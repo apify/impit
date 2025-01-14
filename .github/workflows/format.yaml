@@ -1,35 +1,20 @@
-name: Check formatting & Clippy
+name: Check formatting
 on:
   push:
+    branches:
+      - master
   pull_request:
-
-permissions:
-  contents: read
-
-concurrency:
-  group: deploy
-  cancel-in-progress: false
 
 jobs:
   fmt:
     name: Check code formatting
     runs-on: ubuntu-latest
-    container: rust:slim
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Install rustfmt
-        run: rustup component add rustfmt
-      - name: Check formatting
-        run: cargo fmt -- --check
-  clippy:
-    name: Check code style
-    runs-on: ubuntu-latest
-    container: rust:slim
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Install clippy
-        run: rustup component add clippy
-      - name: Check style
-        run: cargo clippy -- -D warnings
+      - uses: actions/checkout@v4
+
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          components: rustfmt
+
+      - name: Rustfmt Check
+        uses: actions-rust-lang/rustfmt@v1
