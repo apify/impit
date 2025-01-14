@@ -4,11 +4,11 @@ use hickory_proto::error::ProtoError;
 use hickory_proto::rr::rdata::svcb::SvcParamValue;
 use hickory_proto::rr::RData;
 
-use tokio::net::TcpStream as TokioTcpStream;
 use hickory_client::client::{AsyncClient, ClientHandle};
 use hickory_client::proto::iocompat::AsyncIoTokioAsStd;
 use hickory_client::rr::Name;
 use hickory_client::tcp::TcpClientStream;
+use tokio::net::TcpStream as TokioTcpStream;
 
 /// A struct encapsulating the components required to make HTTP/3 requests.
 pub struct H3Engine {
@@ -17,7 +17,7 @@ pub struct H3Engine {
     /// The background task that processes DNS queries.
     bg_join_handle: tokio::task::JoinHandle<Result<(), ProtoError>>,
     /// A map of hosts that support HTTP/3.
-    /// 
+    ///
     /// This is populated by the DNS queries and manual calls to `set_h3_support` (based on the `Alt-Svc` header).
     /// Implicitly used as a cache for the DNS queries.
     h3_alt_svc: HashMap<String, bool>,
@@ -30,38 +30,39 @@ impl H3Engine {
             TcpClientStream::<AsyncIoTokioAsStd<TokioTcpStream>>::new(([8, 8, 8, 8], 53).into());
         let (client, bg) = AsyncClient::new(stream, sender, None).await.unwrap();
 
-        let bg_join_handle= tokio::spawn(bg);
+        let bg_join_handle = tokio::spawn(bg);
 
-        H3Engine { 
-            client, 
+        H3Engine {
+            client,
             bg_join_handle,
             h3_alt_svc: HashMap::new(),
         }
     }
 
-    pub async fn host_supports_h3(self: &mut Self, host: &String) -> bool {
+    pub async fn host_supports_h3(&mut self, host: &String) -> bool {
         if let Some(supports_h3) = self.h3_alt_svc.get(host) {
             return supports_h3.to_owned();
         }
 
         let domain_name = Name::from_utf8(host).unwrap();
-    
-        let response = self.client.query(
-            domain_name,
-            hickory_proto::rr::DNSClass::IN, 
-            hickory_proto::rr::RecordType::HTTPS
-        ).await;
-    
-        let dns_h3_support = response.is_ok_and(|response | {
+
+        let response = self
+            .client
+            .query(
+                domain_name,
+                hickory_proto::rr::DNSClass::IN,
+                hickory_proto::rr::RecordType::HTTPS,
+            )
+            .await;
+
+        let dns_h3_support = response.is_ok_and(|response| {
             response.answers().iter().any(|answer| {
                 if let RData::HTTPS(data) = answer.data().unwrap() {
                     return data.svc_params().iter().any(|param| {
                         if let SvcParamValue::Alpn(alpn_protocols) = param.1.clone() {
-                            return alpn_protocols.0.iter().any(|alpn| { 
-                                alpn == "h3" 
-                            })
+                            return alpn_protocols.0.iter().any(|alpn| alpn == "h3");
                         }
-    
+
                         false
                     });
                 }
@@ -73,7 +74,7 @@ impl H3Engine {
         dns_h3_support
     }
 
-    pub fn set_h3_support(self: &mut Self, host: &String, supports_h3: bool) {
+    pub fn set_h3_support(&mut self, host: &String, supports_h3: bool) {
         if self.h3_alt_svc.contains_key(host) {
             return;
         }

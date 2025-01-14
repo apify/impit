@@ -1,0 +1,35 @@
+name: Check formatting
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+env:
+  RUSTFLAGS: "--cfg reqwest_unstable"
+
+jobs:
+  fmt:
+    name: rustfmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          components: rustfmt
+
+      - name: Rustfmt Check
+        uses: actions-rust-lang/rustfmt@v1
+  clippy:
+    name: clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          components: clippy
+
+      - name: Run clippy
+        run: cargo clippy --all --manifest-path=./Cargo.toml -- -D warnings

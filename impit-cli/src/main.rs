@@ -1,7 +1,11 @@
 use std::ffi::OsString;
 
 use clap::{Parser, ValueEnum};
-use impit::{impit::{Impit, RedirectBehavior}, emulation::Browser as ImpitBrowser, request::RequestOptions};
+use impit::{
+    emulation::Browser as ImpitBrowser,
+    impit::{Impit, RedirectBehavior},
+    request::RequestOptions,
+};
 
 mod headers;
 
@@ -9,19 +13,19 @@ mod headers;
 enum Browser {
     Chrome,
     Firefox,
-    Impit
+    Impit,
 }
 
 #[derive(Parser, Debug, Clone, Copy, ValueEnum)]
 enum Method {
-    GET,
-    POST,
-    PUT,
-    DELETE,
-    PATCH,
-    HEAD,
-    OPTIONS,
-    TRACE
+    Get,
+    Post,
+    Put,
+    Delete,
+    Patch,
+    Head,
+    Options,
+    Trace,
 }
 
 /// CLI interface for the impit library.
@@ -30,31 +34,31 @@ enum Method {
 #[command(about, long_about = None)]
 struct CliArgs {
     /// Method to use for the request.
-    #[arg(short='X', long, default_value = "get")]
+    #[arg(short = 'X', long, default_value = "get")]
     method: Method,
 
     /// HTTP headers to add to the request.
-    #[arg(short='H', long)]
+    #[arg(short = 'H', long)]
     headers: Vec<String>,
-    
+
     /// What browser to use for the request.
-    #[arg(short='A', long, default_value = "impit")]
+    #[arg(short = 'A', long, default_value = "impit")]
     impersonate: Browser,
 
     /// If set, impit will ignore TLS errors.
-    #[arg(short='k', long, action)]
+    #[arg(short = 'k', long, action)]
     ignore_tls_errors: bool,
-    
+
     /// If set, impit will fallback to vanilla HTTP if the impersonated browser fails.
-    #[arg(short='f', long, action)]
+    #[arg(short = 'f', long, action)]
     fallback: bool,
 
     /// Proxy to use for the request.
-    #[arg(short='x', long="proxy")]
+    #[arg(short = 'x', long = "proxy")]
     proxy: Option<String>,
-    
+
     /// Maximum time in seconds to wait for the request to complete.
-    #[arg(short='m', long="max-time")]
+    #[arg(short = 'm', long = "max-time")]
     max_time: Option<u64>,
 
     /// Data to send with the request.
@@ -62,19 +66,19 @@ struct CliArgs {
     data: Option<OsString>,
 
     /// Enforce the use of HTTP/3 for the request. Note that if the server does not support HTTP/3, the request will fail.
-    #[arg(long="http3-only", action)]
+    #[arg(long = "http3-only", action)]
     http3_prior_knowledge: bool,
-    
+
     /// Enable the use of HTTP/3. This will attempt to use HTTP/3, but fall back to earlier versions of HTTP if the server does not support it.
-    #[arg(long="http3", action)]
+    #[arg(long = "http3", action)]
     enable_http3: bool,
 
     /// Follow redirects
-    #[arg(short='L', long="location", action)]
+    #[arg(short = 'L', long = "location", action)]
     follow_redirects: bool,
-    
+
     /// Follow redirects
-    #[arg(long="max-redirs", default_value = "50")]
+    #[arg(long = "max-redirs", default_value = "50")]
     maximum_redirects: usize,
 
     /// URL of the request to make
@@ -92,7 +96,7 @@ async fn main() {
     client = match args.impersonate {
         Browser::Chrome => client.with_browser(ImpitBrowser::Chrome),
         Browser::Firefox => client.with_browser(ImpitBrowser::Firefox),
-        Browser::Impit => client
+        Browser::Impit => client,
     };
 
     if args.proxy.is_some() {
@@ -109,17 +113,13 @@ async fn main() {
         client = client.with_redirect(RedirectBehavior::ManualRedirect);
     }
 
-    let body: Option<Vec<u8>> = match args.data {
-        Some(data) => Some(data.into_string().unwrap().into_bytes()),
-        None => None
-    };
+    let body: Option<Vec<u8>> = args
+        .data
+        .map(|data| data.into_string().unwrap().into_bytes());
 
     let mut client = client.build();
 
-    let timeout = match args.max_time {
-        Some(time) => Some(std::time::Duration::from_secs(time)),
-        None => None
-    };
+    let timeout = args.max_time.map(std::time::Duration::from_secs);
 
     let options = RequestOptions {
         headers: headers::process_headers(args.headers),
@@ -128,14 +128,14 @@ async fn main() {
     };
 
     let response = match args.method {
-        Method::GET => client.get(args.url, Some(options)).await.unwrap(),
-        Method::POST => client.post(args.url, body, Some(options)).await.unwrap(),
-        Method::PUT => client.put(args.url, body, Some(options)).await.unwrap(),
-        Method::DELETE => client.delete(args.url, Some(options)).await.unwrap(),
-        Method::PATCH => client.patch(args.url, body, Some(options)).await.unwrap(),
-        Method::HEAD => client.head(args.url, Some(options)).await.unwrap(),
-        Method::OPTIONS => client.options(args.url, Some(options)).await.unwrap(),
-        Method::TRACE => client.trace(args.url, Some(options)).await.unwrap(),
+        Method::Get => client.get(args.url, Some(options)).await.unwrap(),
+        Method::Post => client.post(args.url, body, Some(options)).await.unwrap(),
+        Method::Put => client.put(args.url, body, Some(options)).await.unwrap(),
+        Method::Delete => client.delete(args.url, Some(options)).await.unwrap(),
+        Method::Patch => client.patch(args.url, body, Some(options)).await.unwrap(),
+        Method::Head => client.head(args.url, Some(options)).await.unwrap(),
+        Method::Options => client.options(args.url, Some(options)).await.unwrap(),
+        Method::Trace => client.trace(args.url, Some(options)).await.unwrap(),
     };
 
     print!("{}", response.text().await.unwrap());

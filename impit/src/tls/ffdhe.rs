@@ -23,8 +23,6 @@ pub const FFDHE2048_KX_GROUP: FfdheKxGroup =
     FfdheKxGroup(NamedGroup::FFDHE2048, ffdhe_groups::FFDHE2048);
 pub const FFDHE3072_KX_GROUP: FfdheKxGroup =
     FfdheKxGroup(NamedGroup::FFDHE3072, ffdhe_groups::FFDHE3072);
-pub const FFDHE4096_KX_GROUP: FfdheKxGroup =
-    FfdheKxGroup(NamedGroup::FFDHE4096, ffdhe_groups::FFDHE4096);
 
 static FFDHE_CIPHER_SUITES: &[rustls::SupportedCipherSuite] = &[
     TLS_DHE_RSA_WITH_AES_128_GCM_SHA256,
@@ -54,9 +52,7 @@ pub struct FfdheKxGroup(pub NamedGroup, pub FfdheGroup<'static>);
 impl SupportedKxGroup for FfdheKxGroup {
     fn start(&self) -> Result<Box<dyn ActiveKeyExchange>, rustls::Error> {
         let mut x = vec![0; 64];
-        ffdhe_provider()
-            .secure_random
-            .fill(&mut x)?;
+        ffdhe_provider().secure_random.fill(&mut x)?;
         let x = BigUint::from_bytes_be(&x);
 
         let p = BigUint::from_bytes_be(self.1.p);
