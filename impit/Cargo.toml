@@ -1,0 +1,23 @@
+[package]
+name = "impit"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+encoding = "0.2.33"
+hickory-client = "0.24.2"
+hickory-proto = "0.24.2"
+log = "0.4.22"
+num-bigint = "0.4.6"
+reqwest = { version = "0.12.9", features = ["json", "gzip", "brotli", "zstd", "deflate", "rustls-tls", "http3", "cookies"] }
+rustls = { version="0.23.16", features=["impit"] }
+scraper = "0.22.0"
+tokio = { version="1.40.0", features = ["full"] }
+url = "2.5.2"
+webpki-roots = "0.26.6"
+
+[patch.crates-io]
+h2 = { git = "https://github.com/apify/h2", branch = "master" }
+rustls = { git = "https://github.com/apify/rustls", branch = "main" }
