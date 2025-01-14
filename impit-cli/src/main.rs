@@ -113,7 +113,9 @@ async fn main() {
         client = client.with_redirect(RedirectBehavior::ManualRedirect);
     }
 
-    let body: Option<Vec<u8>> = args.data.map(|data| data.into_string().unwrap().into_bytes());
+    let body: Option<Vec<u8>> = args
+        .data
+        .map(|data| data.into_string().unwrap().into_bytes());
 
     let mut client = client.build();
 
