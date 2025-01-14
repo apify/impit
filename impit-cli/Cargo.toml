@@ -1,0 +1,21 @@
+[package]
+name = "impit-cli"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+clap = { version = "4.5.21", features = ["derive"] }
+impit = { path="../impit" }
+tokio = { version="1.41.1", features = ["full"] }
+aws-lc-rs = { version = "1.11.1", features = ["bindgen"] }
+
+[target.x86_64-unknown-linux-musl.dependencies]
+openssl = { version = "*", features = ["vendored"] }
+
+[target.aarch64-unknown-linux-musl.dependencies]
+openssl = { version = "*", features = ["vendored"] }
+
+[target.arm-unknown-linux-musleabi.dependencies]
+openssl = { version = "*", features = ["vendored"] }

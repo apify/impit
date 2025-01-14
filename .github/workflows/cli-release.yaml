@@ -1,0 +1,155 @@
+# This file was 1:1 taken from https://github.com/houseabsolute/precious. Check it out!
+name: "[impit-cli] Test & Build"
+
+on:
+  push:
+    branches:
+      - "**"
+    tags-ignore:
+      - "impit-cli-*"
+    paths:
+      - "impit-cli/**"
+      - "impit/**"
+  pull_request:
+
+env:
+  CRATE_NAME: impit-cli
+  GITHUB_TOKEN: ${{ github.token }}
+  RUST_BACKTRACE: 1
+
+jobs:
+  test:
+    name: ${{ matrix.platform.os-name }} with rust ${{ matrix.toolchain }}
+    runs-on: ${{ matrix.platform.runs-on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          # Platforms that don't work:
+          #
+          # - sparc64-unknown-linux-gnu - cannot compile openssl-sys
+          # - x86_64-unknown-illumos - weird error compiling openssl - "bin/sh: 1: granlib: not found"
+
+        #   - os-name: FreeBSD-x86_64
+        #     runs-on: ubuntu-20.04
+        #     target: x86_64-unknown-freebsd
+        #     bin: impit-cli
+        #     name: impit-cli-FreeBSD-x86_64.tar.gz
+        #     skip_tests: true
+          - os-name: Linux-x86_64
+            runs-on: ubuntu-20.04
+            target: x86_64-unknown-linux-musl
+            bin: impit-cli
+            name: impit-cli-Linux-x86_64-musl.tar.gz
+          - os-name: Linux-aarch64
+            runs-on: ubuntu-20.04
+            target: aarch64-unknown-linux-musl
+            bin: impit-cli
+            name: impit-cli-Linux-aarch64-musl.tar.gz
+          - os-name: Linux-arm
+            runs-on: ubuntu-20.04
+            target: arm-unknown-linux-musleabi
+            bin: impit-cli
+            name: impit-cli-Linux-arm-musl.tar.gz
+        #   - os-name: Linux-i686
+        #     runs-on: ubuntu-20.04
+        #     target: i686-unknown-linux-musl
+        #     bin: impit-cli
+        #     name: impit-cli-Linux-i686-musl.tar.gz
+        #     skip_tests: true
+        #   - os-name: Linux-powerpc
+        #     runs-on: ubuntu-20.04
+        #     target: powerpc-unknown-linux-gnu
+        #     bin: impit-cli
+        #     name: impit-cli-Linux-powerpc-gnu.tar.gz
+        #     skip_tests: true
+        #   - os-name: Linux-powerpc64
+        #     runs-on: ubuntu-20.04
+        #     target: powerpc64-unknown-linux-gnu
+        #     bin: impit-cli
+        #     name: impit-cli-Linux-powerpc64-gnu.tar.gz
+        #     skip_tests: true
+        #   - os-name: Linux-powerpc64le
+        #     runs-on: ubuntu-20.04
+        #     target: powerpc64le-unknown-linux-gnu
+        #     bin: impit-cli
+        #     name: impit-cli-Linux-powerpc64le.tar.gz
+        #     skip_tests: true
+        #   - os-name: Linux-riscv64
+        #     runs-on: ubuntu-20.04
+        #     target: riscv64gc-unknown-linux-gnu
+        #     bin: impit-cli
+        #     name: impit-cli-Linux-riscv64gc-gnu.tar.gz
+        #   - os-name: Linux-s390x
+        #     runs-on: ubuntu-20.04
+        #     target: s390x-unknown-linux-gnu
+        #     bin: impit-cli
+        #     name: impit-cli-Linux-s390x-gnu.tar.gz
+        #     skip_tests: true
+        #   - os-name: NetBSD-x86_64
+        #     runs-on: ubuntu-20.04
+        #     target: x86_64-unknown-netbsd
+        #     bin: impit-cli
+        #     name: impit-cli-NetBSD-x86_64.tar.gz
+        #     skip_tests: true
+          - os-name: Windows-aarch64
+            runs-on: windows-latest
+            target: aarch64-pc-windows-msvc
+            bin: impit-cli.exe
+            name: impit-cli-Windows-aarch64.zip
+            skip_tests: true
+        #   - os-name: Windows-i686
+        #     runs-on: windows-latest
+        #     target: i686-pc-windows-msvc
+        #     bin: impit-cli.exe
+        #     name: impit-cli-Windows-i686.zip
+        #     skip_tests: true
+          - os-name: Windows-x86_64
+            runs-on: windows-latest
+            target: x86_64-pc-windows-msvc
+            bin: impit-cli.exe
+            name: impit-cli-Windows-x86_64.zip
+          - os-name: macOS-x86_64
+            runs-on: macOS-latest
+            target: x86_64-apple-darwin
+            bin: impit-cli
+            name: impit-cli-Darwin-x86_64.tar.gz
+          - os-name: macOS-aarch64
+            runs-on: macOS-latest
+            target: aarch64-apple-darwin
+            bin: impit-cli
+            name: impit-cli-Darwin-aarch64.tar.gz
+        toolchain:
+          - stable
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache cargo & target directories
+        uses: Swatinem/rust-cache@v2
+      - name: Configure Git
+        run: |
+          git config --global user.email "jdoe@example.com"
+          git config --global user.name "J. Doe"
+      - name: Build binary
+        uses: houseabsolute/actions-rust-cross@v0
+        with:
+          command: "build"
+          target: ${{ matrix.platform.target }}
+          toolchain: ${{ matrix.toolchain }}
+          args: "--locked --release --manifest-path impit-cli/Cargo.toml"
+          strip: true
+    #   - name: Run tests
+    #     uses: houseabsolute/actions-rust-cross@v0
+    #     with:
+    #       command: "test"
+    #       target: ${{ matrix.platform.target }}
+    #       toolchain: ${{ matrix.toolchain }}
+    #       args: "--locked --release"
+    #     if: ${{ !matrix.platform.skip_tests }}
+      - name: Publish artifacts and release
+        uses: houseabsolute/actions-rust-release@v0.0.4
+        if: matrix.toolchain == 'stable'
+        with:
+          executable-name: impit-cli
+          target: ${{ matrix.platform.target }}
+          changes-file: ""
+          
