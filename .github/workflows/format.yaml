@@ -5,9 +5,12 @@ on:
       - master
   pull_request:
 
+env:
+  RUSTFLAGS: "--cfg reqwest_unstable"
+
 jobs:
   fmt:
-    name: Check code formatting
+    name: rustfmt
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,3 +21,15 @@ jobs:
 
       - name: Rustfmt Check
         uses: actions-rust-lang/rustfmt@v1
+  clippy:
+    name: clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          components: clippy
+
+      - name: Run clippy
+        run: cargo clippy --all --manifest-path=./Cargo.toml -- -D warnings

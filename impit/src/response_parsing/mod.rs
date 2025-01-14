@@ -4,7 +4,7 @@ use encoding::Encoding;
 /// If the BOM sniffing algorithm fails, the function returns `None`.
 ///
 /// See more details at https://encoding.spec.whatwg.org/#bom-sniff
-fn bom_sniffing(bytes: &Vec<u8>) -> Option<encoding::EncodingRef> {
+fn bom_sniffing(bytes: &[u8]) -> Option<encoding::EncodingRef> {
     if bytes.len() < 3 {
         return None;
     }
@@ -27,7 +27,7 @@ fn bom_sniffing(bytes: &Vec<u8>) -> Option<encoding::EncodingRef> {
 /// A lazy implementation of the BOM sniffing algorithm, using `scraper` to parse the HTML and extract the encoding.
 ///
 /// See more details at https://html.spec.whatwg.org/#prescan-a-byte-stream-to-determine-its-encoding
-fn prescan_bytestream(bytes: &Vec<u8>) -> Option<encoding::EncodingRef> {
+fn prescan_bytestream(bytes: &[u8]) -> Option<encoding::EncodingRef> {
     if bytes.len() < 4 {
         return None;
     }

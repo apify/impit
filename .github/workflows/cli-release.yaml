@@ -10,6 +10,7 @@ on:
     paths:
       - "impit-cli/**"
       - "impit/**"
+  workflow_dispatch:
 
 env:
   CRATE_NAME: impit-cli
