@@ -4,13 +4,12 @@ name: "[impit-cli] Test & Build"
 on:
   push:
     branches:
-      - "**"
+      - "master"
     tags-ignore:
       - "impit-cli-*"
     paths:
       - "impit-cli/**"
       - "impit/**"
-  pull_request:
 
 env:
   CRATE_NAME: impit-cli
