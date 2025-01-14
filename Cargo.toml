@@ -1,9 +1,17 @@
 [workspace]
+resolver = "2"
 
 members = [
-    "impit"
+    "impit",
+    "impit-cli"
 ]
 
 [patch.crates-io]
 h2 = { git = "https://github.com/apify/h2", branch = "master" }
 rustls = { git = "https://github.com/apify/rustls", branch = "main" }
+
+[profile.release]
+strip = true  # Automatically strip symbols from the binary.
+opt-level = "z"  # Optimize for size.
+lto = true
+codegen-units = 1

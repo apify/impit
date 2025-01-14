@@ -37,7 +37,7 @@ impl Into<HeaderMap> for HttpHeaders {
         };
 
         if pseudo_headers_order.len() != 0 {
-            std::env::set_var("RETCH_H2_PSEUDOHEADERS_ORDER", pseudo_headers_order.join(","));
+            std::env::set_var("IMPIT_H2_PSEUDOHEADERS_ORDER", pseudo_headers_order.join(","));
         }
 
         let mut used_custom_headers: Vec<String> = vec![];
