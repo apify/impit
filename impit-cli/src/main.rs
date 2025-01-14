@@ -18,14 +18,14 @@ enum Browser {
 
 #[derive(Parser, Debug, Clone, Copy, ValueEnum)]
 enum Method {
-    GET,
-    POST,
-    PUT,
-    DELETE,
-    PATCH,
-    HEAD,
-    OPTIONS,
-    TRACE,
+    Get,
+    Post,
+    Put,
+    Delete,
+    Patch,
+    Head,
+    Options,
+    Trace,
 }
 
 /// CLI interface for the impit library.
@@ -113,17 +113,11 @@ async fn main() {
         client = client.with_redirect(RedirectBehavior::ManualRedirect);
     }
 
-    let body: Option<Vec<u8>> = match args.data {
-        Some(data) => Some(data.into_string().unwrap().into_bytes()),
-        None => None,
-    };
+    let body: Option<Vec<u8>> = args.data.map(|data| data.into_string().unwrap().into_bytes());
 
     let mut client = client.build();
 
-    let timeout = match args.max_time {
-        Some(time) => Some(std::time::Duration::from_secs(time)),
-        None => None,
-    };
+    let timeout = args.max_time.map(std::time::Duration::from_secs);
 
     let options = RequestOptions {
         headers: headers::process_headers(args.headers),
@@ -132,14 +126,14 @@ async fn main() {
     };
 
     let response = match args.method {
-        Method::GET => client.get(args.url, Some(options)).await.unwrap(),
-        Method::POST => client.post(args.url, body, Some(options)).await.unwrap(),
-        Method::PUT => client.put(args.url, body, Some(options)).await.unwrap(),
-        Method::DELETE => client.delete(args.url, Some(options)).await.unwrap(),
-        Method::PATCH => client.patch(args.url, body, Some(options)).await.unwrap(),
-        Method::HEAD => client.head(args.url, Some(options)).await.unwrap(),
-        Method::OPTIONS => client.options(args.url, Some(options)).await.unwrap(),
-        Method::TRACE => client.trace(args.url, Some(options)).await.unwrap(),
+        Method::Get => client.get(args.url, Some(options)).await.unwrap(),
+        Method::Post => client.post(args.url, body, Some(options)).await.unwrap(),
+        Method::Put => client.put(args.url, body, Some(options)).await.unwrap(),
+        Method::Delete => client.delete(args.url, Some(options)).await.unwrap(),
+        Method::Patch => client.patch(args.url, body, Some(options)).await.unwrap(),
+        Method::Head => client.head(args.url, Some(options)).await.unwrap(),
+        Method::Options => client.options(args.url, Some(options)).await.unwrap(),
+        Method::Trace => client.trace(args.url, Some(options)).await.unwrap(),
     };
 
     print!("{}", response.text().await.unwrap());

@@ -23,8 +23,6 @@ pub const FFDHE2048_KX_GROUP: FfdheKxGroup =
     FfdheKxGroup(NamedGroup::FFDHE2048, ffdhe_groups::FFDHE2048);
 pub const FFDHE3072_KX_GROUP: FfdheKxGroup =
     FfdheKxGroup(NamedGroup::FFDHE3072, ffdhe_groups::FFDHE3072);
-pub const FFDHE4096_KX_GROUP: FfdheKxGroup =
-    FfdheKxGroup(NamedGroup::FFDHE4096, ffdhe_groups::FFDHE4096);
 
 static FFDHE_CIPHER_SUITES: &[rustls::SupportedCipherSuite] = &[
     TLS_DHE_RSA_WITH_AES_128_GCM_SHA256,
