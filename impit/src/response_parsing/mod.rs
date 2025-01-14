@@ -88,7 +88,7 @@ fn prescan_bytestream(bytes: &[u8]) -> Option<encoding::EncodingRef> {
 ///
 /// assert_eq!(string, "žluťoučký kůň"); // The function uses the Windows-1250 encoding.
 /// ```
-pub fn decode(bytes: &Vec<u8>, encoding_prior_knowledge: Option<encoding::EncodingRef>) -> String {
+pub fn decode(bytes: &[u8], encoding_prior_knowledge: Option<encoding::EncodingRef>) -> String {
     let mut encoding: encoding::EncodingRef = encoding::all::UTF_8;
 
     if let Some(enc) = encoding_prior_knowledge {
@@ -118,12 +118,17 @@ pub struct ContentType {
     charset: String,
 }
 
+/// Error enum for the `ContentType` struct operations.
+pub enum ContentTypeError {
+    InvalidContentType,
+}
+
 impl ContentType {
-    pub fn from(content_type: &str) -> Result<Self, ()> {
+    pub fn from(content_type: &str) -> Result<Self, ContentTypeError> {
         let parts: Vec<&str> = content_type.split("charset=").collect();
 
         if parts.len() != 2 || parts[1].is_empty() {
-            return Err(());
+            return Err(ContentTypeError::InvalidContentType);
         }
 
         Ok(ContentType {
