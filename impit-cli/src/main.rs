@@ -1,7 +1,7 @@
 use std::ffi::OsString;
 
 use clap::{Parser, ValueEnum};
-use retch::{retcher::{self}, RequestOptions, Browser as RetchBrowser};
+use impit::{impit::{Impit, RedirectBehavior}, emulation::Browser as ImpitBrowser, request::RequestOptions};
 
 mod headers;
 
@@ -9,7 +9,7 @@ mod headers;
 enum Browser {
     Chrome,
     Firefox,
-    Retch
+    Impit
 }
 
 #[derive(Parser, Debug, Clone, Copy, ValueEnum)]
@@ -24,7 +24,7 @@ enum Method {
     TRACE
 }
 
-/// CLI interface for the retch library.
+/// CLI interface for the impit library.
 /// Something like CURL for libcurl, for making impersonated HTTP(2) requests.
 #[derive(Parser, Debug)]
 #[command(about, long_about = None)]
@@ -38,14 +38,14 @@ struct CliArgs {
     headers: Vec<String>,
     
     /// What browser to use for the request.
-    #[arg(short='A', long, default_value = "retch")]
+    #[arg(short='A', long, default_value = "impit")]
     impersonate: Browser,
 
-    /// If set, retch will ignore TLS errors.
+    /// If set, impit will ignore TLS errors.
     #[arg(short='k', long, action)]
     ignore_tls_errors: bool,
     
-    /// If set, retch will fallback to vanilla HTTP if the impersonated browser fails.
+    /// If set, impit will fallback to vanilla HTTP if the impersonated browser fails.
     #[arg(short='f', long, action)]
     fallback: bool,
 
@@ -85,14 +85,14 @@ struct CliArgs {
 async fn main() {
     let args = CliArgs::parse();
 
-    let mut client = retcher::Retcher::builder()
+    let mut client = Impit::builder()
         .with_ignore_tls_errors(args.ignore_tls_errors)
         .with_fallback_to_vanilla(args.fallback);
 
     client = match args.impersonate {
-        Browser::Chrome => client.with_browser(RetchBrowser::Chrome),
-        Browser::Firefox => client.with_browser(RetchBrowser::Firefox),
-        Browser::Retch => client
+        Browser::Chrome => client.with_browser(ImpitBrowser::Chrome),
+        Browser::Firefox => client.with_browser(ImpitBrowser::Firefox),
+        Browser::Impit => client
     };
 
     if args.proxy.is_some() {
@@ -104,9 +104,9 @@ async fn main() {
     }
 
     if args.follow_redirects {
-        client = client.with_redirect(retch::retcher::RedirectBehavior::FollowRedirect(args.maximum_redirects));
+        client = client.with_redirect(RedirectBehavior::FollowRedirect(args.maximum_redirects));
     } else {
-        client = client.with_redirect(retch::retcher::RedirectBehavior::ManualRedirect);
+        client = client.with_redirect(RedirectBehavior::ManualRedirect);
     }
 
     let body: Option<Vec<u8>> = match args.data {
