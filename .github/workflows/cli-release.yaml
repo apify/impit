@@ -151,4 +151,5 @@ jobs:
         with:
           executable-name: impit-cli
           target: ${{ matrix.platform.target }}
+          working-directory: ${{ github.workspace }}/impit-cli
         if: matrix.toolchain == 'stable'
