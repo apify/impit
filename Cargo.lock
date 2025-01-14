@@ -706,7 +706,7 @@ checksum = "a8d1add55171497b4705a648c6b583acafb01d58050a51727785f0b2c8e0a2b2"
 [[package]]
 name = "h2"
 version = "0.4.7"
-source = "git+https://github.com/retch-http/h2?branch=retch-patch#bb35bf7eaecd3ee32b479722bf436fe3c387667e"
+source = "git+https://github.com/apify/h2?branch=master#7f393a728a8db07cabb1b78d2094772b33943b9a"
 dependencies = [
  "atomic-waker",
  "bytes",
