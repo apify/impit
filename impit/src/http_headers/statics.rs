@@ -17,7 +17,14 @@ pub static CHROME_HEADERS: &'static [(&'static str, &'static str)] = &[
     ("accept-language", "en-US,en;q=0.9"),
 ];
 
-pub static CHROME_PSEUDOHEADERS_ORDER : [&'static str; 6] = [":method", ":authority", ":scheme", ":path", ":protocol", ":status"];
+pub static CHROME_PSEUDOHEADERS_ORDER: [&'static str; 6] = [
+    ":method",
+    ":authority",
+    ":scheme",
+    ":path",
+    ":protocol",
+    ":status",
+];
 
 pub static FIREFOX_HEADERS: &'static [(&'static str, &'static str)] = &[
     ("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0"),
@@ -33,4 +40,11 @@ pub static FIREFOX_HEADERS: &'static [(&'static str, &'static str)] = &[
     ("Priority", "u=0, i"),
 ];
 
-pub static FIREFOX_PSEUDOHEADERS_ORDER : [&'static str; 6] = [":method", ":path", ":authority", ":scheme", ":protocol", ":status"];
+pub static FIREFOX_PSEUDOHEADERS_ORDER: [&'static str; 6] = [
+    ":method",
+    ":path",
+    ":authority",
+    ":scheme",
+    ":protocol",
+    ":status",
+];

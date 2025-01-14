@@ -1,6 +1,6 @@
-use std::{collections::HashMap, str::FromStr};
-use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 use crate::emulation::Browser;
+use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
+use std::{collections::HashMap, str::FromStr};
 
 mod statics;
 
@@ -27,45 +27,51 @@ impl Into<HeaderMap> for HttpHeaders {
         let header_values = match self.context.browser {
             Some(Browser::Chrome) => statics::CHROME_HEADERS,
             Some(Browser::Firefox) => statics::FIREFOX_HEADERS,
-            None => &[]
+            None => &[],
         };
 
         let pseudo_headers_order: &[&str] = match self.context.browser {
             Some(Browser::Chrome) => statics::CHROME_PSEUDOHEADERS_ORDER.as_ref(),
             Some(Browser::Firefox) => statics::FIREFOX_PSEUDOHEADERS_ORDER.as_ref(),
-            None => &[]
+            None => &[],
         };
 
         if pseudo_headers_order.len() != 0 {
-            std::env::set_var("IMPIT_H2_PSEUDOHEADERS_ORDER", pseudo_headers_order.join(","));
+            std::env::set_var(
+                "IMPIT_H2_PSEUDOHEADERS_ORDER",
+                pseudo_headers_order.join(","),
+            );
         }
 
         let mut used_custom_headers: Vec<String> = vec![];
 
         // TODO: don't use HTTP2 headers for HTTP1.1
         for (name, impersonated_value) in header_values {
-            let value: &str = match self.context.custom_headers.get(*name)  { 
+            let value: &str = match self.context.custom_headers.get(*name) {
                 Some(custom_value) => {
                     used_custom_headers.push(name.to_string());
                     custom_value.as_str()
-                },
+                }
                 None => impersonated_value,
             };
 
             headers.append(
-                HeaderName::from_str(name).unwrap(), 
-                HeaderValue::from_str(value).unwrap()
+                HeaderName::from_str(name).unwrap(),
+                HeaderValue::from_str(value).unwrap(),
             );
         }
 
-        self.context.custom_headers.iter().for_each(|(name, value)| {
-            if !used_custom_headers.contains(name) {
-                headers.append(
-                    HeaderName::from_str(name).unwrap(), 
-                    HeaderValue::from_str(value).unwrap()
-                );
-            }
-        });
+        self.context
+            .custom_headers
+            .iter()
+            .for_each(|(name, value)| {
+                if !used_custom_headers.contains(name) {
+                    headers.append(
+                        HeaderName::from_str(name).unwrap(),
+                        HeaderValue::from_str(value).unwrap(),
+                    );
+                }
+            });
 
         headers
     }
@@ -81,22 +87,22 @@ pub struct HttpHeadersBuilder {
 
 impl HttpHeadersBuilder {
     // TODO: Enforce `with_host` to be called before `build`
-    pub fn with_host (&mut self, host: &String) -> &mut Self {
+    pub fn with_host(&mut self, host: &String) -> &mut Self {
         self.host = host.to_owned();
         self
     }
 
-    pub fn with_browser (&mut self, browser: &Option<Browser>) -> &mut Self {
+    pub fn with_browser(&mut self, browser: &Option<Browser>) -> &mut Self {
         self.browser = browser.to_owned();
         self
     }
 
-    pub fn with_https (&mut self, https: bool) -> &mut Self {
+    pub fn with_https(&mut self, https: bool) -> &mut Self {
         self.https = https;
         self
     }
 
-    pub fn with_custom_headers (&mut self, custom_headers: &HashMap<String, String>) -> &mut Self {
+    pub fn with_custom_headers(&mut self, custom_headers: &HashMap<String, String>) -> &mut Self {
         self.custom_headers = custom_headers.to_owned();
         self
     }
@@ -105,5 +111,3 @@ impl HttpHeadersBuilder {
         HttpHeaders::new(self)
     }
 }
-
-

@@ -1,8 +1,8 @@
-use impit::impit::Impit;
 use impit::emulation::Browser;
- 
- #[tokio::main]
- async fn main() {
+use impit::impit::Impit;
+
+#[tokio::main]
+async fn main() {
     let mut impit = Impit::builder()
         .with_browser(Browser::Firefox)
         .with_http3()
@@ -18,4 +18,4 @@ use impit::emulation::Browser;
             println!("{:#?}", e);
         }
     }
- }
+}
