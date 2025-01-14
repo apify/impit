@@ -2,6 +2,7 @@ name: Build docs
 on:
   push:
     branches: [master]
+    paths: ['impit/**']
 permissions:
   contents: read
   pages: write
