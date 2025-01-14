@@ -26,11 +26,11 @@ jobs:
       - name: Clean docs folder
         run: cargo clean --doc
       - name: Build docs
-        run: RUSTFLAGS='--cfg reqwest_unstable' cargo doc --no-deps
+        run: RUSTFLAGS='--cfg reqwest_unstable' cargo doc --no-deps --manifest-path impit/Cargo.toml
       - name: Remove lock file
         run: rm target/doc/.lock
       - name: Copy redirect
-        run: cp docs/index.html target/doc/index.html
+        run: cp impit/docs/index.html target/doc/index.html
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
