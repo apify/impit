@@ -135,9 +135,8 @@ jobs:
           command: "build"
           target: ${{ matrix.platform.target }}
           toolchain: ${{ matrix.toolchain }}
-          args: "--locked --release"
+          args: "--locked --release --manifest-path impit-cli/Cargo.toml"
           strip: true
-          working-directory: ${{ github.workspace }}/impit-cli
     #   - name: Run tests
     #     uses: houseabsolute/actions-rust-cross@v0
     #     with:
@@ -148,8 +147,7 @@ jobs:
     #     if: ${{ !matrix.platform.skip_tests }}
       - name: Publish artifacts and release
         uses: houseabsolute/actions-rust-release@v0
+        if: matrix.toolchain == 'stable'
         with:
           executable-name: impit-cli
           target: ${{ matrix.platform.target }}
-          working-directory: ${{ github.workspace }}/impit-cli
-        if: matrix.toolchain == 'stable'
