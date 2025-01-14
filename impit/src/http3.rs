@@ -39,7 +39,7 @@ impl H3Engine {
         }
     }
 
-    pub async fn host_supports_h3(self: &mut Self, host: &String) -> bool {
+    pub async fn host_supports_h3(&mut self, host: &String) -> bool {
         if let Some(supports_h3) = self.h3_alt_svc.get(host) {
             return supports_h3.to_owned();
         }
@@ -74,7 +74,7 @@ impl H3Engine {
         dns_h3_support
     }
 
-    pub fn set_h3_support(self: &mut Self, host: &String, supports_h3: bool) {
+    pub fn set_h3_support(&mut self, host: &String, supports_h3: bool) {
         if self.h3_alt_svc.contains_key(host) {
             return;
         }

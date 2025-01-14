@@ -93,15 +93,15 @@ pub fn decode(bytes: &Vec<u8>, encoding_prior_knowledge: Option<encoding::Encodi
 
     if let Some(enc) = encoding_prior_knowledge {
         encoding = enc;
-    } else if let Some(enc) = bom_sniffing(&bytes) {
+    } else if let Some(enc) = bom_sniffing(bytes) {
         encoding = enc;
-    } else if let Some(enc) = prescan_bytestream(&bytes) {
+    } else if let Some(enc) = prescan_bytestream(bytes) {
         encoding = enc;
     }
 
-    return encoding
-        .decode(&bytes, encoding::DecoderTrap::Strict)
-        .unwrap();
+    encoding
+        .decode(bytes, encoding::DecoderTrap::Strict)
+        .unwrap()
 }
 
 /// A struct that represents the contents of the `Content-Type` header.
@@ -122,7 +122,7 @@ impl ContentType {
     pub fn from(content_type: &str) -> Result<Self, ()> {
         let parts: Vec<&str> = content_type.split("charset=").collect();
 
-        if parts.len() != 2 || parts[1].len() == 0 {
+        if parts.len() != 2 || parts[1].is_empty() {
             return Err(());
         }
 
@@ -132,8 +132,8 @@ impl ContentType {
     }
 }
 
-impl Into<Option<encoding::EncodingRef>> for ContentType {
-    fn into(self) -> Option<encoding::EncodingRef> {
-        encoding::label::encoding_from_whatwg_label(self.charset.as_str())
+impl From<ContentType> for Option<encoding::EncodingRef> {
+    fn from(val: ContentType) -> Self {
+        encoding::label::encoding_from_whatwg_label(val.charset.as_str())
     }
 }

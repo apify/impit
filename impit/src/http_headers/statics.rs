@@ -2,7 +2,7 @@
 // Note that not all requests are made the same:
 //  - on forced (Ctrl+R) reloads, Chrome sets Cache-Control: max-age=0
 //  - when the URL is in the address bar (but not submitted yet), Chrome sets `Purpose: prefetch` and `Sec-Purpose: prefetch`
-pub static CHROME_HEADERS: &'static [(&'static str, &'static str)] = &[
+pub static CHROME_HEADERS: &[(&str, &str)] = &[
     ("sec-ch-ua", "\"Google Chrome\";v=\"125\", \"Chromium\";v=\"125\", \"Not.A/Brand\";v=\"24\""),
     ("sec-ch-ua-mobile", "?0"),
     ("sec-ch-ua-platform", "Linux"),
@@ -17,7 +17,7 @@ pub static CHROME_HEADERS: &'static [(&'static str, &'static str)] = &[
     ("accept-language", "en-US,en;q=0.9"),
 ];
 
-pub static CHROME_PSEUDOHEADERS_ORDER: [&'static str; 6] = [
+pub static CHROME_PSEUDOHEADERS_ORDER: [&str; 6] = [
     ":method",
     ":authority",
     ":scheme",
@@ -26,7 +26,7 @@ pub static CHROME_PSEUDOHEADERS_ORDER: [&'static str; 6] = [
     ":status",
 ];
 
-pub static FIREFOX_HEADERS: &'static [(&'static str, &'static str)] = &[
+pub static FIREFOX_HEADERS: &[(&str, &str)] = &[
     ("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0"),
     ("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/png,image/svg+xml,*/*;q=0.8"),
     ("Accept-Language", "en,cs;q=0.7,en-US;q=0.3"),
@@ -40,7 +40,7 @@ pub static FIREFOX_HEADERS: &'static [(&'static str, &'static str)] = &[
     ("Priority", "u=0, i"),
 ];
 
-pub static FIREFOX_PSEUDOHEADERS_ORDER: [&'static str; 6] = [
+pub static FIREFOX_PSEUDOHEADERS_ORDER: [&str; 6] = [
     ":method",
     ":path",
     ":authority",

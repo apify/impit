@@ -20,23 +20,23 @@ impl HttpHeaders {
     }
 }
 
-impl Into<HeaderMap> for HttpHeaders {
-    fn into(self) -> HeaderMap {
+impl From<HttpHeaders> for HeaderMap {
+    fn from(val: HttpHeaders) -> Self {
         let mut headers = HeaderMap::new();
 
-        let header_values = match self.context.browser {
+        let header_values = match val.context.browser {
             Some(Browser::Chrome) => statics::CHROME_HEADERS,
             Some(Browser::Firefox) => statics::FIREFOX_HEADERS,
             None => &[],
         };
 
-        let pseudo_headers_order: &[&str] = match self.context.browser {
+        let pseudo_headers_order: &[&str] = match val.context.browser {
             Some(Browser::Chrome) => statics::CHROME_PSEUDOHEADERS_ORDER.as_ref(),
             Some(Browser::Firefox) => statics::FIREFOX_PSEUDOHEADERS_ORDER.as_ref(),
             None => &[],
         };
 
-        if pseudo_headers_order.len() != 0 {
+        if !pseudo_headers_order.is_empty() {
             std::env::set_var(
                 "IMPIT_H2_PSEUDOHEADERS_ORDER",
                 pseudo_headers_order.join(","),
@@ -47,7 +47,7 @@ impl Into<HeaderMap> for HttpHeaders {
 
         // TODO: don't use HTTP2 headers for HTTP1.1
         for (name, impersonated_value) in header_values {
-            let value: &str = match self.context.custom_headers.get(*name) {
+            let value: &str = match val.context.custom_headers.get(*name) {
                 Some(custom_value) => {
                     used_custom_headers.push(name.to_string());
                     custom_value.as_str()
@@ -61,17 +61,14 @@ impl Into<HeaderMap> for HttpHeaders {
             );
         }
 
-        self.context
-            .custom_headers
-            .iter()
-            .for_each(|(name, value)| {
-                if !used_custom_headers.contains(name) {
-                    headers.append(
-                        HeaderName::from_str(name).unwrap(),
-                        HeaderValue::from_str(value).unwrap(),
-                    );
-                }
-            });
+        val.context.custom_headers.iter().for_each(|(name, value)| {
+            if !used_custom_headers.contains(name) {
+                headers.append(
+                    HeaderName::from_str(name).unwrap(),
+                    HeaderValue::from_str(value).unwrap(),
+                );
+            }
+        });
 
         headers
     }

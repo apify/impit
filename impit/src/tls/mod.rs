@@ -79,18 +79,15 @@ impl TlsConfigBuilder {
                     .with_browser_emulator(&rustls_browser)
                     .build();
 
-                match browser {
-                    Browser::Firefox => {
-                        crypto_provider.kx_groups = vec![
-                            X25519,
-                            SECP256R1,
-                            SECP384R1,
-                            // TODO : add SECPR521R1
-                            &ffdhe::FFDHE2048_KX_GROUP,
-                            &ffdhe::FFDHE3072_KX_GROUP,
-                        ];
-                    }
-                    _ => {}
+                if browser == Browser::Firefox {
+                    crypto_provider.kx_groups = vec![
+                        X25519,
+                        SECP256R1,
+                        SECP384R1,
+                        // TODO : add SECPR521R1
+                        &ffdhe::FFDHE2048_KX_GROUP,
+                        &ffdhe::FFDHE3072_KX_GROUP,
+                    ];
                 }
 
                 let mut config: rustls::ClientConfig =

@@ -197,7 +197,7 @@ impl Impit {
             client = client.http3_prior_knowledge();
         }
 
-        if config.proxy_url.len() > 0 {
+        if !config.proxy_url.is_empty() {
             client = client.proxy(
                 reqwest::Proxy::all(&config.proxy_url)
                     .expect("The proxy_url option should be a valid URL."),
@@ -252,20 +252,20 @@ impl Impit {
 
         let protocol = url.scheme();
 
-        return match protocol {
+        match protocol {
             "http" => Ok(url),
             "https" => Ok(url),
             _ => Err(ErrorType::UrlProtocolError),
-        };
+        }
     }
 
-    async fn should_use_h3(self: &mut Self, host: &String) -> bool {
+    async fn should_use_h3(&mut self, host: &String) -> bool {
         if self.config.max_http_version < Version::HTTP_3 {
             debug!("HTTP/3 is disabled, falling back to TCP-based requests.");
             return false;
         }
 
-        if let None = &self.h3_engine {
+        if self.h3_engine.is_none() {
             self.h3_engine = Some(H3Engine::init().await);
         }
 
