@@ -146,8 +146,10 @@ jobs:
     #       args: "--locked --release"
     #     if: ${{ !matrix.platform.skip_tests }}
       - name: Publish artifacts and release
-        uses: houseabsolute/actions-rust-release@v0
+        uses: houseabsolute/actions-rust-release@v0.0.4
         if: matrix.toolchain == 'stable'
         with:
           executable-name: impit-cli
           target: ${{ matrix.platform.target }}
+          changes-file: ""
+          
