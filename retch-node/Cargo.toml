@@ -1,0 +1,37 @@
+[package]
+edition = "2021"
+name = "retch-http"
+version = "0.0.0"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+# Default enable napi4 feature, see https://nodejs.org/api/n-api.html#node-api-version-matrix
+napi = { version = "2.12.2", default-features = false, features = ["napi4", "async"] }
+napi-derive = "2.12.2"
+retch = { git="https://github.com/retch-http/retch.git", branch="master" }
+rustls = { version="0.23.16" }
+tokio = { version="1.41.1", features = ["full"] }
+h2 = "0.4.7"
+reqwest = "0.12.9"
+
+[build-dependencies]
+napi-build = "2.0.1"
+
+[target.x86_64-unknown-linux-gnu.dependencies]
+openssl = { version = "*", features = ["vendored"] }
+
+[target.x86_64-unknown-linux-musl.dependencies]
+openssl = { version = "*", features = ["vendored"] }
+
+[target.aarch64-unknown-linux-gnu.dependencies]
+openssl = { version = "*", features = ["vendored"] }
+
+[patch.crates-io]
+rustls = { git="https://github.com/retch-http/rustls.git", branch="retch-patch" }
+h2 = { git="https://github.com/retch-http/h2.git", branch="retch-patch" }
+
+[profile.release]
+lto = true
+strip = "symbols"

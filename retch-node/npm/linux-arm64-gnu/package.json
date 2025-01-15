@@ -1,0 +1,24 @@
+{
+  "name": "retch-http-linux-arm64-gnu",
+  "version": "0.2.0",
+  "repository": {
+    "url": "https://github.com/retch-http/retch-node"
+  },
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "arm64"
+  ],
+  "main": "retch-http.linux-arm64-gnu.node",
+  "files": [
+    "retch-http.linux-arm64-gnu.node"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">= 10"
+  },
+  "libc": [
+    "glibc"
+  ]
+}

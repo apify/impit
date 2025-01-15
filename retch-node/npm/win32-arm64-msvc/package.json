@@ -1,0 +1,21 @@
+{
+  "name": "retch-http-win32-arm64-msvc",
+  "version": "0.3.2",
+  "repository": {
+    "url": "https://github.com/retch-http/retch-node"
+  },
+  "os": [
+    "win32"
+  ],
+  "cpu": [
+    "arm64"
+  ],
+  "main": "retch-http.win32-arm64-msvc.node",
+  "files": [
+    "retch-http.win32-arm64-msvc.node"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">= 10"
+  }
+}

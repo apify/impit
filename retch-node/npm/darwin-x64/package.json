@@ -1,0 +1,21 @@
+{
+  "name": "retch-http-darwin-x64",
+  "version": "0.3.2",
+  "repository": {
+    "url": "https://github.com/retch-http/retch-node"
+  },
+  "os": [
+    "darwin"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "main": "retch-http.darwin-x64.node",
+  "files": [
+    "retch-http.darwin-x64.node"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">= 10"
+  }
+}
