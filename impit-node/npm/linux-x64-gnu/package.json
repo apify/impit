@@ -1,5 +1,5 @@
 {
-  "name": "impit-node-linux-x64-gnu",
+  "name": "impit-linux-x64-gnu",
   "version": "0.1.0",
   "os": [
     "linux"

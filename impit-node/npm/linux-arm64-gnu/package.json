@@ -1,5 +1,5 @@
 {
-  "name": "impit-node-linux-arm64-gnu",
+  "name": "impit-linux-arm64-gnu",
   "version": "0.2.0",
   "repository": {
     "url": "https://github.com/apify/impit"
