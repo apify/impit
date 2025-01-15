@@ -1,6 +1,6 @@
-use std::collections::HashMap;
 use napi::{bindgen_prelude::Buffer, Either};
 use napi_derive::napi;
+use std::collections::HashMap;
 
 #[derive(Default)]
 #[napi(string_enum)]

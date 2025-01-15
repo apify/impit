@@ -1,6 +1,9 @@
 use std::time::Duration;
 
-use impit::{impit::{ImpitBuilder, RedirectBehavior}, emulation::Browser as ImpitBrowser};
+use impit::{
+  emulation::Browser as ImpitBrowser,
+  impit::{ImpitBuilder, RedirectBehavior},
+};
 use napi_derive::napi;
 
 #[napi(string_enum)]
@@ -32,7 +35,7 @@ pub struct ImpitOptions {
   /// Follow redirects.
   pub follow_redirects: Option<bool>,
   /// Maximum number of redirects to follow. Default is `10`.
-  /// 
+  ///
   /// If this number is exceeded, the request will be rejected with an error.
   pub max_redirects: Option<u32>,
 }
