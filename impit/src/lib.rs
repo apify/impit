@@ -48,8 +48,8 @@
 //! impit = { git="https://github.com/apify/impit.git", branch="master" }
 //!
 //! [patch.crates-io]
-//! rustls = { git="https://github.com/apify/rustls.git", branch="impit-patch" }
-//! h2 = { git="https://github.com/apify/h2.git", branch="impit-patch" }
+//! rustls = { git="https://github.com/apify/rustls.git" }
+//! h2 = { git="https://github.com/apify/h2.git" }
 //! ```
 //!
 //! Without the patched dependencies, the project won't build.
