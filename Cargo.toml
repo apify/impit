@@ -3,7 +3,8 @@ resolver = "2"
 
 members = [
     "impit",
-    "impit-cli"
+    "impit-cli",
+    "impit-node",
 ]
 
 [patch.crates-io]
