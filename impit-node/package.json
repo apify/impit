@@ -1,6 +1,6 @@
 {
   "name": "impit",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "main": "index.js",
   "types": "index.d.ts",
   "napi": {
@@ -35,13 +35,5 @@
     "version": "napi version"
   },
   "packageManager": "yarn@1.22.22",
-  "description": "Impit for JavaScript",
-  "optionalDependencies": {
-    "impit-win32-x64-msvc": "0.1.1",
-    "impit-darwin-x64": "0.1.1",
-    "impit-linux-x64-gnu": "0.1.1",
-    "impit-darwin-arm64": "0.1.1",
-    "impit-win32-arm64-msvc": "0.1.1",
-    "impit-linux-x64-musl": "0.1.1"
-  }
+  "description": "Impit for JavaScript"
 }
