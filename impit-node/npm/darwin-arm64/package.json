@@ -1,5 +1,5 @@
 {
-  "name": "impit-darwin-arm64",
+  "name": "impit-node-darwin-arm64",
   "version": "0.1.0",
   "os": [
     "darwin"

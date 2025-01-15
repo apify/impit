@@ -1,5 +1,5 @@
 {
-  "name": "impit-win32-x64-msvc",
+  "name": "impit-node-win32-x64-msvc",
   "version": "0.1.0",
   "os": [
     "win32"

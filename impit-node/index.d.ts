@@ -55,5 +55,6 @@ export declare class ImpitResponse {
 export type ImpitWrapper = Impit
 export declare class Impit {
   constructor(options?: ImpitOptions | undefined | null)
+  /** Fetch a URL with the given options. */
   fetch(url: string, requestInit?: RequestInit | undefined | null): Promise<ImpitResponse>
 }

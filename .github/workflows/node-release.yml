@@ -105,6 +105,7 @@ jobs:
         with:
           node-version: 20
           cache: yarn
+          cache-dependency-path: impit-node/yarn.lock
           architecture: x86
       - name: Build in docker
         uses: addnab/docker-run-action@v3
@@ -146,6 +147,7 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           cache: yarn
+          cache-dependency-path: impit-node/yarn.lock
           architecture: x64
       - name: Install dependencies
         run: yarn --cwd impit-node install
@@ -153,7 +155,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: bindings-${{ matrix.settings.target }}
-          path: .
+          path: impit-node
       - name: List packages
         run: ls -R .
         shell: bash
@@ -177,13 +179,14 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           cache: yarn
+          cache-dependency-path: impit-node/yarn.lock
       - name: Install dependencies
         run: yarn --cwd impit-node install
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
           name: bindings-x86_64-unknown-linux-gnu
-          path: .
+          path: impit-node
       - name: List packages
         run: ls -R .
         shell: bash
@@ -207,6 +210,7 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           cache: yarn
+          cache-dependency-path: impit-node/yarn.lock
       - name: Install dependencies
         run: |
           yarn --cwd impit-node config set supportedArchitectures.libc "musl"
@@ -215,7 +219,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: bindings-x86_64-unknown-linux-musl
-          path: .
+          path: impit-node
       - name: List packages
         run: ls -R .
         shell: bash
@@ -235,6 +239,7 @@ jobs:
         with:
           node-version: 20
           cache: yarn
+          cache-dependency-path: impit-node/yarn.lock
       - name: Install dependencies
         run: yarn --cwd impit-node install
       - name: Download all artifacts
