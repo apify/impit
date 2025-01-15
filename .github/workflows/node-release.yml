@@ -15,9 +15,16 @@ permissions:
       - '**'
     paths:
       - 'impit-node/**'
-  pull_request: null
+  pull_request:
+    paths:
+      - 'impit-node/**'
+      - 'impit/**'
+  workflow_dispatch:
 jobs:
   build:
+    defaults:
+      run:
+        working-directory: impit-node
     strategy:
       fail-fast: false
       matrix:
@@ -61,6 +68,7 @@ jobs:
         with:
           node-version: 20
           cache: yarn
+          cache-dependency-path: impit-node/yarn.lock
       - name: Install
         uses: dtolnay/rust-toolchain@stable
         if: ${{ !matrix.settings.docker }}

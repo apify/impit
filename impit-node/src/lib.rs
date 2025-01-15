@@ -44,7 +44,10 @@ impl ImpitWrapper {
         .and_then(|init| init.headers.as_ref())
         .cloned()
         .unwrap_or_default(),
-      timeout: request_init.as_ref().and_then(|init| init.timeout).map(|timeout| Duration::from_millis(timeout.into())),
+      timeout: request_init
+        .as_ref()
+        .and_then(|init| init.timeout)
+        .map(|timeout| Duration::from_millis(timeout.into())),
       http3_prior_knowledge: request_init
         .as_ref()
         .and_then(|init| init.force_http3)
