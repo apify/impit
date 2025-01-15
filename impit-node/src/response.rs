@@ -54,10 +54,10 @@ impl ImpitResponse {
       content_type_header.and_then(|ct| {
         let parsed = ContentType::from(ct);
 
-        return match parsed {
+        match parsed {
           Ok(ct) => ct.into(),
           Err(_) => None,
-        };
+        }
       }),
     )
   }

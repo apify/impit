@@ -3,16 +3,16 @@ use napi_derive::napi;
 use std::collections::HashMap;
 
 #[derive(Default)]
-#[napi(string_enum)]
+#[napi(string_enum = "UPPERCASE")]
 pub enum HttpMethod {
   #[default]
-  GET,
-  POST,
-  PUT,
-  DELETE,
-  PATCH,
-  HEAD,
-  OPTIONS,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Patch,
+  Head,
+  Options,
 }
 
 pub(crate) fn serialize_body(body: Either<String, Buffer>) -> Vec<u8> {

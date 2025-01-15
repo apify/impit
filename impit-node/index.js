@@ -310,9 +310,9 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { ImpitResponse, HttpMethod, Browser, Impit } = nativeBinding
+const { Browser, HttpMethod, ImpitResponse, Impit } = nativeBinding
 
-module.exports.ImpitResponse = ImpitResponse
-module.exports.HttpMethod = HttpMethod
 module.exports.Browser = Browser
+module.exports.HttpMethod = HttpMethod
+module.exports.ImpitResponse = ImpitResponse
 module.exports.Impit = Impit

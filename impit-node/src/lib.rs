@@ -30,7 +30,9 @@ impl ImpitWrapper {
     }
   }
 
+  #[allow(clippy::missing_safety_doc)] // This method is `unsafe`, but is only ever used from the Node.JS bindings.
   #[napi]
+  /// Fetch a URL with the given options.
   pub async unsafe fn fetch(
     &mut self,
     url: String,
@@ -42,11 +44,7 @@ impl ImpitWrapper {
         .and_then(|init| init.headers.as_ref())
         .cloned()
         .unwrap_or_default(),
-      timeout: if let Some(timeout) = request_init.as_ref().and_then(|init| init.timeout) {
-        Some(Duration::from_millis(timeout.into()))
-      } else {
-        None
-      },
+      timeout: request_init.as_ref().and_then(|init| init.timeout).map(|timeout| Duration::from_millis(timeout.into())),
       http3_prior_knowledge: request_init
         .as_ref()
         .and_then(|init| init.force_http3)
@@ -58,19 +56,16 @@ impl ImpitWrapper {
       .and_then(|init| init.body.as_ref())
       .cloned();
 
-    let body: Option<Vec<u8>> = match body {
-      Some(body) => Some(serialize_body(body)),
-      None => None,
-    };
+    let body: Option<Vec<u8>> = body.map(serialize_body);
 
     let response = match request_init.unwrap_or_default().method.unwrap_or_default() {
-      HttpMethod::GET => self.inner.get(url, request_options).await,
-      HttpMethod::POST => self.inner.post(url, body, request_options).await,
-      HttpMethod::PUT => self.inner.put(url, body, request_options).await,
-      HttpMethod::DELETE => self.inner.delete(url, request_options).await,
-      HttpMethod::PATCH => self.inner.patch(url, body, request_options).await,
-      HttpMethod::HEAD => self.inner.head(url, request_options).await,
-      HttpMethod::OPTIONS => self.inner.options(url, request_options).await,
+      HttpMethod::Get => self.inner.get(url, request_options).await,
+      HttpMethod::Post => self.inner.post(url, body, request_options).await,
+      HttpMethod::Put => self.inner.put(url, body, request_options).await,
+      HttpMethod::Delete => self.inner.delete(url, request_options).await,
+      HttpMethod::Patch => self.inner.patch(url, body, request_options).await,
+      HttpMethod::Head => self.inner.head(url, request_options).await,
+      HttpMethod::Options => self.inner.options(url, request_options).await,
     };
 
     match response {
