@@ -1,4 +1,4 @@
-name: CI
+name: "[impit-node] Test & Build"
 env:
   DEBUG: napi:*
   APP_NAME: impit-node
@@ -13,12 +13,8 @@ permissions:
       - master
     tags-ignore:
       - '**'
-    paths-ignore:
-      - '**/*.md'
-      - LICENSE
-      - '**/*.gitignore'
-      - .editorconfig
-      - docs/**
+    paths:
+      - 'impit-node/**'
   pull_request: null
 jobs:
   build:
@@ -28,14 +24,14 @@ jobs:
         settings:
           - host: macos-latest
             target: x86_64-apple-darwin
-            build: yarn build --target x86_64-apple-darwin
+            build: yarn --cwd impit-node build --target x86_64-apple-darwin
           - host: windows-latest
-            build: yarn build --target x86_64-pc-windows-msvc
+            build: yarn --cwd impit-node build --target x86_64-pc-windows-msvc
             target: x86_64-pc-windows-msvc
           - host: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian
-            build: yarn build --target x86_64-unknown-linux-gnu
+            build: yarn --cwd impit-node build --target x86_64-unknown-linux-gnu
           - host: ubuntu-latest
             target: x86_64-unknown-linux-musl
             docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-alpine
@@ -44,13 +40,13 @@ jobs:
               ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/14.2.0/crtbeginS.o /usr/lib/crtbeginS.o &&
               ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/14.2.0/crtendS.o /usr/lib/crtendS.o &&
               ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/14.2.0/libgcc.a /usr/lib/libgcc.a &&
-              RUSTFLAGS="--cfg reqwest_unstable" yarn build --target x86_64-unknown-linux-musl
+              RUSTFLAGS="--cfg reqwest_unstable" yarn --cwd impit-node build --target x86_64-unknown-linux-musl
           - host: macos-latest
             target: aarch64-apple-darwin
-            build: yarn build --target aarch64-apple-darwin
+            build: yarn --cwd impit-node build --target aarch64-apple-darwin
           - host: windows-latest
             target: aarch64-pc-windows-msvc
-            build: yarn build --target aarch64-pc-windows-msvc
+            build: yarn --cwd impit-node build --target aarch64-pc-windows-msvc
     name: stable - ${{ matrix.settings.target }} - node@20
     runs-on: ${{ matrix.settings.host }}
     steps:
@@ -91,10 +87,10 @@ jobs:
         shell: bash
       - name: Setup node x86
         if: matrix.settings.target == 'i686-pc-windows-msvc'
-        run: yarn config set supportedArchitectures.cpu "ia32"
+        run: yarn --cwd impit-node config set supportedArchitectures.cpu "ia32"
         shell: bash
       - name: Install dependencies
-        run: yarn install
+        run: yarn --cwd impit-node install
       - name: Setup node x86
         uses: actions/setup-node@v4
         if: matrix.settings.target == 'i686-pc-windows-msvc'
@@ -144,7 +140,7 @@ jobs:
           cache: yarn
           architecture: x64
       - name: Install dependencies
-        run: yarn install
+        run: yarn --cwd impit-node install
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
@@ -154,7 +150,7 @@ jobs:
         run: ls -R .
         shell: bash
       - name: Test bindings
-        run: yarn test
+        run: yarn --cwd impit-node test
   test-linux-x64-gnu-binding:
     name: Test bindings on Linux-x64-gnu - node@${{ matrix.node }}
     needs:
@@ -174,7 +170,7 @@ jobs:
           node-version: ${{ matrix.node }}
           cache: yarn
       - name: Install dependencies
-        run: yarn install
+        run: yarn --cwd impit-node install
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
@@ -184,7 +180,7 @@ jobs:
         run: ls -R .
         shell: bash
       - name: Test bindings
-        run: docker run --rm -v $(pwd):/build -w /build node:${{ matrix.node }}-slim yarn test
+        run: docker run --rm -v $(pwd):/build -w /build node:${{ matrix.node }}-slim yarn --cwd impit-node test
   test-linux-x64-musl-binding:
     name: Test bindings on x86_64-unknown-linux-musl - node@${{ matrix.node }}
     needs:
@@ -205,8 +201,8 @@ jobs:
           cache: yarn
       - name: Install dependencies
         run: |
-          yarn config set supportedArchitectures.libc "musl"
-          yarn install
+          yarn --cwd impit-node config set supportedArchitectures.libc "musl"
+          yarn --cwd impit-node install
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
@@ -216,7 +212,7 @@ jobs:
         run: ls -R .
         shell: bash
       - name: Test bindings
-        run: docker run --rm -v $(pwd):/build -w /build node:${{ matrix.node }}-alpine yarn test
+        run: docker run --rm -v $(pwd):/build -w /build node:${{ matrix.node }}-alpine yarn --cwd impit-node test
   publish:
     name: Publish
     runs-on: ubuntu-latest
@@ -232,13 +228,13 @@ jobs:
           node-version: 20
           cache: yarn
       - name: Install dependencies
-        run: yarn install
+        run: yarn --cwd impit-node install
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
       - name: Move artifacts
-        run: yarn artifacts
+        run: yarn --cwd impit-node artifacts
       - name: List packages
         run: ls -R ./npm
         shell: bash
