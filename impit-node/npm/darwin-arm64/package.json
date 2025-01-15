@@ -1,0 +1,20 @@
+{
+  "name": "impit-node-darwin-arm64",
+  "version": "0.1.0",
+  "os": [
+    "darwin"
+  ],
+  "cpu": [
+    "arm64"
+  ],
+  "main": "impit-node.darwin-arm64.node",
+  "files": [
+    "impit-node.darwin-arm64.node"
+  ],
+  "description": "Impit for JavaScript",
+  "license": "MIT",
+  "engines": {
+    "node": ">= 10"
+  },
+  "repository": "https://github.com/apify/impit"
+}

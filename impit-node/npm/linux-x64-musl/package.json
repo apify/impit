@@ -1,0 +1,23 @@
+{
+  "name": "impit-node-linux-x64-musl",
+  "version": "0.1.0",
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "main": "impit-node.linux-x64-musl.node",
+  "files": [
+    "impit-node.linux-x64-musl.node"
+  ],
+  "description": "Impit for JavaScript",
+  "license": "MIT",
+  "engines": {
+    "node": ">= 10"
+  },
+  "repository": "https://github.com/apify/impit",
+  "libc": [
+    "musl"
+  ]
+}

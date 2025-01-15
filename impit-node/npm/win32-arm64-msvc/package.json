@@ -1,0 +1,20 @@
+{
+  "name": "impit-node-win32-arm64-msvc",
+  "version": "0.1.0",
+  "os": [
+    "win32"
+  ],
+  "cpu": [
+    "arm64"
+  ],
+  "main": "impit-node.win32-arm64-msvc.node",
+  "files": [
+    "impit-node.win32-arm64-msvc.node"
+  ],
+  "description": "Impit for JavaScript",
+  "license": "MIT",
+  "engines": {
+    "node": ">= 10"
+  },
+  "repository": "https://github.com/apify/impit"
+}

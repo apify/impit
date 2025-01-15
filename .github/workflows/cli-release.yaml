@@ -10,6 +10,10 @@ on:
     paths:
       - "impit-cli/**"
       - "impit/**"
+  pull_request:
+    paths:
+      - "impit-cli/**"
+      - "impit/**"
   workflow_dispatch:
 
 env:
