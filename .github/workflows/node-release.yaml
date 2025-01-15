@@ -66,7 +66,7 @@ jobs:
 
           - name: Set version
             run: |
-              yarn version --new-version ${{ steps.get-new-version.outputs.TARGET_VERSION }}
+              yarn version --new-version ${{ steps.get-new-version.outputs.TARGET_VERSION }} --no-git-tag-version
 
           - name: Publish to npm
             run: |
@@ -84,3 +84,4 @@ jobs:
                 author_name: Apify Release Bot
                 author_email: noreply@apify.com
                 message: "chore(js-release): Update package version [skip ci]"
+                tag: "js-${{ steps.get-new-version.outputs.TARGET_VERSION }}"
