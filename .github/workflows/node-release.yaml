@@ -1,4 +1,4 @@
-name: "[impit-node] Test & Build"
+name: "[impit-node] Release to npm"
 env:
   DEBUG: napi:*
   APP_NAME: impit-node
