@@ -34,6 +34,8 @@ jobs:
         needs: [test]
         steps:
           - uses: actions/checkout@v4
+            with:
+              token: ${{ secrets.APIFY_SERVICE_ACCOUNT_GITHUB_TOKEN }}
 
           - name: Setup node
             uses: actions/setup-node@v4
@@ -66,20 +68,19 @@ jobs:
             run: |
               yarn version --new-version ${{ steps.get-new-version.outputs.TARGET_VERSION }}
 
-          - name: Publish
+          - name: Publish to npm
             run: |
               npm config set provenance true
-              if git log -1 --pretty=%B | grep "^v[0-9]\+\.[0-9]\+\.[0-9]\+$";
-              then
-                echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
-                npm publish --access public
-              elif git log -1 --pretty=%B | grep "^v[0-9]\+\.[0-9]\+\.[0-9]\+";
-              then
-                echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
-                npm publish --tag next --access public
-              else
-                echo "Not a release, skipping publish"
-              fi
+              echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
+              npm publish --access public
             env:
-              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              GITHUB_TOKEN: ${{ secrets.APIFY_SERVICE_ACCOUNT_GITHUB_TOKEN }}
               NPM_TOKEN: ${{ secrets.APIFY_SERVICE_ACCOUNT_NPM_TOKEN }}
+
+          - name: Commit changes
+            id: commit
+            uses: EndBug/add-and-commit@v9
+            with:
+                author_name: Apify Release Bot
+                author_email: noreply@apify.com
+                message: "chore(js-release): Update package version [skip ci]"
