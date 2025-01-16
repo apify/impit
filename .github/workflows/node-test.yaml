@@ -60,17 +60,23 @@ jobs:
     runs-on: ${{ matrix.settings.host }}
     steps:
       - uses: actions/checkout@v4
+      
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
       - name: Enable Corepack
         run: |
           corepack enable
           corepack prepare yarn@stable --activate
-      - name: Setup node
+
+      - name: Activate cache for Node.js 20
         uses: actions/setup-node@v4
-        if: ${{ !matrix.settings.docker }}
         with:
-          node-version: 20
-          cache: yarn
-          cache-dependency-path: impit-node/yarn.lock
+            cache: yarn
+            cache-dependency-path: impit-node/yarn.lock
+
       - name: Install
         uses: dtolnay/rust-toolchain@stable
         if: ${{ !matrix.settings.docker }}
