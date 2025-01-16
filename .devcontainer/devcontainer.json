@@ -1,0 +1,23 @@
+{
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "latest",
+      "nodeGypDependencies": false,
+      "pnpmVersion": "none",
+      "installYarnUsingApt": false
+    },
+    "ghcr.io/devcontainers/features/rust:1": {
+      "profile": "default"
+    }
+  },
+  "customizations": {
+	  "vscode": {
+		  "settings": {},
+		  "extensions": [
+        "1YiB.rust-bundle",
+        "github.vscode-github-actions"
+      ]
+    }
+  }
+}
