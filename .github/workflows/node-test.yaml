@@ -192,7 +192,7 @@ jobs:
         run: ls -R .
         shell: bash
       - name: Test bindings
-        run: docker run --rm -v $(pwd):/build -w /build node:${{ matrix.node }}-slim yarn --cwd impit-node test
+        run: docker run -e CI=1 --rm -v $(pwd):/build -w /build node:${{ matrix.node }}-slim yarn --cwd impit-node test
   test-linux-x64-musl-binding:
     name: Test bindings on x86_64-unknown-linux-musl - node@${{ matrix.node }}
     needs:
@@ -225,5 +225,5 @@ jobs:
         run: ls -R .
         shell: bash
       - name: Test bindings
-        run: docker run --rm -v $(pwd):/build -w /build node:${{ matrix.node }}-alpine yarn --cwd impit-node test
+        run: docker run -e CI=1 --rm -v $(pwd):/build -w /build node:${{ matrix.node }}-alpine yarn --cwd impit-node test
 
