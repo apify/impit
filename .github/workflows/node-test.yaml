@@ -73,6 +73,8 @@ jobs:
 
       - name: Activate cache for Node.js 20
         uses: actions/setup-node@v4
+        # Disabled because of the cache key conflict with the gnu build
+        if: ${{ matrix.settings.target != 'x86_64-unknown-linux-musl' }} 
         with:
             cache: yarn
             cache-dependency-path: impit-node/yarn.lock
@@ -242,11 +244,13 @@ jobs:
           corepack enable
           corepack prepare yarn@stable --activate
 
-      - name: Activate cache for Node.js
-        uses: actions/setup-node@v4
-        with:
-            cache: yarn
-            cache-dependency-path: impit-node/yarn.lock
+      ## Disabled because of the cache key conflict with the gnu build
+      ## Using the cache loads the wrong dependencies (e.g. @rollup/rollup-linux-x64-gnu), which causes the build to fail
+      # - name: Activate cache for Node.js
+      #   uses: actions/setup-node@v4
+      #   with:
+      #       cache: yarn
+      #       cache-dependency-path: impit-node/yarn.lock
 
       - name: Install dependencies
         run: |
