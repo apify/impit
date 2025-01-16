@@ -12,9 +12,9 @@
     }
   },
   "customizations": {
-	  "vscode": {
-		  "settings": {},
-		  "extensions": [
+    "vscode": {
+      "settings": {},
+      "extensions": [
         "1YiB.rust-bundle",
         "github.vscode-github-actions"
       ]
