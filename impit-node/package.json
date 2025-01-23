@@ -1,7 +1,7 @@
 {
   "name": "impit",
   "homepage": "https://apify.github.io/impit/",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "main": "index.js",
   "types": "index.d.ts",
   "napi": {
@@ -41,11 +41,11 @@
   "packageManager": "yarn@1.22.22",
   "description": "Impit for JavaScript",
   "optionalDependencies": {
-    "impit-win32-x64-msvc": "0.1.4",
-    "impit-darwin-x64": "0.1.4",
-    "impit-linux-x64-gnu": "0.1.4",
-    "impit-darwin-arm64": "0.1.4",
-    "impit-win32-arm64-msvc": "0.1.4",
-    "impit-linux-x64-musl": "0.1.4"
+    "impit-win32-x64-msvc": "0.1.5",
+    "impit-darwin-x64": "0.1.5",
+    "impit-linux-x64-gnu": "0.1.5",
+    "impit-darwin-arm64": "0.1.5",
+    "impit-win32-arm64-msvc": "0.1.5",
+    "impit-linux-x64-musl": "0.1.5"
   }
 }
