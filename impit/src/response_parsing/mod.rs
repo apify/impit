@@ -100,7 +100,7 @@ pub fn decode(bytes: &[u8], encoding_prior_knowledge: Option<encoding::EncodingR
     }
 
     encoding
-        .decode(bytes, encoding::DecoderTrap::Strict)
+        .decode(bytes, encoding::DecoderTrap::Replace)
         .unwrap()
 }
 
