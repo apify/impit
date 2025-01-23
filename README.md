@@ -7,7 +7,7 @@ The library provides a simple API for making requests to websites, and it also a
 ```rust
 use impit::impit::Impit;
 use impit::emulation::Browser;
- 
+
 #[tokio::main]
 async fn main() {
    let mut impit = Impit::builder()
@@ -33,13 +33,36 @@ async fn main() {
 If you are looking for a command-line tool that allows you to make requests to websites, check out the [`impit-cli`](https://github.com/apify/impit/tree/master/impit-cli) project.
 
 If you'd prefer to use `impit` from a Node.js application, check out the [`impit-node`](https://github.com/apify/impit/tree/master/impit-node) folder, or download the package from npm:
+
 ```bash
 npm install impit
 ```
 
+The interface is the same as the native [`fetch`](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch).
+
+```typescript
+import { Impit } from 'impit';
+
+// Set up the Impit instance
+const impit = new Impit({
+    browser: "Chrome", // or "Firefox"
+    proxyUrl: "http://localhost:8080",
+    ignoreTlsErrors: true,
+});
+
+// Use the `fetch` method as you would with the built-in `fetch` function
+const response = await impit.fetch("https://example.com");
+
+console.log(response.status);
+console.log(response.headers);
+console.log(await response.text());
+// console.log(await response.json());
+// ...
+```
+
 ### Usage from Rust
 
-Technically speaking, the `impit` project is a somewhat thin wrapper around `reqwest` that provides a more ergonomic API for making requests to websites. 
+Technically speaking, the `impit` project is a somewhat thin wrapper around `reqwest` that provides a more ergonomic API for making requests to websites.
 The real strength of `impit` is that it uses patched versions of `rustls` and other libraries that allow it to make browser-like requests.
 
 Note that if you want to use this library in your rust project, you have to add the following dependencies to your `Cargo.toml` file:
