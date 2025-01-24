@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{cell::RefCell, collections::HashMap, ops::Deref};
 
 use impit::utils::{decode, ContentType};
 use napi::{bindgen_prelude::Buffer, Env, JsFunction, JsObject, JsString, JsUnknown};
@@ -7,17 +7,32 @@ use reqwest::Response;
 
 #[napi]
 pub struct ImpitResponse {
-  bytes: Vec<u8>,
+  bytes: RefCell<Option<Vec<u8>>>,
+  inner: RefCell<Option<Response>>,
   pub status: u16,
   pub status_text: String,
   pub headers: HashMap<String, String>,
   pub ok: bool,
 }
 
+/// Ensures that the response has been read and the bytes are available.
+/// This is not part of the impl ImpitResponse block because it is an async function,
+/// which causes issues with the napi_derive macro.
+///
+/// Note that calling this method will consume the response.
+async fn read_response_bytes(impit: &ImpitResponse) {
+    let mut response = impit.inner.borrow_mut();
+    if let Some(inner_response) = response.take() {
+        let bytes = inner_response.bytes().await.unwrap().to_vec();
+        impit.bytes.replace_with(|_| { Some(bytes) });
+    } else {
+        panic!("fatal: Response already consumed");
+    }
+}
+
 #[napi]
 impl ImpitResponse {
-  // not the Trait From - this method needs to be async.
-  pub(crate) async fn from(response: Response) -> Self {
+  pub(crate) fn from(response: Response) -> Self {
     let status = response.status().as_u16();
     let status_text = response
       .status()
@@ -30,9 +45,9 @@ impl ImpitResponse {
       .map(|(k, v)| (k.as_str().to_string(), v.to_str().unwrap().to_string()))
       .collect();
     let ok = response.status().is_success();
-    let bytes = response.bytes().await.unwrap().to_vec();
     Self {
-      bytes,
+      bytes: RefCell::new(None),
+      inner: RefCell::new(Some(response)),
       status,
       status_text,
       headers,
@@ -40,17 +55,29 @@ impl ImpitResponse {
     }
   }
 
+  fn get_bytes(&self) -> Vec<u8> {
+    if self.bytes.borrow().is_none() {
+        tokio::runtime::Runtime::new().unwrap().block_on(async {
+          read_response_bytes(self).await;
+        });
+    }
+
+    return self.bytes.borrow().deref().clone().unwrap()
+  }
+
   #[napi]
   pub fn bytes(&self) -> Buffer {
-    self.bytes.clone().into()
+    let bytes = self.get_bytes();
+    bytes.into()
   }
 
   #[napi]
   pub fn text(&self) -> String {
+    let bytes= self.get_bytes();
     let content_type_header = self.headers.get("content-type");
 
     decode(
-      &self.bytes,
+      &bytes,
       content_type_header.and_then(|ct| {
         let parsed = ContentType::from(ct);
 
@@ -77,6 +104,6 @@ impl ImpitResponse {
           .create_string_from_std(text)
           .expect("Couldn't create JS string from the response text")],
       )
-      .expect("fatal: Couldn't parse JSON")
+      .expect("fatal: Couldn't parse response JSON")
   }
 }
