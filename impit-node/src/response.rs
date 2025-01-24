@@ -1,8 +1,9 @@
 use std::{cell::RefCell, collections::HashMap, ops::Deref};
 
 use impit::utils::{decode, ContentType};
-use napi::{bindgen_prelude::Buffer, Env, JsFunction, JsObject, JsString, JsUnknown};
+use napi::{bindgen_prelude::{Buffer, ReadableStream, Result, BufferSlice}, Env, JsFunction, JsObject, JsString, JsUnknown};
 use napi_derive::napi;
+use tokio_stream::{wrappers::ReceiverStream, StreamExt};
 use reqwest::Response;
 
 #[napi]
@@ -87,6 +88,23 @@ impl ImpitResponse {
         }
       }),
     )
+  }
+
+  #[napi(getter, js_name="body")]
+  pub fn create_readable_stream(&self, env: &Env) -> Result<ReadableStream<BufferSlice>> {
+    let mut response = self.inner.borrow_mut();
+
+    let (tx, rx) = tokio::sync::mpsc::channel(10000);
+
+    tokio::runtime::Runtime::new().unwrap().block_on(async {
+      let inner_response = response.take().unwrap();
+      let mut body = inner_response.bytes_stream();
+      while let Some(chunk) = body.next().await {
+        tx.send(Ok(chunk.unwrap().to_vec())).await;
+      }
+    });
+
+    ReadableStream::create_with_stream_bytes(env, ReceiverStream::new(rx))
   }
 
   #[napi(ts_return_type = "any")]
