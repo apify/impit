@@ -1,10 +1,13 @@
 use std::{cell::RefCell, collections::HashMap, ops::Deref};
 
 use impit::utils::{decode, ContentType};
-use napi::{bindgen_prelude::{Buffer, ReadableStream, Result, BufferSlice}, Env, JsFunction, JsObject, JsString, JsUnknown};
+use napi::{
+  bindgen_prelude::{Buffer, BufferSlice, ReadableStream, Result},
+  Env, JsFunction, JsObject, JsString, JsUnknown,
+};
 use napi_derive::napi;
-use tokio_stream::{wrappers::ReceiverStream, StreamExt};
 use reqwest::Response;
+use tokio_stream::{wrappers::ReceiverStream, StreamExt};
 
 #[napi]
 pub struct ImpitResponse {
@@ -22,13 +25,13 @@ pub struct ImpitResponse {
 ///
 /// Note that calling this method will consume the response.
 async fn read_response_bytes(impit: &ImpitResponse) {
-    let mut response = impit.inner.borrow_mut();
-    if let Some(inner_response) = response.take() {
-        let bytes = inner_response.bytes().await.unwrap().to_vec();
-        impit.bytes.replace_with(|_| { Some(bytes) });
-    } else {
-        panic!("fatal: Response already consumed");
-    }
+  let mut response = impit.inner.borrow_mut();
+  if let Some(inner_response) = response.take() {
+    let bytes = inner_response.bytes().await.unwrap().to_vec();
+    impit.bytes.replace_with(|_| Some(bytes));
+  } else {
+    panic!("fatal: Response already consumed");
+  }
 }
 
 #[napi]
@@ -58,12 +61,12 @@ impl ImpitResponse {
 
   fn get_bytes(&self) -> Vec<u8> {
     if self.bytes.borrow().is_none() {
-        tokio::runtime::Runtime::new().unwrap().block_on(async {
-          read_response_bytes(self).await;
-        });
+      tokio::runtime::Runtime::new().unwrap().block_on(async {
+        read_response_bytes(self).await;
+      });
     }
 
-    return self.bytes.borrow().deref().clone().unwrap()
+    return self.bytes.borrow().deref().clone().unwrap();
   }
 
   #[napi]
@@ -74,7 +77,7 @@ impl ImpitResponse {
 
   #[napi]
   pub fn text(&self) -> String {
-    let bytes= self.get_bytes();
+    let bytes = self.get_bytes();
     let content_type_header = self.headers.get("content-type");
 
     decode(
@@ -90,7 +93,7 @@ impl ImpitResponse {
     )
   }
 
-  #[napi(getter, js_name="body")]
+  #[napi(getter, js_name = "body")]
   pub fn stream_body(&self, env: &Env) -> Result<ReadableStream<BufferSlice>> {
     let mut response = self.inner.borrow_mut();
     let response = response.take();
@@ -108,14 +111,12 @@ impl ImpitResponse {
       }
     };
 
-    let napi_stream = reqwest_stream.map(|chunk| {
-      match chunk {
-        Ok(bytes) => Ok(bytes.to_vec()),
-        Err(e) => Err(napi::Error::new(
-          napi::Status::Unknown,
-          format!("Error reading response stream: {:?}", e),
-        )),
-      }
+    let napi_stream = reqwest_stream.map(|chunk| match chunk {
+      Ok(bytes) => Ok(bytes.to_vec()),
+      Err(e) => Err(napi::Error::new(
+        napi::Status::Unknown,
+        format!("Error reading response stream: {:?}", e),
+      )),
     });
 
     ReadableStream::create_with_stream_bytes(env, napi_stream)
