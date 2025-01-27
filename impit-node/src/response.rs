@@ -1,3 +1,4 @@
+#![allow(clippy::await_holding_refcell_ref, deprecated)]
 use std::{cell::RefCell, collections::HashMap, ops::Deref};
 
 use impit::utils::{decode, ContentType};
@@ -7,7 +8,7 @@ use napi::{
 };
 use napi_derive::napi;
 use reqwest::Response;
-use tokio_stream::{wrappers::ReceiverStream, StreamExt};
+use tokio_stream::StreamExt;
 
 #[napi]
 pub struct ImpitResponse {
@@ -99,10 +100,7 @@ impl ImpitResponse {
     let response = response.take();
 
     let reqwest_stream = match response {
-      Some(inner_response) => {
-        let stream = inner_response.bytes_stream();
-        stream
-      }
+      Some(inner_response) => inner_response.bytes_stream(),
       None => {
         return Err(napi::Error::new(
           napi::Status::Unknown,
