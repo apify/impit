@@ -91,20 +91,34 @@ impl ImpitResponse {
   }
 
   #[napi(getter, js_name="body")]
-  pub fn create_readable_stream(&self, env: &Env) -> Result<ReadableStream<BufferSlice>> {
+  pub fn stream_body(&self, env: &Env) -> Result<ReadableStream<BufferSlice>> {
     let mut response = self.inner.borrow_mut();
+    let response = response.take();
 
-    let (tx, rx) = tokio::sync::mpsc::channel(10000);
+    let reqwest_stream = match response {
+      Some(inner_response) => {
+        let stream = inner_response.bytes_stream();
+        stream
+      }
+      None => {
+        return Err(napi::Error::new(
+          napi::Status::Unknown,
+          "This response has been already consumed.",
+        ));
+      }
+    };
 
-    tokio::runtime::Runtime::new().unwrap().block_on(async {
-      let inner_response = response.take().unwrap();
-      let mut body = inner_response.bytes_stream();
-      while let Some(chunk) = body.next().await {
-        tx.send(Ok(chunk.unwrap().to_vec())).await;
+    let napi_stream = reqwest_stream.map(|chunk| {
+      match chunk {
+        Ok(bytes) => Ok(bytes.to_vec()),
+        Err(e) => Err(napi::Error::new(
+          napi::Status::Unknown,
+          format!("Error reading response stream: {:?}", e),
+        )),
       }
     });
 
-    ReadableStream::create_with_stream_bytes(env, ReceiverStream::new(rx))
+    ReadableStream::create_with_stream_bytes(env, napi_stream)
   }
 
   #[napi(ts_return_type = "any")]
