@@ -112,6 +112,15 @@ describe.each([
         // test that first 5 bytes of the response are the `<?xml` XML declaration
         t.expect(bytes.slice(0, 5)).toEqual(Buffer.from([0x3c, 0x3f, 0x78, 0x6d, 0x6c]));
         });
+
+        test('repeated response consumption works', async (t) => {
+        const response = await impit.fetch('https://httpbin.org/json');
+        const json = await response.json();
+        const text = await response.text();
+
+        t.expect(json?.slideshow?.author).toBe('Yours Truly');
+        t.expect(text).toContain('Yours Truly');
+        });
     });
 
     describe('Redirects', () => {
