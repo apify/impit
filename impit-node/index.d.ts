@@ -48,9 +48,10 @@ export declare class ImpitResponse {
   statusText: string
   headers: Record<string, string>
   ok: boolean
-  bytes(): Buffer
-  text(): string
-  json(): any
+  bytes(): Promise<Uint8Array>
+  text(): Promise<String>
+  json(): Promise<any>
+  get body(): ReadableStream<Uint8Array>
 }
 export type ImpitWrapper = Impit
 export declare class Impit {

@@ -1,38 +1,21 @@
 #![allow(clippy::await_holding_refcell_ref, deprecated)]
-use std::{cell::RefCell, collections::HashMap, ops::Deref};
-
-use impit::utils::{decode, ContentType};
 use napi::{
-  bindgen_prelude::{Buffer, BufferSlice, ReadableStream, Result},
-  Env, JsFunction, JsObject, JsString, JsUnknown,
+  bindgen_prelude::{ReadableStream, Result, This},
+  Env, JsFunction, JsObject, JsUnknown,
 };
 use napi_derive::napi;
 use reqwest::Response;
+use std::{cell::RefCell, collections::HashMap};
 use tokio_stream::StreamExt;
 
+const INNER_RESPONSE_PROPERTY_NAME: &str = "__js_response";
 #[napi]
 pub struct ImpitResponse {
-  bytes: RefCell<Option<Vec<u8>>>,
   inner: RefCell<Option<Response>>,
   pub status: u16,
   pub status_text: String,
   pub headers: HashMap<String, String>,
   pub ok: bool,
-}
-
-/// Ensures that the response has been read and the bytes are available.
-/// This is not part of the impl ImpitResponse block because it is an async function,
-/// which causes issues with the napi_derive macro.
-///
-/// Note that calling this method will consume the response.
-async fn read_response_bytes(impit: &ImpitResponse) {
-  let mut response = impit.inner.borrow_mut();
-  if let Some(inner_response) = response.take() {
-    let bytes = inner_response.bytes().await.unwrap().to_vec();
-    impit.bytes.replace_with(|_| Some(bytes));
-  } else {
-    panic!("fatal: Response already consumed");
-  }
 }
 
 #[napi]
@@ -51,7 +34,6 @@ impl ImpitResponse {
       .collect();
     let ok = response.status().is_success();
     Self {
-      bytes: RefCell::new(None),
       inner: RefCell::new(Some(response)),
       status,
       status_text,
@@ -60,81 +42,83 @@ impl ImpitResponse {
     }
   }
 
-  fn get_bytes(&self) -> Vec<u8> {
-    if self.bytes.borrow().is_none() {
-      tokio::runtime::Runtime::new().unwrap().block_on(async {
-        read_response_bytes(self).await;
+  fn get_inner_response(&self, env: &Env, mut this: This<JsObject>) -> Result<napi::JsObject> {
+    let cached_response = this.get::<JsObject>(INNER_RESPONSE_PROPERTY_NAME)?;
+
+    if cached_response.is_none() {
+      let mut response = self.inner.borrow_mut();
+      let response = response.take();
+
+      let reqwest_stream = match response {
+        Some(inner_response) => inner_response.bytes_stream(),
+        None => panic!("fatal: Response already consumed, but stream was not cached?"),
+      };
+
+      let napi_stream = reqwest_stream.filter_map(|chunk| match chunk {
+        Ok(bytes) => {
+          if bytes.is_empty() {
+            return None;
+          }
+
+          Some(Ok(bytes.to_vec()))
+        }
+        Err(e) => Some(Err(napi::Error::new(
+          napi::Status::Unknown,
+          format!("Error reading response stream: {:?}", e),
+        ))),
       });
+
+      let js_stream = ReadableStream::create_with_stream_bytes(env, napi_stream)?;
+
+      let response_constructor = env
+        .get_global()
+        .and_then(|global| global.get_named_property::<JsFunction>("Response"))
+        .expect("fatal: Couldn't get Response constructor");
+
+      this.set(
+        INNER_RESPONSE_PROPERTY_NAME,
+        response_constructor.new_instance(&[js_stream])?,
+      )?;
     }
 
-    return self.bytes.borrow().deref().clone().unwrap();
+    Ok(this.get(INNER_RESPONSE_PROPERTY_NAME)?.unwrap())
   }
 
-  #[napi]
-  pub fn bytes(&self) -> Buffer {
-    let bytes = self.get_bytes();
-    bytes.into()
+  #[napi(ts_return_type = "Promise<Uint8Array>")]
+  pub fn bytes(&self, env: &Env, this: This<JsObject>) -> Result<JsUnknown> {
+    let response = self.get_inner_response(env, this)?;
+
+    response
+      .get_named_property::<JsFunction>("bytes")?
+      .call_without_args(Some(&response))
   }
 
-  #[napi]
-  pub fn text(&self) -> String {
-    let bytes = self.get_bytes();
-    let content_type_header = self.headers.get("content-type");
+  #[napi(ts_return_type = "Promise<String>")]
+  pub fn text(&self, env: &Env, this: This<JsObject>) -> Result<JsUnknown> {
+    let response = self.get_inner_response(env, this)?;
 
-    decode(
-      &bytes,
-      content_type_header.and_then(|ct| {
-        let parsed = ContentType::from(ct);
-
-        match parsed {
-          Ok(ct) => ct.into(),
-          Err(_) => None,
-        }
-      }),
-    )
+    response
+      .get_named_property::<JsFunction>("text")?
+      .call_without_args(Some(&response))
   }
 
-  #[napi(getter, js_name = "body")]
-  pub fn stream_body(&self, env: &Env) -> Result<ReadableStream<BufferSlice>> {
-    let mut response = self.inner.borrow_mut();
-    let response = response.take();
+  #[napi(ts_return_type = "Promise<any>")]
+  pub fn json(&self, env: &Env, this: This<JsObject>) -> Result<JsUnknown> {
+    let response = self.get_inner_response(env, this)?;
 
-    let reqwest_stream = match response {
-      Some(inner_response) => inner_response.bytes_stream(),
-      None => {
-        return Err(napi::Error::new(
-          napi::Status::Unknown,
-          "This response has been already consumed.",
-        ));
-      }
-    };
-
-    let napi_stream = reqwest_stream.map(|chunk| match chunk {
-      Ok(bytes) => Ok(bytes.to_vec()),
-      Err(e) => Err(napi::Error::new(
-        napi::Status::Unknown,
-        format!("Error reading response stream: {:?}", e),
-      )),
-    });
-
-    ReadableStream::create_with_stream_bytes(env, napi_stream)
+    response
+      .get_named_property::<JsFunction>("json")?
+      .call_without_args(Some(&response))
   }
 
-  #[napi(ts_return_type = "any")]
-  pub fn json(&self, env: Env) -> JsUnknown {
-    let text = self.text();
+  #[napi(
+    getter,
+    js_name = "body",
+    ts_return_type = "ReadableStream<Uint8Array>"
+  )]
+  pub fn body(&self, env: &Env, this: This<JsObject>) -> Result<napi::JsObject> {
+    let response = self.get_inner_response(env, this)?;
 
-    env
-      .get_global()
-      .and_then(|global| global.get_named_property::<JsObject>("JSON"))
-      .and_then(|json| json.get_named_property::<JsFunction>("parse"))
-      .expect("fatal: Couldn't get JSON.parse")
-      .call::<JsString>(
-        None,
-        &[env
-          .create_string_from_std(text)
-          .expect("Couldn't create JS string from the response text")],
-      )
-      .expect("fatal: Couldn't parse response JSON")
+    response.get_named_property("body")
   }
 }

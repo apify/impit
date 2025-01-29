@@ -1243,6 +1243,7 @@ dependencies = [
 name = "impit-node"
 version = "0.0.0"
 dependencies = [
+ "bytes",
  "h2",
  "impit",
  "napi",
