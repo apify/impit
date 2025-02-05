@@ -42,13 +42,26 @@ jobs:
             build: yarn --cwd impit-node build --target x86_64-unknown-linux-gnu
           - host: ubuntu-latest
             target: x86_64-unknown-linux-musl
-            docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-alpine
+            docker: node:20-alpine
+            # Script taken from https://github.com/napi-rs/napi-rs/blob/main/alpine.Dockerfile
             build: |
-              apk add perl &&
-              ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/14.2.0/crtbeginS.o /usr/lib/crtbeginS.o &&
-              ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/14.2.0/crtendS.o /usr/lib/crtendS.o &&
-              ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/14.2.0/libgcc.a /usr/lib/libgcc.a &&
-              RUSTFLAGS="--cfg reqwest_unstable" yarn --cwd impit-node build --target x86_64-unknown-linux-musl
+                export PATH="/aarch64-linux-musl-cross/bin:/usr/local/cargo/bin/rustup:/root/.cargo/bin:$PATH" RUSTFLAGS="-C target-feature=-crt-static --cfg reqwest_unstable" CC="clang" CXX="clang++" GN_EXE=gn &&
+                apk add --update --no-cache bash wget cmake musl-dev clang llvm build-base python3 &&
+                sed -i -e 's/v[[:digit:]]\..*\//edge\//g' /etc/apk/repositories &&
+                apk add --update --no-cache --repository https://dl-cdn.alpinelinux.org/alpine/edge/testing rustup git gn tar ninja &&
+                apk update &&
+                apk upgrade &&
+                rustup-init -y &&
+                yarn global add pnpm lerna &&
+                rustup target add aarch64-unknown-linux-musl &&
+                wget https://github.com/napi-rs/napi-rs/releases/download/linux-musl-cross%4010/aarch64-linux-musl-cross.tgz &&
+                tar -xvf aarch64-linux-musl-cross.tgz &&
+                rm aarch64-linux-musl-cross.tgz &&
+                apk add perl &&
+                ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/14.2.0/crtbeginS.o /usr/lib/crtbeginS.o &&
+                ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/14.2.0/crtendS.o /usr/lib/crtendS.o &&
+                ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/14.2.0/libgcc.a /usr/lib/libgcc.a &&
+                yarn --cwd impit-node build --target x86_64-unknown-linux-musl
           - host: macos-latest
             target: aarch64-apple-darwin
             build: yarn --cwd impit-node build --target aarch64-apple-darwin
