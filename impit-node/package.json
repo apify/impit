@@ -22,7 +22,7 @@
   "license": "MIT",
   "devDependencies": {
     "@napi-rs/cli": "^3.0.0-alpha.70",
-    "vitest": "^2.1.8"
+    "vitest": "^3.0.5"
   },
   "ava": {
     "timeout": "3m"
