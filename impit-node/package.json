@@ -5,14 +5,15 @@
   "main": "index.js",
   "types": "index.d.ts",
   "napi": {
-    "name": "impit-node",
-    "triples": {
-      "additional": [
+    "binaryName": "impit-node",
+    "targets": [
+        "x86_64-apple-darwin",
+        "x86_64-unknown-linux-gnu",
+        "x86_64-pc-windows-msvc",
         "aarch64-apple-darwin",
         "aarch64-pc-windows-msvc",
         "x86_64-unknown-linux-musl"
-      ]
-    }
+    ]
   },
   "repository": {
     "type": "git",
@@ -20,14 +21,14 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "@napi-rs/cli": "^2.18.4",
+    "@napi-rs/cli": "^3.0.0-alpha.70",
     "vitest": "^3.0.5"
   },
   "ava": {
     "timeout": "3m"
   },
   "engines": {
-    "node": ">= 10"
+    "node": ">= 20"
   },
   "scripts": {
     "artifacts": "napi artifacts --dir ../artifacts --dist npm",
