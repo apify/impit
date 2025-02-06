@@ -7,12 +7,12 @@
   "napi": {
     "binaryName": "impit-node",
     "targets": [
-        "x86_64-apple-darwin",
-        "x86_64-unknown-linux-gnu",
-        "x86_64-pc-windows-msvc",
-        "aarch64-apple-darwin",
-        "aarch64-pc-windows-msvc",
-        "x86_64-unknown-linux-musl"
+      "x86_64-apple-darwin",
+      "x86_64-unknown-linux-gnu",
+      "x86_64-pc-windows-msvc",
+      "aarch64-apple-darwin",
+      "aarch64-pc-windows-msvc",
+      "x86_64-unknown-linux-musl"
     ]
   },
   "repository": {
@@ -39,14 +39,6 @@
     "universal": "napi universal",
     "version": "napi version"
   },
-  "packageManager": "yarn@1.22.22",
-  "description": "Impit for JavaScript",
-  "optionalDependencies": {
-    "impit-darwin-arm64": "0.1.5",
-    "impit-darwin-x64": "0.1.5",
-    "impit-linux-x64-gnu": "0.1.5",
-    "impit-linux-x64-musl": "0.1.5",
-    "impit-win32-arm64-msvc": "0.1.5",
-    "impit-win32-x64-msvc": "0.1.5"
-  }
+  "packageManager": "yarn@4.6.0",
+  "description": "Impit for JavaScript"
 }
