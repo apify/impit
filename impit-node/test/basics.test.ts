@@ -1,7 +1,27 @@
-import { test, describe, expect } from 'vitest';
-import { Buffer } from 'node:buffer';
+import { test, describe, expect, beforeAll } from 'vitest';
 
 import { HttpMethod, Impit, Browser } from '../index.js';
+
+function getHttpBinUrl(path: string, https?: boolean): string {
+    https ??= true;
+
+    let url: URL;
+    if (process.env.APIFY_HTTPBIN_TOKEN) {
+        url = new URL(path, 'https://httpbin.apify.actor');
+        url.searchParams.set('token', process.env.APIFY_HTTPBIN_TOKEN);
+    } else {
+        url = new URL(path, 'https://httpbin.org');
+    }
+
+    url.protocol = https ? 'https:' : 'http:';
+    return url.href;
+}
+
+beforeAll(async () => {
+    // Warms up the httpbin instance, so that the first tests don't timeout.
+    // Has a longer timeout itself (5s vs 10s) to avoid flakiness.
+    await fetch(getHttpBinUrl('/get'));
+}, 10_000);
 
 describe.each([
     Browser.Chrome,
@@ -21,7 +41,7 @@ describe.each([
 
         test('headers work', async (t) => {
             const response = await impit.fetch(
-            'https://httpbin.org/headers',
+            getHttpBinUrl('/headers'),
             {
                 headers: {
                 'Impit-Test': 'foo',
@@ -55,7 +75,7 @@ describe.each([
     describe('Request body', () => {
         test('passing string body', async (t) => {
             const response = await impit.fetch(
-            'https://httpbin.org/post',
+            getHttpBinUrl('/post'),
             {
                     method: HttpMethod.Post,
                     body: '{"Impit-Test":"foořžš"}',
@@ -69,7 +89,7 @@ describe.each([
 
         test('passing binary body', async (t) => {
             const response = await impit.fetch(
-                'https://httpbin.org/post',
+                getHttpBinUrl('/post'),
                 {
                     method: HttpMethod.Post,
                     body: Uint8Array.from([0x49, 0x6d, 0x70, 0x69, 0x74, 0x2d, 0x54, 0x65, 0x73, 0x74, 0x3a, 0x66, 0x6f, 0x6f, 0xc5, 0x99, 0xc5, 0xbe, 0xc5, 0xa1]),
@@ -92,21 +112,21 @@ describe.each([
 
     describe('Response parsing', () => {
         test('.text() method works', async (t) => {
-        const response = await impit.fetch('https://httpbin.org/html');
+        const response = await impit.fetch(getHttpBinUrl('/html'));
         const text = await response.text();
 
         t.expect(text).toContain('Herman Melville');
         });
 
         test('.json() method works', async (t) => {
-        const response = await impit.fetch('https://httpbin.org/json');
+        const response = await impit.fetch(getHttpBinUrl('/json'));
         const json = await response.json();
 
         t.expect(json?.slideshow?.author).toBe('Yours Truly');
         });
 
         test('.bytes() method works', async (t) => {
-        const response = await impit.fetch('https://httpbin.org/xml');
+        const response = await impit.fetch(getHttpBinUrl('/xml'));
         const bytes = await response.bytes();
 
         // test that first 5 bytes of the response are the `<?xml` XML declaration
@@ -136,7 +156,7 @@ describe.each([
     describe('Redirects', () => {
         test('redirects work by default', async (t) => {
             const response = await impit.fetch(
-                'https://httpbin.org/absolute-redirect/1',
+                getHttpBinUrl('/absolute-redirect/1'),
             );
 
             t.expect(response.status).toBe(200);
@@ -148,11 +168,11 @@ describe.each([
             });
 
             const response = await impit.fetch(
-                'https://httpbin.org/absolute-redirect/1',
+                getHttpBinUrl('/absolute-redirect/1'),
             );
 
             t.expect(response.status).toBe(302);
-            t.expect(response.headers['location']).toBe('http://httpbin.org/get');
+            t.expect(response.headers['location']).toBe(getHttpBinUrl('/get', false));
         });
 
         test('limiting redirects', async (t) => {
@@ -162,7 +182,7 @@ describe.each([
             });
 
             const response = impit.fetch(
-                'https://httpbin.org/absolute-redirect/2',
+                getHttpBinUrl('/absolute-redirect/2'),
             );
 
             await t.expect(response).rejects.toThrowError('TooManyRedirects');
