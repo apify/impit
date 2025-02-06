@@ -272,5 +272,5 @@ jobs:
         shell: bash
       - name: Test bindings
         run: |
-          docker run -e CI=1 --rm -v $(pwd):/build -w /build node:${{ matrix.node }}-alpine corepack enable && yarn --cwd impit-node install && yarn --cwd impit-node test
+          docker run -e CI=1 --rm -v $(pwd):/build -w /build node:${{ matrix.node }}-alpine sh -c "corepack enable && yarn --cwd impit-node install && yarn --cwd impit-node test"
 
