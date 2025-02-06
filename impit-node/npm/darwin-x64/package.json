@@ -1,6 +1,7 @@
 {
   "name": "impit-darwin-x64",
-  "version": "0.1.3",
+  "homepage": "https://apify.github.io/impit/",
+  "version": "0.1.5",
   "os": [
     "darwin"
   ],
