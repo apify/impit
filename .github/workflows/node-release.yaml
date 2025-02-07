@@ -75,7 +75,8 @@ jobs:
 
           - name: Set version
             run: |
-              yarn version --new-version ${{ steps.get-new-version.outputs.TARGET_VERSION }} --no-git-tag-version
+              yarn version ${{ steps.get-new-version.outputs.TARGET_VERSION }}
+              yarn copy-version
 
           - name: Publish to npm
             run: |
