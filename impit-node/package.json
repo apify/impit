@@ -32,7 +32,7 @@
     "node": ">= 20"
   },
   "scripts": {
-    "artifacts": "napi artifacts --dir ../artifacts --dist npm",
+    "artifacts": "napi artifacts --output-dir ../artifacts --npm-dir npm",
     "build": "napi build --platform --release",
     "build:debug": "napi build --platform",
     "prepublishOnly": "napi prepublish -t npm --no-gh-release",
