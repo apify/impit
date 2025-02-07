@@ -19,9 +19,9 @@ function getHttpBinUrl(path: string, https?: boolean): string {
 
 beforeAll(async () => {
     // Warms up the httpbin instance, so that the first tests don't timeout.
-    // Has a longer timeout itself (5s vs 10s) to avoid flakiness.
+    // Has a longer timeout itself (5s vs 30s) to avoid flakiness.
     await fetch(getHttpBinUrl('/get'));
-}, 10_000);
+}, 30e3);
 
 describe.each([
     Browser.Chrome,
