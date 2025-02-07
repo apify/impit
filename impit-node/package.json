@@ -35,7 +35,7 @@
     "artifacts": "napi artifacts --dir ../artifacts --dist npm",
     "build": "napi build --platform --release",
     "build:debug": "napi build --platform",
-    "prepublishOnly": "napi prepublish -t npm",
+    "prepublishOnly": "napi prepublish -t npm --no-gh-release",
     "test": "vitest",
     "universal": "napi universal",
     "version": "napi version"
