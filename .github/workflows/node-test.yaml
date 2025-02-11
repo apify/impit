@@ -234,7 +234,7 @@ jobs:
         run: ls -R .
         shell: bash
       - name: Test bindings
-        run: docker run -e CI=1 -e APIFY_HTTPBIN_TOKEN=${{ secrets.APIFY_HTTPBIN_TOKEN }} --rm -v $(pwd):/build -w /build node:${{ matrix.node }}-slim corepack enable && yarn --cwd impit-node test
+        run: docker run -e CI=1 -e APIFY_HTTPBIN_TOKEN=${{ secrets.APIFY_HTTPBIN_TOKEN }} --rm -v $(pwd):/build -w /build node:${{ matrix.node }}-slim sh -c "corepack enable && yarn --cwd impit-node test"
   test-linux-x64-musl-binding:
     name: Test bindings on x86_64-unknown-linux-musl - node@${{ matrix.node }}
     needs:
