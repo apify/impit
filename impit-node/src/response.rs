@@ -16,6 +16,7 @@ pub struct ImpitResponse {
   pub status_text: String,
   pub headers: HashMap<String, String>,
   pub ok: bool,
+  pub url: String,
 }
 
 #[napi]
@@ -33,12 +34,15 @@ impl ImpitResponse {
       .map(|(k, v)| (k.as_str().to_string(), v.to_str().unwrap().to_string()))
       .collect();
     let ok = response.status().is_success();
+    let url = response.url().to_string();
+
     Self {
       inner: RefCell::new(Some(response)),
       status,
       status_text,
       headers,
       ok,
+      url,
     }
   }
 
