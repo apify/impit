@@ -160,7 +160,7 @@ describe.each([
             );
 
             t.expect(response.status).toBe(200);
-            t.expect(response.url).toBe(getHttpBinUrl('/get', false));
+            t.expect(response.url).toBe(getHttpBinUrl('/get', true));
         });
 
         test('disabling redirects', async (t) => {
