@@ -24,6 +24,7 @@ jobs:
     test:
         name: Build and test
         uses: ./.github/workflows/node-test.yaml
+        secrets: inherit
 
     publish:
         defaults:
