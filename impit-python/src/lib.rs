@@ -13,42 +13,42 @@ struct ImpitResponse {
 }
 
 enum HttpMethods {
-    GET,
-    OPTIONS,
-    HEAD,
-    POST,
-    PUT,
-    PATCH,
-    DELETE,
+    Get,
+    Options,
+    Head,
+    Post,
+    Put,
+    Patch,
+    Delete,
 }
 
 #[derive(Default)]
 struct RequestKwargs {
-    params: Option<Vec<(String, String)>>,
-    data: Option<Vec<u8>>,
-    headers: Option<Vec<(String, String)>>,
-    cookies: Option<HashMap<String, String>>,
-    timeout: Option<Duration>,
-    allow_redirects: Option<bool>,
-    proxies: Option<HashMap<String, String>>,
-    verify: Option<bool>,
+    _params: Option<Vec<(String, String)>>,
+    _data: Option<Vec<u8>>,
+    _headers: Option<Vec<(String, String)>>,
+    _cookies: Option<HashMap<String, String>>,
+    _timeout: Option<Duration>,
+    _allow_redirects: Option<bool>,
+    _proxies: Option<HashMap<String, String>>,
+    _verify: Option<bool>,
 }
 
 async fn request(
     method: HttpMethods,
     url: String,
-    kwargs: Option<RequestKwargs>,
+    _kwargs: Option<RequestKwargs>,
 ) -> Result<ImpitResponse, ErrorType> {
     let mut impit = ImpitBuilder::default().build();
 
     let response = match method {
-        HttpMethods::GET => impit.get(url, None).await,
-        HttpMethods::OPTIONS => impit.options(url, None).await,
-        HttpMethods::HEAD => impit.head(url, None).await,
-        HttpMethods::POST => impit.post(url, None, None).await,
-        HttpMethods::PUT => impit.put(url, None, None).await,
-        HttpMethods::PATCH => impit.patch(url, None, None).await,
-        HttpMethods::DELETE => impit.delete(url, None).await,
+        HttpMethods::Get => impit.get(url, None).await,
+        HttpMethods::Options => impit.options(url, None).await,
+        HttpMethods::Head => impit.head(url, None).await,
+        HttpMethods::Post => impit.post(url, None, None).await,
+        HttpMethods::Put => impit.put(url, None, None).await,
+        HttpMethods::Patch => impit.patch(url, None, None).await,
+        HttpMethods::Delete => impit.delete(url, None).await,
     }?;
 
     let status_code = response.status().as_u16();
@@ -85,13 +85,13 @@ fn impit(_py: Python, m: &PyModule) -> PyResult<()> {
     }
 
     generate_pyfn! {
-        get => GET,
-        head => HEAD,
-        post => POST,
-        patch => PATCH,
-        put => PUT,
-        delete => DELETE,
-        options => OPTIONS
+        get => Get,
+        head => Head,
+        post => Post,
+        patch => Patch,
+        put => Put,
+        delete => Delete,
+        options => Options
     }
 
     Ok(())
