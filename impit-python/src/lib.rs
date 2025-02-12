@@ -1,8 +1,7 @@
-use std::{collections::HashMap, time::Duration};
 use ::impit::impit::{ErrorType, ImpitBuilder};
+use std::{collections::HashMap, time::Duration};
 
 use pyo3::prelude::*;
-
 
 #[pyclass]
 #[derive(Debug, Clone)]
@@ -20,7 +19,7 @@ enum HttpMethods {
     POST,
     PUT,
     PATCH,
-    DELETE
+    DELETE,
 }
 
 #[derive(Default)]
@@ -35,7 +34,11 @@ struct RequestKwargs {
     verify: Option<bool>,
 }
 
-async fn request(method: HttpMethods, url: String, kwargs: Option<RequestKwargs>) -> Result<ImpitResponse, ErrorType> {
+async fn request(
+    method: HttpMethods,
+    url: String,
+    kwargs: Option<RequestKwargs>,
+) -> Result<ImpitResponse, ErrorType> {
     let mut impit = ImpitBuilder::default().build();
 
     let response = match method {
@@ -54,9 +57,15 @@ async fn request(method: HttpMethods, url: String, kwargs: Option<RequestKwargs>
     Ok(ImpitResponse { status_code, text })
 }
 
-fn request_sync(method: HttpMethods, url: String, kwargs: Option<RequestKwargs>) -> Result<ImpitResponse, pyo3::PyErr> {
+fn request_sync(
+    method: HttpMethods,
+    url: String,
+    kwargs: Option<RequestKwargs>,
+) -> Result<ImpitResponse, pyo3::PyErr> {
     tokio::runtime::Runtime::new().unwrap().block_on(async {
-        request(method, url, kwargs).await.map_err(|e| PyErr::new::<PyAny, String>(format!("{:?}", e)))
+        request(method, url, kwargs)
+            .await
+            .map_err(|e| PyErr::new::<PyAny, String>(format!("{:?}", e)))
     })
 }
 
