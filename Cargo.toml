@@ -5,6 +5,7 @@ members = [
     "impit",
     "impit-cli",
     "impit-node",
+    "impit-python",
 ]
 
 [patch.crates-io]
