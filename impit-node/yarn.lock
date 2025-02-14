@@ -1334,11 +1334,11 @@ __metadata:
   linkType: hard
 
 "@types/node@npm:^22.13.1":
-  version: 22.13.1
-  resolution: "@types/node@npm:22.13.1"
+  version: 22.13.4
+  resolution: "@types/node@npm:22.13.4"
   dependencies:
     undici-types: "npm:~6.20.0"
-  checksum: 10c0/d4e56d41d8bd53de93da2651c0a0234e330bd7b1b6d071b1a94bd3b5ee2d9f387519e739c52a15c1faa4fb9d97e825b848421af4b2e50e6518011e7adb4a34b7
+  checksum: 10c0/3a234fa7766a3efc382cf81f66f474c26cdab2f54f43f757634c81c0444eb2160c2dabbde9741e4983078a318a88515b65416b5f1ab5478548579d7b3ead1d95
   languageName: node
   linkType: hard
 
@@ -1941,44 +1941,44 @@ __metadata:
   languageName: node
   linkType: hard
 
-"impit-darwin-arm64@npm:0.2.0":
-  version: 0.2.0
-  resolution: "impit-darwin-arm64@npm:0.2.0"
+"impit-darwin-arm64@npm:0.2.1":
+  version: 0.2.1
+  resolution: "impit-darwin-arm64@npm:0.2.1"
   conditions: os=darwin & cpu=arm64
   languageName: node
   linkType: hard
 
-"impit-darwin-x64@npm:0.2.0":
-  version: 0.2.0
-  resolution: "impit-darwin-x64@npm:0.2.0"
+"impit-darwin-x64@npm:0.2.1":
+  version: 0.2.1
+  resolution: "impit-darwin-x64@npm:0.2.1"
   conditions: os=darwin & cpu=x64
   languageName: node
   linkType: hard
 
-"impit-linux-x64-gnu@npm:0.2.0":
-  version: 0.2.0
-  resolution: "impit-linux-x64-gnu@npm:0.2.0"
+"impit-linux-x64-gnu@npm:0.2.1":
+  version: 0.2.1
+  resolution: "impit-linux-x64-gnu@npm:0.2.1"
   conditions: os=linux & cpu=x64 & libc=glibc
   languageName: node
   linkType: hard
 
-"impit-linux-x64-musl@npm:0.2.0":
-  version: 0.2.0
-  resolution: "impit-linux-x64-musl@npm:0.2.0"
+"impit-linux-x64-musl@npm:0.2.1":
+  version: 0.2.1
+  resolution: "impit-linux-x64-musl@npm:0.2.1"
   conditions: os=linux & cpu=x64 & libc=musl
   languageName: node
   linkType: hard
 
-"impit-win32-arm64-msvc@npm:0.2.0":
-  version: 0.2.0
-  resolution: "impit-win32-arm64-msvc@npm:0.2.0"
+"impit-win32-arm64-msvc@npm:0.2.1":
+  version: 0.2.1
+  resolution: "impit-win32-arm64-msvc@npm:0.2.1"
   conditions: os=win32 & cpu=arm64
   languageName: node
   linkType: hard
 
-"impit-win32-x64-msvc@npm:0.2.0":
-  version: 0.2.0
-  resolution: "impit-win32-x64-msvc@npm:0.2.0"
+"impit-win32-x64-msvc@npm:0.2.1":
+  version: 0.2.1
+  resolution: "impit-win32-x64-msvc@npm:0.2.1"
   conditions: os=win32 & cpu=x64
   languageName: node
   linkType: hard
@@ -1989,12 +1989,12 @@ __metadata:
   dependencies:
     "@napi-rs/cli": "npm:^3.0.0-alpha.70"
     "@types/node": "npm:^22.13.1"
-    impit-darwin-arm64: "npm:0.2.0"
-    impit-darwin-x64: "npm:0.2.0"
-    impit-linux-x64-gnu: "npm:0.2.0"
-    impit-linux-x64-musl: "npm:0.2.0"
-    impit-win32-arm64-msvc: "npm:0.2.0"
-    impit-win32-x64-msvc: "npm:0.2.0"
+    impit-darwin-arm64: "npm:0.2.1"
+    impit-darwin-x64: "npm:0.2.1"
+    impit-linux-x64-gnu: "npm:0.2.1"
+    impit-linux-x64-musl: "npm:0.2.1"
+    impit-win32-arm64-msvc: "npm:0.2.1"
+    impit-win32-x64-msvc: "npm:0.2.1"
     vitest: "npm:^3.0.5"
   dependenciesMeta:
     impit-darwin-arm64:
