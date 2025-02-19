@@ -1,0 +1,24 @@
+[package]
+edition = "2021"
+name = "impit-python"
+version = "0.0.0"
+
+[lib]
+name = "impit"
+crate-type = ["cdylib"]
+
+[dependencies.pyo3]
+version = "0.20.0"
+features = ["extension-module"]
+
+[dependencies]
+impit = { path="../impit" }
+rustls = { version="0.23.16" }
+tokio = { version="1.41.1", features = ["full"] }
+h2 = "0.4.7"
+reqwest = "0.12.9"
+tokio-stream = "0.1.17"
+bytes = "1.9.0"
+pyo3-asyncio = { version="0.20.0", "features"=["async-std"] }
+[build-dependencies]
+napi-build = "2.1.4"
