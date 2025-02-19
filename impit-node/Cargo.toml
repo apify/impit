@@ -8,7 +8,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 # Default enable napi4 feature, see https://nodejs.org/api/n-api.html#node-api-version-matrix
-napi = { version = "3.0.0-alpha.27", default-features = false, features = ["napi4", "async", "web_stream"] }
+napi = { version = "3.0.0-alpha.27", default-features = false, features = ["napi4", "async", "web_stream", "tokio_rt"] }
 napi-derive = "3.0.0-alpha.25"
 impit = { path="../impit" }
 rustls = { version="0.23.16" }
