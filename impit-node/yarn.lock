@@ -2393,9 +2393,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"impit-win32-x64-msvc@npm:0.2.1":
-  version: 0.2.1
-  resolution: "impit-win32-x64-msvc@npm:0.2.1"
+"impit-win32-x64-msvc@npm:0.2.2":
+  version: 0.2.2
+  resolution: "impit-win32-x64-msvc@npm:0.2.2"
   conditions: os=win32 & cpu=x64
   languageName: node
   linkType: hard
@@ -2413,7 +2413,7 @@ __metadata:
     impit-linux-x64-gnu: "npm:0.2.1"
     impit-linux-x64-musl: "npm:0.2.1"
     impit-win32-arm64-msvc: "npm:0.2.1"
-    impit-win32-x64-msvc: "npm:0.2.1"
+    impit-win32-x64-msvc: "npm:0.2.2"
     vitest: "npm:^3.0.5"
   dependenciesMeta:
     impit-darwin-arm64:

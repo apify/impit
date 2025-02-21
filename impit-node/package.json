@@ -50,6 +50,6 @@
     "impit-linux-x64-gnu": "0.2.1",
     "impit-linux-x64-musl": "0.2.1",
     "impit-win32-arm64-msvc": "0.2.1",
-    "impit-win32-x64-msvc": "0.2.1"
+    "impit-win32-x64-msvc": "0.2.2"
   }
 }
