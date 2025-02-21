@@ -3,7 +3,7 @@
   "homepage": "https://apify.github.io/impit/",
   "version": "0.2.1",
   "main": "index.wrapper.js",
-  "types": "index.wrapper.d.ts",
+  "types": "index.d.ts",
   "napi": {
     "binaryName": "impit-node",
     "targets": [
@@ -35,9 +35,8 @@
   },
   "scripts": {
     "artifacts": "napi artifacts --output-dir ../artifacts --npm-dir npm",
-    "build": "napi build --platform --release && npm run move-declarations",
-    "build:debug": "napi build --platform && npm run move-declarations",
-    "move-declarations": "mv ./index.d.ts index.wrapper.d.ts",
+    "build": "napi build --platform --release",
+    "build:debug": "napi build --platform",
     "prepublishOnly": "napi prepublish -t npm --no-gh-release",
     "test": "vitest --retry=3",
     "universal": "napi universal",
