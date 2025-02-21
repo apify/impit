@@ -71,6 +71,24 @@ describe.each([
 
             t.expect(json.headers?.['Impit-Test']).toBe('foo');
         })
+
+        test('http3 works', async (t) => {
+            const impit = new Impit({
+                http3: true,
+                browser,
+            })
+
+            const response = await impit.fetch(
+                'https://curl.se',
+                {
+                    forceHttp3: true,
+                }
+            );
+
+            const text = await response.text();
+
+            t.expect(text).toContain('curl');
+        })
     });
 
     describe('HTTP methods', () => {

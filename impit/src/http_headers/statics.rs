@@ -35,7 +35,6 @@ pub static FIREFOX_HEADERS: &[(&str, &str)] = &[
     ("sec-fetch-mode", "navigate"),
     ("sec-fetch-site", "none"),
     ("sec-fetch-user", "?1"),
-    ("Connection", "keep-alive"),
     ("Upgrade-Insecure-Requests", "1"),
     ("Priority", "u=0, i"),
 ];
