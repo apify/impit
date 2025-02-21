@@ -1,7 +1,7 @@
 {
   "name": "impit-linux-x64-musl",
   "homepage": "https://apify.github.io/impit/",
-  "version": "0.2.1",
+  "version": "0.2.3",
   "os": [
     "linux"
   ],
