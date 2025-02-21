@@ -91,18 +91,17 @@ impl ImpitResponse {
 
   #[napi(ts_return_type = "String")]
   pub fn decode_buffer(&self, buffer: Buffer) -> Result<String> {
-
-    let encoding = self.headers.get("content-type")
-        .and_then(|content_type| {
-            ContentType::from(content_type).ok()
-        });
+    let encoding = self
+      .headers
+      .get("content-type")
+      .and_then(|content_type| ContentType::from(content_type).ok());
 
     let string = decode(
-        buffer.to_vec().as_slice(),
-        match encoding {
-            Some(encoding) => encoding.into(),
-            None => None,
-        },
+      buffer.to_vec().as_slice(),
+      match encoding {
+        Some(encoding) => encoding.into(),
+        None => None,
+      },
     );
     Ok(string)
   }
