@@ -1,4 +1,4 @@
-const exports = require('./index.js');
+const native = require('./index.js');
 
 class ResponsePatches {
     static async text() {
@@ -7,7 +7,7 @@ class ResponsePatches {
     }
 }
 
-class Impit extends exports.Impit {
+class Impit extends native.Impit {
     async fetch(url, options) {
         const originalResponse = await super.fetch(url, options);
 
@@ -19,8 +19,8 @@ class Impit extends exports.Impit {
     }
 }
 
-exports.ImpitResponse = Response;
-exports.Impit = Impit;
+native.ImpitResponse = Response;
+native.Impit = Impit;
 
-module.exports = exports;
+module.exports = native;
 
