@@ -19,8 +19,9 @@ class Impit extends native.Impit {
     }
 }
 
-native.ImpitResponse = Response;
-native.Impit = Impit;
-
-module.exports = native;
+module.exports.Impit = Impit
+module.exports.ImpitWrapper = native.ImpitWrapper
+module.exports.ImpitResponse = native.ImpitResponse
+module.exports.Browser = native.Browser
+module.exports.HttpMethod = native.HttpMethod
 

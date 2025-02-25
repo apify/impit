@@ -3,7 +3,6 @@ import { test, describe, expect, beforeAll, afterAll } from 'vitest';
 import { HttpMethod, Impit, Browser } from '../index.wrapper.js';
 import { Server } from 'http';
 import { routes, runServer } from './mock.server.js';
-import { get } from 'express/lib/response.js';
 
 function getHttpBinUrl(path: string, https?: boolean): string {
     https ??= true;
