@@ -19,6 +19,6 @@ h2 = "0.4.7"
 reqwest = "0.12.9"
 tokio-stream = "0.1.17"
 bytes = "1.9.0"
-pyo3-asyncio = { version="0.20.0", "features"=["async-std"] }
+pyo3-asyncio = { version="0.20.0", "features"=["async-std", "tokio-runtime"] }
 [build-dependencies]
 napi-build = "2.1.4"
