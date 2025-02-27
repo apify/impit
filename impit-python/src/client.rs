@@ -1,4 +1,4 @@
-use std::{collections::HashMap, future::Future, option, time::Duration};
+use std::{collections::HashMap, time::Duration};
 
 use impit::{
     emulation::Browser,

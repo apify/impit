@@ -25,16 +25,7 @@ macro_rules! http_no_client {
     };
 }
 
-http_no_client!(
-    get,
-    post,
-    put,
-    head,
-    patch,
-    delete,
-    options,
-    trace
-);
+http_no_client!(get, post, put, head, patch, delete, options, trace);
 
 #[pymodule]
 fn impit(_py: Python, m: &PyModule) -> PyResult<()> {
@@ -48,16 +39,7 @@ fn impit(_py: Python, m: &PyModule) -> PyResult<()> {
         };
     }
 
-    register_http_no_client!(
-        get,
-        post,
-        put,
-        head,
-        patch,
-        delete,
-        options,
-        trace
-    );
+    register_http_no_client!(get, post, put, head, patch, delete, options, trace);
 
     Ok(())
 }
