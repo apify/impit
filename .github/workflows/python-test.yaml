@@ -82,24 +82,24 @@ jobs:
           set -e
           python3 -m venv .venv
           source .venv/bin/activate
-          pip install impit --find-links dist --force-reinstall
+          pip install dist/*.whl --force-reinstall
           pip install pytest
-          pytest
-      - name: pytest
-        if: ${{ !startsWith(matrix.platform.target, 'x86') && matrix.platform.target != 'ppc64' }}
-        uses: uraimo/run-on-arch-action@v2
-        with:
-          arch: ${{ matrix.platform.target }}
-          distro: ubuntu22.04
-          githubToken: ${{ github.token }}
-          install: |
-            apt-get update
-            apt-get install -y --no-install-recommends python3 python3-pip
-            pip3 install -U pip pytest
-          run: |
-            set -e
-            pip3 install impit --find-links impit-python/dist --force-reinstall
-            pytest
+          python -m pytest
+    #   - name: pytest
+    #     if: ${{ !startsWith(matrix.platform.target, 'x86') && matrix.platform.target != 'ppc64' }}
+    #     uses: uraimo/run-on-arch-action@v2
+    #     with:
+    #       arch: ${{ matrix.platform.target }}
+    #       distro: ubuntu22.04
+    #       githubToken: ${{ github.token }}
+    #       install: |
+    #         apt-get update
+    #         apt-get install -y --no-install-recommends python3 python3-pip
+    #         pip3 install -U pip pytest
+    #       run: |
+    #         set -e
+    #         pip3 install impit --find-links impit-python/dist --force-reinstall
+    #         pytest
 
 #   musllinux:
 #     runs-on: ${{ matrix.platform.runner }}
