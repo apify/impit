@@ -1,6 +1,6 @@
-use std::{collections::HashMap, future::Future, option};
+use std::{collections::HashMap, future::Future, option, time::Duration};
 
-use impit::{impit::Impit, request::RequestOptions};
+use impit::{emulation::Browser, impit::{Impit, ImpitBuilder}, request::RequestOptions};
 use pyo3::prelude::*;
 
 use crate::response;
@@ -13,9 +13,43 @@ pub(crate) struct Client {
 #[pymethods]
 impl Client {
     #[new]
-    pub fn new() -> Self {
+    pub fn new(browser: Option<String>, http3: Option<bool>, proxy: Option<String>, timeout: Option<u64>, verify: Option<bool>) -> Self {
+        let builder = ImpitBuilder::default();
+
+        let builder = match browser {
+            Some(browser) => {
+                match browser.to_lowercase().as_str() {
+                    "chrome" => builder.with_browser(Browser::Chrome),
+                    "firefox" => builder.with_browser(Browser::Firefox),
+                    _ => panic!("Unsupported browser"),
+                }
+            },
+            None => builder,
+        };
+
+        let builder = match http3 {
+            Some(true) => builder.with_http3(),
+            Some(false) => builder.with_http3(),
+            None => builder,
+        };
+
+        let builder = match proxy {
+            Some(proxy) => builder.with_proxy(proxy),
+            None => builder,
+        };
+
+        let builder = match timeout {
+            Some(secs) => builder.with_default_timeout(Duration::from_secs(secs)),
+            None => builder,
+        };
+
+        let builder = match verify {
+            Some(false) => builder.with_ignore_tls_errors(true),
+            _ => builder,
+        };
+
         Self {
-            impit: Impit::default(),
+            impit: builder.build()
         }
     }
 
