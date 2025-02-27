@@ -14,6 +14,7 @@ fn impit(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
         ($($name:ident),*) => {
             $(
                 #[pyfunction]
+                #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None))]
                 fn $name(
                     url: String,
                     content: Option<Vec<u8>>,

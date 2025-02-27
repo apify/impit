@@ -17,6 +17,7 @@ pub(crate) struct Client {
 #[pymethods]
 impl Client {
     #[new]
+    #[pyo3(signature = (browser=None, http3=None, proxy=None, timeout=None, verify=None))]
     pub fn new(
         browser: Option<String>,
         http3: Option<bool>,
@@ -60,6 +61,7 @@ impl Client {
         }
     }
 
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None))]
     pub fn get(
         &mut self,
         url: String,
@@ -70,6 +72,8 @@ impl Client {
     ) -> response::ImpitPyResponse {
         self.request("get", url, content, data, headers, timeout)
     }
+
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None))]
     pub fn head(
         &mut self,
         url: String,
@@ -81,6 +85,7 @@ impl Client {
         self.request("head", url, content, data, headers, timeout)
     }
 
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None))]
     pub fn post(
         &mut self,
         url: String,
@@ -92,6 +97,7 @@ impl Client {
         self.request("post", url, content, data, headers, timeout)
     }
 
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None))]
     pub fn patch(
         &mut self,
         url: String,
@@ -103,6 +109,7 @@ impl Client {
         self.request("patch", url, content, data, headers, timeout)
     }
 
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None))]
     pub fn put(
         &mut self,
         url: String,
@@ -114,6 +121,7 @@ impl Client {
         self.request("put", url, content, data, headers, timeout)
     }
 
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None))]
     pub fn delete(
         &mut self,
         url: String,
@@ -125,6 +133,7 @@ impl Client {
         self.request("delete", url, content, data, headers, timeout)
     }
 
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None))]
     pub fn options(
         &mut self,
         url: String,
@@ -136,6 +145,7 @@ impl Client {
         self.request("options", url, content, data, headers, timeout)
     }
 
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None))]
     pub fn trace(
         &mut self,
         url: String,
@@ -147,6 +157,7 @@ impl Client {
         self.request("trace", url, content, data, headers, timeout)
     }
 
+    #[pyo3(signature = (method, url, content=None, data=None, headers=None, timeout=None))]
     pub fn request(
         &mut self,
         method: &str,

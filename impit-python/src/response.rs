@@ -32,12 +32,12 @@ pub(crate) struct ImpitPyResponse {
     // elapsed: Duration,
 }
 
-impl Into<ImpitPyResponse> for Response {
-    fn into(self) -> ImpitPyResponse {
+impl From<Response> for ImpitPyResponse {
+    fn from(val: Response) -> Self {
         ImpitPyResponse {
-            status_code: self.status().as_u16(),
-            reason_phrase: self.status().canonical_reason().unwrap().to_string(),
-            http_version: match self.version() {
+            status_code: val.status().as_u16(),
+            reason_phrase: val.status().canonical_reason().unwrap().to_string(),
+            http_version: match val.version() {
                 Version::HTTP_09 => "HTTP/0.9".to_string(),
                 Version::HTTP_10 => "HTTP/1.0".to_string(),
                 Version::HTTP_11 => "HTTP/1.1".to_string(),
@@ -45,20 +45,21 @@ impl Into<ImpitPyResponse> for Response {
                 Version::HTTP_3 => "HTTP/3".to_string(),
                 _ => "Unknown".to_string(),
             },
-            is_redirect: self.status().is_redirection(),
+            is_redirect: val.status().is_redirection(),
             headers: HashMap::from_iter(
-                self.headers()
+                val.headers()
                     .iter()
                     .map(|(k, v)| (k.as_str().to_string(), v.to_str().unwrap().to_string())),
             ),
-            encoding: self
+            encoding: val
                 .headers()
                 .get("content-type")
                 .unwrap()
                 .to_str()
                 .unwrap()
                 .to_string(),
-            text: pyo3_async_runtimes::tokio::get_runtime().block_on(async { self.text().await.unwrap() }),
+            text: pyo3_async_runtimes::tokio::get_runtime()
+                .block_on(async { val.text().await.unwrap() }),
         }
     }
 }
