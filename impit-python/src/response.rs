@@ -58,7 +58,7 @@ impl Into<ImpitPyResponse> for Response {
                 .to_str()
                 .unwrap()
                 .to_string(),
-            text: pyo3_asyncio::tokio::get_runtime().block_on(async { self.text().await.unwrap() }),
+            text: pyo3_async_runtimes::tokio::get_runtime().block_on(async { self.text().await.unwrap() }),
         }
     }
 }
