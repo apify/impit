@@ -22,12 +22,17 @@ pub struct ImpitWrapper {
 #[napi]
 impl ImpitWrapper {
   #[napi(constructor)]
-  pub fn new(options: Option<ImpitOptions>) -> Self {
+  pub fn new(options: Option<ImpitOptions>) -> Result<Self, napi::Error> {
     let config: ImpitBuilder = options.unwrap_or_default().into();
 
-    Self {
-      inner: config.build(),
-    }
+    // `quinn` for h3 requires existing async runtime.
+    // This runs the `config.build` function in the napi-managed tokio runtime which remains available
+    // throughout the lifetime of the `ImpitWrapper` instance.
+    napi::bindgen_prelude::block_on(async {
+      Ok(Self {
+        inner: config.build(),
+      })
+    })
   }
 
   #[allow(clippy::missing_safety_doc)] // This method is `unsafe`, but is only ever used from the Node.JS bindings.

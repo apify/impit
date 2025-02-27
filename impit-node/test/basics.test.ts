@@ -1,6 +1,8 @@
-import { test, describe, expect, beforeAll } from 'vitest';
+import { test, describe, expect, beforeAll, afterAll } from 'vitest';
 
-import { HttpMethod, Impit, Browser } from '../index.js';
+import { HttpMethod, Impit, Browser } from '../index.wrapper.js';
+import { Server } from 'http';
+import { routes, runServer } from './mock.server.js';
 
 function getHttpBinUrl(path: string, https?: boolean): string {
     https ??= true;
@@ -17,11 +19,26 @@ function getHttpBinUrl(path: string, https?: boolean): string {
     return url.href;
 }
 
+let localServer: Server | null = null;
+async function getServer() {
+    localServer ??= await runServer(3001);
+    return localServer;
+}
+
 beforeAll(async () => {
     // Warms up the httpbin instance, so that the first tests don't timeout.
     // Has a longer timeout itself (5s vs 30s) to avoid flakiness.
     await fetch(getHttpBinUrl('/get'));
+    // Start the local server
+    await getServer();
 }, 30e3);
+
+afterAll(async () => {
+    const server = await getServer();
+    new Promise<void>(res => {
+        server?.close(() => res())
+    });
+});
 
 describe.each([
     Browser.Chrome,
@@ -52,6 +69,24 @@ describe.each([
             const json = await response.json();
 
             t.expect(json.headers?.['Impit-Test']).toBe('foo');
+        })
+
+        test('http3 works', async (t) => {
+            const impit = new Impit({
+                http3: true,
+                browser,
+            })
+
+            const response = await impit.fetch(
+                'https://curl.se',
+                {
+                    forceHttp3: true,
+                }
+            );
+
+            const text = await response.text();
+
+            t.expect(text).toContain('curl');
         })
     });
 
@@ -112,10 +147,17 @@ describe.each([
 
     describe('Response parsing', () => {
         test('.text() method works', async (t) => {
-        const response = await impit.fetch(getHttpBinUrl('/html'));
-        const text = await response.text();
+            const response = await impit.fetch(getHttpBinUrl('/html'));
+            const text = await response.text();
 
-        t.expect(text).toContain('Herman Melville');
+            t.expect(text).toContain('Herman Melville');
+        });
+
+        test('.text() method works with decoding', async (t) => {
+            const response = await impit.fetch(new URL(routes.charset.path, "http://127.0.0.1:3001").href);
+            const text = await response.text();
+
+            t.expect(text).toContain(routes.charset.bodyString);
         });
 
         test('.json() method works', async (t) => {

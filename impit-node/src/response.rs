@@ -1,6 +1,7 @@
 #![allow(clippy::await_holding_refcell_ref, deprecated)]
+use impit::utils::{decode, ContentType};
 use napi::{
-  bindgen_prelude::{ReadableStream, Result, This},
+  bindgen_prelude::{Buffer, ReadableStream, Result, This},
   Env, JsFunction, JsObject, JsUnknown,
 };
 use napi_derive::napi;
@@ -86,6 +87,23 @@ impl ImpitResponse {
     }
 
     Ok(this.get(INNER_RESPONSE_PROPERTY_NAME)?.unwrap())
+  }
+
+  #[napi(ts_return_type = "String")]
+  pub fn decode_buffer(&self, buffer: Buffer) -> Result<String> {
+    let encoding = self
+      .headers
+      .get("content-type")
+      .and_then(|content_type| ContentType::from(content_type).ok());
+
+    let string = decode(
+      buffer.to_vec().as_slice(),
+      match encoding {
+        Some(encoding) => encoding.into(),
+        None => None,
+      },
+    );
+    Ok(string)
   }
 
   #[napi(ts_return_type = "Promise<Uint8Array>")]

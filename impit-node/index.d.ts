@@ -13,6 +13,7 @@ export declare class ImpitResponse {
   headers: Record<string, string>
   ok: boolean
   url: string
+  decodeBuffer(buffer: Buffer): String
   bytes(this: object): Promise<Uint8Array>
   text(this: object): Promise<String>
   json(this: object): Promise<any>
