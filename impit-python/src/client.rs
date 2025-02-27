@@ -37,8 +37,7 @@ impl Client {
 
         let builder = match http3 {
             Some(true) => builder.with_http3(),
-            Some(false) => builder.with_http3(),
-            None => builder,
+            _ => builder,
         };
 
         let builder = match proxy {
@@ -102,6 +101,50 @@ impl Client {
         timeout: Option<f64>,
     ) -> response::ImpitPyResponse {
         self.request("patch", url, content, data, headers, timeout)
+    }
+
+    pub fn put(
+        &mut self,
+        url: String,
+        content: Option<Vec<u8>>,
+        data: Option<HashMap<String, String>>,
+        headers: Option<HashMap<String, String>>,
+        timeout: Option<f64>,
+    ) -> response::ImpitPyResponse {
+        self.request("put", url, content, data, headers, timeout)
+    }
+
+    pub fn delete(
+        &mut self,
+        url: String,
+        content: Option<Vec<u8>>,
+        data: Option<HashMap<String, String>>,
+        headers: Option<HashMap<String, String>>,
+        timeout: Option<f64>,
+    ) -> response::ImpitPyResponse {
+        self.request("delete", url, content, data, headers, timeout)
+    }
+
+    pub fn options(
+        &mut self,
+        url: String,
+        content: Option<Vec<u8>>,
+        data: Option<HashMap<String, String>>,
+        headers: Option<HashMap<String, String>>,
+        timeout: Option<f64>,
+    ) -> response::ImpitPyResponse {
+        self.request("options", url, content, data, headers, timeout)
+    }
+
+    pub fn trace(
+        &mut self,
+        url: String,
+        content: Option<Vec<u8>>,
+        data: Option<HashMap<String, String>>,
+        headers: Option<HashMap<String, String>>,
+        timeout: Option<f64>,
+    ) -> response::ImpitPyResponse {
+        self.request("trace", url, content, data, headers, timeout)
     }
 
     pub fn request(
