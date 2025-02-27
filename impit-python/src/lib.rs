@@ -1,15 +1,13 @@
 use pyo3::prelude::*;
 
 mod client;
-mod async_client;
 mod response;
 use client::Client;
-use async_client::AsyncClient;
 
 use std::collections::HashMap;
 
 #[pymodule]
-fn impit(_py: Python, m: &PyModule) -> PyResult<()> {
+fn impit(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<Client>()?;
 
     macro_rules! http_no_client {

@@ -186,7 +186,7 @@ impl Client {
             ..Default::default()
         };
 
-        let response = pyo3_asyncio::tokio::get_runtime()
+        let response = pyo3_async_runtimes::tokio::get_runtime()
             .block_on(async {
                 match method.to_lowercase().as_str() {
                     "get" => self.impit.get(url, Some(options)).await,
