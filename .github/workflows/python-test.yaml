@@ -12,9 +12,9 @@ on:
     tags:
       - '*'
   pull_request:
-    paths:
-      - 'impit-python/**'
-      - 'impit/**'
+    # paths:
+    #   - 'impit-python/**'
+    #   - 'impit/**'
   workflow_dispatch:
 
 permissions:
@@ -72,7 +72,7 @@ jobs:
             pip3 install -U pip pytest
           run: |
             set -e
-            pip3 install impit --find-links dist --force-reinstall
+            pip3 install impit --find-links impit-python/dist --force-reinstall
             pytest
 
 #   musllinux:
