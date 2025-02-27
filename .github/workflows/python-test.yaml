@@ -29,13 +29,24 @@ jobs:
         platform:
           - runner: ubuntu-22.04
             target: x86_64
-          - runner: ubuntu-22.04
-            target: aarch64
+        #   - runner: ubuntu-22.04
+        #     target: aarch64
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: 3.x
+
+      - name: Calculate openssl-vendored
+        shell: bash
+        id: is-openssl-vendored
+        run: |
+          if [[ "${{ startsWith(matrix.platform.target, 'x86') }}" == "true" ]]; then
+            echo "enabled=" >> $GITHUB_OUTPUT
+          else
+            echo "enabled=--features openssl-vendored" >> $GITHUB_OUTPUT
+          fi
+
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -44,6 +55,20 @@ jobs:
           args: --release --out dist --find-interpreter
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: auto
+          before-script-linux: |
+            case "${{ matrix.platform.target }}" in
+              "aarch64" | "armv7" | "s390x" | "ppc64le")
+                # NOTE: pypa/manylinux docker images are Debian based
+                sudo apt-get update
+                sudo apt-get install -y pkg-config libssl-dev
+                ;;
+              "x86" | "x86_64")
+                # NOTE: rust-cross/manylinux docker images are CentOS based
+                yum update -y
+                yum install -y openssl openssl-devel perl perl-IPC-Cmd
+                ;;
+            esac
+
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
