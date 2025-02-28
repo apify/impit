@@ -82,7 +82,7 @@ jobs:
           set -e
           python3 -m venv .venv
           source .venv/bin/activate
-          pip install dist/impit_python-0.0.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl --force-reinstall
+          pip install impit --find-links dist --force-reinstall
           pip install pytest
           python -m pytest
       - name: pytest

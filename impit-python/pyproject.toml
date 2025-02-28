@@ -1,0 +1,12 @@
+[project]
+name = "impit"
+version = "0.0.0"
+
+dependencies = []
+
+[tool.maturin]
+module-name = "impit"
+
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
