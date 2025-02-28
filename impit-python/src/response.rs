@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use pyo3::prelude::*;
-use reqwest::{Response, Version};
+use reqwest::{header::HeaderValue, Response, Version};
 
 #[pyclass]
 #[derive(Debug, Clone)]
@@ -54,12 +54,12 @@ impl From<Response> for ImpitPyResponse {
             encoding: val
                 .headers()
                 .get("content-type")
-                .unwrap()
+                .unwrap_or(&HeaderValue::from_static("text/plain"))
                 .to_str()
                 .unwrap()
                 .to_string(),
             text: pyo3_async_runtimes::tokio::get_runtime()
-                .block_on(async { val.text().await.unwrap() }),
+                .block_on(async { val.text().await.unwrap_or_default() }),
         }
     }
 }
