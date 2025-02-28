@@ -206,7 +206,6 @@ impl Client {
             headers: headers.unwrap_or_default(),
             timeout: timeout.map(Duration::from_secs_f64),
             http3_prior_knowledge: force_http3.unwrap_or(false),
-            ..Default::default()
         };
 
         let response = pyo3_async_runtimes::tokio::get_runtime()
