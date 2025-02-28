@@ -56,12 +56,14 @@ impl Client {
             _ => builder,
         };
 
-        Self {
-            impit: builder.build(),
-        }
+        pyo3_async_runtimes::tokio::get_runtime().block_on(async {
+            Self {
+                impit: builder.build(),
+            }
+        })
     }
 
-    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None))]
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
     pub fn get(
         &mut self,
         url: String,
@@ -69,11 +71,12 @@ impl Client {
         data: Option<HashMap<String, String>>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
+        force_http3: Option<bool>,
     ) -> response::ImpitPyResponse {
-        self.request("get", url, content, data, headers, timeout)
+        self.request("get", url, content, data, headers, timeout, force_http3)
     }
 
-    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None))]
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
     pub fn head(
         &mut self,
         url: String,
@@ -81,11 +84,12 @@ impl Client {
         data: Option<HashMap<String, String>>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
+        force_http3: Option<bool>,
     ) -> response::ImpitPyResponse {
-        self.request("head", url, content, data, headers, timeout)
+        self.request("head", url, content, data, headers, timeout, force_http3)
     }
 
-    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None))]
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
     pub fn post(
         &mut self,
         url: String,
@@ -93,11 +97,12 @@ impl Client {
         data: Option<HashMap<String, String>>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
+        force_http3: Option<bool>,
     ) -> response::ImpitPyResponse {
-        self.request("post", url, content, data, headers, timeout)
+        self.request("post", url, content, data, headers, timeout, force_http3)
     }
 
-    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None))]
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
     pub fn patch(
         &mut self,
         url: String,
@@ -105,11 +110,12 @@ impl Client {
         data: Option<HashMap<String, String>>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
+        force_http3: Option<bool>,
     ) -> response::ImpitPyResponse {
-        self.request("patch", url, content, data, headers, timeout)
+        self.request("patch", url, content, data, headers, timeout, force_http3)
     }
 
-    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None))]
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
     pub fn put(
         &mut self,
         url: String,
@@ -117,11 +123,12 @@ impl Client {
         data: Option<HashMap<String, String>>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
+        force_http3: Option<bool>,
     ) -> response::ImpitPyResponse {
-        self.request("put", url, content, data, headers, timeout)
+        self.request("put", url, content, data, headers, timeout, force_http3)
     }
 
-    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None))]
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
     pub fn delete(
         &mut self,
         url: String,
@@ -129,11 +136,12 @@ impl Client {
         data: Option<HashMap<String, String>>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
+        force_http3: Option<bool>,
     ) -> response::ImpitPyResponse {
-        self.request("delete", url, content, data, headers, timeout)
+        self.request("delete", url, content, data, headers, timeout, force_http3)
     }
 
-    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None))]
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
     pub fn options(
         &mut self,
         url: String,
@@ -141,11 +149,12 @@ impl Client {
         data: Option<HashMap<String, String>>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
+        force_http3: Option<bool>,
     ) -> response::ImpitPyResponse {
-        self.request("options", url, content, data, headers, timeout)
+        self.request("options", url, content, data, headers, timeout, force_http3)
     }
 
-    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None))]
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
     pub fn trace(
         &mut self,
         url: String,
@@ -153,11 +162,12 @@ impl Client {
         data: Option<HashMap<String, String>>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
+        force_http3: Option<bool>,
     ) -> response::ImpitPyResponse {
-        self.request("trace", url, content, data, headers, timeout)
+        self.request("trace", url, content, data, headers, timeout, force_http3)
     }
 
-    #[pyo3(signature = (method, url, content=None, data=None, headers=None, timeout=None))]
+    #[pyo3(signature = (method, url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
     pub fn request(
         &mut self,
         method: &str,
@@ -166,6 +176,7 @@ impl Client {
         data: Option<HashMap<String, String>>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
+        force_http3: Option<bool>,
     ) -> response::ImpitPyResponse {
         let mut headers = headers.clone();
 
@@ -194,6 +205,7 @@ impl Client {
         let options = RequestOptions {
             headers: headers.unwrap_or_default(),
             timeout: timeout.map(Duration::from_secs_f64),
+            http3_prior_knowledge: force_http3.unwrap_or(false),
             ..Default::default()
         };
 
