@@ -6,7 +6,6 @@ import urllib
 import pytest
 import json
 
-# @pytest.fixture
 def getHttpBinUrl(path: str, *, https: bool = True) -> str:
     url = None
     if os.environ.get('APIFY_HTTPBIN_TOKEN') is not None:
