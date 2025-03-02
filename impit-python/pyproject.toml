@@ -1,0 +1,18 @@
+[project]
+name = "impit"
+version = "0.1.0"
+description = "A library for making HTTP requests through browser impersonation"
+readme = "README.md"
+keywords = ["http", "requests", "browser", "impersonation"]
+authors = [
+    {name = "Jindřich Bär"}
+]
+
+dependencies = []
+
+[tool.maturin]
+module-name = "impit"
+
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
