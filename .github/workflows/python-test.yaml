@@ -78,6 +78,8 @@ jobs:
         if: ${{ startsWith(matrix.platform.target, 'x86_64') }}
         shell: bash
         working-directory: impit-python
+        env:
+            APIFY_HTTPBIN_TOKEN: ${{ secrets.APIFY_HTTPBIN_TOKEN }}
         run: |
           set -e
           python3 -m venv .venv
@@ -91,6 +93,8 @@ jobs:
         with:
           arch: ${{ matrix.platform.target }}
           distro: ubuntu22.04
+          env: |
+            APIFY_HTTPBIN_TOKEN: ${{ secrets.APIFY_HTTPBIN_TOKEN }}
           githubToken: ${{ github.token }}
           install: |
             apt-get update
@@ -136,7 +140,7 @@ jobs:
         uses: addnab/docker-run-action@v3
         with:
           image: alpine:latest
-          options: -v ${{ github.workspace }}:/io -w /io
+          options: -v ${{ github.workspace }}:/io -w /io -e APIFY_HTTPBIN_TOKEN=${{ secrets.APIFY_HTTPBIN_TOKEN }}
           run: |
             set -e
             apk add py3-pip py3-virtualenv
@@ -152,6 +156,8 @@ jobs:
           arch: ${{ matrix.platform.target }}
           distro: alpine_latest
           githubToken: ${{ github.token }}
+          env: |
+            APIFY_HTTPBIN_TOKEN: ${{ secrets.APIFY_HTTPBIN_TOKEN }}
           install: |
             apk add py3-virtualenv
           run: |
@@ -191,6 +197,8 @@ jobs:
         if: ${{ !startsWith(matrix.platform.target, 'aarch64') }}
         shell: bash
         working-directory: impit-python
+        env:
+            APIFY_HTTPBIN_TOKEN: ${{ secrets.APIFY_HTTPBIN_TOKEN }}
         run: |
           set -e
           python3 -m venv .venv
@@ -227,6 +235,8 @@ jobs:
           path: dist
       - name: pytest
         working-directory: impit-python
+        env:
+            APIFY_HTTPBIN_TOKEN: ${{ secrets.APIFY_HTTPBIN_TOKEN }}
         run: |
           set -e
           python3 -m venv .venv
