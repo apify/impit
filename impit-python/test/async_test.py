@@ -1,24 +1,8 @@
-import urllib.parse
 from impit import AsyncClient
-import os
-import urllib
+from .httpbin import get_httpbin_url
 
 import pytest
 import json
-
-def getHttpBinUrl(path: str, *, https: bool = True) -> str:
-    url = None
-    if os.environ.get('APIFY_HTTPBIN_TOKEN') is not None:
-        url = urllib.parse.urlparse(f'https://httpbin.apify.actor')
-        query = urllib.parse.parse_qs(url.query)
-        query['token'] = os.environ['APIFY_HTTPBIN_TOKEN']
-        url = url._replace(query=urllib.parse.urlencode(query, doseq=True))
-    else:
-        url = urllib.parse.urlparse(f'https://httpbin.org')
-    scheme = 'https' if https else 'http'
-    url = url._replace(scheme=scheme)
-
-    return urllib.parse.urljoin(url.geturl(), path)
 
 @pytest.mark.parametrize(
     ("browser"),
@@ -48,7 +32,7 @@ class TestBasicRequests:
         impit = AsyncClient(browser=browser)
 
         response = await impit.get(
-            getHttpBinUrl('/headers'),
+            get_httpbin_url('/headers'),
             headers = {
                 'Impit-Test': 'foo',
                 'Cookie': 'test=123; test2=456'
@@ -106,7 +90,7 @@ class TestRequestBody:
         impit = AsyncClient(browser=browser)
 
         response = await impit.post(
-            getHttpBinUrl('/post'),
+            get_httpbin_url('/post'),
             content = bytearray('{"Impit-Test":"foořžš"}', 'utf-8'),
             headers = { 'Content-Type': 'application/json' }
         );
@@ -119,7 +103,7 @@ class TestRequestBody:
         impit = AsyncClient(browser=browser)
 
         response = await impit.post(
-            getHttpBinUrl('/post'),
+            get_httpbin_url('/post'),
             content = [0x49, 0x6d, 0x70, 0x69, 0x74, 0x2d, 0x54, 0x65, 0x73, 0x74, 0x3a, 0x66, 0x6f, 0x6f, 0xc5, 0x99, 0xc5, 0xbe, 0xc5, 0xa1],
             headers = { 'Content-Type': 'application/json' }
         );
@@ -138,7 +122,7 @@ class TestRequestBody:
         m = getattr(impit, method.lower())
 
         response = await m(
-            getHttpBinUrl(f'/{method.lower()}'),
+            get_httpbin_url(f'/{method.lower()}'),
             content = b'foo'
         );
 
