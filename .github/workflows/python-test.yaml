@@ -85,7 +85,7 @@ jobs:
           python3 -m venv .venv
           source .venv/bin/activate
           pip install impit --no-index --find-links dist --force-reinstall
-          pip install pytest
+          pip install pytest pytest-asyncio
           python -m pytest
       - name: pytest
         if: ${{ !startsWith(matrix.platform.target, 'x86') && matrix.platform.target != 'ppc64' }}
@@ -99,7 +99,7 @@ jobs:
           install: |
             apt-get update
             apt-get install -y --no-install-recommends python3 python3-pip
-            pip3 install -U pip pytest
+            pip3 install -U pip pytest pytest-asyncio
           run: |
             set -e
             pip3 install impit --no-index --find-links impit-python/dist --force-reinstall
@@ -147,7 +147,7 @@ jobs:
             python3 -m virtualenv .venv
             source .venv/bin/activate
             pip install impit --no-index --find-links impit-python/dist/ --force-reinstall
-            pip install pytest
+            pip install pytest pytest-asyncio
             pytest
       - name: pytest
         if: ${{ !startsWith(matrix.platform.target, 'x86') }}
@@ -164,7 +164,7 @@ jobs:
             set -e
             python3 -m virtualenv .venv
             source .venv/bin/activate
-            pip install pytest
+            pip install pytest pytest-asyncio
             pip install impit --no-index --find-links impit-python/dist/ --force-reinstall
             pytest
 
@@ -204,7 +204,7 @@ jobs:
           python3 -m venv .venv
           source .venv/Scripts/activate
           pip install impit --no-index --find-links dist --force-reinstall
-          pip install pytest
+          pip install pytest pytest-asyncio
           python -m pytest
 
   macos:
@@ -242,7 +242,7 @@ jobs:
           python3 -m venv .venv
           source .venv/bin/activate
           pip install impit --no-index --find-links dist --force-reinstall
-          pip install pytest
+          pip install pytest pytest-asyncio
           python -m pytest
 
 #   release:
