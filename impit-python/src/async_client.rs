@@ -1,10 +1,6 @@
 use std::{collections::HashMap, time::Duration};
 
-use impit::{
-    emulation::Browser,
-    impit::ImpitBuilder,
-    request::RequestOptions,
-};
+use impit::{emulation::Browser, impit::ImpitBuilder, request::RequestOptions};
 use pyo3::prelude::*;
 use tokio::sync::oneshot;
 
@@ -87,7 +83,16 @@ impl AsyncClient {
         timeout: Option<f64>,
         force_http3: Option<bool>,
     ) -> Result<pyo3::Bound<'python, PyAny>, PyErr> {
-        self.request(py, "head", url, content, data, headers, timeout, force_http3)
+        self.request(
+            py,
+            "head",
+            url,
+            content,
+            data,
+            headers,
+            timeout,
+            force_http3,
+        )
     }
 
     #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
@@ -101,7 +106,16 @@ impl AsyncClient {
         timeout: Option<f64>,
         force_http3: Option<bool>,
     ) -> Result<pyo3::Bound<'python, PyAny>, PyErr> {
-        self.request(py, "post", url, content, data, headers, timeout, force_http3)
+        self.request(
+            py,
+            "post",
+            url,
+            content,
+            data,
+            headers,
+            timeout,
+            force_http3,
+        )
     }
 
     #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
@@ -115,7 +129,16 @@ impl AsyncClient {
         timeout: Option<f64>,
         force_http3: Option<bool>,
     ) -> Result<pyo3::Bound<'python, PyAny>, PyErr> {
-        self.request(py, "patch", url, content, data, headers, timeout, force_http3)
+        self.request(
+            py,
+            "patch",
+            url,
+            content,
+            data,
+            headers,
+            timeout,
+            force_http3,
+        )
     }
 
     #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
@@ -143,7 +166,16 @@ impl AsyncClient {
         timeout: Option<f64>,
         force_http3: Option<bool>,
     ) -> Result<pyo3::Bound<'python, PyAny>, PyErr> {
-        self.request(py, "delete", url, content, data, headers, timeout, force_http3)
+        self.request(
+            py,
+            "delete",
+            url,
+            content,
+            data,
+            headers,
+            timeout,
+            force_http3,
+        )
     }
 
     #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
@@ -157,7 +189,16 @@ impl AsyncClient {
         timeout: Option<f64>,
         force_http3: Option<bool>,
     ) -> Result<pyo3::Bound<'python, PyAny>, PyErr> {
-        self.request(py, "options", url, content, data, headers, timeout, force_http3)
+        self.request(
+            py,
+            "options",
+            url,
+            content,
+            data,
+            headers,
+            timeout,
+            force_http3,
+        )
     }
 
     #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
@@ -171,7 +212,16 @@ impl AsyncClient {
         timeout: Option<f64>,
         force_http3: Option<bool>,
     ) -> Result<pyo3::Bound<'python, PyAny>, PyErr> {
-        self.request(py, "trace", url, content, data, headers, timeout, force_http3)
+        self.request(
+            py,
+            "trace",
+            url,
+            content,
+            data,
+            headers,
+            timeout,
+            force_http3,
+        )
     }
 
     #[pyo3(signature = (method, url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
@@ -221,37 +271,34 @@ impl AsyncClient {
         let impit_config = self.impit_config.clone();
         let method = method.to_string();
 
-        pyo3_async_runtimes::tokio::get_runtime()
-            .spawn(async move {
-                let mut impit = impit_config.build();
+        pyo3_async_runtimes::tokio::get_runtime().spawn(async move {
+            let mut impit = impit_config.build();
 
-                let response = match method.to_lowercase().as_str() {
-                    "get" => impit.get(url, Some(options)).await,
-                    "post" => impit.post(url, Some(body), Some(options)).await,
-                    "patch" => impit.patch(url, Some(body), Some(options)).await,
-                    "put" => impit.put(url, Some(body), Some(options)).await,
-                    "options" => impit.options(url, Some(options)).await,
-                    "trace" => impit.trace(url, Some(options)).await,
-                    "head" => impit.head(url, Some(options)).await,
-                    "delete" => impit.delete(url, Some(options)).await,
-                    _ => panic!("Unsupported method"),
-                };
+            let response = match method.to_lowercase().as_str() {
+                "get" => impit.get(url, Some(options)).await,
+                "post" => impit.post(url, Some(body), Some(options)).await,
+                "patch" => impit.patch(url, Some(body), Some(options)).await,
+                "put" => impit.put(url, Some(body), Some(options)).await,
+                "options" => impit.options(url, Some(options)).await,
+                "trace" => impit.trace(url, Some(options)).await,
+                "head" => impit.head(url, Some(options)).await,
+                "delete" => impit.delete(url, Some(options)).await,
+                _ => panic!("Unsupported method"),
+            };
 
-                tx.send(response).unwrap();
-            });
+            tx.send(response).unwrap();
+        });
 
-        pyo3_async_runtimes::async_std::future_into_py::<_, ImpitPyResponse>(
-            py,
-            async {
-                let response = rx.await.unwrap();
+        pyo3_async_runtimes::async_std::future_into_py::<_, ImpitPyResponse>(py, async {
+            let response = rx.await.unwrap();
 
-                match response {
-                    Ok(response) => Ok(response.into()),
-                    Err(err) => Err(PyErr::new::<pyo3::exceptions::PyException, _>(format!("{:#?}", err))),
-                }
+            match response {
+                Ok(response) => Ok(response.into()),
+                Err(err) => Err(PyErr::new::<pyo3::exceptions::PyException, _>(format!(
+                    "{:#?}",
+                    err
+                ))),
             }
-        )
-
-
+        })
     }
 }

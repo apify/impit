@@ -1,10 +1,10 @@
 use pyo3::prelude::*;
 
-mod client;
 mod async_client;
+mod client;
 mod response;
-use client::Client;
 use async_client::AsyncClient;
+use client::Client;
 
 use std::collections::HashMap;
 
