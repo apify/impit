@@ -1,6 +1,12 @@
 [project]
 name = "impit"
-version = "0.0.0"
+version = "0.1.0"
+description = "A library for making HTTP requests through browser impersonation"
+readme = "README.md"
+keywords = ["http", "requests", "browser", "impersonation"]
+authors = [
+    {name = "Jindřich Bär"}
+]
 
 dependencies = []
 
