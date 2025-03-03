@@ -150,7 +150,7 @@ jobs:
           command: "test"
           target: ${{ matrix.platform.target }}
           toolchain: ${{ matrix.toolchain }}
-          args: "--locked --release"
+          args: "--locked --release --manifest-path impit-cli/Cargo.toml"
         if: ${{ !matrix.platform.skip_tests }}
 
       - name: Publish artifacts
