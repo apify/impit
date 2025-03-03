@@ -8,9 +8,13 @@ name: "[impit-python] Test & Build"
 on:
   push:
     branches:
-      - master
+        - "master"
     tags:
-      - '*'
+        - "py-*"
+    paths:
+        - "impit-python/**"
+        - "impit/**"
+        - 'Cargo.*'
   pull_request:
     paths:
         - 'impit-python/**'
