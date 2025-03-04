@@ -154,7 +154,7 @@ jobs:
         if: ${{ !matrix.platform.skip_tests }}
 
       - name: Publish artifacts
-        uses: houseabsolute/actions-rust-release@v0.0.4
+        uses: houseabsolute/actions-rust-release@v0.0.6
         if: matrix.toolchain == 'stable' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
         with:
           executable-name: impit-cli
