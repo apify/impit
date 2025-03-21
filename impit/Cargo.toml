@@ -7,13 +7,13 @@ edition = "2021"
 
 [dependencies]
 encoding = "0.2.33"
-hickory-client = "0.24.2"
-hickory-proto = "0.24.2"
+hickory-client = "0.25.1"
+hickory-proto = "0.25.1"
 log = "0.4.22"
 num-bigint = "0.4.6"
 reqwest = { version = "0.12.9", features = ["json", "gzip", "brotli", "zstd", "deflate", "rustls-tls", "http3", "cookies", "stream"] }
 rustls = { version="0.23.16", features=["impit"] }
-scraper = "0.22.0"
+scraper = "0.23.0"
 thiserror = "2.0.12"
 tokio = { version="1.40.0", features = ["full"] }
 url = "2.5.2"

@@ -1,19 +1,19 @@
 use std::collections::HashMap;
 
-use hickory_proto::error::ProtoError;
 use hickory_proto::rr::rdata::svcb::SvcParamValue;
-use hickory_proto::rr::RData;
+use hickory_proto::rr::{Name, RData};
+use hickory_proto::runtime::TokioRuntimeProvider;
+use hickory_proto::ProtoError;
 
-use hickory_client::client::{AsyncClient, ClientHandle};
-use hickory_client::proto::iocompat::AsyncIoTokioAsStd;
-use hickory_client::rr::Name;
-use hickory_client::tcp::TcpClientStream;
+use hickory_client::client::{Client, ClientHandle};
+use hickory_client::proto::runtime::iocompat::AsyncIoTokioAsStd;
+use hickory_client::proto::tcp::TcpClientStream;
 use tokio::net::TcpStream as TokioTcpStream;
 
 /// A struct encapsulating the components required to make HTTP/3 requests.
 pub struct H3Engine {
     /// The DNS client used to resolve DNS queries.
-    client: AsyncClient,
+    client: Client,
     /// The background task that processes DNS queries.
     bg_join_handle: tokio::task::JoinHandle<Result<(), ProtoError>>,
     /// A map of hosts that support HTTP/3.
@@ -26,9 +26,13 @@ pub struct H3Engine {
 impl H3Engine {
     pub async fn init() -> Self {
         // todo: use the DNS server from the system config
-        let (stream, sender) =
-            TcpClientStream::<AsyncIoTokioAsStd<TokioTcpStream>>::new(([8, 8, 8, 8], 53).into());
-        let (client, bg) = AsyncClient::new(stream, sender, None).await.unwrap();
+        let (stream, sender) = TcpClientStream::<AsyncIoTokioAsStd<TokioTcpStream>>::new(
+            ([8, 8, 8, 8], 53).into(),
+            None,
+            None,
+            TokioRuntimeProvider::new(),
+        );
+        let (client, bg) = Client::new(stream, sender, None).await.unwrap();
 
         let bg_join_handle = tokio::spawn(bg);
 
@@ -57,7 +61,7 @@ impl H3Engine {
 
         let dns_h3_support = response.is_ok_and(|response| {
             response.answers().iter().any(|answer| {
-                if let RData::HTTPS(data) = answer.data().unwrap() {
+                if let RData::HTTPS(data) = answer.data() {
                     return data.svc_params().iter().any(|param| {
                         if let SvcParamValue::Alpn(alpn_protocols) = param.1.clone() {
                             return alpn_protocols.0.iter().any(|alpn| alpn == "h3");
