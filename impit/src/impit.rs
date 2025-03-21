@@ -1,7 +1,7 @@
 use log::debug;
 use reqwest::{Method, Response, Version};
-use thiserror::Error;
 use std::{str::FromStr, time::Duration};
+use thiserror::Error;
 use url::Url;
 
 use crate::{
