@@ -1,5 +1,6 @@
 use log::debug;
 use reqwest::{Method, Response, Version};
+use thiserror::Error;
 use std::{str::FromStr, time::Duration};
 use url::Url;
 
@@ -11,18 +12,18 @@ use crate::{
 ///
 /// The `ErrorType` enum is used to represent the different types of errors that can occur when making requests.
 /// The `RequestError` variant is used to wrap the `reqwest::Error` type.
-#[derive(Debug)]
+#[derive(Error, Debug)]
 pub enum ErrorType {
-    /// The URL couldn't be parsed.
+    #[error("The URL couldn't be parsed.")]
     UrlParsingError,
-    /// The URL is missing the hostname.
+    #[error("The URL is missing the hostname.")]
     UrlMissingHostnameError,
-    /// The URL uses an unsupported protocol.
+    #[error("The URL uses an unsupported protocol. Currently, only HTTP and HTTPS are supported.")]
     UrlProtocolError,
-    /// The request was made with `http3_prior_knowledge`, but HTTP/3 usage wasn't enabled.
+    #[error("The request was made with http3_prior_knowledge, but HTTP/3 usage wasn't enabled.")]
     Http3Disabled,
-    /// `reqwest::Error` variant. See the nested error for more details.
-    RequestError(reqwest::Error),
+    #[error(transparent)]
+    RequestError(#[from] reqwest::Error),
 }
 
 /// Impit is the main struct used to make (impersonated) requests.
