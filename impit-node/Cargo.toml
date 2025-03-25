@@ -30,3 +30,6 @@ openssl = { version = "*", features = ["vendored"] }
 [target.aarch64-unknown-linux-gnu.dependencies]
 openssl = { version = "*", features = ["vendored"] }
 
+[target.aarch64-unknown-linux-musl.dependencies]
+openssl = { version = "*", features = ["vendored"] }
+
