@@ -7,10 +7,16 @@ keywords = ["http", "requests", "browser", "impersonation"]
 authors = [
     {name = "Jindřich Bär"}
 ]
+requires-python = ">=3.9"
+
+dependencies = [
+    "typing-extensions>=4.1.0",
+]
 
 dependencies = []
 
 [tool.maturin]
+python-source = "python"
 module-name = "impit"
 
 [build-system]
