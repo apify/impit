@@ -40,6 +40,13 @@ jobs:
         #     target: x86_64-unknown-linux-gnu
         #     docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian
           - host: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-musl
+            setup: |
+                yarn config set supportedArchitectures.cpu "arm64"
+                yarn config set supportedArchitectures.libc "musl"
+                yarn install --immutable
+            build: yarn --cwd impit-node build --target aarch64-unknown-linux-musl
+          - host: ubuntu-24.04-arm
             target: aarch64-unknown-linux-gnu
             build: yarn --cwd impit-node build --target aarch64-unknown-linux-gnu
         #   - host: ubuntu-latest
@@ -197,6 +204,7 @@ jobs:
         env:
             APIFY_HTTPBIN_TOKEN: ${{ secrets.APIFY_HTTPBIN_TOKEN }}
         run: yarn --cwd impit-node test
+
   test-linux-x64-gnu-binding:
     name: Test bindings on Linux-x64-gnu - node@${{ matrix.node }}
     needs:
@@ -237,6 +245,97 @@ jobs:
         shell: bash
       - name: Test bindings
         run: docker run -e CI=1 -e APIFY_HTTPBIN_TOKEN=${{ secrets.APIFY_HTTPBIN_TOKEN }} --rm -v $(pwd):/build -w /build node:${{ matrix.node }}-slim sh -c "corepack enable && yarn --cwd impit-node test"
+
+  test-linux-aarch64-gnu-binding:
+    name: Test bindings on Linux-aarch64-gnu - node@${{ matrix.node }}
+    needs:
+      - build
+    strategy:
+      fail-fast: false
+      matrix:
+        node:
+          - '20'
+          - '22'
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js ${{ matrix.node }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Enable Corepack
+        run: |
+          corepack enable
+          corepack prepare yarn@stable --activate
+
+      - name: Activate cache for Node.js
+        uses: actions/setup-node@v4
+        with:
+            cache: yarn
+            cache-dependency-path: impit-node/yarn.lock
+
+      - name: Install dependencies
+        run: yarn --cwd impit-node install
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: bindings-aarch64-unknown-linux-gnu
+          path: impit-node
+      - name: List packages
+        run: ls -R .
+        shell: bash
+      - name: Test bindings
+        env:
+            APIFY_HTTPBIN_TOKEN: ${{ secrets.APIFY_HTTPBIN_TOKEN }}
+        run: yarn --cwd impit-node test
+
+  test-linux-aarch64-musl-binding:
+    name: Test bindings on Linux-aarch64-musl - node@${{ matrix.node }}
+    needs:
+      - build
+    strategy:
+      fail-fast: false
+      matrix:
+        node:
+          - '20'
+          - '22'
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js ${{ matrix.node }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Enable Corepack
+        run: |
+          corepack enable
+          corepack prepare yarn@stable --activate
+
+      - name: Activate cache for Node.js
+        uses: actions/setup-node@v4
+        with:
+            cache: yarn
+            cache-dependency-path: impit-node/yarn.lock
+
+      - name: Install dependencies
+        run: |
+          yarn config set supportedArchitectures.cpu "arm64"
+          yarn config set supportedArchitectures.libc "musl"
+          yarn --cwd impit-node install
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: bindings-aarch64-unknown-linux-musl
+          path: impit-node
+      - name: List packages
+        run: ls -R .
+        shell: bash
+      - name: Test bindings
+        env:
+            APIFY_HTTPBIN_TOKEN: ${{ secrets.APIFY_HTTPBIN_TOKEN }}
+        run: yarn --cwd impit-node test
 
   test-linux-x64-musl-binding:
     name: Test bindings on x86_64-unknown-linux-musl - node@${{ matrix.node }}
