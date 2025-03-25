@@ -1,6 +1,5 @@
-from ._impit import (
+from .impit import (
     AsyncClient,
-    BrowserType,
     Client,
     delete,
     get,
@@ -15,7 +14,6 @@ from ._impit import (
 __all__ = [
     'BROWSER',
     'AsyncClient',
-    'BrowserType',
     'Client',
     'delete',
     'get',
@@ -26,6 +24,3 @@ __all__ = [
     'put',
     'trace',
 ]
-
-
-BROWSER = BrowserType()

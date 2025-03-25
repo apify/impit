@@ -7,10 +7,9 @@ keywords = ["http", "requests", "browser", "impersonation"]
 authors = [
     {name = "Jindřich Bär"}
 ]
-requires-python = ">=3.9"
 
 dependencies = [
-    "typing-extensions>=4.1.0",
+    "typing-extensions",
 ]
 
 
