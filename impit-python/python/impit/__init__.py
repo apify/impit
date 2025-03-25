@@ -1,7 +1,9 @@
+from typing import Literal
+from typing_extensions import TypeAlias
+
 from .impit import (
     AsyncClient,
     Client,
-    BrowserType,
     delete,
     get,
     head,
@@ -25,3 +27,6 @@ __all__ = [
     'put',
     'trace',
 ]
+
+
+BrowserType: TypeAlias = Literal['chrome', 'firefox']
