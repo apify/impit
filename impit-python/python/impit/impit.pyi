@@ -7,7 +7,7 @@ from typing_extensions import TypeAlias
 
 Headers: TypeAlias = dict[str, str]
 Content: TypeAlias = bytes | bytearray | list[int]
-BrowserLiteral: TypeAlias = Literal['chrome', 'firefox']
+BrowserType: TypeAlias = Literal['chrome', 'firefox']
 
 
 class ImpitPyResponse:
@@ -40,7 +40,7 @@ class Client:
 
     def __init__(
         self,
-        browser: BrowserLiteral | None = None,
+        browser: BrowserType | None = None,
         http3: bool | None = None,
         proxy: str | None = None,
         timeout: float | None = None,
@@ -245,7 +245,7 @@ class AsyncClient:
 
     def __init__(
         self,
-        browser: BrowserLiteral | None = None,
+        browser: BrowserType | None = None,
         http3: bool | None = None,
         proxy: str | None = None,
         timeout: float | None = None,
