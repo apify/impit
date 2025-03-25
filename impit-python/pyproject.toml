@@ -13,7 +13,6 @@ dependencies = [
     "typing-extensions>=4.1.0",
 ]
 
-dependencies = []
 
 [tool.maturin]
 python-source = "python"
