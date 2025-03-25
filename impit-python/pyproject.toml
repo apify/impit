@@ -8,10 +8,7 @@ authors = [
     {name = "Jindřich Bär"}
 ]
 
-dependencies = [
-    "typing-extensions",
-]
-
+dependencies = []
 
 [tool.maturin]
 python-source = "python"

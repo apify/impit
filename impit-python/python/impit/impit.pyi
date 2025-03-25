@@ -2,12 +2,8 @@ from __future__ import annotations
 
 from typing import Literal
 
-from typing_extensions import TypeAlias
 
-
-Headers: TypeAlias = dict[str, str]
-Content: TypeAlias = bytes | bytearray | list[int]
-BrowserType: TypeAlias = Literal['chrome', 'firefox']
+Browser = Literal['chrome', 'firefox']
 
 
 class ImpitPyResponse:
@@ -22,7 +18,7 @@ class ImpitPyResponse:
     http_version: str
     """HTTP version (e.g., 'HTTP/1.1', 'HTTP/2')"""
 
-    headers: Headers
+    headers: dict[str, str]
     """Response headers as a dictionary"""
 
     text: str
@@ -40,7 +36,7 @@ class Client:
 
     def __init__(
         self,
-        browser: BrowserType | None = None,
+        browser: Browser | None = None,
         http3: bool | None = None,
         proxy: str | None = None,
         timeout: float | None = None,
@@ -59,9 +55,9 @@ class Client:
     def get(
         self,
         url: str,
-        content: Content | None = None,
+        content: bytes | None = None,
         data: dict[str, str] | None = None,
-        headers: Headers | None = None,
+        headers: dict[str, str] | None = None,
         timeout: float | None = None,
         force_http3: bool | None = None,
     ) -> ImpitPyResponse:
@@ -79,9 +75,9 @@ class Client:
     def post(
         self,
         url: str,
-        content: Content | None = None,
+        content: bytes | None = None,
         data: dict[str, str] | None = None,
-        headers: Headers | None = None,
+        headers: dict[str, str] | None = None,
         timeout: float | None = None,
         force_http3: bool | None = None,
     ) -> ImpitPyResponse:
@@ -100,9 +96,9 @@ class Client:
     def put(
         self,
         url: str,
-        content: Content | None = None,
+        content: bytes | None = None,
         data: dict[str, str] | None = None,
-        headers: Headers | None = None,
+        headers: dict[str, str] | None = None,
         timeout: float | None = None,
         force_http3: bool | None = None,
     ) -> ImpitPyResponse:
@@ -120,9 +116,9 @@ class Client:
     def patch(
         self,
         url: str,
-        content: Content | None = None,
+        content: bytes | None = None,
         data: dict[str, str] | None = None,
-        headers: Headers | None = None,
+        headers: dict[str, str] | None = None,
         timeout: float | None = None,
         force_http3: bool | None = None,
     ) -> ImpitPyResponse:
@@ -140,9 +136,9 @@ class Client:
     def delete(
         self,
         url: str,
-        content: Content | None = None,
+        content: bytes | None = None,
         data: dict[str, str] | None = None,
-        headers: Headers | None = None,
+        headers: dict[str, str] | None = None,
         timeout: float | None = None,
         force_http3: bool | None = None,
     ) -> ImpitPyResponse:
@@ -160,9 +156,9 @@ class Client:
     def head(
         self,
         url: str,
-        content: Content | None = None,
+        content: bytes | None = None,
         data: dict[str, str] | None = None,
-        headers: Headers | None = None,
+        headers: dict[str, str] | None = None,
         timeout: float | None = None,
         force_http3: bool | None = None,
     ) -> ImpitPyResponse:
@@ -180,9 +176,9 @@ class Client:
     def options(
         self,
         url: str,
-        content: Content | None = None,
+        content: bytes | None = None,
         data: dict[str, str] | None = None,
-        headers: Headers | None = None,
+        headers: dict[str, str] | None = None,
         timeout: float | None = None,
         force_http3: bool | None = None,
     ) -> ImpitPyResponse:
@@ -200,9 +196,9 @@ class Client:
     def trace(
         self,
         url: str,
-        content: Content | None = None,
+        content: bytes | None = None,
         data: dict[str, str] | None = None,
-        headers: Headers | None = None,
+        headers: dict[str, str] | None = None,
         timeout: float | None = None,
         force_http3: bool | None = None,
     ) -> ImpitPyResponse:
@@ -221,9 +217,9 @@ class Client:
         self,
         method: str,
         url: str,
-        content: Content | None = None,
+        content: bytes | None = None,
         data: dict[str, str] | None = None,
-        headers: Headers | None = None,
+        headers: dict[str, str] | None = None,
         timeout: float | None = None,
         force_http3: bool | None = None,
     ) -> ImpitPyResponse:
@@ -245,7 +241,7 @@ class AsyncClient:
 
     def __init__(
         self,
-        browser: BrowserType | None = None,
+        browser: Browser | None = None,
         http3: bool | None = None,
         proxy: str | None = None,
         timeout: float | None = None,
@@ -264,9 +260,9 @@ class AsyncClient:
     async def get(
         self,
         url: str,
-        content: Content | None = None,
+        content: bytes | None = None,
         data: dict[str, str] | None = None,
-        headers: Headers | None = None,
+        headers: dict[str, str] | None = None,
         timeout: float | None = None,
         force_http3: bool | None = None,
     ) -> ImpitPyResponse:
@@ -284,9 +280,9 @@ class AsyncClient:
     async def post(
         self,
         url: str,
-        content: Content | None = None,
+        content: bytes | None = None,
         data: dict[str, str] | None = None,
-        headers: Headers | None = None,
+        headers: dict[str, str] | None = None,
         timeout: float | None = None,
         force_http3: bool | None = None,
     ) -> ImpitPyResponse:
@@ -304,9 +300,9 @@ class AsyncClient:
     async def put(
         self,
         url: str,
-        content: Content | None = None,
+        content: bytes | None = None,
         data: dict[str, str] | None = None,
-        headers: Headers | None = None,
+        headers: dict[str, str] | None = None,
         timeout: float | None = None,
         force_http3: bool | None = None,
     ) -> ImpitPyResponse:
@@ -324,9 +320,9 @@ class AsyncClient:
     async def patch(
         self,
         url: str,
-        content: Content | None = None,
+        content: bytes | None = None,
         data: dict[str, str] | None = None,
-        headers: Headers | None = None,
+        headers: dict[str, str] | None = None,
         timeout: float | None = None,
         force_http3: bool | None = None,
     ) -> ImpitPyResponse:
@@ -344,9 +340,9 @@ class AsyncClient:
     async def delete(
         self,
         url: str,
-        content: Content | None = None,
+        content: bytes | None = None,
         data: dict[str, str] | None = None,
-        headers: Headers | None = None,
+        headers: dict[str, str] | None = None,
         timeout: float | None = None,
         force_http3: bool | None = None,
     ) -> ImpitPyResponse:
@@ -364,9 +360,9 @@ class AsyncClient:
     async def head(
         self,
         url: str,
-        content: Content | None = None,
+        content: bytes | None = None,
         data: dict[str, str] | None = None,
-        headers: Headers | None = None,
+        headers: dict[str, str] | None = None,
         timeout: float | None = None,
         force_http3: bool | None = None,
     ) -> ImpitPyResponse:
@@ -384,9 +380,9 @@ class AsyncClient:
     async def options(
         self,
         url: str,
-        content: Content | None = None,
+        content: bytes | None = None,
         data: dict[str, str] | None = None,
-        headers: Headers | None = None,
+        headers: dict[str, str] | None = None,
         timeout: float | None = None,
         force_http3: bool | None = None,
     ) -> ImpitPyResponse:
@@ -404,9 +400,9 @@ class AsyncClient:
     async def trace(
         self,
         url: str,
-        content: Content | None = None,
+        content: bytes | None = None,
         data: dict[str, str] | None = None,
-        headers: Headers | None = None,
+        headers: dict[str, str] | None = None,
         timeout: float | None = None,
         force_http3: bool | None = None,
     ) -> ImpitPyResponse:
@@ -425,9 +421,9 @@ class AsyncClient:
         self,
         method: str,
         url: str,
-        content: Content | None = None,
+        content: bytes | None = None,
         data: dict[str, str] | None = None,
-        headers: Headers | None = None,
+        headers: dict[str, str] | None = None,
         timeout: float | None = None,
         force_http3: bool | None = None,
     ) -> ImpitPyResponse:
@@ -446,9 +442,9 @@ class AsyncClient:
 
 def get(
     url: str,
-    content: Content | None = None,
+    content: bytes | None = None,
     data: dict[str, str] | None = None,
-    headers: Headers | None = None,
+    headers: dict[str, str] | None = None,
     timeout: float | None = None,
     force_http3: bool | None = None,
 ) -> ImpitPyResponse:
@@ -469,9 +465,9 @@ def get(
 
 def post(
     url: str,
-    content: Content | None = None,
+    content: bytes | None = None,
     data: dict[str, str] | None = None,
-    headers: Headers | None = None,
+    headers: dict[str, str] | None = None,
     timeout: float | None = None,
     force_http3: bool | None = None,
 ) -> ImpitPyResponse:
@@ -492,9 +488,9 @@ def post(
 
 def put(
     url: str,
-    content: Content | None = None,
+    content: bytes | None = None,
     data: dict[str, str] | None = None,
-    headers: Headers | None = None,
+    headers: dict[str, str] | None = None,
     timeout: float | None = None,
     force_http3: bool | None = None,
 ) -> ImpitPyResponse:
@@ -515,9 +511,9 @@ def put(
 
 def patch(
     url: str,
-    content: Content | None = None,
+    content: bytes | None = None,
     data: dict[str, str] | None = None,
-    headers: Headers | None = None,
+    headers: dict[str, str] | None = None,
     timeout: float | None = None,
     force_http3: bool | None = None,
 ) -> ImpitPyResponse:
@@ -538,9 +534,9 @@ def patch(
 
 def delete(
     url: str,
-    content: Content | None = None,
+    content: bytes | None = None,
     data: dict[str, str] | None = None,
-    headers: Headers | None = None,
+    headers: dict[str, str] | None = None,
     timeout: float | None = None,
     force_http3: bool | None = None,
 ) -> ImpitPyResponse:
@@ -561,9 +557,9 @@ def delete(
 
 def head(
     url: str,
-    content: Content | None = None,
+    content: bytes | None = None,
     data: dict[str, str] | None = None,
-    headers: Headers | None = None,
+    headers: dict[str, str] | None = None,
     timeout: float | None = None,
     force_http3: bool | None = None,
 ) -> ImpitPyResponse:
@@ -584,9 +580,9 @@ def head(
 
 def options(
     url: str,
-    content: Content | None = None,
+    content: bytes | None = None,
     data: dict[str, str] | None = None,
-    headers: Headers | None = None,
+    headers: dict[str, str] | None = None,
     timeout: float | None = None,
     force_http3: bool | None = None,
 ) -> ImpitPyResponse:
@@ -595,9 +591,9 @@ def options(
 
 def trace(
     url: str,
-    content: Content | None = None,
+    content: bytes | None = None,
     data: dict[str, str] | None = None,
-    headers: Headers | None = None,
+    headers: dict[str, str] | None = None,
     timeout: float | None = None,
     force_http3: bool | None = None,
 ) -> ImpitPyResponse:

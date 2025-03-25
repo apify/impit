@@ -1,5 +1,4 @@
 from typing import Literal
-from typing_extensions import TypeAlias
 
 from .impit import (
     AsyncClient,
@@ -17,7 +16,7 @@ from .impit import (
 __all__ = [
     'AsyncClient',
     'Client',
-    'BrowserType',
+    'Browser',
     'delete',
     'get',
     'head',
@@ -29,4 +28,4 @@ __all__ = [
 ]
 
 
-BrowserType: TypeAlias = Literal['chrome', 'firefox']
+Browser = Literal['chrome', 'firefox']
