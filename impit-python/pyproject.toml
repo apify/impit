@@ -117,7 +117,7 @@ warn_unused_ignores = true
 [tool.basedpyright]
 pythonVersion = "3.9"
 typeCheckingMode = "standard"
-include = ["src", "tests", "docs", "website"]
+include = ["src", "test"]
 
 [tool.coverage.report]
 exclude_lines = ["pragma: no cover", "if TYPE_CHECKING:", "assert_never()"]
