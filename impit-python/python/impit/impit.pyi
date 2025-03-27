@@ -55,7 +55,7 @@ class Client:
     def get(
         self,
         url: str,
-        content: bytes | None = None,
+        content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
         timeout: float | None = None,
@@ -75,7 +75,7 @@ class Client:
     def post(
         self,
         url: str,
-        content: bytes | None = None,
+        content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
         timeout: float | None = None,
@@ -96,7 +96,7 @@ class Client:
     def put(
         self,
         url: str,
-        content: bytes | None = None,
+        content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
         timeout: float | None = None,
@@ -116,7 +116,7 @@ class Client:
     def patch(
         self,
         url: str,
-        content: bytes | None = None,
+        content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
         timeout: float | None = None,
@@ -136,7 +136,7 @@ class Client:
     def delete(
         self,
         url: str,
-        content: bytes | None = None,
+        content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
         timeout: float | None = None,
@@ -156,7 +156,7 @@ class Client:
     def head(
         self,
         url: str,
-        content: bytes | None = None,
+        content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
         timeout: float | None = None,
@@ -176,7 +176,7 @@ class Client:
     def options(
         self,
         url: str,
-        content: bytes | None = None,
+        content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
         timeout: float | None = None,
@@ -196,7 +196,7 @@ class Client:
     def trace(
         self,
         url: str,
-        content: bytes | None = None,
+        content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
         timeout: float | None = None,
@@ -217,7 +217,7 @@ class Client:
         self,
         method: str,
         url: str,
-        content: bytes | None = None,
+        content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
         timeout: float | None = None,
@@ -260,7 +260,7 @@ class AsyncClient:
     async def get(
         self,
         url: str,
-        content: bytes | None = None,
+        content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
         timeout: float | None = None,
@@ -280,7 +280,7 @@ class AsyncClient:
     async def post(
         self,
         url: str,
-        content: bytes | None = None,
+        content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
         timeout: float | None = None,
@@ -300,7 +300,7 @@ class AsyncClient:
     async def put(
         self,
         url: str,
-        content: bytes | None = None,
+        content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
         timeout: float | None = None,
@@ -320,7 +320,7 @@ class AsyncClient:
     async def patch(
         self,
         url: str,
-        content: bytes | None = None,
+        content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
         timeout: float | None = None,
@@ -340,7 +340,7 @@ class AsyncClient:
     async def delete(
         self,
         url: str,
-        content: bytes | None = None,
+        content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
         timeout: float | None = None,
@@ -360,7 +360,7 @@ class AsyncClient:
     async def head(
         self,
         url: str,
-        content: bytes | None = None,
+        content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
         timeout: float | None = None,
@@ -380,7 +380,7 @@ class AsyncClient:
     async def options(
         self,
         url: str,
-        content: bytes | None = None,
+        content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
         timeout: float | None = None,
@@ -400,7 +400,7 @@ class AsyncClient:
     async def trace(
         self,
         url: str,
-        content: bytes | None = None,
+        content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
         timeout: float | None = None,
@@ -421,7 +421,7 @@ class AsyncClient:
         self,
         method: str,
         url: str,
-        content: bytes | None = None,
+        content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
         timeout: float | None = None,
@@ -442,7 +442,7 @@ class AsyncClient:
 
 def get(
     url: str,
-    content: bytes | None = None,
+    content: bytes | bytearray | list[int] | None = None,
     data: dict[str, str] | None = None,
     headers: dict[str, str] | None = None,
     timeout: float | None = None,
@@ -465,7 +465,7 @@ def get(
 
 def post(
     url: str,
-    content: bytes | None = None,
+    content: bytes | bytearray | list[int] | None = None,
     data: dict[str, str] | None = None,
     headers: dict[str, str] | None = None,
     timeout: float | None = None,
@@ -488,7 +488,7 @@ def post(
 
 def put(
     url: str,
-    content: bytes | None = None,
+    content: bytes | bytearray | list[int] | None = None,
     data: dict[str, str] | None = None,
     headers: dict[str, str] | None = None,
     timeout: float | None = None,
@@ -511,7 +511,7 @@ def put(
 
 def patch(
     url: str,
-    content: bytes | None = None,
+    content: bytes | bytearray | list[int] | None = None,
     data: dict[str, str] | None = None,
     headers: dict[str, str] | None = None,
     timeout: float | None = None,
@@ -534,7 +534,7 @@ def patch(
 
 def delete(
     url: str,
-    content: bytes | None = None,
+    content: bytes | bytearray | list[int] | None = None,
     data: dict[str, str] | None = None,
     headers: dict[str, str] | None = None,
     timeout: float | None = None,
@@ -557,7 +557,7 @@ def delete(
 
 def head(
     url: str,
-    content: bytes | None = None,
+    content: bytes | bytearray | list[int] | None = None,
     data: dict[str, str] | None = None,
     headers: dict[str, str] | None = None,
     timeout: float | None = None,
@@ -580,7 +580,7 @@ def head(
 
 def options(
     url: str,
-    content: bytes | None = None,
+    content: bytes | bytearray | list[int] | None = None,
     data: dict[str, str] | None = None,
     headers: dict[str, str] | None = None,
     timeout: float | None = None,
@@ -591,7 +591,7 @@ def options(
 
 def trace(
     url: str,
-    content: bytes | None = None,
+    content: bytes | bytearray | list[int] | None = None,
     data: dict[str, str] | None = None,
     headers: dict[str, str] | None = None,
     timeout: float | None = None,

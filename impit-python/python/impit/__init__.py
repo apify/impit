@@ -15,8 +15,8 @@ from .impit import (
 
 __all__ = [
     'AsyncClient',
-    'Client',
     'Browser',
+    'Client',
     'delete',
     'get',
     'head',
