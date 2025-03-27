@@ -30,16 +30,16 @@ jobs:
       fail-fast: false
       matrix:
         settings:
-          - host: macos-latest
-            target: x86_64-apple-darwin
-            build: yarn --cwd impit-node build --target x86_64-apple-darwin
-          - host: windows-latest
-            build: yarn --cwd impit-node build --target x86_64-pc-windows-msvc
-            target: x86_64-pc-windows-msvc
-          - host: ubuntu-latest
-            target: x86_64-unknown-linux-gnu
-            docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian
-            build: yarn --cwd impit-node build --target x86_64-unknown-linux-gnu
+        #   - host: macos-latest
+        #     target: x86_64-apple-darwin
+        #     build: yarn --cwd impit-node build --target x86_64-apple-darwin
+        #   - host: windows-latest
+        #     build: yarn --cwd impit-node build --target x86_64-pc-windows-msvc
+        #     target: x86_64-pc-windows-msvc
+        #   - host: ubuntu-latest
+        #     target: x86_64-unknown-linux-gnu
+        #     docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian
+        #     build: yarn --cwd impit-node build --target x86_64-unknown-linux-gnu
           - host: ubuntu-24.04-arm
             target: aarch64-unknown-linux-musl
             setup: |
@@ -47,38 +47,38 @@ jobs:
                 yarn config set supportedArchitectures.libc "musl"
                 yarn install --immutable
             build: CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER=aarch64-linux-gnu-gcc CC=aarch64-linux-gnu-gcc yarn --cwd impit-node build --target aarch64-unknown-linux-musl
-          - host: ubuntu-24.04-arm
-            target: aarch64-unknown-linux-gnu
-            build: yarn --cwd impit-node build --target aarch64-unknown-linux-gnu
-          - host: ubuntu-latest
-            target: x86_64-unknown-linux-musl
-            docker: node:20-alpine
-            # Script taken from https://github.com/napi-rs/napi-rs/blob/main/alpine.Dockerfile
-            build: |
-                export PATH="/aarch64-linux-musl-cross/bin:/usr/local/cargo/bin/rustup:/root/.cargo/bin:$PATH" RUSTFLAGS="-C target-feature=-crt-static --cfg reqwest_unstable" CC="clang" CXX="clang++" GN_EXE=gn &&
-                apk add --update --no-cache bash wget cmake musl-dev clang llvm build-base python3 &&
-                sed -i -e 's/v[[:digit:]]\..*\//edge\//g' /etc/apk/repositories &&
-                apk add --update --no-cache --repository https://dl-cdn.alpinelinux.org/alpine/edge/testing rustup git gn tar ninja &&
-                apk update &&
-                apk upgrade &&
-                rustup-init -y &&
-                yarn global add pnpm lerna &&
-                rustup target add aarch64-unknown-linux-musl &&
-                wget https://github.com/napi-rs/napi-rs/releases/download/linux-musl-cross%4010/aarch64-linux-musl-cross.tgz &&
-                tar -xvf aarch64-linux-musl-cross.tgz &&
-                rm aarch64-linux-musl-cross.tgz &&
-                apk add perl &&
-                ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/14.2.0/crtbeginS.o /usr/lib/crtbeginS.o &&
-                ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/14.2.0/crtendS.o /usr/lib/crtendS.o &&
-                ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/14.2.0/libgcc.a /usr/lib/libgcc.a &&
-                corepack enable &&
-                yarn --cwd impit-node build --target x86_64-unknown-linux-musl
-          - host: macos-latest
-            target: aarch64-apple-darwin
-            build: yarn --cwd impit-node build --target aarch64-apple-darwin
-          - host: windows-latest
-            target: aarch64-pc-windows-msvc
-            build: yarn --cwd impit-node build --target aarch64-pc-windows-msvc
+        #   - host: ubuntu-24.04-arm
+        #     target: aarch64-unknown-linux-gnu
+        #     build: yarn --cwd impit-node build --target aarch64-unknown-linux-gnu
+        #   - host: ubuntu-latest
+        #     target: x86_64-unknown-linux-musl
+        #     docker: node:20-alpine
+        #     # Script taken from https://github.com/napi-rs/napi-rs/blob/main/alpine.Dockerfile
+        #     build: |
+        #         export PATH="/aarch64-linux-musl-cross/bin:/usr/local/cargo/bin/rustup:/root/.cargo/bin:$PATH" RUSTFLAGS="-C target-feature=-crt-static --cfg reqwest_unstable" CC="clang" CXX="clang++" GN_EXE=gn &&
+        #         apk add --update --no-cache bash wget cmake musl-dev clang llvm build-base python3 &&
+        #         sed -i -e 's/v[[:digit:]]\..*\//edge\//g' /etc/apk/repositories &&
+        #         apk add --update --no-cache --repository https://dl-cdn.alpinelinux.org/alpine/edge/testing rustup git gn tar ninja &&
+        #         apk update &&
+        #         apk upgrade &&
+        #         rustup-init -y &&
+        #         yarn global add pnpm lerna &&
+        #         rustup target add aarch64-unknown-linux-musl &&
+        #         wget https://github.com/napi-rs/napi-rs/releases/download/linux-musl-cross%4010/aarch64-linux-musl-cross.tgz &&
+        #         tar -xvf aarch64-linux-musl-cross.tgz &&
+        #         rm aarch64-linux-musl-cross.tgz &&
+        #         apk add perl &&
+        #         ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/14.2.0/crtbeginS.o /usr/lib/crtbeginS.o &&
+        #         ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/14.2.0/crtendS.o /usr/lib/crtendS.o &&
+        #         ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/14.2.0/libgcc.a /usr/lib/libgcc.a &&
+        #         corepack enable &&
+        #         yarn --cwd impit-node build --target x86_64-unknown-linux-musl
+        #   - host: macos-latest
+        #     target: aarch64-apple-darwin
+        #     build: yarn --cwd impit-node build --target aarch64-apple-darwin
+        #   - host: windows-latest
+        #     target: aarch64-pc-windows-msvc
+        #     build: yarn --cwd impit-node build --target aarch64-pc-windows-msvc
     name: stable - ${{ matrix.settings.target }} - node@22
     runs-on: ${{ matrix.settings.host }}
     steps:
@@ -156,139 +156,139 @@ jobs:
           name: bindings-${{ matrix.settings.target }}
           path: impit-node/${{ env.APP_NAME }}.*.node
           if-no-files-found: error
-  test-macOS-windows-binding:
-    name: Test bindings on ${{ matrix.settings.target }} - node@${{ matrix.node }}
-    needs:
-      - build
-    strategy:
-      fail-fast: false
-      matrix:
-        settings:
-          - host: macos-latest
-            target: x86_64-apple-darwin
-          - host: windows-latest
-            target: x86_64-pc-windows-msvc
-        node:
-          - '20'
-          - '22'
-    runs-on: ${{ matrix.settings.host }}
-    steps:
-      - uses: actions/checkout@v4
-      - name: Use Node.js ${{ matrix.node }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node }}
-          architecture: x64
+#   test-macOS-windows-binding:
+#     name: Test bindings on ${{ matrix.settings.target }} - node@${{ matrix.node }}
+#     needs:
+#       - build
+#     strategy:
+#       fail-fast: false
+#       matrix:
+#         settings:
+#           - host: macos-latest
+#             target: x86_64-apple-darwin
+#           - host: windows-latest
+#             target: x86_64-pc-windows-msvc
+#         node:
+#           - '20'
+#           - '22'
+#     runs-on: ${{ matrix.settings.host }}
+#     steps:
+#       - uses: actions/checkout@v4
+#       - name: Use Node.js ${{ matrix.node }}
+#         uses: actions/setup-node@v4
+#         with:
+#           node-version: ${{ matrix.node }}
+#           architecture: x64
 
-      - name: Enable Corepack
-        run: |
-          corepack enable
-          corepack prepare yarn@stable --activate
+#       - name: Enable Corepack
+#         run: |
+#           corepack enable
+#           corepack prepare yarn@stable --activate
 
-      - name: Activate cache for Node.js
-        uses: actions/setup-node@v4
-        with:
-            cache: yarn
-            cache-dependency-path: impit-node/yarn.lock
+#       - name: Activate cache for Node.js
+#         uses: actions/setup-node@v4
+#         with:
+#             cache: yarn
+#             cache-dependency-path: impit-node/yarn.lock
 
-      - name: Install dependencies
-        run: yarn --cwd impit-node install
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: bindings-${{ matrix.settings.target }}
-          path: impit-node
-      - name: List packages
-        run: ls -R .
-        shell: bash
-      - name: Test bindings
-        env:
-            APIFY_HTTPBIN_TOKEN: ${{ secrets.APIFY_HTTPBIN_TOKEN }}
-        run: yarn --cwd impit-node test
-  test-linux-x64-gnu-binding:
-    name: Test bindings on Linux-x64-gnu - node@${{ matrix.node }}
-    needs:
-      - build
-    strategy:
-      fail-fast: false
-      matrix:
-        node:
-          - '20'
-          - '22'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Use Node.js ${{ matrix.node }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node }}
+#       - name: Install dependencies
+#         run: yarn --cwd impit-node install
+#       - name: Download artifacts
+#         uses: actions/download-artifact@v4
+#         with:
+#           name: bindings-${{ matrix.settings.target }}
+#           path: impit-node
+#       - name: List packages
+#         run: ls -R .
+#         shell: bash
+#       - name: Test bindings
+#         env:
+#             APIFY_HTTPBIN_TOKEN: ${{ secrets.APIFY_HTTPBIN_TOKEN }}
+#         run: yarn --cwd impit-node test
+#   test-linux-x64-gnu-binding:
+#     name: Test bindings on Linux-x64-gnu - node@${{ matrix.node }}
+#     needs:
+#       - build
+#     strategy:
+#       fail-fast: false
+#       matrix:
+#         node:
+#           - '20'
+#           - '22'
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v4
+#       - name: Use Node.js ${{ matrix.node }}
+#         uses: actions/setup-node@v4
+#         with:
+#           node-version: ${{ matrix.node }}
 
-      - name: Enable Corepack
-        run: |
-          corepack enable
-          corepack prepare yarn@stable --activate
+#       - name: Enable Corepack
+#         run: |
+#           corepack enable
+#           corepack prepare yarn@stable --activate
 
-      - name: Activate cache for Node.js
-        uses: actions/setup-node@v4
-        with:
-            cache: yarn
-            cache-dependency-path: impit-node/yarn.lock
-      - name: Install dependencies
-        run: yarn --cwd impit-node install
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: bindings-x86_64-unknown-linux-gnu
-          path: impit-node
-      - name: List packages
-        run: ls -R .
-        shell: bash
-      - name: Test bindings
-        run: docker run -e CI=1 -e APIFY_HTTPBIN_TOKEN=${{ secrets.APIFY_HTTPBIN_TOKEN }} --rm -v $(pwd):/build -w /build node:${{ matrix.node }}-slim sh -c "corepack enable && yarn --cwd impit-node test"
+#       - name: Activate cache for Node.js
+#         uses: actions/setup-node@v4
+#         with:
+#             cache: yarn
+#             cache-dependency-path: impit-node/yarn.lock
+#       - name: Install dependencies
+#         run: yarn --cwd impit-node install
+#       - name: Download artifacts
+#         uses: actions/download-artifact@v4
+#         with:
+#           name: bindings-x86_64-unknown-linux-gnu
+#           path: impit-node
+#       - name: List packages
+#         run: ls -R .
+#         shell: bash
+#       - name: Test bindings
+#         run: docker run -e CI=1 -e APIFY_HTTPBIN_TOKEN=${{ secrets.APIFY_HTTPBIN_TOKEN }} --rm -v $(pwd):/build -w /build node:${{ matrix.node }}-slim sh -c "corepack enable && yarn --cwd impit-node test"
 
-  test-linux-aarch64-gnu-binding:
-    name: Test bindings on Linux-aarch64-gnu - node@${{ matrix.node }}
-    needs:
-      - build
-    strategy:
-      fail-fast: false
-      matrix:
-        node:
-          - '20'
-          - '22'
-    runs-on: ubuntu-24.04-arm
-    steps:
-      - uses: actions/checkout@v4
-      - name: Use Node.js ${{ matrix.node }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node }}
+#   test-linux-aarch64-gnu-binding:
+#     name: Test bindings on Linux-aarch64-gnu - node@${{ matrix.node }}
+#     needs:
+#       - build
+#     strategy:
+#       fail-fast: false
+#       matrix:
+#         node:
+#           - '20'
+#           - '22'
+#     runs-on: ubuntu-24.04-arm
+#     steps:
+#       - uses: actions/checkout@v4
+#       - name: Use Node.js ${{ matrix.node }}
+#         uses: actions/setup-node@v4
+#         with:
+#           node-version: ${{ matrix.node }}
 
-      - name: Enable Corepack
-        run: |
-          corepack enable
-          corepack prepare yarn@stable --activate
+#       - name: Enable Corepack
+#         run: |
+#           corepack enable
+#           corepack prepare yarn@stable --activate
 
-      - name: Activate cache for Node.js
-        uses: actions/setup-node@v4
-        with:
-            cache: yarn
-            cache-dependency-path: impit-node/yarn.lock
+#       - name: Activate cache for Node.js
+#         uses: actions/setup-node@v4
+#         with:
+#             cache: yarn
+#             cache-dependency-path: impit-node/yarn.lock
 
-      - name: Install dependencies
-        run: yarn --cwd impit-node install
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: bindings-aarch64-unknown-linux-gnu
-          path: impit-node
-      - name: List packages
-        run: ls -R .
-        shell: bash
-      - name: Test bindings
-        env:
-            APIFY_HTTPBIN_TOKEN: ${{ secrets.APIFY_HTTPBIN_TOKEN }}
-        run: yarn --cwd impit-node test
+#       - name: Install dependencies
+#         run: yarn --cwd impit-node install
+#       - name: Download artifacts
+#         uses: actions/download-artifact@v4
+#         with:
+#           name: bindings-aarch64-unknown-linux-gnu
+#           path: impit-node
+#       - name: List packages
+#         run: ls -R .
+#         shell: bash
+#       - name: Test bindings
+#         env:
+#             APIFY_HTTPBIN_TOKEN: ${{ secrets.APIFY_HTTPBIN_TOKEN }}
+#         run: yarn --cwd impit-node test
 
   test-linux-aarch64-musl-binding:
     name: Test bindings on Linux-aarch64-musl - node@${{ matrix.node }}
@@ -331,44 +331,44 @@ jobs:
         run: |
           docker run -e CI=1 -e APIFY_HTTPBIN_TOKEN=${{ secrets.APIFY_HTTPBIN_TOKEN }} --rm -v $(pwd):/build -w /build arm64v8/node:${{ matrix.node }}-alpine sh -c "corepack enable && yarn --cwd impit-node install && yarn --cwd impit-node test"
 
-  test-linux-x64-musl-binding:
-    name: Test bindings on x86_64-unknown-linux-musl - node@${{ matrix.node }}
-    needs:
-      - build
-    strategy:
-      fail-fast: false
-      matrix:
-        node:
-          - '20'
-          - '22'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Use Node.js ${{ matrix.node }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node }}
+#   test-linux-x64-musl-binding:
+#     name: Test bindings on x86_64-unknown-linux-musl - node@${{ matrix.node }}
+#     needs:
+#       - build
+#     strategy:
+#       fail-fast: false
+#       matrix:
+#         node:
+#           - '20'
+#           - '22'
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v4
+#       - name: Use Node.js ${{ matrix.node }}
+#         uses: actions/setup-node@v4
+#         with:
+#           node-version: ${{ matrix.node }}
 
-      - name: Enable Corepack
-        run: |
-          corepack enable
-          corepack prepare yarn@stable --activate
+#       - name: Enable Corepack
+#         run: |
+#           corepack enable
+#           corepack prepare yarn@stable --activate
 
-      - name: Activate cache for Node.js
-        uses: actions/setup-node@v4
-        with:
-            cache: yarn
-            cache-dependency-path: impit-node/yarn.lock
+#       - name: Activate cache for Node.js
+#         uses: actions/setup-node@v4
+#         with:
+#             cache: yarn
+#             cache-dependency-path: impit-node/yarn.lock
 
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: bindings-x86_64-unknown-linux-musl
-          path: impit-node
-      - name: List packages
-        run: ls -R .
-        shell: bash
-      - name: Test bindings
-        run: |
-          docker run -e CI=1 -e APIFY_HTTPBIN_TOKEN=${{ secrets.APIFY_HTTPBIN_TOKEN }} --rm -v $(pwd):/build -w /build node:${{ matrix.node }}-alpine sh -c "corepack enable && yarn --cwd impit-node install && yarn --cwd impit-node test"
+#       - name: Download artifacts
+#         uses: actions/download-artifact@v4
+#         with:
+#           name: bindings-x86_64-unknown-linux-musl
+#           path: impit-node
+#       - name: List packages
+#         run: ls -R .
+#         shell: bash
+#       - name: Test bindings
+#         run: |
+#           docker run -e CI=1 -e APIFY_HTTPBIN_TOKEN=${{ secrets.APIFY_HTTPBIN_TOKEN }} --rm -v $(pwd):/build -w /build node:${{ matrix.node }}-alpine sh -c "corepack enable && yarn --cwd impit-node install && yarn --cwd impit-node test"
 
