@@ -319,11 +319,6 @@ jobs:
             cache: yarn
             cache-dependency-path: impit-node/yarn.lock
 
-      - name: Install dependencies
-        run: |
-          yarn config set supportedArchitectures.cpu "arm64"
-          yarn config set supportedArchitectures.libc "musl"
-          yarn --cwd impit-node install
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
@@ -333,9 +328,8 @@ jobs:
         run: ls -R .
         shell: bash
       - name: Test bindings
-        env:
-            APIFY_HTTPBIN_TOKEN: ${{ secrets.APIFY_HTTPBIN_TOKEN }}
-        run: yarn --cwd impit-node test
+        run: |
+          docker run -e CI=1 -e APIFY_HTTPBIN_TOKEN=${{ secrets.APIFY_HTTPBIN_TOKEN }} --rm -v $(pwd):/build -w /build arm64v8/node:${{ matrix.node }}-alpine sh -c "corepack enable && yarn --cwd impit-node install && yarn --cwd impit-node test"
 
   test-linux-x64-musl-binding:
     name: Test bindings on x86_64-unknown-linux-musl - node@${{ matrix.node }}
