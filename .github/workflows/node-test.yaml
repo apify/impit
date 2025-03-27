@@ -40,13 +40,26 @@ jobs:
         #     target: x86_64-unknown-linux-gnu
         #     docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian
         #     build: yarn --cwd impit-node build --target x86_64-unknown-linux-gnu
-          - host: ubuntu-24.04-arm
+          - host: ubuntu-latest
             target: aarch64-unknown-linux-musl
-            setup: |
-                yarn config set supportedArchitectures.cpu "arm64"
-                yarn config set supportedArchitectures.libc "musl"
-                yarn install --immutable
-            build: CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER=aarch64-linux-gnu-gcc CC=aarch64-linux-gnu-gcc yarn --cwd impit-node build --target aarch64-unknown-linux-musl
+            docker: node:20-alpine
+            build: |-
+                export PATH="/aarch64-linux-musl-cross/bin:/usr/local/cargo/bin/rustup:/root/.cargo/bin:$PATH" RUSTFLAGS="-C target-feature=-crt-static --cfg reqwest_unstable" CC="clang" CXX="clang++" GN_EXE=gn &&
+                apk add --update --no-cache bash wget cmake musl-dev clang llvm build-base python3 &&
+                sed -i -e 's/v[[:digit:]]\..*\//edge\//g' /etc/apk/repositories &&
+                apk add --update --no-cache --repository https://dl-cdn.alpinelinux.org/alpine/edge/testing rustup git gn tar ninja &&
+                apk update &&
+                apk upgrade &&
+                rustup-init -y &&
+                yarn global add pnpm lerna &&
+                rustup target add aarch64-unknown-linux-musl &&
+                wget https://github.com/napi-rs/napi-rs/releases/download/linux-musl-cross%4010/aarch64-linux-musl-cross.tgz &&
+                tar -xvf aarch64-linux-musl-cross.tgz &&
+                rm aarch64-linux-musl-cross.tgz &&
+                set -e &&
+                rustup target add aarch64-unknown-linux-musl &&
+                corepack enable &&
+                yarn --cwd impit-node build --target aarch64-unknown-linux-musl
         #   - host: ubuntu-24.04-arm
         #     target: aarch64-unknown-linux-gnu
         #     build: yarn --cwd impit-node build --target aarch64-unknown-linux-gnu
