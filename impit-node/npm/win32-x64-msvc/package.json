@@ -1,7 +1,7 @@
 {
   "name": "impit-win32-x64-msvc",
   "homepage": "https://apify.github.io/impit/",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "os": [
     "win32"
   ],
