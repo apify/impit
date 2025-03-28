@@ -5,7 +5,6 @@
 
 const { createRequire } = require('node:module')
 require = createRequire(__filename)
-const util = require('node:util');
 
 const { readFileSync } = require('node:fs')
 let nativeBinding = null
@@ -59,10 +58,6 @@ const isMuslFromChildProcess = () => {
     return false
   }
 }
-
-process.stdout.write(process.platform + '\n')
-process.stdout.write(process.arch + '\n')
-process.stdout.write('isMusl: ' + isMusl() + '\n')
 
 function requireNative() {
   if (process.env.NAPI_RS_NATIVE_LIBRARY_PATH) {
@@ -238,13 +233,11 @@ function requireNative() {
         try {
         return require('./impit-node.linux-arm64-musl.node')
       } catch (e) {
-        process.stdout.write(util.inspect(e) + '\n')
         loadErrors.push(e)
       }
       try {
         return require('impit-linux-arm64-musl')
       } catch (e) {
-        process.stdout.write(util.inspect(e) + '\n')
         loadErrors.push(e)
       }
 
