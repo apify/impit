@@ -66,7 +66,7 @@ class Client:
         Args:
             url: URL to request
             content: Raw content to send
-            data: unused
+            data: Form data to send in request body
             headers: HTTP headers
             timeout: Request timeout in seconds (overrides default timeout)
             force_http3: Force HTTP/3 protocol
@@ -86,7 +86,7 @@ class Client:
         Args:
             url: URL to request
             content: Raw content to send
-            data: unused
+            data: Form data to send in request body
             headers: HTTP headers
             timeout: Request timeout in seconds (overrides default timeout)
             force_http3: Force HTTP/3 protocol
@@ -107,7 +107,7 @@ class Client:
         Args:
             url: URL to request
             content: Raw content to send
-            data: unused
+            data: Form data to send in request body
             headers: HTTP headers
             timeout: Request timeout in seconds (overrides default timeout)
             force_http3: Force HTTP/3 protocol
@@ -127,7 +127,7 @@ class Client:
         Args:
             url: URL to request
             content: Raw content to send
-            data: unused
+            data: Form data to send in request body
             headers: HTTP headers
             timeout: Request timeout in seconds (overrides default timeout)
             force_http3: Force HTTP/3 protocol
@@ -147,7 +147,7 @@ class Client:
         Args:
             url: URL to request
             content: Raw content to send
-            data: unused
+            data: Form data to send in request body
             headers: HTTP headers
             timeout: Request timeout in seconds (overrides default timeout)
             force_http3: Force HTTP/3 protocol
@@ -167,7 +167,7 @@ class Client:
         Args:
             url: URL to request
             content: Raw content to send
-            data: unused
+            data: Form data to send in request body
             headers: HTTP headers
             timeout: Request timeout in seconds (overrides default timeout)
             force_http3: Force HTTP/3 protocol
@@ -187,7 +187,7 @@ class Client:
         Args:
             url: URL to request
             content: Raw content to send
-            data: unused
+            data: Form data to send in request body
             headers: HTTP headers
             timeout: Request timeout in seconds (overrides default timeout)
             force_http3: Force HTTP/3 protocol
@@ -207,7 +207,7 @@ class Client:
         Args:
             url: URL to request
             content: Raw content to send
-            data: unused
+            data: Form data to send in request body
             headers: HTTP headers
             timeout: Request timeout in seconds (overrides default timeout)
             force_http3: Force HTTP/3 protocol
@@ -229,7 +229,7 @@ class Client:
             method: HTTP method (e.g., "get", "post")
             url: URL to request
             content: Raw content to send
-            data: unused
+            data: Form data to send in request body
             headers: HTTP headers
             timeout: Request timeout in seconds (overrides default timeout)
             force_http3: Force HTTP/3 protocol
@@ -271,7 +271,7 @@ class AsyncClient:
         Args:
             url: URL to request
             content: Raw content to send
-            data: unused
+            data: Form data to send in request body
             headers: HTTP headers
             timeout: Request timeout in seconds (overrides default timeout)
             force_http3: Force HTTP/3 protocol
@@ -291,7 +291,7 @@ class AsyncClient:
         Args:
             url: URL to request
             content: Raw content to send
-            data: unused
+            data: Form data to send in request body
             headers: HTTP headers
             timeout: Request timeout in seconds (overrides default timeout)
             force_http3: Force HTTP/3 protocol
@@ -311,7 +311,7 @@ class AsyncClient:
         Args:
             url: URL to request
             content: Raw content to send
-            data: unused
+            data: Form data to send in request body
             headers: HTTP headers
             timeout: Request timeout in seconds (overrides default timeout)
             force_http3: Force HTTP/3 protocol
@@ -331,7 +331,7 @@ class AsyncClient:
         Args:
             url: URL to request
             content: Raw content to send
-            data: unused
+            data: Form data to send in request body
             headers: HTTP headers
             timeout: Request timeout in seconds (overrides default timeout)
             force_http3: Force HTTP/3 protocol
@@ -351,7 +351,7 @@ class AsyncClient:
         Args:
             url: URL to request
             content: Raw content to send
-            data: unused
+            data: Form data to send in request body
             headers: HTTP headers
             timeout: Request timeout in seconds (overrides default timeout)
             force_http3: Force HTTP/3 protocol
@@ -371,7 +371,7 @@ class AsyncClient:
         Args:
             url: URL to request
             content: Raw content to send
-            data: unused
+            data: Form data to send in request body
             headers: HTTP headers
             timeout: Request timeout in seconds (overrides default timeout)
             force_http3: Force HTTP/3 protocol
@@ -391,7 +391,7 @@ class AsyncClient:
         Args:
             url: URL to request
             content: Raw content to send
-            data: unused
+            data: Form data to send in request body
             headers: HTTP headers
             timeout: Request timeout in seconds (overrides default timeout)
             force_http3: Force HTTP/3 protocol
@@ -411,7 +411,7 @@ class AsyncClient:
         Args:
             url: URL to request
             content: Raw content to send
-            data: unused
+            data: Form data to send in request body
             headers: HTTP headers
             timeout: Request timeout in seconds (overrides default timeout)
             force_http3: Force HTTP/3 protocol
@@ -433,7 +433,7 @@ class AsyncClient:
             method: HTTP method (e.g., "get", "post")
             url: URL to request
             content: Raw content to send
-            data: unused
+            data: Form data to send in request body
             headers: HTTP headers
             timeout: Request timeout in seconds (overrides default timeout)
             force_http3: Force HTTP/3 protocol
@@ -453,7 +453,7 @@ def get(
     Args:
         url: URL to request
         content: Raw content to send
-        data: unused
+        data: Form data to send in request body
         headers: HTTP headers
         timeout: Request timeout in seconds
         force_http3: Force HTTP/3 protocol
@@ -476,7 +476,7 @@ def post(
     Args:
         url: URL to request
         content: Raw content to send
-        data: unused
+        data: Form data to send in request body
         headers: HTTP headers
         timeout: Request timeout in seconds
         force_http3: Force HTTP/3 protocol
@@ -499,7 +499,7 @@ def put(
     Args:
         url: URL to request
         content: Raw content to send
-        data: unused
+        data: Form data to send in request body
         headers: HTTP headers
         timeout: Request timeout in seconds
         force_http3: Force HTTP/3 protocol
@@ -522,7 +522,7 @@ def patch(
     Args:
         url: URL to request
         content: Raw content to send
-        data: unused
+        data: Form data to send in request body
         headers: HTTP headers
         timeout: Request timeout in seconds
         force_http3: Force HTTP/3 protocol
@@ -545,7 +545,7 @@ def delete(
     Args:
         url: URL to request
         content: Raw content to send
-        data: unused
+        data: Form data to send in request body
         headers: HTTP headers
         timeout: Request timeout in seconds
         force_http3: Force HTTP/3 protocol
@@ -568,7 +568,7 @@ def head(
     Args:
         url: URL to request
         content: Raw content to send
-        data: unused
+        data: Form data to send in request body
         headers: HTTP headers
         timeout: Request timeout in seconds
         force_http3: Force HTTP/3 protocol
@@ -586,7 +586,16 @@ def options(
     timeout: float | None = None,
     force_http3: bool | None = None,
 ) -> ImpitPyResponse:
-    ...
+    """Make an OPTIONS request without creating a client instance.
+
+    Args:
+        url: URL to request
+        content: Raw content to send
+        data: Form data to send in request body
+        headers: HTTP headers
+        timeout: Request timeout in seconds (overrides default timeout)
+        force_http3: Force HTTP/3 protocol
+    """
 
 
 def trace(
@@ -597,4 +606,13 @@ def trace(
     timeout: float | None = None,
     force_http3: bool | None = None,
 ) -> ImpitPyResponse:
-    ...
+    """Make a TRACE request without creating a client instance.
+
+    Args:
+        url: URL to request
+        content: Raw content to send
+        data: Form data to send in request body
+        headers: HTTP headers
+        timeout: Request timeout in seconds (overrides default timeout)
+        force_http3: Force HTTP/3 protocol
+    """
