@@ -14,18 +14,16 @@ Installing the root package (`impit`) with the package manager of your choice wi
 
 ### Compatibility
 
-| Operating System | Architecture | libc implementation | Prebuilt binaries available | 
+| Operating System | Architecture | libc implementation | Prebuilt binaries available |
 |--|--|--|--|
 | Linux | x86_64 | glibc | ✅ |
 | Linux | x86_64 | musl | ✅ |
+| Linux | arm64 | glibc | ✅ |
+| Linux | arm64 | musl | ✅ |
 | macOS | x86_64 | N/A | ✅ |
 | Windows | x86_64 | N/A | ✅ |
 | macOS | arm64 | N/A | ✅ |
 | Windows | arm64 | N/A | ✅ |
-| Linux | arm64 | glibc | ❌* |
-| Linux | arm64 | musl | ❌* |
-
-*The prebuilt binaries for Linux on arm64 are WIP and not available on npm yet. You can build the package from sources in this repository.
 
 ## Usage
 
