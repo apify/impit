@@ -15,10 +15,11 @@ pub(crate) enum RequestBody<'py> {
 pub fn form_to_bytes(data: HashMap<String, String>) -> Vec<u8> {
     let mut body = Vec::new();
     for (key, value) in data {
-        body.extend_from_slice(key.as_bytes());
-        body.extend_from_slice(b"=");
-        body.extend_from_slice(value.as_bytes());
-        body.extend_from_slice(b"&");
+        body.extend_from_slice(urlencoding::encode(key.as_str()).as_bytes());
+        body.extend_from_slice("=".as_bytes());
+        body.extend_from_slice(urlencoding::encode(value.as_str()).as_bytes());
+        body.extend_from_slice("&".as_bytes());
     }
+    body.pop(); // Remove the last "&"
     body
 }

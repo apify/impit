@@ -87,6 +87,17 @@ class TestRequestBody:
         assert response.status_code == 200
         assert json.loads(response.text)['data'] == '{"Impit-Test":"foořžš"}'
 
+    def test_form_non_ascii_(self, browser: Browser) -> None:
+        impit = Client(browser=browser)
+
+        response = impit.post(
+            get_httpbin_url('/post'),
+            data = { 'Impit-Test': '👾🕵🏻‍♂️🧑‍💻' },
+        );
+
+        assert response.status_code == 200
+        assert json.loads(response.text)['form']['Impit-Test'] == '👾🕵🏻‍♂️🧑‍💻'
+
     def test_passing_binary_body(self, browser: Browser) -> None:
         impit = Client(browser=browser)
 
