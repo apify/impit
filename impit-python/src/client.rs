@@ -7,7 +7,7 @@ use impit::{
 };
 use pyo3::prelude::*;
 
-use crate::response;
+use crate::{request::{form_to_bytes, RequestBody}, response};
 
 #[pyclass]
 pub(crate) struct Client {
@@ -68,7 +68,7 @@ impl Client {
         &mut self,
         url: String,
         content: Option<Vec<u8>>,
-        data: Option<HashMap<String, String>>,
+        data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
         force_http3: Option<bool>,
@@ -81,7 +81,7 @@ impl Client {
         &mut self,
         url: String,
         content: Option<Vec<u8>>,
-        data: Option<HashMap<String, String>>,
+        data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
         force_http3: Option<bool>,
@@ -94,7 +94,7 @@ impl Client {
         &mut self,
         url: String,
         content: Option<Vec<u8>>,
-        data: Option<HashMap<String, String>>,
+        data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
         force_http3: Option<bool>,
@@ -107,7 +107,7 @@ impl Client {
         &mut self,
         url: String,
         content: Option<Vec<u8>>,
-        data: Option<HashMap<String, String>>,
+        data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
         force_http3: Option<bool>,
@@ -120,7 +120,7 @@ impl Client {
         &mut self,
         url: String,
         content: Option<Vec<u8>>,
-        data: Option<HashMap<String, String>>,
+        data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
         force_http3: Option<bool>,
@@ -133,7 +133,7 @@ impl Client {
         &mut self,
         url: String,
         content: Option<Vec<u8>>,
-        data: Option<HashMap<String, String>>,
+        data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
         force_http3: Option<bool>,
@@ -146,7 +146,7 @@ impl Client {
         &mut self,
         url: String,
         content: Option<Vec<u8>>,
-        data: Option<HashMap<String, String>>,
+        data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
         force_http3: Option<bool>,
@@ -159,7 +159,7 @@ impl Client {
         &mut self,
         url: String,
         content: Option<Vec<u8>>,
-        data: Option<HashMap<String, String>>,
+        data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
         force_http3: Option<bool>,
@@ -173,7 +173,7 @@ impl Client {
         method: &str,
         url: String,
         content: Option<Vec<u8>>,
-        data: Option<HashMap<String, String>>,
+        data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
         force_http3: Option<bool>,
@@ -184,19 +184,17 @@ impl Client {
             Some(content) => content,
             None => match data {
                 Some(data) => {
-                    let mut body = Vec::new();
-                    for (key, value) in data {
-                        body.extend_from_slice(key.as_bytes());
-                        body.extend_from_slice(b"=");
-                        body.extend_from_slice(value.as_bytes());
-                        body.extend_from_slice(b"&");
+                    match data {
+                        RequestBody::Bytes(bytes) => bytes,
+                        RequestBody::Form(form) => {
+                            headers.get_or_insert_with(HashMap::new).insert(
+                                "Content-Type".to_string(),
+                                "application/x-www-form-urlencoded".to_string(),
+                            );
+                            form_to_bytes(form)
+                        },
+                        RequestBody::CatchAll(e) => panic!("Unsupported data type in request body: {:#?}", e),
                     }
-                    headers.get_or_insert_with(HashMap::new).insert(
-                        "Content-Type".to_string(),
-                        "application/x-www-form-urlencoded".to_string(),
-                    );
-
-                    body
                 }
                 None => Vec::new(),
             },
