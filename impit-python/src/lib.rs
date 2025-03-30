@@ -2,8 +2,8 @@ use pyo3::prelude::*;
 
 mod async_client;
 mod client;
-mod response;
 mod request;
+mod response;
 use async_client::AsyncClient;
 use client::Client;
 use request::RequestBody;

@@ -12,9 +12,7 @@ pub(crate) enum RequestBody<'py> {
     CatchAll(Bound<'py, PyAny>), // This extraction never fails
 }
 
-pub fn form_to_bytes(
-    data: HashMap<String, String>,
-) -> Vec<u8> {
+pub fn form_to_bytes(data: HashMap<String, String>) -> Vec<u8> {
     let mut body = Vec::new();
     for (key, value) in data {
         body.extend_from_slice(key.as_bytes());

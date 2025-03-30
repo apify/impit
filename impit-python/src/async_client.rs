@@ -238,27 +238,24 @@ impl AsyncClient {
     ) -> Result<pyo3::Bound<'python, PyAny>, PyErr> {
         let mut headers = headers.clone();
 
-        match content {
-            Some(content) => {
-                data = Some(RequestBody::Bytes(content));
-            },
-            None => {},
+        if let Some(content) = content {
+            data = Some(RequestBody::Bytes(content));
         }
 
         let body: Vec<u8> = match data {
-            Some(data) => {
-                match data {
-                    RequestBody::Bytes(bytes) => bytes,
-                    RequestBody::Form(form) => {
-                        headers.get_or_insert_with(HashMap::new).insert(
-                            "Content-Type".to_string(),
-                            "application/x-www-form-urlencoded".to_string(),
-                        );
-                        form_to_bytes(form)
-                    },
-                    RequestBody::CatchAll(e) => panic!("Unsupported data type in request body: {:#?}", e),
+            Some(data) => match data {
+                RequestBody::Bytes(bytes) => bytes,
+                RequestBody::Form(form) => {
+                    headers.get_or_insert_with(HashMap::new).insert(
+                        "Content-Type".to_string(),
+                        "application/x-www-form-urlencoded".to_string(),
+                    );
+                    form_to_bytes(form)
                 }
-            }
+                RequestBody::CatchAll(e) => {
+                    panic!("Unsupported data type in request body: {:#?}", e)
+                }
+            },
             None => Vec::new(),
         };
 
