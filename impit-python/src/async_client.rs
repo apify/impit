@@ -4,7 +4,7 @@ use impit::{emulation::Browser, impit::ImpitBuilder, request::RequestOptions};
 use pyo3::prelude::*;
 use tokio::sync::oneshot;
 
-use crate::response::ImpitPyResponse;
+use crate::{request::form_to_bytes, response::ImpitPyResponse, RequestBody};
 
 #[pyclass]
 pub(crate) struct AsyncClient {
@@ -64,7 +64,7 @@ impl AsyncClient {
         py: Python<'python>,
         url: String,
         content: Option<Vec<u8>>,
-        data: Option<HashMap<String, String>>,
+        data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
         force_http3: Option<bool>,
@@ -78,7 +78,7 @@ impl AsyncClient {
         py: Python<'python>,
         url: String,
         content: Option<Vec<u8>>,
-        data: Option<HashMap<String, String>>,
+        data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
         force_http3: Option<bool>,
@@ -101,7 +101,7 @@ impl AsyncClient {
         py: Python<'python>,
         url: String,
         content: Option<Vec<u8>>,
-        data: Option<HashMap<String, String>>,
+        data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
         force_http3: Option<bool>,
@@ -124,7 +124,7 @@ impl AsyncClient {
         py: Python<'python>,
         url: String,
         content: Option<Vec<u8>>,
-        data: Option<HashMap<String, String>>,
+        data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
         force_http3: Option<bool>,
@@ -147,7 +147,7 @@ impl AsyncClient {
         py: Python<'python>,
         url: String,
         content: Option<Vec<u8>>,
-        data: Option<HashMap<String, String>>,
+        data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
         force_http3: Option<bool>,
@@ -161,7 +161,7 @@ impl AsyncClient {
         py: Python<'python>,
         url: String,
         content: Option<Vec<u8>>,
-        data: Option<HashMap<String, String>>,
+        data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
         force_http3: Option<bool>,
@@ -184,7 +184,7 @@ impl AsyncClient {
         py: Python<'python>,
         url: String,
         content: Option<Vec<u8>>,
-        data: Option<HashMap<String, String>>,
+        data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
         force_http3: Option<bool>,
@@ -207,7 +207,7 @@ impl AsyncClient {
         py: Python<'python>,
         url: String,
         content: Option<Vec<u8>>,
-        data: Option<HashMap<String, String>>,
+        data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
         force_http3: Option<bool>,
@@ -231,33 +231,32 @@ impl AsyncClient {
         method: &str,
         url: String,
         content: Option<Vec<u8>>,
-        data: Option<HashMap<String, String>>,
+        mut data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
         force_http3: Option<bool>,
     ) -> Result<pyo3::Bound<'python, PyAny>, PyErr> {
         let mut headers = headers.clone();
 
-        let body: Vec<u8> = match content {
-            Some(content) => content,
-            None => match data {
-                Some(data) => {
-                    let mut body = Vec::new();
-                    for (key, value) in data {
-                        body.extend_from_slice(key.as_bytes());
-                        body.extend_from_slice(b"=");
-                        body.extend_from_slice(value.as_bytes());
-                        body.extend_from_slice(b"&");
-                    }
+        if let Some(content) = content {
+            data = Some(RequestBody::Bytes(content));
+        }
+
+        let body: Vec<u8> = match data {
+            Some(data) => match data {
+                RequestBody::Bytes(bytes) => bytes,
+                RequestBody::Form(form) => {
                     headers.get_or_insert_with(HashMap::new).insert(
                         "Content-Type".to_string(),
                         "application/x-www-form-urlencoded".to_string(),
                     );
-
-                    body
+                    form_to_bytes(form)
                 }
-                None => Vec::new(),
+                RequestBody::CatchAll(e) => {
+                    panic!("Unsupported data type in request body: {:#?}", e)
+                }
             },
+            None => Vec::new(),
         };
 
         let options = RequestOptions {
