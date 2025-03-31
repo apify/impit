@@ -87,7 +87,7 @@ class TestRequestBody:
         assert response.status_code == 200
         assert json.loads(response.text)['data'] == '{"Impit-Test":"foořžš"}'
 
-    def test_form_non_ascii_(self, browser: Browser) -> None:
+    def test_form_non_ascii(self, browser: Browser) -> None:
         impit = Client(browser=browser)
 
         response = impit.post(

@@ -94,7 +94,7 @@ class TestRequestBody:
         assert json.loads(response.text)['data'] == '{"Impit-Test":"foořžš"}'
 
     @pytest.mark.asyncio
-    async def test_form_non_ascii_(self, browser: Browser) -> None:
+    async def test_form_non_ascii(self, browser: Browser) -> None:
         impit = AsyncClient(browser=browser)
 
         response = await impit.post(
