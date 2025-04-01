@@ -44,7 +44,7 @@
     "universal": "napi universal",
     "copy-version": "napi version"
   },
-  "packageManager": "yarn@4.8.0",
+  "packageManager": "yarn@4.8.1",
   "description": "Impit for JavaScript",
   "optionalDependencies": {
     "impit-darwin-x64": "0.3.1",
