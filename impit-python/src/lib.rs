@@ -14,7 +14,7 @@ use std::collections::HashMap;
 fn impit(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<Client>()?;
     m.add_class::<AsyncClient>()?;
-    m.add_class::<response::ImpitPyResponse>()?; 
+    m.add_class::<response::ImpitPyResponse>()?;
 
     macro_rules! http_no_client {
         ($($name:ident),*) => {

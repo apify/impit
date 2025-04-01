@@ -36,9 +36,8 @@ pub struct ImpitPyResponse {
 impl ImpitPyResponse {
     fn __repr__(&self) -> PyResult<String> {
         Ok(format!(
-            "<Response [{} {}]>", 
-            self.status_code,
-            self.reason_phrase
+            "<Response [{} {}]>",
+            self.status_code, self.reason_phrase
         ))
     }
 }
