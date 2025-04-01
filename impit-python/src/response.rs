@@ -3,9 +3,9 @@ use std::collections::HashMap;
 use pyo3::prelude::*;
 use reqwest::{header::HeaderValue, Response, Version};
 
-#[pyclass]
+#[pyclass(name = "Response")]
 #[derive(Debug, Clone)]
-pub(crate) struct ImpitPyResponse {
+pub struct ImpitPyResponse {
     #[pyo3(get)]
     status_code: u16,
     #[pyo3(get)]
@@ -30,6 +30,17 @@ pub(crate) struct ImpitPyResponse {
     // history: Vec<Response>,
     // #[pyo3(get)]
     // elapsed: Duration,
+}
+
+#[pymethods]
+impl ImpitPyResponse {
+    fn __repr__(&self) -> PyResult<String> {
+        Ok(format!(
+            "<Response [{} {}]>", 
+            self.status_code,
+            self.reason_phrase
+        ))
+    }
 }
 
 impl From<Response> for ImpitPyResponse {

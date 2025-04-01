@@ -6,7 +6,7 @@ from typing import Literal
 Browser = Literal['chrome', 'firefox']
 
 
-class ImpitPyResponse:
+class Response:
     """Response object returned by impit requests."""
 
     status_code: int
@@ -60,7 +60,7 @@ class Client:
         headers: dict[str, str] | None = None,
         timeout: float | None = None,
         force_http3: bool | None = None,
-    ) -> ImpitPyResponse:
+    ) -> Response:
         """Make a GET request.
 
         Args:
@@ -80,7 +80,7 @@ class Client:
         headers: dict[str, str] | None = None,
         timeout: float | None = None,
         force_http3: bool | None = None,
-    ) -> ImpitPyResponse:
+    ) -> Response:
         """Make a POST request.
 
         Args:
@@ -101,7 +101,7 @@ class Client:
         headers: dict[str, str] | None = None,
         timeout: float | None = None,
         force_http3: bool | None = None,
-    ) -> ImpitPyResponse:
+    ) -> Response:
         """Make a PUT request.
 
         Args:
@@ -121,7 +121,7 @@ class Client:
         headers: dict[str, str] | None = None,
         timeout: float | None = None,
         force_http3: bool | None = None,
-    ) -> ImpitPyResponse:
+    ) -> Response:
         """Make a PATCH request.
 
         Args:
@@ -141,7 +141,7 @@ class Client:
         headers: dict[str, str] | None = None,
         timeout: float | None = None,
         force_http3: bool | None = None,
-    ) -> ImpitPyResponse:
+    ) -> Response:
         """Make a DELETE request.
 
         Args:
@@ -161,7 +161,7 @@ class Client:
         headers: dict[str, str] | None = None,
         timeout: float | None = None,
         force_http3: bool | None = None,
-    ) -> ImpitPyResponse:
+    ) -> Response:
         """Make a HEAD request.
 
         Args:
@@ -181,7 +181,7 @@ class Client:
         headers: dict[str, str] | None = None,
         timeout: float | None = None,
         force_http3: bool | None = None,
-    ) -> ImpitPyResponse:
+    ) -> Response:
         """Make an OPTIONS request.
 
         Args:
@@ -201,7 +201,7 @@ class Client:
         headers: dict[str, str] | None = None,
         timeout: float | None = None,
         force_http3: bool | None = None,
-    ) -> ImpitPyResponse:
+    ) -> Response:
         """Make a TRACE request.
 
         Args:
@@ -222,7 +222,7 @@ class Client:
         headers: dict[str, str] | None = None,
         timeout: float | None = None,
         force_http3: bool | None = None,
-    ) -> ImpitPyResponse:
+    ) -> Response:
         """Make an HTTP request with the specified method.
 
         Args:
@@ -265,7 +265,7 @@ class AsyncClient:
         headers: dict[str, str] | None = None,
         timeout: float | None = None,
         force_http3: bool | None = None,
-    ) -> ImpitPyResponse:
+    ) -> Response:
         """Make an asynchronous GET request.
 
         Args:
@@ -285,7 +285,7 @@ class AsyncClient:
         headers: dict[str, str] | None = None,
         timeout: float | None = None,
         force_http3: bool | None = None,
-    ) -> ImpitPyResponse:
+    ) -> Response:
         """Make an asynchronous POST request.
 
         Args:
@@ -305,7 +305,7 @@ class AsyncClient:
         headers: dict[str, str] | None = None,
         timeout: float | None = None,
         force_http3: bool | None = None,
-    ) -> ImpitPyResponse:
+    ) -> Response:
         """Make an asynchronous PUT request.
 
         Args:
@@ -325,7 +325,7 @@ class AsyncClient:
         headers: dict[str, str] | None = None,
         timeout: float | None = None,
         force_http3: bool | None = None,
-    ) -> ImpitPyResponse:
+    ) -> Response:
         """Make an asynchronous PATCH request.
 
         Args:
@@ -345,7 +345,7 @@ class AsyncClient:
         headers: dict[str, str] | None = None,
         timeout: float | None = None,
         force_http3: bool | None = None,
-    ) -> ImpitPyResponse:
+    ) -> Response:
         """Make an asynchronous DELETE request.
 
         Args:
@@ -365,7 +365,7 @@ class AsyncClient:
         headers: dict[str, str] | None = None,
         timeout: float | None = None,
         force_http3: bool | None = None,
-    ) -> ImpitPyResponse:
+    ) -> Response:
         """Make an asynchronous HEAD request.
 
         Args:
@@ -385,7 +385,7 @@ class AsyncClient:
         headers: dict[str, str] | None = None,
         timeout: float | None = None,
         force_http3: bool | None = None,
-    ) -> ImpitPyResponse:
+    ) -> Response:
         """Make an asynchronous OPTIONS request.
 
         Args:
@@ -405,7 +405,7 @@ class AsyncClient:
         headers: dict[str, str] | None = None,
         timeout: float | None = None,
         force_http3: bool | None = None,
-    ) -> ImpitPyResponse:
+    ) -> Response:
         """Make an asynchronous TRACE request.
 
         Args:
@@ -426,7 +426,7 @@ class AsyncClient:
         headers: dict[str, str] | None = None,
         timeout: float | None = None,
         force_http3: bool | None = None,
-    ) -> ImpitPyResponse:
+    ) -> Response:
         """Make an asynchronous HTTP request with the specified method.
 
         Args:
@@ -447,7 +447,7 @@ def get(
     headers: dict[str, str] | None = None,
     timeout: float | None = None,
     force_http3: bool | None = None,
-) -> ImpitPyResponse:
+) -> Response:
     """Make a GET request without creating a client instance.
 
     Args:
@@ -470,7 +470,7 @@ def post(
     headers: dict[str, str] | None = None,
     timeout: float | None = None,
     force_http3: bool | None = None,
-) -> ImpitPyResponse:
+) -> Response:
     """Make a POST request without creating a client instance.
 
     Args:
@@ -493,7 +493,7 @@ def put(
     headers: dict[str, str] | None = None,
     timeout: float | None = None,
     force_http3: bool | None = None,
-) -> ImpitPyResponse:
+) -> Response:
     """Make a PUT request without creating a client instance.
 
     Args:
@@ -516,7 +516,7 @@ def patch(
     headers: dict[str, str] | None = None,
     timeout: float | None = None,
     force_http3: bool | None = None,
-) -> ImpitPyResponse:
+) -> Response:
     """Make a PATCH request without creating a client instance.
 
     Args:
@@ -539,7 +539,7 @@ def delete(
     headers: dict[str, str] | None = None,
     timeout: float | None = None,
     force_http3: bool | None = None,
-) -> ImpitPyResponse:
+) -> Response:
     """Make a DELETE request without creating a client instance.
 
     Args:
@@ -562,7 +562,7 @@ def head(
     headers: dict[str, str] | None = None,
     timeout: float | None = None,
     force_http3: bool | None = None,
-) -> ImpitPyResponse:
+) -> Response:
     """Make a HEAD request without creating a client instance.
 
     Args:
@@ -585,7 +585,7 @@ def options(
     headers: dict[str, str] | None = None,
     timeout: float | None = None,
     force_http3: bool | None = None,
-) -> ImpitPyResponse:
+) -> Response:
     """Make an OPTIONS request without creating a client instance.
 
     Args:
@@ -605,7 +605,7 @@ def trace(
     headers: dict[str, str] | None = None,
     timeout: float | None = None,
     force_http3: bool | None = None,
-) -> ImpitPyResponse:
+) -> Response:
     """Make a TRACE request without creating a client instance.
 
     Args:

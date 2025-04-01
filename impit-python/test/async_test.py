@@ -86,10 +86,9 @@ class TestRequestBody:
 
         response = await impit.post(
             get_httpbin_url('/post'),
-            data = bytearray('{"Impit-Test":"foořžš"}', 'utf-8'),
-            headers = { 'Content-Type': 'application/json' }
-        );
-
+            data=bytearray('{"Impit-Test":"foořžš"}', 'utf-8'),
+            headers={'Content-Type': 'application/json'},
+        )
         assert response.status_code == 200
         assert json.loads(response.text)['data'] == '{"Impit-Test":"foořžš"}'
 
@@ -99,9 +98,8 @@ class TestRequestBody:
 
         response = await impit.post(
             get_httpbin_url('/post'),
-            data = { 'Impit-Test': '👾🕵🏻‍♂️🧑‍💻' },
-        );
-
+            data={'Impit-Test': '👾🕵🏻‍♂️🧑‍💻'},
+        )
         assert response.status_code == 200
         assert json.loads(response.text)['form']['Impit-Test'] == '👾🕵🏻‍♂️🧑‍💻'
 
