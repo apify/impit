@@ -34,11 +34,11 @@ pub struct ImpitPyResponse {
 
 #[pymethods]
 impl ImpitPyResponse {
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!(
+    fn __repr__(&self) -> String {
+        format!(
             "<Response [{} {}]>",
             self.status_code, self.reason_phrase
-        ))
+        )
     }
 }
 
