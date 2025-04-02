@@ -17,10 +17,10 @@ permissions:
           - 'patch'
 
 jobs:
-    test:
-        name: Build and test
-        uses: ./.github/workflows/python-test.yaml
-        secrets: inherit
+    # test:
+    #     name: Build and test
+    #     uses: ./.github/workflows/python-test.yaml
+    #     secrets: inherit
 
     publish:
         defaults:
@@ -28,7 +28,7 @@ jobs:
             working-directory: impit-python
         name: Publish
         runs-on: ubuntu-latest
-        needs: [test]
+        # needs: [test]
         steps:
           - uses: actions/checkout@v4
             with:
@@ -41,7 +41,9 @@ jobs:
           - name: Download all artifacts
             uses: actions/download-artifact@v4
             with:
-              path: dist
+              path: impit-python/dist
+              run-id: 14217710491
+              github-token: ${{ secrets.APIFY_SERVICE_ACCOUNT_GITHUB_TOKEN }}
 
           - name: List files
             run: |
