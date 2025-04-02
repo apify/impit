@@ -21,6 +21,7 @@ on:
         - 'impit/**'
         - 'Cargo.*'
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: read
