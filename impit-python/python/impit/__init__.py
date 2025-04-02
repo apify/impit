@@ -3,6 +3,7 @@ from typing import Literal
 from .impit import (
     AsyncClient,
     Client,
+    Response,
     delete,
     get,
     head,
@@ -17,6 +18,7 @@ __all__ = [
     'AsyncClient',
     'Browser',
     'Client',
+    'Response',
     'delete',
     'get',
     'head',
