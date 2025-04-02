@@ -3,6 +3,7 @@ permissions:
   contents: write
   id-token: write
 'on':
+  push:
   workflow_dispatch:
     inputs:
       bump:
