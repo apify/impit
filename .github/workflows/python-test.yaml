@@ -90,6 +90,8 @@ jobs:
             APIFY_HTTPBIN_TOKEN: ${{ secrets.APIFY_HTTPBIN_TOKEN }}
         run: |
           set -e
+          uv venv
+          source .venv/bin/activate
           uv pip install --no-index --find-links dist --force-reinstall impit
           uv pip install --group=dev
           uv run pytest --reruns 3
@@ -109,6 +111,8 @@ jobs:
             pip3 install -U uv
           run: |
             set -e
+            uv venv
+            source .venv/bin/activate
             uv pip install --no-index --find-links dist --force-reinstall impit
             uv pip install --group=dev
             uv run pytest --reruns 3
@@ -157,6 +161,8 @@ jobs:
             set -e
             apk add py3-pip
             pip install -U uv
+            uv venv
+            source .venv/bin/activate
             uv pip install --no-index --find-links dist --force-reinstall impit
             uv pip install --group=dev
             uv run pytest --reruns 3
@@ -175,6 +181,8 @@ jobs:
           run: |
             set -e
             pip install -U uv
+            uv venv
+            source .venv/bin/activate
             uv pip install --no-index --find-links dist --force-reinstall impit
             uv pip install --group=dev
             uv run pytest --reruns 3
@@ -218,6 +226,8 @@ jobs:
         env:
             APIFY_HTTPBIN_TOKEN: ${{ secrets.APIFY_HTTPBIN_TOKEN }}
         run: |
+          uv venv
+          source .venv/bin/activate
           uv pip install --no-index --find-links dist --force-reinstall impit
           uv pip install --group=dev
           uv run pytest --reruns 3
@@ -259,6 +269,8 @@ jobs:
         env:
             APIFY_HTTPBIN_TOKEN: ${{ secrets.APIFY_HTTPBIN_TOKEN }}
         run: |
+          uv venv
+          source .venv/bin/activate
           uv pip install --no-index --find-links dist --force-reinstall impit
           uv pip install --group=dev
           uv run pytest --reruns 3
