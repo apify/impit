@@ -1,7 +1,8 @@
 #![allow(clippy::await_holding_refcell_ref, deprecated)]
 use impit::utils::{decode, ContentType};
 use napi::{
-  bindgen_prelude::{Buffer, FromNapiValue, Object, ReadableStream, Result, This, ToNapiValue}, sys, Env, JsFunction, JsObject, JsUnknown
+  bindgen_prelude::{Buffer, FromNapiValue, Object, ReadableStream, Result, This, ToNapiValue},
+  sys, Env, JsFunction, JsObject, JsUnknown,
 };
 use napi_derive::napi;
 use reqwest::Response;
@@ -23,30 +24,30 @@ pub struct ImpitResponse {
 }
 
 impl ToNapiValue for &mut Headers {
-    unsafe fn to_napi_value(raw_env: sys::napi_env, val: Self) -> Result<sys::napi_value> {
-        let map = val.0.clone();
-        let env = Env::from(raw_env);
-        let mut obj = env.create_object()?;
-        for (k, v) in map.into_iter() {
-          obj.set(k.as_str(), v)?;
-        }
+  unsafe fn to_napi_value(raw_env: sys::napi_env, val: Self) -> Result<sys::napi_value> {
+    let map = val.0.clone();
+    let env = Env::from(raw_env);
+    let mut obj = env.create_object()?;
+    for (k, v) in map.into_iter() {
+      obj.set(k.as_str(), v)?;
+    }
 
-        unsafe { Object::to_napi_value(raw_env, obj) }
-      }
+    unsafe { Object::to_napi_value(raw_env, obj) }
+  }
 }
 
 impl FromNapiValue for Headers {
-    unsafe fn from_napi_value(env: sys::napi_env, napi_val: sys::napi_value) -> Result<Self> {
-        let obj = unsafe { Object::from_napi_value(env, napi_val)? };
-        let mut map = HashMap::default();
-        for key in Object::keys(&obj)?.into_iter() {
-            if let Some(val) = obj.get(&key)? {
-                map.insert(key, val);
-            }
-        }
-
-        Ok(Headers(map))
+  unsafe fn from_napi_value(env: sys::napi_env, napi_val: sys::napi_value) -> Result<Self> {
+    let obj = unsafe { Object::from_napi_value(env, napi_val)? };
+    let mut map = HashMap::default();
+    for key in Object::keys(&obj)?.into_iter() {
+      if let Some(val) = obj.get(&key)? {
+        map.insert(key, val);
+      }
     }
+
+    Ok(Headers(map))
+  }
 }
 
 #[napi]
@@ -58,11 +59,13 @@ impl ImpitResponse {
       .canonical_reason()
       .unwrap_or("")
       .to_string();
-    let headers = Headers(response
-      .headers()
-      .iter()
-      .map(|(k, v)| (k.as_str().to_string(), v.to_str().unwrap().to_string()))
-      .collect());
+    let headers = Headers(
+      response
+        .headers()
+        .iter()
+        .map(|(k, v)| (k.as_str().to_string(), v.to_str().unwrap().to_string()))
+        .collect(),
+    );
     let ok = response.status().is_success();
     let url = response.url().to_string();
 

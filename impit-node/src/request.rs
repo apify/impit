@@ -1,4 +1,4 @@
-use napi::{bindgen_prelude::{Buffer}, Either};
+use napi::{bindgen_prelude::Buffer, Either};
 use napi_derive::napi;
 use std::collections::HashMap;
 
