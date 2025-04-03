@@ -88,7 +88,7 @@ jobs:
           name: wheels-linux-${{ matrix.platform.target }}
           path: impit-python/dist
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          run-id: 14220938490
+          run-id: 14166233038
 
       - name: pytest
         if: ${{ startsWith(matrix.platform.target, 'x86_64') }}
@@ -100,9 +100,9 @@ jobs:
           set -e
           uv venv
           source .venv/bin/activate
+          uv sync --no-build -v || true
           uv pip install --no-index --find-links dist --force-reinstall impit -v
-          uv sync --no-binary-package=impit
-          uv run pytest --reruns 3
+          python -m pytest --reruns 3
 
       - name: pytest
         if: ${{ !startsWith(matrix.platform.target, 'x86') && matrix.platform.target != 'ppc64' }}
@@ -121,9 +121,9 @@ jobs:
             set -e
             uv venv
             source .venv/bin/activate
+            uv sync --no-build -v || true
             uv pip install --no-index --find-links dist --force-reinstall impit -v
-            uv sync --no-binary-package=impit
-            uv run pytest --reruns 3
+            python -m pytest --reruns 3
 
   musllinux:
     runs-on: ${{ matrix.platform.runner }}
@@ -165,7 +165,7 @@ jobs:
             name: wheels-musllinux-${{ matrix.platform.target }}
             path: impit-python/dist
             github-token: ${{ secrets.GITHUB_TOKEN }}
-            run-id: 14220938490
+            run-id: 14166233038
 
       - name: pytest
         if: ${{ startsWith(matrix.platform.target, 'x86_64') }}
@@ -179,9 +179,9 @@ jobs:
             python3 -m virtualenv .venv
             source .venv/bin/activate
             pip install -U uv
+            uv sync --no-build -v || true
             uv pip install --no-index --find-links dist --force-reinstall impit -v
-            uv sync --no-binary-package=impit
-            uv run pytest --reruns 3
+            python -m pytest --reruns 3
 
       - name: pytest
         if: ${{ !startsWith(matrix.platform.target, 'x86') }}
@@ -200,9 +200,9 @@ jobs:
             python3 -m virtualenv .venv
             source .venv/bin/activate
             pip install -U uv
+            uv sync --no-build -v || true
             uv pip install --no-index --find-links dist --force-reinstall impit -v
-            uv sync --no-binary-package=impit
-            uv run pytest --reruns 3
+            python -m pytest --reruns 3
 
 #   windows:
 #     runs-on: ${{ matrix.platform.runner }}
@@ -247,7 +247,7 @@ jobs:
 #           source .venv/bin/activate
 #           uv pip install --no-index --find-links dist --force-reinstall impit -v
 #           uv pip install --group=dev -v
-#           uv run pytest --reruns 3
+#           python -m pytest --reruns 3
 
   macos:
     runs-on: ${{ matrix.platform.runner }}
@@ -288,7 +288,7 @@ jobs:
             name: wheels-macos-${{ matrix.platform.target }}
             path: impit-python/dist
             github-token: ${{ secrets.GITHUB_TOKEN }}
-            run-id: 14220938490
+            run-id: 14166233038
 
       - name: pytest
         working-directory: impit-python
@@ -297,7 +297,7 @@ jobs:
         run: |
           uv venv
           source .venv/bin/activate
+          uv sync --no-build -v || true
           uv pip install --no-index --find-links dist --force-reinstall impit -v
-          uv sync --no-binary-package=impit
-          uv run pytest --reruns 3
+          python -m pytest --reruns 3
 
