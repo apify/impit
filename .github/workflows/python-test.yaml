@@ -92,8 +92,8 @@ jobs:
           set -e
           uv venv
           source .venv/bin/activate
-          uv pip install --no-index --find-links dist --force-reinstall impit
-          uv pip install --group=dev
+          uv pip install --no-index --find-links dist --force-reinstall impit -v
+          uv pip install --group=dev -v
           uv run pytest --reruns 3
 
       - name: pytest
@@ -113,8 +113,8 @@ jobs:
             set -e
             uv venv
             source .venv/bin/activate
-            uv pip install --no-index --find-links dist --force-reinstall impit
-            uv pip install --group=dev
+            uv pip install --no-index --find-links dist --force-reinstall impit -v
+            uv pip install --group=dev -v
             uv run pytest --reruns 3
 
   musllinux:
@@ -163,8 +163,8 @@ jobs:
             pip install -U uv
             uv venv
             source .venv/bin/activate
-            uv pip install --no-index --find-links dist --force-reinstall impit
-            uv pip install --group=dev
+            uv pip install --no-index --find-links dist --force-reinstall impit -v
+            uv pip install --group=dev -v
             uv run pytest --reruns 3
 
       - name: pytest
@@ -183,8 +183,8 @@ jobs:
             pip install -U uv
             uv venv
             source .venv/bin/activate
-            uv pip install --no-index --find-links dist --force-reinstall impit
-            uv pip install --group=dev
+            uv pip install --no-index --find-links dist --force-reinstall impit -v
+            uv pip install --group=dev -v
             uv run pytest --reruns 3
 
   windows:
@@ -228,8 +228,8 @@ jobs:
         run: |
           uv venv
           source .venv/bin/activate
-          uv pip install --no-index --find-links dist --force-reinstall impit
-          uv pip install --group=dev
+          uv pip install --no-index --find-links dist --force-reinstall impit -v
+          uv pip install --group=dev -v
           uv run pytest --reruns 3
 
   macos:
@@ -271,7 +271,7 @@ jobs:
         run: |
           uv venv
           source .venv/bin/activate
-          uv pip install --no-index --find-links dist --force-reinstall impit
-          uv pip install --group=dev
+          uv pip install --no-index --find-links dist --force-reinstall impit -v
+          uv pip install --group=dev -v
           uv run pytest --reruns 3
 
