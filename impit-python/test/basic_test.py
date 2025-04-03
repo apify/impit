@@ -26,6 +26,9 @@ class TestBasicRequests:
         resp = impit.get(f'{protocol}example.org')
         assert resp.status_code == 200
 
+    def test_retries(self, protocol: str, browser: Browser) -> None:
+        assert False == True
+
     def test_headers_work(self, browser: Browser) -> None:
         impit = Client(browser=browser)
 
