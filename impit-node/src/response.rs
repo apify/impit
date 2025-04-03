@@ -1,7 +1,7 @@
 #![allow(clippy::await_holding_refcell_ref, deprecated)]
 use impit::utils::{decode, ContentType};
 use napi::{
-  bindgen_prelude::{Buffer, FromNapiValue, Object, ReadableStream, Result, This, ToNapiValue},
+  bindgen_prelude::{Buffer, FromNapiValue, ReadableStream, Result, This, ToNapiValue},
   sys, Env, JsFunction, JsObject, JsUnknown,
 };
 use napi_derive::napi;
@@ -26,27 +26,14 @@ pub struct ImpitResponse {
 impl ToNapiValue for &mut Headers {
   unsafe fn to_napi_value(raw_env: sys::napi_env, val: Self) -> Result<sys::napi_value> {
     let map = val.0.clone();
-    let env = Env::from(raw_env);
-    let mut obj = env.create_object()?;
-    for (k, v) in map.into_iter() {
-      obj.set(k.as_str(), v)?;
-    }
 
-    unsafe { Object::to_napi_value(raw_env, obj) }
+    HashMap::to_napi_value(raw_env, map)
   }
 }
 
 impl FromNapiValue for Headers {
   unsafe fn from_napi_value(env: sys::napi_env, napi_val: sys::napi_value) -> Result<Self> {
-    let obj = unsafe { Object::from_napi_value(env, napi_val)? };
-    let mut map = HashMap::default();
-    for key in Object::keys(&obj)?.into_iter() {
-      if let Some(val) = obj.get(&key)? {
-        map.insert(key, val);
-      }
-    }
-
-    Ok(Headers(map))
+    HashMap::from_napi_value(env, napi_val).map(Headers)
   }
 }
 
