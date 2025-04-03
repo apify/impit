@@ -44,43 +44,51 @@ jobs:
       - name: Set up Python
         run: uv python install
 
-      - name: Calculate openssl-vendored
-        shell: bash
-        id: is-openssl-vendored
-        run: |
-          if [[ "${{ startsWith(matrix.platform.target, 'x86') }}" == "true" ]]; then
-            echo "enabled=" >> $GITHUB_OUTPUT
-          else
-            echo "enabled=--features openssl-vendored" >> $GITHUB_OUTPUT
-          fi
+    #   - name: Calculate openssl-vendored
+    #     shell: bash
+    #     id: is-openssl-vendored
+    #     run: |
+    #       if [[ "${{ startsWith(matrix.platform.target, 'x86') }}" == "true" ]]; then
+    #         echo "enabled=" >> $GITHUB_OUTPUT
+    #       else
+    #         echo "enabled=--features openssl-vendored" >> $GITHUB_OUTPUT
+    #       fi
 
-      - name: Build wheels
-        uses: PyO3/maturin-action@v1
-        with:
-          working-directory: impit-python
-          target: ${{ matrix.platform.target }}
-          args: --release --out dist --find-interpreter
-          sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
-          manylinux: auto
-          before-script-linux: |
-            case "${{ matrix.platform.target }}" in
-              "aarch64" | "armv7" | "s390x" | "ppc64le")
-                # NOTE: pypa/manylinux docker images are Debian based
-                sudo apt-get update
-                sudo apt-get install -y pkg-config libssl-dev perl
-                ;;
-              "x86" | "x86_64")
-                # NOTE: rust-cross/manylinux docker images are CentOS based
-                yum update -y
-                yum install -y openssl openssl-devel perl perl-IPC-Cmd
-                ;;
-            esac
+    #   - name: Build wheels
+    #     uses: PyO3/maturin-action@v1
+    #     with:
+    #       working-directory: impit-python
+    #       target: ${{ matrix.platform.target }}
+    #       args: --release --out dist --find-interpreter
+    #       sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
+    #       manylinux: auto
+    #       before-script-linux: |
+    #         case "${{ matrix.platform.target }}" in
+    #           "aarch64" | "armv7" | "s390x" | "ppc64le")
+    #             # NOTE: pypa/manylinux docker images are Debian based
+    #             sudo apt-get update
+    #             sudo apt-get install -y pkg-config libssl-dev perl
+    #             ;;
+    #           "x86" | "x86_64")
+    #             # NOTE: rust-cross/manylinux docker images are CentOS based
+    #             yum update -y
+    #             yum install -y openssl openssl-devel perl perl-IPC-Cmd
+    #             ;;
+    #         esac
 
-      - name: Upload wheels
-        uses: actions/upload-artifact@v4
+    #   - name: Upload wheels
+    #     uses: actions/upload-artifact@v4
+    #     with:
+    #       name: wheels-linux-${{ matrix.platform.target }}
+    #       path: impit-python/dist
+
+      - name: Download wheels
+        uses: actions/download-artifact@v4
         with:
           name: wheels-linux-${{ matrix.platform.target }}
           path: impit-python/dist
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: 14220938490
 
       - name: pytest
         if: ${{ startsWith(matrix.platform.target, 'x86_64') }}
@@ -133,23 +141,31 @@ jobs:
         with:
           python-version: 3.x
 
-      - name: Build wheels
-        uses: PyO3/maturin-action@v1
-        with:
-          working-directory: impit-python
-          target: ${{ matrix.platform.target }}
-          args: --release --out dist --find-interpreter
-          sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
-          manylinux: musllinux_1_2
-          before-script-linux: |
-            sudo apt-get update
-            sudo apt-get install -y pkg-config libssl-dev perl
+    #   - name: Build wheels
+    #     uses: PyO3/maturin-action@v1
+    #     with:
+    #       working-directory: impit-python
+    #       target: ${{ matrix.platform.target }}
+    #       args: --release --out dist --find-interpreter
+    #       sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
+    #       manylinux: musllinux_1_2
+    #       before-script-linux: |
+    #         sudo apt-get update
+    #         sudo apt-get install -y pkg-config libssl-dev perl
 
-      - name: Upload wheels
-        uses: actions/upload-artifact@v4
+    #   - name: Upload wheels
+    #     uses: actions/upload-artifact@v4
+    #     with:
+    #       name: wheels-musllinux-${{ matrix.platform.target }}
+    #       path: impit-python/dist
+
+      - name: Download wheels
+        uses: actions/download-artifact@v4
         with:
-          name: wheels-musllinux-${{ matrix.platform.target }}
-          path: impit-python/dist
+            name: wheels-musllinux-${{ matrix.platform.target }}
+            path: impit-python/dist
+            github-token: ${{ secrets.GITHUB_TOKEN }}
+            run-id: 14220938490
 
       - name: pytest
         if: ${{ startsWith(matrix.platform.target, 'x86_64') }}
@@ -187,50 +203,50 @@ jobs:
             uv pip install --group=dev -v
             uv run pytest --reruns 3
 
-  windows:
-    runs-on: ${{ matrix.platform.runner }}
-    strategy:
-      matrix:
-        platform:
-          - runner: windows-latest
-            target: x64
-    steps:
-      - uses: actions/checkout@v4
+#   windows:
+#     runs-on: ${{ matrix.platform.runner }}
+#     strategy:
+#       matrix:
+#         platform:
+#           - runner: windows-latest
+#             target: x64
+#     steps:
+#       - uses: actions/checkout@v4
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
+#       - name: Install uv
+#         uses: astral-sh/setup-uv@v5
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: 3.x
-          architecture: ${{ matrix.platform.target }}
+#       - uses: actions/setup-python@v5
+#         with:
+#           python-version: 3.x
+#           architecture: ${{ matrix.platform.target }}
 
-      - name: Build wheels
-        uses: PyO3/maturin-action@v1
-        with:
-          working-directory: impit-python
-          target: ${{ matrix.platform.target }}
-          args: --release --out dist --find-interpreter
-          sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
+#       - name: Build wheels
+#         uses: PyO3/maturin-action@v1
+#         with:
+#           working-directory: impit-python
+#           target: ${{ matrix.platform.target }}
+#           args: --release --out dist --find-interpreter
+#           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
 
-      - name: Upload wheels
-        uses: actions/upload-artifact@v4
-        with:
-          name: wheels-windows-${{ matrix.platform.target }}
-          path: impit-python/dist
+#       - name: Upload wheels
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: wheels-windows-${{ matrix.platform.target }}
+#           path: impit-python/dist
 
-      - name: pytest
-        if: ${{ !startsWith(matrix.platform.target, 'aarch64') }}
-        shell: bash
-        working-directory: impit-python
-        env:
-            APIFY_HTTPBIN_TOKEN: ${{ secrets.APIFY_HTTPBIN_TOKEN }}
-        run: |
-          uv venv
-          source .venv/bin/activate
-          uv pip install --no-index --find-links dist --force-reinstall impit -v
-          uv pip install --group=dev -v
-          uv run pytest --reruns 3
+#       - name: pytest
+#         if: ${{ !startsWith(matrix.platform.target, 'aarch64') }}
+#         shell: bash
+#         working-directory: impit-python
+#         env:
+#             APIFY_HTTPBIN_TOKEN: ${{ secrets.APIFY_HTTPBIN_TOKEN }}
+#         run: |
+#           uv venv
+#           source .venv/bin/activate
+#           uv pip install --no-index --find-links dist --force-reinstall impit -v
+#           uv pip install --group=dev -v
+#           uv run pytest --reruns 3
 
   macos:
     runs-on: ${{ matrix.platform.runner }}
@@ -250,19 +266,28 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
 
-      - name: Build wheels
-        uses: PyO3/maturin-action@v1
-        with:
-          working-directory: impit-python
-          target: ${{ matrix.platform.target }}
-          args: --release --out dist --find-interpreter
-          sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
+    #   - name: Build wheels
+    #     uses: PyO3/maturin-action@v1
+    #     with:
+    #       working-directory: impit-python
+    #       target: ${{ matrix.platform.target }}
+    #       args: --release --out dist --find-interpreter
+    #       sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
 
-      - name: Upload wheels
-        uses: actions/upload-artifact@v4
+    #   - name: Upload wheels
+    #     uses: actions/upload-artifact@v4
+    #     with:
+    #       name: wheels-macos-${{ matrix.platform.target }}
+    #       path: impit-python/dist
+
+
+      - name: Download wheels
+        uses: actions/download-artifact@v4
         with:
-          name: wheels-macos-${{ matrix.platform.target }}
-          path: impit-python/dist
+            name: wheels-macos-${{ matrix.platform.target }}
+            path: impit-python/dist
+            github-token: ${{ secrets.GITHUB_TOKEN }}
+            run-id: 14220938490
 
       - name: pytest
         working-directory: impit-python
