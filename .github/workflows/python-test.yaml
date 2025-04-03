@@ -101,7 +101,7 @@ jobs:
           uv venv
           source .venv/bin/activate
           uv pip install --no-index --find-links dist --force-reinstall impit -v
-          uv sync --no-build-package=impit
+          uv sync --no-binary-package=impit
           uv run pytest --reruns 3
 
       - name: pytest
@@ -122,7 +122,7 @@ jobs:
             uv venv
             source .venv/bin/activate
             uv pip install --no-index --find-links dist --force-reinstall impit -v
-            uv sync --no-build-package=impit
+            uv sync --no-binary-package=impit
             uv run pytest --reruns 3
 
   musllinux:
@@ -179,8 +179,8 @@ jobs:
             python3 -m virtualenv .venv
             source .venv/bin/activate
             pip install -U uv
-            uv pip install --no-index --find-links dist --force-reinstall impit -v
-            uv sync --no-build-package=impit
+            uv pip install --no-index --find-links impit-python/dist --force-reinstall impit -v
+            uv sync --no-binary-package=impit
             uv run pytest --reruns 3
 
       - name: pytest
@@ -199,8 +199,8 @@ jobs:
             python3 -m virtualenv .venv
             source .venv/bin/activate
             pip install -U uv
-            uv pip install --no-index --find-links dist --force-reinstall impit -v
-            uv sync --no-build-package=impit
+            uv pip install --no-index --find-links impit-python/dist --force-reinstall impit -v
+            uv sync --no-binary-package=impit
             uv run pytest --reruns 3
 
 #   windows:
@@ -297,6 +297,6 @@ jobs:
           uv venv
           source .venv/bin/activate
           uv pip install --no-index --find-links dist --force-reinstall impit -v
-          uv sync --no-build-package=impit
+          uv sync --no-binary-package=impit
           uv run pytest --reruns 3
 
