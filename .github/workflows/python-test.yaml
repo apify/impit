@@ -101,7 +101,7 @@ jobs:
           uv venv
           source .venv/bin/activate
           uv pip install --no-index --find-links dist --force-reinstall impit -v
-          uv pip install --group=dev -v
+          uv sync --no-build-package=impit
           uv run pytest --reruns 3
 
       - name: pytest
@@ -122,7 +122,7 @@ jobs:
             uv venv
             source .venv/bin/activate
             uv pip install --no-index --find-links dist --force-reinstall impit -v
-            uv pip install --group=dev -v
+            uv sync --no-build-package=impit
             uv run pytest --reruns 3
 
   musllinux:
@@ -175,12 +175,12 @@ jobs:
           options: -v ${{ github.workspace }}:/io -w /io -e APIFY_HTTPBIN_TOKEN=${{ secrets.APIFY_HTTPBIN_TOKEN }}
           run: |
             set -e
-            apk add py3-pip
-            pip install -U uv
-            uv venv
+            apk add py3-pip py3-virtualenv
+            python3 -m virtualenv .venv
             source .venv/bin/activate
+            pip install -U uv
             uv pip install --no-index --find-links dist --force-reinstall impit -v
-            uv pip install --group=dev -v
+            uv sync --no-build-package=impit
             uv run pytest --reruns 3
 
       - name: pytest
@@ -196,11 +196,11 @@ jobs:
             apk add py3-virtualenv
           run: |
             set -e
-            pip install -U uv
-            uv venv
+            python3 -m virtualenv .venv
             source .venv/bin/activate
+            pip install -U uv
             uv pip install --no-index --find-links dist --force-reinstall impit -v
-            uv pip install --group=dev -v
+            uv sync --no-build-package=impit
             uv run pytest --reruns 3
 
 #   windows:
@@ -297,6 +297,6 @@ jobs:
           uv venv
           source .venv/bin/activate
           uv pip install --no-index --find-links dist --force-reinstall impit -v
-          uv pip install --group=dev -v
+          uv sync --no-build-package=impit
           uv run pytest --reruns 3
 
