@@ -61,8 +61,7 @@ impl ImpitWrapper {
 
     let body = request_init
       .as_ref()
-      .and_then(|init| init.body.as_ref())
-      .cloned();
+      .and_then(|init| init.body.as_ref());
 
     let body: Option<Vec<u8>> = body.map(serialize_body);
 
