@@ -42,6 +42,7 @@ dependencies = []
 dev = [
     "mypy",
     "pytest-asyncio",
+    "pytest-rerunfailures",
     "pytest-cov",
     "pytest-only",
     "pytest-xdist",
