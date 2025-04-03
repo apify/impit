@@ -100,7 +100,7 @@ jobs:
           set -e
           uv venv
           source .venv/bin/activate
-          uv sync --no-build -v || true
+          uv sync --no-install-package impit -v
           uv pip install --no-index --find-links dist --force-reinstall impit -v
           python -m pytest --reruns 3
 
@@ -121,7 +121,7 @@ jobs:
             set -e
             uv venv
             source .venv/bin/activate
-            uv sync --no-build -v || true
+            uv sync --no-install-package impit -v
             uv pip install --no-index --find-links dist --force-reinstall impit -v
             python -m pytest --reruns 3
 
@@ -179,7 +179,7 @@ jobs:
             python3 -m virtualenv .venv
             source .venv/bin/activate
             pip install -U uv
-            uv sync --no-build -v || true
+            uv sync --no-install-package impit -v
             uv pip install --no-index --find-links dist --force-reinstall impit -v
             python -m pytest --reruns 3
 
@@ -200,7 +200,7 @@ jobs:
             python3 -m virtualenv .venv
             source .venv/bin/activate
             pip install -U uv
-            uv sync --no-build -v || true
+            uv sync --no-install-package impit -v
             uv pip install --no-index --find-links dist --force-reinstall impit -v
             python -m pytest --reruns 3
 
@@ -297,7 +297,7 @@ jobs:
         run: |
           uv venv
           source .venv/bin/activate
-          uv sync --no-build -v || true
+          uv sync --no-install-package impit -v
           uv pip install --no-index --find-links dist --force-reinstall impit -v
           python -m pytest --reruns 3
 
