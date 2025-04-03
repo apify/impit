@@ -172,14 +172,14 @@ jobs:
         uses: addnab/docker-run-action@v3
         with:
           image: alpine:latest
-          options: -v ${{ github.workspace }}:/io -w /io -e APIFY_HTTPBIN_TOKEN=${{ secrets.APIFY_HTTPBIN_TOKEN }}
+          options: -v ${{ github.workspace }}:/io -w /io/impit-python -e APIFY_HTTPBIN_TOKEN=${{ secrets.APIFY_HTTPBIN_TOKEN }}
           run: |
             set -e
             apk add py3-pip py3-virtualenv
             python3 -m virtualenv .venv
             source .venv/bin/activate
             pip install -U uv
-            uv pip install --no-index --find-links impit-python/dist --force-reinstall impit -v
+            uv pip install --no-index --find-links dist --force-reinstall impit -v
             uv sync --no-binary-package=impit
             uv run pytest --reruns 3
 
@@ -190,6 +190,7 @@ jobs:
           arch: ${{ matrix.platform.target }}
           distro: alpine_latest
           githubToken: ${{ github.token }}
+          dockerRunArgs: -v ${{ github.workspace }}:/io -w /io/impit-python
           env: |
             APIFY_HTTPBIN_TOKEN: ${{ secrets.APIFY_HTTPBIN_TOKEN }}
           install: |
@@ -199,7 +200,7 @@ jobs:
             python3 -m virtualenv .venv
             source .venv/bin/activate
             pip install -U uv
-            uv pip install --no-index --find-links impit-python/dist --force-reinstall impit -v
+            uv pip install --no-index --find-links dist --force-reinstall impit -v
             uv sync --no-binary-package=impit
             uv run pytest --reruns 3
 
