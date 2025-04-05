@@ -15,8 +15,8 @@ h2 = "0.4.7"
 reqwest = "0.12.9"
 tokio-stream = "0.1.17"
 bytes = "1.9.0"
-pyo3 = { version = "0.23", features = ["extension-module"] }
-pyo3-async-runtimes = { version = "0.23", features = ["attributes", "async-std-runtime", "tokio-runtime"] }
+pyo3 = { version = "0.24", features = ["extension-module"] }
+pyo3-async-runtimes = { version = "0.24", features = ["attributes", "async-std-runtime", "tokio-runtime"] }
 openssl = { version = "*", features = ["vendored"] }
 urlencoding = "2.1.3"
 
