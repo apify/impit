@@ -1,7 +1,7 @@
 use std::{collections::HashMap, time::Duration};
 
-use impit::{emulation::Browser, impit::ImpitBuilder, request::RequestOptions};
-use pyo3::prelude::*;
+use impit::{emulation::Browser, impit::{ErrorType, ImpitBuilder}, request::RequestOptions};
+use pyo3::{exceptions::{PyRuntimeError, PyTypeError, PyValueError}, prelude::*};
 use tokio::sync::oneshot;
 
 use crate::{request::form_to_bytes, response::ImpitPyResponse, RequestBody};
@@ -244,20 +244,20 @@ impl AsyncClient {
 
         let body: Vec<u8> = match data {
             Some(data) => match data {
-                RequestBody::Bytes(bytes) => bytes,
+                RequestBody::Bytes(bytes) => Ok(bytes),
                 RequestBody::Form(form) => {
                     headers.get_or_insert_with(HashMap::new).insert(
                         "Content-Type".to_string(),
                         "application/x-www-form-urlencoded".to_string(),
                     );
-                    form_to_bytes(form)
+                    Ok(form_to_bytes(form))
                 }
                 RequestBody::CatchAll(e) => {
-                    panic!("Unsupported data type in request body: {:#?}", e)
+                    Err(PyErr::new::<PyTypeError, _>(format!("Unsupported data type in request body: {:#?}", e)))
                 }
             },
-            None => Vec::new(),
-        };
+            None => Ok(Vec::new()),
+        }?;
 
         let options = RequestOptions {
             headers: headers.unwrap_or_default(),
@@ -282,7 +282,7 @@ impl AsyncClient {
                 "trace" => impit.trace(url, Some(options)).await,
                 "head" => impit.head(url, Some(options)).await,
                 "delete" => impit.delete(url, Some(options)).await,
-                _ => panic!("Unsupported method"),
+                _ => Err(ErrorType::InvalidMethod(method.to_string()))
             };
 
             tx.send(response).unwrap();
@@ -291,13 +291,16 @@ impl AsyncClient {
         pyo3_async_runtimes::async_std::future_into_py::<_, ImpitPyResponse>(py, async {
             let response = rx.await.unwrap();
 
-            match response {
-                Ok(response) => Ok(response.into()),
-                Err(err) => Err(PyErr::new::<pyo3::exceptions::PyException, _>(format!(
-                    "{:#?}",
-                    err
-                ))),
-            }
+            response
+                .map(|response| {
+                    response.into()
+                })
+                .map_err(|err| {
+                    match err {
+                        ErrorType::RequestError(r) => PyErr::new::<PyRuntimeError, _>(format!("{:#?}", r)),
+                        e => PyErr::new::<PyValueError, _>(e.to_string())
+                    }
+                })
         })
     }
 }

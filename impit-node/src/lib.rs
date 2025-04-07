@@ -80,6 +80,7 @@ impl ImpitWrapper {
           ErrorType::UrlMissingHostnameError => napi::Status::InvalidArg,
           ErrorType::UrlProtocolError => napi::Status::InvalidArg,
           ErrorType::UrlParsingError => napi::Status::InvalidArg,
+          ErrorType::InvalidMethod(_) => napi::Status::InvalidArg,
           ErrorType::Http3Disabled => napi::Status::GenericFailure,
           ErrorType::RequestError(_) => napi::Status::GenericFailure,
         };

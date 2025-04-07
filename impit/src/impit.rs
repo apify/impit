@@ -1,4 +1,4 @@
-use log::debug;
+use log::{debug, kv::Error};
 use reqwest::{Method, Response, Version};
 use std::{str::FromStr, time::Duration};
 use thiserror::Error;
@@ -22,6 +22,8 @@ pub enum ErrorType {
     UrlProtocolError,
     #[error("The request was made with http3_prior_knowledge, but HTTP/3 usage wasn't enabled.")]
     Http3Disabled,
+    #[error("The request method `{0}` is invalid. Only GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS and TRACE are supported.")]
+    InvalidMethod(String),
     #[error(transparent)]
     RequestError(#[from] reqwest::Error),
 }
@@ -200,8 +202,7 @@ impl Impit {
 
         if !config.proxy_url.is_empty() {
             client = client.proxy(
-                reqwest::Proxy::all(&config.proxy_url)
-                    .expect("The proxy_url option should be a valid URL."),
+                reqwest::Proxy::all(&config.proxy_url)?,
             );
         }
 
@@ -240,12 +241,7 @@ impl Impit {
     }
 
     fn parse_url(&self, url: String) -> Result<Url, ErrorType> {
-        let url = Url::parse(&url);
-
-        if url.is_err() {
-            return Err(ErrorType::UrlParsingError);
-        }
-        let url = url.unwrap();
+        let url = Url::parse(&url).map_err(|_| ErrorType::UrlParsingError)?;
 
         if url.host_str().is_none() {
             return Err(ErrorType::UrlMissingHostnameError);
@@ -291,8 +287,7 @@ impl Impit {
         }
 
         let parsed_url = self
-            .parse_url(url.clone())
-            .expect("URL should be a valid URL");
+            .parse_url(url.clone())?;
         let host = parsed_url.host_str().unwrap().to_string();
 
         let h3 = options.http3_prior_knowledge || self.should_use_h3(&host).await;
