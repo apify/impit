@@ -18,8 +18,8 @@ pub enum ErrorType {
     UrlParsingError,
     #[error("The URL is missing the hostname.")]
     UrlMissingHostnameError,
-    #[error("The URL uses an unsupported protocol. Currently, only HTTP and HTTPS are supported.")]
-    UrlProtocolError,
+    #[error("The URL uses an unsupported protocol (`{0}`). Currently, only HTTP and HTTPS are supported.")]
+    UrlProtocolError(String),
     #[error("The request was made with http3_prior_knowledge, but HTTP/3 usage wasn't enabled.")]
     Http3Disabled,
     #[error("The request method `{0}` is invalid. Only GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS and TRACE are supported.")]
@@ -250,7 +250,7 @@ impl Impit {
         match protocol {
             "http" => Ok(url),
             "https" => Ok(url),
-            _ => Err(ErrorType::UrlProtocolError),
+            _ => Err(ErrorType::UrlProtocolError(protocol.to_string())),
         }
     }
 
