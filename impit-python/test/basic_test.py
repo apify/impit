@@ -1,4 +1,5 @@
 import json
+from urllib.parse import urlencode
 
 import pytest
 
@@ -53,6 +54,21 @@ class TestBasicRequests:
         m = getattr(impit, method.lower())
 
         m('https://example.org')
+
+    async def test_url_with_redirect(self, browser: Browser) -> None:
+        impit = Client(browser=browser)
+
+        target_url = get_httpbin_url('/')
+        redirect_url = get_httpbin_url(f'/redirect-to?{urlencode({"url": target_url})}')
+
+        response = impit.get(redirect_url)
+
+        assert response.status_code == 200
+        assert response.url == target_url
+        assert response.url != redirect_url
+
+        # The target page does not have a redirect status
+        assert not response.is_redirect
 
 
 @pytest.mark.parametrize(
@@ -140,3 +156,13 @@ class TestRequestBody:
         response = m(get_httpbin_url(f'/{method.lower()}'), content=b'foo')
         assert response.status_code == 200
         assert json.loads(response.text)['data'] == 'foo'
+
+    async def test_content(self, browser: Browser) -> None:
+        impit = Client(browser=browser)
+
+        response = impit.get(get_httpbin_url('/'))
+
+        assert response.status_code == 200
+        assert isinstance(response.content, bytes)
+        assert isinstance(response.text, str)
+        assert response.content.decode('utf-8') == response.text

@@ -30,6 +30,12 @@ class Response:
     is_redirect: bool
     """Whether the response is a redirect"""
 
+    url: str
+    """Final URL"""
+
+    content: bytes
+    """Response body as bytes"""
+
 
 class Client:
     """Synchronous HTTP client with browser impersonation capabilities."""
