@@ -1507,6 +1507,7 @@ dependencies = [
  "hickory-client",
  "hickory-proto",
  "log",
+ "mime",
  "num-bigint",
  "reqwest",
  "rustls",
