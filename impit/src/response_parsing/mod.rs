@@ -129,7 +129,9 @@ impl ContentType {
         let mime: Mime = content_type.parse().unwrap_or(TEXT_PLAIN);
 
         match mime.get_param("charset") {
-            Some(encoding) => Ok(ContentType { charset: encoding.to_string() }),
+            Some(encoding) => Ok(ContentType {
+                charset: encoding.to_string(),
+            }),
             None => Err(ContentTypeError::InvalidContentType),
         }
     }
