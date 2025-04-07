@@ -1,4 +1,4 @@
-use log::{debug, kv::Error};
+use log::debug;
 use reqwest::{Method, Response, Version};
 use std::{str::FromStr, time::Duration};
 use thiserror::Error;
@@ -201,9 +201,7 @@ impl Impit {
         }
 
         if !config.proxy_url.is_empty() {
-            client = client.proxy(
-                reqwest::Proxy::all(&config.proxy_url)?,
-            );
+            client = client.proxy(reqwest::Proxy::all(&config.proxy_url)?);
         }
 
         match config.redirect {
@@ -286,8 +284,7 @@ impl Impit {
             return Err(ErrorType::Http3Disabled);
         }
 
-        let parsed_url = self
-            .parse_url(url.clone())?;
+        let parsed_url = self.parse_url(url.clone())?;
         let host = parsed_url.host_str().unwrap().to_string();
 
         let h3 = options.http3_prior_knowledge || self.should_use_h3(&host).await;

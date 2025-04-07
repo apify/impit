@@ -5,7 +5,10 @@ use impit::{
     impit::{ErrorType, Impit, ImpitBuilder},
     request::RequestOptions,
 };
-use pyo3::{exceptions::{PyRuntimeError, PyTypeError, PyValueError}, prelude::*};
+use pyo3::{
+    exceptions::{PyRuntimeError, PyTypeError, PyValueError},
+    prelude::*,
+};
 
 use crate::{
     request::{form_to_bytes, RequestBody},
@@ -180,7 +183,7 @@ impl Client {
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
         force_http3: Option<bool>,
-    ) -> Result<ImpitPyResponse, PyErr>  {
+    ) -> Result<ImpitPyResponse, PyErr> {
         let mut headers = headers.clone();
 
         if let Some(content) = content {
@@ -197,9 +200,10 @@ impl Client {
                     );
                     Ok(form_to_bytes(form))
                 }
-                RequestBody::CatchAll(e) => {
-                    Err(PyErr::new::<PyTypeError, _>(format!("Unsupported data type in request body: {:#?}", e)))
-                }
+                RequestBody::CatchAll(e) => Err(PyErr::new::<PyTypeError, _>(format!(
+                    "Unsupported data type in request body: {:#?}",
+                    e
+                ))),
             },
             None => Ok(Vec::new()),
         }?;
@@ -221,17 +225,13 @@ impl Client {
                     "trace" => self.impit.trace(url, Some(options)).await,
                     "head" => self.impit.head(url, Some(options)).await,
                     "delete" => self.impit.delete(url, Some(options)).await,
-                    _ => Err(ErrorType::InvalidMethod(method.to_string()))
+                    _ => Err(ErrorType::InvalidMethod(method.to_string())),
                 }
             })
-            .map(|response| {
-                response.into()
-            })
-            .map_err(|err| {
-                match err {
-                    ErrorType::RequestError(r) => PyErr::new::<PyRuntimeError, _>(format!("{:#?}", r)),
-                    e => PyErr::new::<PyValueError, _>(e.to_string())
-                }
+            .map(|response| response.into())
+            .map_err(|err| match err {
+                ErrorType::RequestError(r) => PyErr::new::<PyRuntimeError, _>(format!("{:#?}", r)),
+                e => PyErr::new::<PyValueError, _>(e.to_string()),
             })
     }
 }
