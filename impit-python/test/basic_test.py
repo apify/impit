@@ -25,7 +25,7 @@ class TestBasicRequests:
 
         resp = impit.get(f'{protocol}example.org')
         assert resp.status_code == 200
-    
+
     def test_content_encoding(self, browser: Browser) -> None:
         impit = Client(browser=browser)
 
