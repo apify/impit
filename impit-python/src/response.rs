@@ -68,12 +68,13 @@ impl From<Response> for ImpitPyResponse {
                 v.to_str().unwrap_or_default().to_string(),
             )
         }));
-        let encoding = val
-        .headers()
-        .get("content-type")
-        .and_then(|v| v.to_str().ok())
-        .and_then(|ct| ContentType::from(ct).ok().map(|f| f.charset))
-        .unwrap_or_default();
+
+        let encoding_ref = val
+            .headers()
+            .get("content-type")
+            .and_then(|v| v.to_str().ok())
+            .and_then(|ct| ContentType::from(ct).ok())
+            .and_then(|ct| ct.into());
 
         let content = pyo3_async_runtimes::tokio::get_runtime().block_on(async {
             match val.bytes().await {
@@ -82,7 +83,11 @@ impl From<Response> for ImpitPyResponse {
             }
         });
 
-        let text = String::from_utf8_lossy(&content).to_string();
+        let text = impit::utils::decode(&content, encoding_ref);
+
+        let encoding = encoding_ref
+            .map(|enc| enc.name().to_string())
+            .unwrap_or_default();
 
         ImpitPyResponse {
             status_code,
