@@ -1,4 +1,5 @@
 use encoding::Encoding;
+use mime::{Mime, TEXT_PLAIN};
 
 /// Implements the BOM sniffing algorithm to detect the encoding of the response.
 /// If the BOM sniffing algorithm fails, the function returns `None`.
@@ -115,7 +116,7 @@ pub fn decode(bytes: &[u8], encoding_prior_knowledge: Option<encoding::EncodingR
 /// decode(&bytes, content_type.into());
 /// ```
 pub struct ContentType {
-    charset: String,
+    pub charset: String,
 }
 
 /// Error enum for the `ContentType` struct operations.
@@ -125,15 +126,14 @@ pub enum ContentTypeError {
 
 impl ContentType {
     pub fn from(content_type: &str) -> Result<Self, ContentTypeError> {
-        let parts: Vec<&str> = content_type.split("charset=").collect();
+        let mime: Mime = content_type.parse().unwrap_or(TEXT_PLAIN);
 
-        if parts.len() != 2 || parts[1].is_empty() {
-            return Err(ContentTypeError::InvalidContentType);
+        match mime.get_param("charset") {
+            Some(encoding) => Ok(ContentType {
+                charset: encoding.to_string(),
+            }),
+            None => Err(ContentTypeError::InvalidContentType),
         }
-
-        Ok(ContentType {
-            charset: String::from(parts[1]),
-        })
     }
 }
 

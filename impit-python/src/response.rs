@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 
+use impit::utils::ContentType;
 use pyo3::prelude::*;
-use reqwest::{header::HeaderValue, Response, Version};
+use reqwest::{Response, Version};
 
 #[pyclass(name = "Response")]
 #[derive(Debug, Clone)]
@@ -68,12 +69,11 @@ impl From<Response> for ImpitPyResponse {
             )
         }));
         let encoding = val
-            .headers()
-            .get("content-type")
-            .unwrap_or(&HeaderValue::from_static("text/plain"))
-            .to_str()
-            .unwrap_or_default()
-            .to_string();
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|ct| ContentType::from(ct).ok().map(|f| f.charset))
+        .unwrap_or_default();
 
         let content = pyo3_async_runtimes::tokio::get_runtime().block_on(async {
             match val.bytes().await {
