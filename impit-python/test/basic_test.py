@@ -25,6 +25,13 @@ class TestBasicRequests:
 
         resp = impit.get(f'{protocol}example.org')
         assert resp.status_code == 200
+    
+    def test_content_encoding(self, browser: Browser) -> None:
+        impit = Client(browser=browser)
+
+        resp = impit.get(get_httpbin_url('/encoding/utf8'))
+        assert resp.status_code == 200
+        assert resp.encoding == 'utf-8'
 
     def test_headers_work(self, browser: Browser) -> None:
         impit = Client(browser=browser)
