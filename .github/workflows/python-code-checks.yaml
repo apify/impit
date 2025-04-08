@@ -1,13 +1,8 @@
-name: Run code checks
+name: "[impit-python] Run code checks"
 
 on:
-  pull_request: null
-  push:
-    branches:
-      - master
-    tags-ignore:
-      - "**"
   workflow_dispatch: null
+  workflow_call:
 
 jobs:
   lint_check:
@@ -32,7 +27,7 @@ jobs:
           python-version: "${{ matrix.python-version }}"
 
       - name: Install Python dependencies
-        run: uv sync --all-extras
+        run: uv sync --all-extras --no-install-package impit
         working-directory: impit-python
 
       - name: Run lint check
@@ -61,7 +56,7 @@ jobs:
           python-version: "${{ matrix.python-version }}"
 
       - name: Install Python dependencies
-        run: uv sync --all-extras
+        run: uv sync --all-extras --no-install-package impit
         working-directory: impit-python
 
       - name: Run type check
