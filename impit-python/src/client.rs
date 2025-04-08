@@ -2,14 +2,17 @@ use std::{collections::HashMap, time::Duration};
 
 use impit::{
     emulation::Browser,
-    impit::{Impit, ImpitBuilder},
+    impit::{ErrorType, Impit, ImpitBuilder},
     request::RequestOptions,
 };
-use pyo3::prelude::*;
+use pyo3::{
+    exceptions::{PyRuntimeError, PyTypeError, PyValueError},
+    prelude::*,
+};
 
 use crate::{
     request::{form_to_bytes, RequestBody},
-    response,
+    response::{self, ImpitPyResponse},
 };
 
 #[pyclass]
@@ -75,7 +78,7 @@ impl Client {
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
         force_http3: Option<bool>,
-    ) -> response::ImpitPyResponse {
+    ) -> Result<response::ImpitPyResponse, PyErr> {
         self.request("get", url, content, data, headers, timeout, force_http3)
     }
 
@@ -88,7 +91,7 @@ impl Client {
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
         force_http3: Option<bool>,
-    ) -> response::ImpitPyResponse {
+    ) -> Result<response::ImpitPyResponse, PyErr> {
         self.request("head", url, content, data, headers, timeout, force_http3)
     }
 
@@ -101,7 +104,7 @@ impl Client {
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
         force_http3: Option<bool>,
-    ) -> response::ImpitPyResponse {
+    ) -> Result<response::ImpitPyResponse, PyErr> {
         self.request("post", url, content, data, headers, timeout, force_http3)
     }
 
@@ -114,7 +117,7 @@ impl Client {
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
         force_http3: Option<bool>,
-    ) -> response::ImpitPyResponse {
+    ) -> Result<response::ImpitPyResponse, PyErr> {
         self.request("patch", url, content, data, headers, timeout, force_http3)
     }
 
@@ -127,7 +130,7 @@ impl Client {
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
         force_http3: Option<bool>,
-    ) -> response::ImpitPyResponse {
+    ) -> Result<response::ImpitPyResponse, PyErr> {
         self.request("put", url, content, data, headers, timeout, force_http3)
     }
 
@@ -140,7 +143,7 @@ impl Client {
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
         force_http3: Option<bool>,
-    ) -> response::ImpitPyResponse {
+    ) -> Result<response::ImpitPyResponse, PyErr> {
         self.request("delete", url, content, data, headers, timeout, force_http3)
     }
 
@@ -153,7 +156,7 @@ impl Client {
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
         force_http3: Option<bool>,
-    ) -> response::ImpitPyResponse {
+    ) -> Result<response::ImpitPyResponse, PyErr> {
         self.request("options", url, content, data, headers, timeout, force_http3)
     }
 
@@ -166,7 +169,7 @@ impl Client {
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
         force_http3: Option<bool>,
-    ) -> response::ImpitPyResponse {
+    ) -> Result<response::ImpitPyResponse, PyErr> {
         self.request("trace", url, content, data, headers, timeout, force_http3)
     }
 
@@ -180,7 +183,7 @@ impl Client {
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
         force_http3: Option<bool>,
-    ) -> response::ImpitPyResponse {
+    ) -> Result<ImpitPyResponse, PyErr> {
         let mut headers = headers.clone();
 
         if let Some(content) = content {
@@ -189,20 +192,21 @@ impl Client {
 
         let body: Vec<u8> = match data {
             Some(data) => match data {
-                RequestBody::Bytes(bytes) => bytes,
+                RequestBody::Bytes(bytes) => Ok(bytes),
                 RequestBody::Form(form) => {
                     headers.get_or_insert_with(HashMap::new).insert(
                         "Content-Type".to_string(),
                         "application/x-www-form-urlencoded".to_string(),
                     );
-                    form_to_bytes(form)
+                    Ok(form_to_bytes(form))
                 }
-                RequestBody::CatchAll(e) => {
-                    panic!("Unsupported data type in request body: {:#?}", e)
-                }
+                RequestBody::CatchAll(e) => Err(PyErr::new::<PyTypeError, _>(format!(
+                    "Unsupported data type in request body: {:#?}",
+                    e
+                ))),
             },
-            None => Vec::new(),
-        };
+            None => Ok(Vec::new()),
+        }?;
 
         let options = RequestOptions {
             headers: headers.unwrap_or_default(),
@@ -210,7 +214,7 @@ impl Client {
             http3_prior_knowledge: force_http3.unwrap_or(false),
         };
 
-        let response = pyo3_async_runtimes::tokio::get_runtime()
+        pyo3_async_runtimes::tokio::get_runtime()
             .block_on(async {
                 match method.to_lowercase().as_str() {
                     "get" => self.impit.get(url, Some(options)).await,
@@ -221,11 +225,13 @@ impl Client {
                     "trace" => self.impit.trace(url, Some(options)).await,
                     "head" => self.impit.head(url, Some(options)).await,
                     "delete" => self.impit.delete(url, Some(options)).await,
-                    _ => panic!("Unsupported method"),
+                    _ => Err(ErrorType::InvalidMethod(method.to_string())),
                 }
             })
-            .unwrap();
-
-        response.into()
+            .map(|response| response.into())
+            .map_err(|err| match err {
+                ErrorType::RequestError(r) => PyErr::new::<PyRuntimeError, _>(format!("{:#?}", r)),
+                e => PyErr::new::<PyValueError, _>(e.to_string()),
+            })
     }
 }

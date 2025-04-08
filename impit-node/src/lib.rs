@@ -78,12 +78,18 @@ impl ImpitWrapper {
       Err(err) => {
         let status = match err {
           ErrorType::UrlMissingHostnameError => napi::Status::InvalidArg,
-          ErrorType::UrlProtocolError => napi::Status::InvalidArg,
+          ErrorType::UrlProtocolError(_) => napi::Status::InvalidArg,
           ErrorType::UrlParsingError => napi::Status::InvalidArg,
+          ErrorType::InvalidMethod(_) => napi::Status::InvalidArg,
           ErrorType::Http3Disabled => napi::Status::GenericFailure,
           ErrorType::RequestError(_) => napi::Status::GenericFailure,
         };
-        let reason = format!("{:#?}", err);
+
+        let reason = match err {
+          ErrorType::RequestError(r) => format!("{:#?}", r),
+          e => format!("{}", e),
+        };
+
         Err(napi::Error::new(status, reason))
       }
     }
