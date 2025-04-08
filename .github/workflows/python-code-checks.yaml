@@ -31,7 +31,7 @@ jobs:
         working-directory: impit-python
 
       - name: Run lint check
-        run: uv run ruff format --check && uv run ruff check
+        run: uv run --no-binary-package impit ruff format --check && uv run --no-binary-package impit ruff check
         working-directory: impit-python
 
   type_check:
@@ -60,5 +60,5 @@ jobs:
         working-directory: impit-python
 
       - name: Run type check
-        run: uv run mypy
+        run: uv run --no-binary-package impit mypy
         working-directory: impit-python
