@@ -80,7 +80,7 @@ class TestRequestBody:
 
         response = impit.post(
             get_httpbin_url('/post'),
-            content=bytearray('{"Impit-Test":"foořžš"}', 'utf-8'),
+            data=bytearray('{"Impit-Test":"foořžš"}', 'utf-8'),  # type: ignore[arg-type]
             headers={'Content-Type': 'application/json'},
         )
         assert response.status_code == 200

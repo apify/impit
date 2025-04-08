@@ -1,24 +1,69 @@
 name: Run code checks
 
 on:
-    # Trigger it when a new pull request is opened.
-    pull_request:
-
-    # Trigger it  when pushing to the master branch.
-    push:
-        branches:
-            - master
-        tags-ignore:
-            - "**" # Ignore all tags to prevent duplicate checks when tags are pushed.
-
-    # Allow manual trigger.
-    workflow_dispatch:
+  pull_request: null
+  push:
+    branches:
+      - master
+    tags-ignore:
+      - "**"
+  workflow_dispatch: null
 
 jobs:
-    lint_check:
-        name: Lint check
-        uses: apify/workflows/.github/workflows/python_lint_check.yaml@main
+  lint_check:
+    name: Lint check
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
 
-    type_check:
-        name: Type check
-        uses: apify/workflows/.github/workflows/python_type_check.yaml@main
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: "Set up Python ${{ matrix.python-version }}"
+        uses: actions/setup-python@v5
+        with:
+          python-version: "${{ matrix.python-version }}"
+
+      - name: Set up uv package manager
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "${{ matrix.python-version }}"
+
+      - name: Install Python dependencies
+        run: uv sync --all-extras
+        working-directory: impit-python
+
+      - name: Run lint check
+        run: uv run ruff format --check && uv run ruff check
+        working-directory: impit-python
+
+  type_check:
+    name: Type check
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: "Set up Python ${{ matrix.python-version }}"
+        uses: actions/setup-python@v5
+        with:
+          python-version: "${{ matrix.python-version }}"
+
+      - name: Set up uv package manager
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "${{ matrix.python-version }}"
+
+      - name: Install Python dependencies
+        run: uv sync --all-extras
+        working-directory: impit-python
+
+      - name: Run type check
+        run: uv run mypy
+        working-directory: impit-python
