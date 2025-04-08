@@ -1,0 +1,72 @@
+name: "[impit-python] Run code checks"
+
+on:
+  workflow_dispatch: null
+  workflow_call:
+
+jobs:
+  lint_check:
+    name: Lint check
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: "Set up Python ${{ matrix.python-version }}"
+        uses: actions/setup-python@v5
+        with:
+          python-version: "${{ matrix.python-version }}"
+
+      - name: Set up uv package manager
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "${{ matrix.python-version }}"
+
+      - name: Disable automatic `uv` builds
+        run: printf "\n[tool.uv]\npackage = false" >> pyproject.toml
+        working-directory: impit-python
+
+      - name: Install Python dependencies
+        run: uv sync --all-extras
+        working-directory: impit-python
+
+      - name: Run lint check
+        run: uv run ruff format --diff --check && uv run ruff check --diff
+        working-directory: impit-python
+
+  type_check:
+    name: Type check
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: "Set up Python ${{ matrix.python-version }}"
+        uses: actions/setup-python@v5
+        with:
+          python-version: "${{ matrix.python-version }}"
+
+      - name: Set up uv package manager
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "${{ matrix.python-version }}"
+        
+      - name: Disable automatic `uv` builds
+        run: printf "\n[tool.uv]\npackage = false" >> pyproject.toml
+        working-directory: impit-python
+
+      - name: Install Python dependencies
+        run: uv sync --all-extras
+        working-directory: impit-python
+
+      - name: Run type check
+        run: uv run mypy
+        working-directory: impit-python

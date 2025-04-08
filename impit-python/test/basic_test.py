@@ -25,7 +25,7 @@ class TestBasicRequests:
 
         resp = impit.get(f'{protocol}example.org')
         assert resp.status_code == 200
-    
+
     def test_content_encoding(self, browser: Browser) -> None:
         impit = Client(browser=browser)
 
@@ -87,7 +87,7 @@ class TestRequestBody:
 
         response = impit.post(
             get_httpbin_url('/post'),
-            data=bytearray('{"Impit-Test":"foořžš"}', 'utf-8'),
+            data=bytearray('{"Impit-Test":"foořžš"}', 'utf-8'),  # type: ignore[arg-type]
             headers={'Content-Type': 'application/json'},
         )
         assert response.status_code == 200
