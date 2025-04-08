@@ -28,7 +28,7 @@ fn impit(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
                     headers: Option<HashMap<String, String>>,
                     timeout: Option<f64>,
                     force_http3: Option<bool>,
-                ) -> response::ImpitPyResponse {
+                ) -> Result<response::ImpitPyResponse, PyErr> {
                     let mut client = Client::new(None, None, None, None, None);
 
                     client.$name(url, content, data, headers, timeout, force_http3)
