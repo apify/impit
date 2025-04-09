@@ -44,8 +44,8 @@ impl ImpitPyResponse {
     }
 }
 
-impl From<Response> for ImpitPyResponse {
-    fn from(val: Response) -> Self {
+impl ImpitPyResponse {
+    pub fn from(val: Response, preferred_encoding: Option<String>) -> Self {
         let status_code = val.status().as_u16();
         let url = val.url().to_string();
         let reason_phrase = val
@@ -69,13 +69,6 @@ impl From<Response> for ImpitPyResponse {
             )
         }));
 
-        let encoding_ref = val
-            .headers()
-            .get("content-type")
-            .and_then(|v| v.to_str().ok())
-            .and_then(|ct| ContentType::from(ct).ok())
-            .and_then(|ct| ct.into());
-
         let content = pyo3_async_runtimes::tokio::get_runtime().block_on(async {
             match val.bytes().await {
                 Ok(bytes) => bytes.to_vec(),
@@ -83,11 +76,20 @@ impl From<Response> for ImpitPyResponse {
             }
         });
 
-        let text = impit::utils::decode(&content, encoding_ref);
+        let content_type_charset = headers
+            .get("content-type")
+            .and_then(|ct| ContentType::from(ct).ok())
+            .and_then(|ct| ct.into());
 
-        let encoding = encoding_ref
-            .map(|enc| enc.name().to_string())
-            .unwrap_or_default();
+        let encoding = 
+            preferred_encoding.and_then(|e| {
+                encoding::label::encoding_from_whatwg_label(&e)
+            })
+            .or(content_type_charset)
+            .or(impit::utils::determine_encoding(content.as_slice()))
+            .unwrap_or(impit::utils::encodings::UTF_8);
+
+        let text = impit::utils::decode(&content, Some(encoding));
 
         ImpitPyResponse {
             status_code,
@@ -96,7 +98,7 @@ impl From<Response> for ImpitPyResponse {
             http_version,
             is_redirect,
             headers,
-            encoding,
+            encoding: encoding.name().to_string(),
             text,
             content,
         }

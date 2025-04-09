@@ -16,18 +16,20 @@ use crate::{request::form_to_bytes, response::ImpitPyResponse, RequestBody};
 #[pyclass]
 pub(crate) struct AsyncClient {
     impit_config: ImpitBuilder,
+    default_encoding: Option<String>,
 }
 
 #[pymethods]
 impl AsyncClient {
     #[new]
-    #[pyo3(signature = (browser=None, http3=None, proxy=None, timeout=None, verify=None))]
+    #[pyo3(signature = (browser=None, http3=None, proxy=None, timeout=None, verify=None, default_encoding=None))]
     pub fn new(
         browser: Option<String>,
         http3: Option<bool>,
         proxy: Option<String>,
         timeout: Option<f64>,
         verify: Option<bool>,
+        default_encoding: Option<String>,
     ) -> Self {
         let builder = ImpitBuilder::default();
 
@@ -62,6 +64,7 @@ impl AsyncClient {
 
         Self {
             impit_config: builder,
+            default_encoding,
         }
     }
 
@@ -296,11 +299,13 @@ impl AsyncClient {
             tx.send(response).unwrap();
         });
 
+        let default_encoding = self.default_encoding.clone();
+
         pyo3_async_runtimes::async_std::future_into_py::<_, ImpitPyResponse>(py, async {
             let response = rx.await.unwrap();
 
             response
-                .map(|response| response.into())
+                .map(|response| ImpitPyResponse::from(response, default_encoding))
                 .map_err(|err| match err {
                     ErrorType::RequestError(r) => {
                         PyErr::new::<PyRuntimeError, _>(format!("{:#?}", r))

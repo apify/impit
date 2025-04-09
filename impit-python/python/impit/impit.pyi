@@ -22,7 +22,7 @@ class Response:
     """Response headers as a dictionary"""
 
     text: str
-    """Response body as text"""
+    """Response body as text. Decoded from `content` using `encoding`."""
 
     encoding: str
     """Response content encoding"""
@@ -47,6 +47,7 @@ class Client:
         proxy: str | None = None,
         timeout: float | None = None,
         verify: bool | None = None,
+        default_encoding: str | None = None,
     ) -> None:
         """Initialize a synchronous HTTP client.
 
@@ -56,6 +57,8 @@ class Client:
             proxy: Proxy URL to use
             timeout: Default request timeout in seconds
             verify: Verify SSL certificates (set to False to ignore TLS errors)
+            default_encoding: Default encoding for response.text field (e.g., "utf-8", "cp1252"). Overrides `content-type`
+                header and bytestream prescan.
         """
 
     def get(
@@ -252,6 +255,7 @@ class AsyncClient:
         proxy: str | None = None,
         timeout: float | None = None,
         verify: bool | None = None,
+        default_encoding: str | None = None,
     ) -> None:
         """Initialize an asynchronous HTTP client.
 
@@ -261,6 +265,8 @@ class AsyncClient:
             proxy: Proxy URL to use
             timeout: Default request timeout in seconds
             verify: Verify SSL certificates (set to False to ignore TLS errors)
+            default_encoding: Default encoding for response.text field (e.g., "utf-8", "cp1252"). Overrides `content-type`
+                header and bytestream prescan.
         """
 
     async def get(
