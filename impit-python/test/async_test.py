@@ -63,7 +63,7 @@ class TestBasicRequests:
     async def test_default_no_redirect(self, browser: Browser) -> None:
         impit = AsyncClient(browser=browser)
 
-        target_url = get_httpbin_url('/')
+        target_url = 'https://example.org/'
         redirect_url = get_httpbin_url(f'/redirect-to', query={'url': target_url})
 
         response = await impit.get(redirect_url)
@@ -78,7 +78,7 @@ class TestBasicRequests:
     async def test_follow_redirects(self, browser: Browser) -> None:
         impit = AsyncClient(browser=browser, follow_redirects=True)
 
-        target_url = get_httpbin_url('/')
+        target_url = 'https://example.org/'
         redirect_url = get_httpbin_url(f'/redirect-to', query={'url': target_url})
 
         response = await impit.get(redirect_url)
