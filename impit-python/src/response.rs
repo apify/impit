@@ -81,10 +81,8 @@ impl ImpitPyResponse {
             .and_then(|ct| ContentType::from(ct).ok())
             .and_then(|ct| ct.into());
 
-        let encoding = 
-            preferred_encoding.and_then(|e| {
-                encoding::label::encoding_from_whatwg_label(&e)
-            })
+        let encoding = preferred_encoding
+            .and_then(|e| encoding::label::encoding_from_whatwg_label(&e))
             .or(content_type_charset)
             .or(impit::utils::determine_encoding(content.as_slice()))
             .unwrap_or(impit::utils::encodings::UTF_8);

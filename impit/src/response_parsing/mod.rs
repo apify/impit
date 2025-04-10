@@ -101,12 +101,9 @@ pub fn decode(bytes: &[u8], preferred_encoding: Option<encoding::EncodingRef>) -
 }
 
 /// Determines the encoding of a byte stream.
-/// 
+///
 /// If the checks fail, the function returns `None`.
-pub fn determine_encoding(
-    bytes: &[u8],
-) -> Option<encoding::EncodingRef> {
-
+pub fn determine_encoding(bytes: &[u8]) -> Option<encoding::EncodingRef> {
     if let Some(enc) = bom_sniffing(bytes) {
         return Some(enc);
     } else if let Some(enc) = prescan_bytestream(bytes) {

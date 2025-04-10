@@ -231,12 +231,7 @@ impl Client {
                     _ => Err(ErrorType::InvalidMethod(method.to_string())),
                 }
             })
-            .map(|response| {
-                ImpitPyResponse::from(
-                    response,
-                    self.default_encoding.clone(),
-                )
-            })
+            .map(|response| ImpitPyResponse::from(response, self.default_encoding.clone()))
             .map_err(|err| match err {
                 ErrorType::RequestError(r) => PyErr::new::<PyRuntimeError, _>(format!("{:#?}", r)),
                 e => PyErr::new::<PyValueError, _>(e.to_string()),
