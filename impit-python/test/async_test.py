@@ -64,7 +64,7 @@ class TestBasicRequests:
         impit = AsyncClient(browser=browser)
 
         target_url = get_httpbin_url('/')
-        redirect_url = get_httpbin_url(f'/redirect-to?{urlencode({"url": target_url})}')
+        redirect_url = get_httpbin_url(f'/redirect-to', query={'url': target_url})
 
         response = await impit.get(redirect_url)
 
@@ -79,7 +79,7 @@ class TestBasicRequests:
         impit = AsyncClient(browser=browser, follow_redirects=True)
 
         target_url = get_httpbin_url('/')
-        redirect_url = get_httpbin_url(f'/redirect-to?{urlencode({"url": target_url})}')
+        redirect_url = get_httpbin_url(f'/redirect-to', query={'url': target_url})
 
         response = await impit.get(redirect_url)
 
