@@ -26,7 +26,7 @@ class TestBasicRequests:
 
         resp = impit.get(f'{protocol}example.org')
         assert resp.status_code == 200
-    
+
     def test_content_encoding(self, browser: Browser) -> None:
         impit = Client(browser=browser)
 
@@ -88,18 +88,14 @@ class TestBasicRequests:
         assert not response.is_redirect
 
         assert response.url == target_url
-    
+
     def test_limit_redirects(self, browser: Browser) -> None:
         impit = Client(browser=browser, follow_redirects=True, max_redirects=1)
 
-        redirect_url = get_httpbin_url(f'/absolute-redirect/3')
-        
-        try:
-            response = impit.get(redirect_url)
-        except Exception as e:
-            assert isinstance(e, RuntimeError)
-            assert 'TooManyRedirects' in str(e)
-            return
+        redirect_url = get_httpbin_url('/absolute-redirect/3')
+
+        with pytest.raises(RuntimeError, match='TooManyRedirects'):
+            impit.get(redirect_url)
 
 
 @pytest.mark.parametrize(

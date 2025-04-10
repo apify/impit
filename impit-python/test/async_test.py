@@ -87,19 +87,15 @@ class TestBasicRequests:
         assert not response.is_redirect
 
         assert response.url == target_url
-    
+
     @pytest.mark.asyncio
     async def test_limit_redirects(self, browser: Browser) -> None:
         impit = AsyncClient(browser=browser, follow_redirects=True, max_redirects=1)
 
-        redirect_url = get_httpbin_url(f'/absolute-redirect/3')
-        
-        try:
-            response = await impit.get(redirect_url)
-        except Exception as e:
-            assert isinstance(e, RuntimeError)
-            assert 'TooManyRedirects' in str(e)
-            return
+        redirect_url = get_httpbin_url('/absolute-redirect/3')
+
+        with pytest.raises(RuntimeError, match='TooManyRedirects'):
+            await impit.get(redirect_url)
 
 
 @pytest.mark.parametrize(
