@@ -26,7 +26,13 @@ permissions:
   contents: read
 
 jobs:
+  code_checks:
+    name: Code checks
+    uses: ./.github/workflows/python-code-checks.yaml
+    secrets: inherit
+
   linux:
+    needs: code_checks
     runs-on: ${{ matrix.platform.runner }}
     strategy:
       matrix:
@@ -118,6 +124,7 @@ jobs:
             python -m pytest
 
   musllinux:
+    needs: code_checks
     runs-on: ${{ matrix.platform.runner }}
     strategy:
       matrix:
@@ -189,6 +196,7 @@ jobs:
             python -m pytest
 
   windows:
+    needs: code_checks
     runs-on: ${{ matrix.platform.runner }}
     strategy:
       matrix:
@@ -234,6 +242,7 @@ jobs:
           python -m pytest
 
   macos:
+    needs: code_checks
     runs-on: ${{ matrix.platform.runner }}
     strategy:
       matrix:
