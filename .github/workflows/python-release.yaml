@@ -97,9 +97,6 @@ jobs:
               python-version: 3.x
 
           - name: Publish to PyPI
-            env:
-              TWINE_USERNAME: __token__
-              TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
             run: |
-              pip install twine
-              twine upload --skip-existing --verbose wheels/* --repository-url https://test.pypi.org/legacy
+              pip install maturin
+              maturin upload --repository-url https://test.pypi.org/legacy/ --username __token__ --password ${{ secrets.PYPI_TOKEN }} wheels/*
