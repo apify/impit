@@ -1,5 +1,14 @@
 /target
 /artifacts
 .idea
-.venv
+
+# Python
 __pycache__
+.mypy_cache
+.pytest_cache
+.ruff_cache
+.venv
+venv
+.coverage
+*.so
+*.py[cod]

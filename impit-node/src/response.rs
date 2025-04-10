@@ -1,8 +1,8 @@
 #![allow(clippy::await_holding_refcell_ref, deprecated)]
 use impit::utils::{decode, ContentType};
 use napi::{
-  bindgen_prelude::{Buffer, ReadableStream, Result, This},
-  Env, JsFunction, JsObject, JsUnknown,
+  bindgen_prelude::{Buffer, FromNapiValue, ReadableStream, Result, This, ToNapiValue},
+  sys, Env, JsFunction, JsObject, JsUnknown,
 };
 use napi_derive::napi;
 use reqwest::Response;
@@ -10,14 +10,31 @@ use std::{cell::RefCell, collections::HashMap};
 use tokio_stream::StreamExt;
 
 const INNER_RESPONSE_PROPERTY_NAME: &str = "__js_response";
+
+pub struct Headers(HashMap<String, String>);
 #[napi]
 pub struct ImpitResponse {
   inner: RefCell<Option<Response>>,
   pub status: u16,
   pub status_text: String,
-  pub headers: HashMap<String, String>,
+  #[napi(ts_type = "Record<string, string>")]
+  pub headers: Headers,
   pub ok: bool,
   pub url: String,
+}
+
+impl ToNapiValue for &mut Headers {
+  unsafe fn to_napi_value(raw_env: sys::napi_env, val: Self) -> Result<sys::napi_value> {
+    let map = val.0.clone();
+
+    HashMap::to_napi_value(raw_env, map)
+  }
+}
+
+impl FromNapiValue for Headers {
+  unsafe fn from_napi_value(env: sys::napi_env, napi_val: sys::napi_value) -> Result<Self> {
+    HashMap::from_napi_value(env, napi_val).map(Headers)
+  }
 }
 
 #[napi]
@@ -29,11 +46,13 @@ impl ImpitResponse {
       .canonical_reason()
       .unwrap_or("")
       .to_string();
-    let headers = response
-      .headers()
-      .iter()
-      .map(|(k, v)| (k.as_str().to_string(), v.to_str().unwrap().to_string()))
-      .collect();
+    let headers = Headers(
+      response
+        .headers()
+        .iter()
+        .map(|(k, v)| (k.as_str().to_string(), v.to_str().unwrap().to_string()))
+        .collect(),
+    );
     let ok = response.status().is_success();
     let url = response.url().to_string();
 
@@ -93,6 +112,7 @@ impl ImpitResponse {
   pub fn decode_buffer(&self, buffer: Buffer) -> Result<String> {
     let encoding = self
       .headers
+      .0
       .get("content-type")
       .and_then(|content_type| ContentType::from(content_type).ok());
 

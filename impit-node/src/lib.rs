@@ -59,10 +59,7 @@ impl ImpitWrapper {
         .unwrap_or_default(),
     });
 
-    let body = request_init
-      .as_ref()
-      .and_then(|init| init.body.as_ref())
-      .cloned();
+    let body = request_init.as_ref().and_then(|init| init.body.as_ref());
 
     let body: Option<Vec<u8>> = body.map(serialize_body);
 
@@ -81,12 +78,18 @@ impl ImpitWrapper {
       Err(err) => {
         let status = match err {
           ErrorType::UrlMissingHostnameError => napi::Status::InvalidArg,
-          ErrorType::UrlProtocolError => napi::Status::InvalidArg,
+          ErrorType::UrlProtocolError(_) => napi::Status::InvalidArg,
           ErrorType::UrlParsingError => napi::Status::InvalidArg,
+          ErrorType::InvalidMethod(_) => napi::Status::InvalidArg,
           ErrorType::Http3Disabled => napi::Status::GenericFailure,
           ErrorType::RequestError(_) => napi::Status::GenericFailure,
         };
-        let reason = format!("{:#?}", err);
+
+        let reason = match err {
+          ErrorType::RequestError(r) => format!("{:#?}", r),
+          e => format!("{}", e),
+        };
+
         Err(napi::Error::new(status, reason))
       }
     }

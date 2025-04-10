@@ -1,11 +1,12 @@
 use std::collections::HashMap;
 
+use impit::utils::ContentType;
 use pyo3::prelude::*;
-use reqwest::{header::HeaderValue, Response, Version};
+use reqwest::{Response, Version};
 
-#[pyclass]
+#[pyclass(name = "Response")]
 #[derive(Debug, Clone)]
-pub(crate) struct ImpitPyResponse {
+pub struct ImpitPyResponse {
     #[pyo3(get)]
     status_code: u16,
     #[pyo3(get)]
@@ -32,6 +33,13 @@ pub(crate) struct ImpitPyResponse {
     // elapsed: Duration,
 }
 
+#[pymethods]
+impl ImpitPyResponse {
+    fn __repr__(&self) -> String {
+        format!("<Response [{} {}]>", self.status_code, self.reason_phrase)
+    }
+}
+
 impl From<Response> for ImpitPyResponse {
     fn from(val: Response) -> Self {
         ImpitPyResponse {
@@ -54,10 +62,9 @@ impl From<Response> for ImpitPyResponse {
             encoding: val
                 .headers()
                 .get("content-type")
-                .unwrap_or(&HeaderValue::from_static("text/plain"))
-                .to_str()
-                .unwrap()
-                .to_string(),
+                .and_then(|v| v.to_str().ok())
+                .and_then(|ct| ContentType::from(ct).ok().map(|f| f.charset))
+                .unwrap_or_default(),
             text: pyo3_async_runtimes::tokio::get_runtime()
                 .block_on(async { val.text().await.unwrap_or_default() }),
         }

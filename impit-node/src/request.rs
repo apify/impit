@@ -15,10 +15,10 @@ pub enum HttpMethod {
   Options,
 }
 
-pub(crate) fn serialize_body(body: Either<String, Buffer>) -> Vec<u8> {
+pub(crate) fn serialize_body(body: &Either<String, Buffer>) -> Vec<u8> {
   match body {
-    Either::A(string) => string.into_bytes(),
-    Either::B(buffer) => buffer.into(),
+    Either::A(string) => string.clone().into_bytes(),
+    Either::B(buffer) => buffer.iter().copied().collect(),
   }
 }
 
