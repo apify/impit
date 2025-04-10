@@ -2,8 +2,7 @@ name: "[impit-python] Release to PyPI"
 permissions:
   contents: write
   id-token: write
-'on':
-  push:
+on:
   workflow_dispatch:
     inputs:
       bump:
@@ -20,7 +19,7 @@ jobs:
     get_version:
       runs-on: ubuntu-latest
       outputs:
-        new_version: ${{ steps.increment_version.outputs.new_version }}
+        bumped-version-commit-sha: ${{ steps.commit_version.outputs.commit-sha }}
       steps:
         - uses: actions/checkout@v4
           with:
@@ -54,14 +53,24 @@ jobs:
           working-directory: impit-python
           run: |
             echo "New version is ${{ steps.increment_version.outputs.new_version }}"
+            uvx --from=toml-cli toml set --toml-path=pyproject.toml project.version ${{ steps.increment_version.outputs.new_version }}
 
-    # test:
-    #     needs: [get_version]
-    #     name: Build and test
-    #     uses: ./.github/workflows/python-test.yaml
-    #     secrets: inherit
-    #     with:
-    #       version: ${{ needs.get_version.outputs.new_version }}
+        - name: Commit new version
+          id: commit_version
+          uses: EndBug/add-and-commit@v9
+          with:
+            author_name: github-actions[bot]
+            author_email: github-actions[bot]@users.noreply.github.com
+            message: "chore(py): bump `pyproject.toml` version"
+            add: 'impit-python/pyproject.toml'
+
+    test:
+        needs: [get_version]
+        name: Build and test
+        uses: ./.github/workflows/python-test.yaml
+        secrets: inherit
+        with:
+          commit_sha: ${{ needs.get_version.outputs.bumped-version-commit-sha }}
 
     publish:
         defaults:
@@ -69,14 +78,12 @@ jobs:
             working-directory: impit-python
         name: Publish
         runs-on: ubuntu-latest
-        # needs: [test]
+        needs: [test]
         steps:
           - name: Download all artifacts
             uses: actions/download-artifact@v4
             with:
               path: impit-python/artifacts
-              run-id: 14378458029
-              github-token: ${{ secrets.APIFY_SERVICE_ACCOUNT_GITHUB_TOKEN }}
 
           - name: List files
             run: |
@@ -99,4 +106,4 @@ jobs:
           - name: Publish to PyPI
             run: |
               pip install maturin
-              maturin upload --repository-url https://test.pypi.org/legacy/ --username __token__ --password ${{ secrets.PYPI_TOKEN }} wheels/*
+              maturin upload --username __token__ --password ${{ secrets.PYPI_TOKEN }} wheels/*

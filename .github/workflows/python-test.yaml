@@ -23,11 +23,10 @@ on:
   workflow_dispatch:
   workflow_call:
     inputs:
-      version:
-        description: 'Version to set in pyproject.toml and wheel metadata'
+      commit_sha:
         required: false
         type: string
-        default: ''
+        default: ${{ github.sha }}
 
 concurrency: 
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -54,19 +53,14 @@ jobs:
         #     target: aarch64
     steps:
       - uses: actions/checkout@v4
+        with: 
+          ref: ${{ inputs.commit_sha }}
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
 
       - name: Set up Python
         run: uv python install
-
-      - name: Set new version
-        if: ${{ inputs.version != '' }}
-        id: set_version
-        working-directory: impit-python
-        run: |
-          uvx --from=toml-cli toml set --toml-path=pyproject.toml project.version ${{ inputs.version }}
 
       - name: Calculate openssl-vendored
         shell: bash
@@ -153,19 +147,12 @@ jobs:
             target: aarch64
     steps:
       - uses: actions/checkout@v4
+        with: 
+          ref: ${{ inputs.commit_sha }}
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-
-      - name: Set up Python
-        run: uv python install
-
-      - name: Set new version
-        if: ${{ inputs.version != '' }}
-        id: set_version
-        working-directory: impit-python
-        run: |
-          uvx --from=toml-cli toml set --toml-path=pyproject.toml project.version ${{ inputs.version }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
 
       - name: Build wheels
         uses: PyO3/maturin-action@v1
@@ -232,6 +219,8 @@ jobs:
             target: x64
     steps:
       - uses: actions/checkout@v4
+        with: 
+          ref: ${{ inputs.commit_sha }}
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
@@ -240,13 +229,6 @@ jobs:
         with:
           python-version: 3.x
           architecture: ${{ matrix.platform.target }}
-
-      - name: Set new version
-        if: ${{ inputs.version != '' }}
-        id: set_version
-        working-directory: impit-python
-        run: |
-          uvx --from=toml-cli toml set --toml-path=pyproject.toml project.version ${{ inputs.version }}
 
       - name: Build wheels
         uses: PyO3/maturin-action@v1
@@ -287,19 +269,14 @@ jobs:
             target: aarch64
     steps:
       - uses: actions/checkout@v4
+        with: 
+          ref: ${{ inputs.commit_sha }}
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
 
       - name: Set up Python
         uses: actions/setup-python@v5
-
-      - name: Set new version
-        if: ${{ inputs.version != '' }}
-        id: set_version
-        working-directory: impit-python
-        run: |
-          uvx --from=toml-cli toml set --toml-path=pyproject.toml project.version ${{ inputs.version }}
 
       - name: Build wheels
         uses: PyO3/maturin-action@v1
