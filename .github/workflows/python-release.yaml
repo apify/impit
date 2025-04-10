@@ -1,0 +1,109 @@
+name: "[impit-python] Release to PyPI"
+permissions:
+  contents: write
+  id-token: write
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: 'Bump version'
+        required: true
+        type: choice
+        default: 'patch'
+        options:
+          - 'major'
+          - 'minor'
+          - 'patch'
+
+jobs:
+    get_version:
+      runs-on: ubuntu-latest
+      outputs:
+        bumped-version-commit-sha: ${{ steps.commit_version.outputs.commit-sha }}
+      steps:
+        - uses: actions/checkout@v4
+          with:
+            token: ${{ secrets.APIFY_SERVICE_ACCOUNT_GITHUB_TOKEN }}
+
+        - name: Use Python
+          uses: actions/setup-python@v5
+          with:
+            python-version: 3.x
+
+        - name: Set up uv package manager
+          uses: astral-sh/setup-uv@v5
+
+        - name: Use Node.js
+          uses: actions/setup-node@v4
+
+        - name: Get current version
+          id: get_version
+          working-directory: impit-python
+          run: |
+            echo "current_version=$(uvx --from=toml-cli toml get --toml-path=pyproject.toml project.version)" >> "$GITHUB_OUTPUT"
+
+        - name: Increment version
+          id: increment_version
+          working-directory: impit-python
+          run: |
+            echo "new_version=$(npx semver -i ${{ github.event.inputs.bump }} ${{ steps.get_version.outputs.current_version }})" >> "$GITHUB_OUTPUT"
+
+        - name: Set new version
+          id: show_new_version
+          working-directory: impit-python
+          run: |
+            echo "New version is ${{ steps.increment_version.outputs.new_version }}"
+            uvx --from=toml-cli toml set --toml-path=pyproject.toml project.version ${{ steps.increment_version.outputs.new_version }}
+
+        - name: Commit new version
+          id: commit_version
+          uses: EndBug/add-and-commit@v9
+          with:
+            author_name: github-actions[bot]
+            author_email: github-actions[bot]@users.noreply.github.com
+            message: "chore(py): bump `pyproject.toml` version"
+            add: 'impit-python/pyproject.toml'
+
+    test:
+        needs: [get_version]
+        name: Build and test
+        uses: ./.github/workflows/python-test.yaml
+        secrets: inherit
+        with:
+          commit_sha: ${{ needs.get_version.outputs.bumped-version-commit-sha }}
+
+    publish:
+        defaults:
+          run:
+            working-directory: impit-python
+        name: Publish
+        runs-on: ubuntu-latest
+        needs: [test]
+        steps:
+          - name: Download all artifacts
+            uses: actions/download-artifact@v4
+            with:
+              path: impit-python/artifacts
+
+          - name: List files
+            run: |
+                ls -lR
+
+          - name: Move all wheels to /wheels
+            run: |
+                mkdir -p wheels
+                mv artifacts/**/*.{whl,tar.gz} wheels/
+
+          - name: List files
+            run: |
+              ls -lR
+
+          - name: Install Python
+            uses: actions/setup-python@v5
+            with:
+              python-version: 3.x
+
+          - name: Publish to PyPI
+            run: |
+              pip install maturin
+              maturin upload --username __token__ --password ${{ secrets.PYPI_TOKEN }} wheels/*
