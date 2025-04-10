@@ -34,9 +34,16 @@ jobs:
             with:
               token: ${{ secrets.APIFY_SERVICE_ACCOUNT_GITHUB_TOKEN }}
 
-          - uses: actions/setup-python@v5
+          - name: Use Python
+            uses: actions/setup-python@v5
             with:
               python-version: 3.x
+
+          - name: Set up uv package manager
+            uses: astral-sh/setup-uv@v5
+
+          - name: Use Node.js
+            uses: actions/setup-node@v4
 
           - name: Get current version
             id: get_version
@@ -48,7 +55,7 @@ jobs:
             id: increment_version
             working-directory: impit-python
             run: |
-              echo "new_version=$(npx semver -i ${ { github.event.inputs.bump } } ${{ steps.get_version.outputs.current_version }})" >> "$GITHUB_OUTPUT"
+              echo "new_version=$(npx semver -i ${{ github.event.inputs.bump }} ${{ steps.get_version.outputs.current_version }})" >> "$GITHUB_OUTPUT"
 
           - name: Show new version
             id: show_new_version
