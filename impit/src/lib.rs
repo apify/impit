@@ -88,6 +88,7 @@ pub mod emulation {
 /// Various utility functions and types.
 pub mod utils {
     pub use crate::response_parsing::decode;
+    pub use crate::response_parsing::determine_encoding;
     pub use crate::response_parsing::ContentType;
     pub use encoding::all as encodings;
 }

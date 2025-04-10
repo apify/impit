@@ -18,18 +18,22 @@ use crate::{
 #[pyclass]
 pub(crate) struct Client {
     impit: Impit,
+    default_encoding: Option<String>,
 }
 
 #[pymethods]
 impl Client {
     #[new]
-    #[pyo3(signature = (browser=None, http3=None, proxy=None, timeout=None, verify=None))]
+    #[pyo3(signature = (browser=None, http3=None, proxy=None, timeout=None, verify=None, default_encoding=None, follow_redirects=None, max_redirects=Some(20)))]
     pub fn new(
         browser: Option<String>,
         http3: Option<bool>,
         proxy: Option<String>,
         timeout: Option<f64>,
         verify: Option<bool>,
+        default_encoding: Option<String>,
+        follow_redirects: Option<bool>,
+        max_redirects: Option<u16>,
     ) -> Self {
         let builder = ImpitBuilder::default();
 
@@ -62,9 +66,17 @@ impl Client {
             _ => builder,
         };
 
+        let builder = match follow_redirects {
+            Some(true) => builder.with_redirect(impit::impit::RedirectBehavior::FollowRedirect(
+                max_redirects.unwrap_or(20).into(),
+            )),
+            _ => builder.with_redirect(impit::impit::RedirectBehavior::ManualRedirect),
+        };
+
         pyo3_async_runtimes::tokio::get_runtime().block_on(async {
             Self {
                 impit: builder.build(),
+                default_encoding,
             }
         })
     }
@@ -228,7 +240,7 @@ impl Client {
                     _ => Err(ErrorType::InvalidMethod(method.to_string())),
                 }
             })
-            .map(|response| response.into())
+            .map(|response| ImpitPyResponse::from(response, self.default_encoding.clone()))
             .map_err(|err| match err {
                 ErrorType::RequestError(r) => PyErr::new::<PyRuntimeError, _>(format!("{:#?}", r)),
                 e => PyErr::new::<PyValueError, _>(e.to_string()),

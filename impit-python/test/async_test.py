@@ -58,6 +58,44 @@ class TestBasicRequests:
 
         await m('https://example.org')
 
+    @pytest.mark.asyncio
+    async def test_default_no_redirect(self, browser: Browser) -> None:
+        impit = AsyncClient(browser=browser)
+
+        target_url = 'https://example.org/'
+        redirect_url = get_httpbin_url('/redirect-to', query={'url': target_url})
+
+        response = await impit.get(redirect_url)
+
+        assert response.status_code == 302
+        assert response.is_redirect
+
+        assert response.url == redirect_url
+        assert response.headers.get('location') == target_url
+
+    @pytest.mark.asyncio
+    async def test_follow_redirects(self, browser: Browser) -> None:
+        impit = AsyncClient(browser=browser, follow_redirects=True)
+
+        target_url = 'https://example.org/'
+        redirect_url = get_httpbin_url('/redirect-to', query={'url': target_url})
+
+        response = await impit.get(redirect_url)
+
+        assert response.status_code == 200
+        assert not response.is_redirect
+
+        assert response.url == target_url
+
+    @pytest.mark.asyncio
+    async def test_limit_redirects(self, browser: Browser) -> None:
+        impit = AsyncClient(browser=browser, follow_redirects=True, max_redirects=1)
+
+        redirect_url = get_httpbin_url('/absolute-redirect/3')
+
+        with pytest.raises(RuntimeError, match='TooManyRedirects'):
+            await impit.get(redirect_url)
+
 
 @pytest.mark.parametrize(
     ('browser'),
@@ -149,3 +187,14 @@ class TestRequestBody:
         response = await m(get_httpbin_url(f'/{method.lower()}'), content=b'foo')
         assert response.status_code == 200
         assert json.loads(response.text)['data'] == 'foo'
+
+    @pytest.mark.asyncio
+    async def test_content(self, browser: Browser) -> None:
+        impit = AsyncClient(browser=browser)
+
+        response = await impit.get(get_httpbin_url('/'))
+
+        assert response.status_code == 200
+        assert isinstance(response.content, bytes)
+        assert isinstance(response.text, str)
+        assert response.content.decode('utf-8') == response.text

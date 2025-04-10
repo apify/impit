@@ -89,20 +89,28 @@ fn prescan_bytestream(bytes: &[u8]) -> Option<encoding::EncodingRef> {
 ///
 /// assert_eq!(string, "žluťoučký kůň"); // The function uses the Windows-1250 encoding.
 /// ```
-pub fn decode(bytes: &[u8], encoding_prior_knowledge: Option<encoding::EncodingRef>) -> String {
-    let mut encoding: encoding::EncodingRef = encoding::all::UTF_8;
-
-    if let Some(enc) = encoding_prior_knowledge {
-        encoding = enc;
-    } else if let Some(enc) = bom_sniffing(bytes) {
-        encoding = enc;
-    } else if let Some(enc) = prescan_bytestream(bytes) {
-        encoding = enc;
-    }
+pub fn decode(bytes: &[u8], preferred_encoding: Option<encoding::EncodingRef>) -> String {
+    let encoding = match preferred_encoding {
+        Some(encoding) => encoding,
+        None => determine_encoding(bytes).unwrap_or(encoding::all::UTF_8),
+    };
 
     encoding
         .decode(bytes, encoding::DecoderTrap::Replace)
         .unwrap()
+}
+
+/// Determines the encoding of a byte stream.
+///
+/// If the checks fail, the function returns `None`.
+pub fn determine_encoding(bytes: &[u8]) -> Option<encoding::EncodingRef> {
+    if let Some(enc) = bom_sniffing(bytes) {
+        return Some(enc);
+    } else if let Some(enc) = prescan_bytestream(bytes) {
+        return Some(enc);
+    }
+
+    None
 }
 
 /// A struct that represents the contents of the `Content-Type` header.

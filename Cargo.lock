@@ -1551,6 +1551,7 @@ name = "impit-python"
 version = "0.0.0"
 dependencies = [
  "bytes",
+ "encoding",
  "h2",
  "impit",
  "napi-build",
