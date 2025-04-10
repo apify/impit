@@ -24,7 +24,7 @@ pub(crate) struct Client {
 #[pymethods]
 impl Client {
     #[new]
-    #[pyo3(signature = (browser=None, http3=None, proxy=None, timeout=None, verify=None, default_encoding=None))]
+    #[pyo3(signature = (browser=None, http3=None, proxy=None, timeout=None, verify=None, default_encoding=None, follow_redirects=None, max_redirects=Some(20)))]
     pub fn new(
         browser: Option<String>,
         http3: Option<bool>,
@@ -32,6 +32,8 @@ impl Client {
         timeout: Option<f64>,
         verify: Option<bool>,
         default_encoding: Option<String>,
+        follow_redirects: Option<bool>,
+        max_redirects: Option<u16>,
     ) -> Self {
         let builder = ImpitBuilder::default();
 
@@ -62,6 +64,13 @@ impl Client {
         let builder = match verify {
             Some(false) => builder.with_ignore_tls_errors(true),
             _ => builder,
+        };
+
+        let builder = match follow_redirects {
+            Some(true) => builder.with_redirect(impit::impit::RedirectBehavior::FollowRedirect(
+                max_redirects.unwrap_or(20).into(),
+            )),
+            _ => builder.with_redirect(impit::impit::RedirectBehavior::ManualRedirect),
         };
 
         pyo3_async_runtimes::tokio::get_runtime().block_on(async {

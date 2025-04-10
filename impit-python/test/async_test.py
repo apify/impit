@@ -60,7 +60,7 @@ class TestBasicRequests:
         await m('https://example.org')
 
     @pytest.mark.asyncio
-    async def test_url_with_redirect(self, browser: Browser) -> None:
+    async def test_default_no_redirect(self, browser: Browser) -> None:
         impit = AsyncClient(browser=browser)
 
         target_url = get_httpbin_url('/')
@@ -68,12 +68,38 @@ class TestBasicRequests:
 
         response = await impit.get(redirect_url)
 
-        assert response.status_code == 200
-        assert response.url == target_url
-        assert response.url != redirect_url
+        assert response.status_code == 302
+        assert response.is_redirect
 
-        # The target page does not have a redirect status
+        assert response.url == redirect_url
+        assert response.headers.get('location') == target_url
+
+    @pytest.mark.asyncio
+    async def test_follow_redirects(self, browser: Browser) -> None:
+        impit = AsyncClient(browser=browser, follow_redirects=True)
+
+        target_url = get_httpbin_url('/')
+        redirect_url = get_httpbin_url(f'/redirect-to?{urlencode({"url": target_url})}')
+
+        response = await impit.get(redirect_url)
+
+        assert response.status_code == 200
         assert not response.is_redirect
+
+        assert response.url == target_url
+    
+    @pytest.mark.asyncio
+    async def test_limit_redirects(self, browser: Browser) -> None:
+        impit = AsyncClient(browser=browser, follow_redirects=True, max_redirects=1)
+
+        redirect_url = get_httpbin_url(f'/absolute-redirect/3')
+        
+        try:
+            response = await impit.get(redirect_url)
+        except Exception as e:
+            assert isinstance(e, RuntimeError)
+            assert 'TooManyRedirects' in str(e)
+            return
 
 
 @pytest.mark.parametrize(

@@ -48,6 +48,8 @@ class Client:
         timeout: float | None = None,
         verify: bool | None = None,
         default_encoding: str | None = None,
+        follow_redirects: bool | None = None,
+        max_redirects: int | None = None,
     ) -> None:
         """Initialize a synchronous HTTP client.
 
@@ -59,6 +61,8 @@ class Client:
             verify: Verify SSL certificates (set to False to ignore TLS errors)
             default_encoding: Default encoding for response.text field (e.g., "utf-8", "cp1252"). Overrides `content-type`
                 header and bytestream prescan.
+            follow_redirects: Whether to follow redirects (default: False)
+            max_redirects: Maximum number of redirects to follow (default: 20)
         """
 
     def get(
@@ -256,6 +260,8 @@ class AsyncClient:
         timeout: float | None = None,
         verify: bool | None = None,
         default_encoding: str | None = None,
+        follow_redirects: bool | None = None,
+        max_redirects: int | None = None,
     ) -> None:
         """Initialize an asynchronous HTTP client.
 
@@ -267,6 +273,8 @@ class AsyncClient:
             verify: Verify SSL certificates (set to False to ignore TLS errors)
             default_encoding: Default encoding for response.text field (e.g., "utf-8", "cp1252"). Overrides `content-type`
                 header and bytestream prescan.
+            follow_redirects: Whether to follow redirects (default: False)
+            max_redirects: Maximum number of redirects to follow (default: 20)
         """
 
     async def get(
