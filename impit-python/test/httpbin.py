@@ -6,7 +6,7 @@ def get_httpbin_url(path: str, *, query: dict[str, str] = {}, https: bool = True
     url = None
     if os.environ.get('APIFY_HTTPBIN_TOKEN'):
         url = urllib.parse.urlparse('https://httpbin.apify.actor')
-        query['token'] = [os.environ['APIFY_HTTPBIN_TOKEN']]
+        query['token'] = os.environ['APIFY_HTTPBIN_TOKEN']
         url = url._replace(query=urllib.parse.urlencode(query, doseq=True))
     else:
         url = urllib.parse.urlparse('https://httpbin.org')
