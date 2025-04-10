@@ -90,3 +90,16 @@ jobs:
           - name: List files
             run: |
               ls -lR
+
+          - name: Install Python
+            uses: actions/setup-python@v5
+            with:
+              python-version: 3.x
+
+          - name: Publish to PyPI
+            env:
+              TWINE_USERNAME: __token__
+              TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+            run: |
+              pip install twine
+              twine upload --skip-existing --verbose wheels/* --repository-url https://test.pypi.org/legacy
