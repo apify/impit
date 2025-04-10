@@ -38,6 +38,24 @@ jobs:
             with:
               python-version: 3.x
 
+          - name: Get current version
+            id: get_version
+            working-directory: impit-python
+            run: |
+              echo "current_version=$(uvx --from=toml-cli toml get --toml-path=pyproject.toml project.version)" >> "$GITHUB_OUTPUT"
+
+          - name: Increment version
+            id: increment_version
+            working-directory: impit-python
+            run: |
+              echo "new_version=$(npx semver -i ${ { github.event.inputs.bump } } ${{ steps.get_version.outputs.current_version }})" >> "$GITHUB_OUTPUT"
+
+          - name: Show new version
+            id: show_new_version
+            working-directory: impit-python
+            run: |
+              echo "New version is ${{ steps.increment_version.outputs.new_version }}"
+
           - name: Download all artifacts
             uses: actions/download-artifact@v4
             with:
