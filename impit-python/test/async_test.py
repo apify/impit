@@ -38,6 +38,16 @@ class TestBasicRequests:
         assert json.loads(response.text)['headers']['Impit-Test'] == 'foo'
 
     @pytest.mark.asyncio
+    async def test_overwriting_headers_work(self, browser: Browser) -> None:
+        impit = AsyncClient(browser=browser)
+
+        response = await impit.get(
+            get_httpbin_url('/headers'), headers={'User-Agent': 'this is impit!'}
+        )
+        assert response.status_code == 200
+        assert json.loads(response.text)['headers']['User-Agent'] == 'this is impit!'
+
+    @pytest.mark.asyncio
     async def test_http3_works(self, browser: Browser) -> None:
         impit = AsyncClient(browser=browser, http3=True)
 

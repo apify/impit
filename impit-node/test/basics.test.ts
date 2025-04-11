@@ -71,6 +71,20 @@ describe.each([
             t.expect(json.headers?.['Impit-Test']).toBe('foo');
         })
 
+        test('overwriting impersonated headers works', async (t) => {
+            const response = await impit.fetch(
+            getHttpBinUrl('/headers'),
+            {
+                headers: {
+                    'User-Agent': 'this is impit!',
+                }
+            }
+            );
+            const json = await response.json();
+
+            t.expect(json.headers?.['User-Agent']).toBe('this is impit!');
+        })
+
         test('http3 works', async (t) => {
             const impit = new Impit({
                 http3: true,
