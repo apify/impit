@@ -45,9 +45,7 @@ class TestBasicRequests:
     def test_overwriting_headers_work(self, browser: Browser) -> None:
         impit = Client(browser=browser)
 
-        response = impit.get(
-            get_httpbin_url('/headers'), headers={'User-Agent': 'this is impit!'}
-        )
+        response = impit.get(get_httpbin_url('/headers'), headers={'User-Agent': 'this is impit!'})
         assert response.status_code == 200
         assert json.loads(response.text)['headers']['User-Agent'] == 'this is impit!'
 
