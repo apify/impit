@@ -1,6 +1,9 @@
 use crate::emulation::Browser;
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
-use std::{collections::HashMap, str::FromStr};
+use std::{
+    collections::{HashMap, HashSet},
+    str::FromStr,
+};
 
 mod statics;
 
@@ -22,13 +25,18 @@ impl HttpHeaders {
 
 impl From<HttpHeaders> for HeaderMap {
     fn from(val: HttpHeaders) -> Self {
-        let mut headers = HeaderMap::new();
-
-        let header_values = match val.context.browser {
+        let impersonated_headers = match val.context.browser {
             Some(Browser::Chrome) => statics::CHROME_HEADERS,
             Some(Browser::Firefox) => statics::FIREFOX_HEADERS,
             None => &[],
-        };
+        }
+        .to_owned();
+
+        let custom_headers = val
+            .context
+            .custom_headers
+            .iter()
+            .map(|(k, v)| (k.as_str(), v.as_str()));
 
         let pseudo_headers_order: &[&str] = match val.context.browser {
             Some(Browser::Chrome) => statics::CHROME_PSEUDOHEADERS_ORDER.as_ref(),
@@ -43,33 +51,21 @@ impl From<HttpHeaders> for HeaderMap {
             );
         }
 
-        let mut used_custom_headers: Vec<String> = vec![];
+        let mut headers = HeaderMap::new();
 
-        // TODO: don't use HTTP2 headers for HTTP1.1
-        for (name, impersonated_value) in header_values {
-            let value: &str = match val.context.custom_headers.get(*name) {
-                Some(custom_value) => {
-                    used_custom_headers.push(name.to_string());
-                    custom_value.as_str()
-                }
-                None => impersonated_value,
-            };
+        let mut used_header_names: HashSet<String> = HashSet::new();
+
+        for (name, value) in custom_headers.chain(impersonated_headers) {
+            if used_header_names.contains(&name.to_lowercase()) {
+                continue;
+            }
 
             headers.append(
                 HeaderName::from_str(name).unwrap(),
                 HeaderValue::from_str(value).unwrap(),
             );
+            used_header_names.insert(name.to_lowercase());
         }
-
-        val.context.custom_headers.iter().for_each(|(name, value)| {
-            if !used_custom_headers.contains(name) {
-                headers.append(
-                    HeaderName::from_str(name).unwrap(),
-                    HeaderValue::from_str(value).unwrap(),
-                );
-            }
-        });
-
         headers
     }
 }
