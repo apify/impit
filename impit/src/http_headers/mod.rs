@@ -1,6 +1,9 @@
 use crate::emulation::Browser;
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
-use std::{collections::{HashMap, HashSet}, str::FromStr};
+use std::{
+    collections::{HashMap, HashSet},
+    str::FromStr,
+};
 
 mod statics;
 
@@ -26,9 +29,12 @@ impl From<HttpHeaders> for HeaderMap {
             Some(Browser::Chrome) => statics::CHROME_HEADERS,
             Some(Browser::Firefox) => statics::FIREFOX_HEADERS,
             None => &[],
-        }.to_owned();
+        }
+        .to_owned();
 
-        let custom_headers = val.context.custom_headers
+        let custom_headers = val
+            .context
+            .custom_headers
             .iter()
             .map(|(k, v)| (k.as_str(), v.as_str()));
 
@@ -54,7 +60,10 @@ impl From<HttpHeaders> for HeaderMap {
                 continue;
             }
 
-            headers.append(HeaderName::from_str(name).unwrap(), HeaderValue::from_str(value).unwrap());
+            headers.append(
+                HeaderName::from_str(name).unwrap(),
+                HeaderValue::from_str(value).unwrap(),
+            );
             used_header_names.insert(name.to_lowercase());
         }
         headers
