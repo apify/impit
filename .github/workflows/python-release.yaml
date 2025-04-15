@@ -17,61 +17,61 @@ on:
   push:
 
 jobs:
-    # get_version:
-    #   runs-on: ubuntu-latest
-    #   outputs:
-    #     bumped-version-commit-sha: ${{ steps.commit_version.outputs.commit_long_sha || github.sha }}
-    #   steps:
-    #     - uses: actions/checkout@v4
-    #       with:
-    #         token: ${{ secrets.APIFY_SERVICE_ACCOUNT_GITHUB_TOKEN }}
+    get_version:
+      runs-on: ubuntu-latest
+      outputs:
+        bumped-version-commit-sha: ${{ steps.commit_version.outputs.commit_long_sha || github.sha }}
+      steps:
+        - uses: actions/checkout@v4
+          with:
+            token: ${{ secrets.APIFY_SERVICE_ACCOUNT_GITHUB_TOKEN }}
 
-    #     - name: Use Python
-    #       uses: actions/setup-python@v5
-    #       with:
-    #         python-version: 3.x
+        - name: Use Python
+          uses: actions/setup-python@v5
+          with:
+            python-version: 3.x
 
-    #     - name: Set up uv package manager
-    #       uses: astral-sh/setup-uv@v5
+        - name: Set up uv package manager
+          uses: astral-sh/setup-uv@v5
 
-    #     - name: Use Node.js
-    #       uses: actions/setup-node@v4
+        - name: Use Node.js
+          uses: actions/setup-node@v4
 
-    #     - name: Get current version
-    #       id: get_version
-    #       working-directory: impit-python
-    #       run: |
-    #         echo "current_version=$(uvx --from=toml-cli toml get --toml-path=pyproject.toml project.version)" >> "$GITHUB_OUTPUT"
+        - name: Get current version
+          id: get_version
+          working-directory: impit-python
+          run: |
+            echo "current_version=$(uvx --from=toml-cli toml get --toml-path=pyproject.toml project.version)" >> "$GITHUB_OUTPUT"
 
-    #     - name: Increment version
-    #       id: increment_version
-    #       working-directory: impit-python
-    #       run: |
-    #         echo "new_version=$(npx semver -i ${{ github.event.inputs.bump }} ${{ steps.get_version.outputs.current_version }})" >> "$GITHUB_OUTPUT"
+        - name: Increment version
+          id: increment_version
+          working-directory: impit-python
+          run: |
+            echo "new_version=$(npx semver -i ${{ github.event.inputs.bump }} ${{ steps.get_version.outputs.current_version }})" >> "$GITHUB_OUTPUT"
 
-    #     - name: Set new version
-    #       id: show_new_version
-    #       working-directory: impit-python
-    #       run: |
-    #         echo "New version is ${{ steps.increment_version.outputs.new_version }}"
-    #         uvx --from=toml-cli toml set --toml-path=pyproject.toml project.version ${{ steps.increment_version.outputs.new_version }}
+        - name: Set new version
+          id: show_new_version
+          working-directory: impit-python
+          run: |
+            echo "New version is ${{ steps.increment_version.outputs.new_version }}"
+            uvx --from=toml-cli toml set --toml-path=pyproject.toml project.version ${{ steps.increment_version.outputs.new_version }}
 
-    #     - name: Commit new version
-    #       id: commit_version
-    #       uses: EndBug/add-and-commit@v9
-    #       with:
-    #         author_name: github-actions[bot]
-    #         author_email: github-actions[bot]@users.noreply.github.com
-    #         message: "chore(py): bump `pyproject.toml` version"
-    #         add: 'impit-python/pyproject.toml'
+        - name: Commit new version
+          id: commit_version
+          uses: EndBug/add-and-commit@v9
+          with:
+            author_name: github-actions[bot]
+            author_email: github-actions[bot]@users.noreply.github.com
+            message: "chore(py): bump `pyproject.toml` version"
+            add: 'impit-python/pyproject.toml'
 
-    # test:
-    #     needs: [get_version]
-    #     name: Build and test
-    #     uses: ./.github/workflows/python-test.yaml
-    #     secrets: inherit
-    #     with:
-    #       commit_sha: ${{ needs.get_version.outputs.bumped-version-commit-sha }}
+    test:
+        needs: [get_version]
+        name: Build and test
+        uses: ./.github/workflows/python-test.yaml
+        secrets: inherit
+        with:
+          commit_sha: ${{ needs.get_version.outputs.bumped-version-commit-sha }}
 
     publish:
         defaults:
@@ -79,18 +79,12 @@ jobs:
             working-directory: impit-python
         name: Publish
         runs-on: ubuntu-latest
-        # needs: [test]
+        needs: [test]
         steps:
           - name: Download all artifacts
             uses: actions/download-artifact@v4
             with:
               path: impit-python/artifacts
-              run-id: 14381587193
-              github-token: ${{ secrets.APIFY_SERVICE_ACCOUNT_GITHUB_TOKEN }}
-
-          - name: List files
-            run: |
-                ls -lR
 
           - name: Move all wheels to /wheels
             run: |
@@ -104,6 +98,5 @@ jobs:
           - name: Publish to PyPI
             uses: pypa/gh-action-pypi-publish@release/v1
             with:
-              repository-url: https://test.pypi.org/legacy/
               packages-dir: impit-python/wheels
 
