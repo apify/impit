@@ -14,7 +14,6 @@ on:
           - 'major'
           - 'minor'
           - 'patch'
-  push:
 
 jobs:
     get_version:
