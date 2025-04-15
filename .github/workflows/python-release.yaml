@@ -85,10 +85,6 @@ jobs:
             with:
               path: impit-python/artifacts
 
-          - name: List files
-            run: |
-                ls -lR
-
           - name: Move all wheels to /wheels
             run: |
                 mkdir -p wheels
@@ -98,12 +94,8 @@ jobs:
             run: |
               ls -lR
 
-          - name: Install Python
-            uses: actions/setup-python@v5
-            with:
-              python-version: 3.x
-
           - name: Publish to PyPI
-            run: |
-              pip install maturin
-              maturin upload --username __token__ --password ${{ secrets.PYPI_TOKEN }} wheels/*
+            uses: pypa/gh-action-pypi-publish@release/v1
+            with:
+              packages-dir: impit-python/wheels
+

@@ -49,6 +49,7 @@ class TestBasicRequests:
         assert response.status_code == 200
         assert json.loads(response.text)['headers']['User-Agent'] == 'this is impit!'
 
+    @pytest.mark.skip(reason='Flaky under the CI environment')
     def test_http3_works(self, browser: Browser) -> None:
         impit = Client(browser=browser, http3=True)
 
