@@ -13,9 +13,9 @@ export declare class ImpitResponse {
   headers: Record<string, string>
   ok: boolean
   url: string
-  decodeBuffer(buffer: Buffer): String
+  decodeBuffer(buffer: Buffer): string
   bytes(this: object): Promise<Uint8Array>
-  text(this: object): Promise<String>
+  text(this: object): Promise<string>
   json(this: object): Promise<any>
   get body(): ReadableStream<Uint8Array>
 }
