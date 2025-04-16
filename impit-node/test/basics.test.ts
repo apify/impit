@@ -61,14 +61,19 @@ describe.each([
             getHttpBinUrl('/headers'),
             {
                 headers: {
-                'Impit-Test': 'foo',
-                'Cookie': 'test=123; test2=456'
+                    'Impit-Test': 'foo',
+                    'Cookie': 'test=123; test2=456'
                 }
             }
             );
             const json = await response.json();
+            const headers = response.headers;
 
+            // request headers
             t.expect(json.headers?.['Impit-Test']).toBe('foo');
+
+            // response headers
+            t.expect(headers.get('content-type')).toEqual('application/json');
         })
 
         test('overwriting impersonated headers works', async (t) => {

@@ -10,7 +10,7 @@ export type ImpitWrapper = Impit
 export declare class ImpitResponse {
   status: number
   statusText: string
-  headers: Record<string, string>
+  headers: Headers
   ok: boolean
   url: string
   decodeBuffer(buffer: Buffer): String

@@ -17,7 +17,7 @@ pub struct ImpitResponse {
   inner: RefCell<Option<Response>>,
   pub status: u16,
   pub status_text: String,
-  #[napi(ts_type = "Record<string, string>")]
+  #[napi(ts_type = "Headers")]
   pub headers: Headers,
   pub ok: bool,
   pub url: String,
