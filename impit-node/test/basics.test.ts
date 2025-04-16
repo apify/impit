@@ -77,6 +77,8 @@ describe.each([
         })
 
         test('multiple same-named response headers work', async (t) => {
+            const impit = new Impit({ browser, followRedirects: false })
+
             const { headers } = await impit.fetch(
                 getHttpBinUrl('/cookies/set?a=1&b=2&c=3'),
             );
