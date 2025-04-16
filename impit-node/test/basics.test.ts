@@ -162,14 +162,14 @@ describe.each([
     describe('Response parsing', () => {
         test('.text() method works', async (t) => {
             const response = await impit.fetch(getHttpBinUrl('/html'));
-            const text = await response.text();
+            const text: string = await response.text();
 
             t.expect(text).toContain('Herman Melville');
         });
 
         test('.text() method works with decoding', async (t) => {
             const response = await impit.fetch(new URL(routes.charset.path, "http://127.0.0.1:3001").href);
-            const text = await response.text();
+            const text: string = await response.text();
 
             t.expect(text).toContain(routes.charset.bodyString);
         });

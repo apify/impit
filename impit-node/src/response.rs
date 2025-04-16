@@ -108,7 +108,7 @@ impl ImpitResponse {
     Ok(this.get(INNER_RESPONSE_PROPERTY_NAME)?.unwrap())
   }
 
-  #[napi(ts_return_type = "String")]
+  #[napi(ts_return_type = "string")]
   pub fn decode_buffer(&self, buffer: Buffer) -> Result<String> {
     let encoding = self
       .headers
@@ -135,7 +135,7 @@ impl ImpitResponse {
       .call_without_args(Some(&response))
   }
 
-  #[napi(ts_return_type = "Promise<String>")]
+  #[napi(ts_return_type = "Promise<string>")]
   pub fn text(&self, env: &Env, this: This<JsObject>) -> Result<JsUnknown> {
     let response = self.get_inner_response(env, this)?;
 
