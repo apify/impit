@@ -168,7 +168,7 @@ impl ImpitBuilder {
     }
 
     /// Sets whether to store cookies in the internal Client cookie store.
-    /// 
+    ///
     /// If set to `true`, the client will store cookies in the internal cookie store.
     /// If set to `false`, the client will not store cookies. Response headers will contain the
     /// `Set-Cookie` header.
