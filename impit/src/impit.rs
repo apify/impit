@@ -193,6 +193,7 @@ impl Impit {
             .danger_accept_invalid_certs(config.ignore_tls_errors)
             .danger_accept_invalid_hostnames(config.ignore_tls_errors)
             .use_preconfigured_tls(tls_config)
+            .cookie_store(true)
             .timeout(config.request_timeout);
 
         if config.max_http_version == Version::HTTP_3 {
