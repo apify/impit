@@ -37,63 +37,63 @@ jobs:
           # - x86_64-unknown-illumos - weird error compiling openssl - "bin/sh: 1: granlib: not found"
 
         #   - os-name: FreeBSD-x86_64
-        #     runs-on: ubuntu-20.04
+        #     runs-on: ubuntu-24.04
         #     target: x86_64-unknown-freebsd
         #     bin: impit-cli
         #     name: impit-cli-FreeBSD-x86_64.tar.gz
         #     skip_tests: true
           - os-name: Linux-x86_64
-            runs-on: ubuntu-20.04
+            runs-on: ubuntu-24.04
             target: x86_64-unknown-linux-musl
             bin: impit-cli
             name: impit-cli-Linux-x86_64-musl.tar.gz
           - os-name: Linux-aarch64
-            runs-on: ubuntu-20.04
+            runs-on: ubuntu-24.04
             target: aarch64-unknown-linux-musl
             bin: impit-cli
             name: impit-cli-Linux-aarch64-musl.tar.gz
           - os-name: Linux-arm
-            runs-on: ubuntu-20.04
+            runs-on: ubuntu-24.04
             target: arm-unknown-linux-musleabi
             bin: impit-cli
             name: impit-cli-Linux-arm-musl.tar.gz
         #   - os-name: Linux-i686
-        #     runs-on: ubuntu-20.04
+        #     runs-on: ubuntu-24.04
         #     target: i686-unknown-linux-musl
         #     bin: impit-cli
         #     name: impit-cli-Linux-i686-musl.tar.gz
         #     skip_tests: true
         #   - os-name: Linux-powerpc
-        #     runs-on: ubuntu-20.04
+        #     runs-on: ubuntu-24.04
         #     target: powerpc-unknown-linux-gnu
         #     bin: impit-cli
         #     name: impit-cli-Linux-powerpc-gnu.tar.gz
         #     skip_tests: true
         #   - os-name: Linux-powerpc64
-        #     runs-on: ubuntu-20.04
+        #     runs-on: ubuntu-24.04
         #     target: powerpc64-unknown-linux-gnu
         #     bin: impit-cli
         #     name: impit-cli-Linux-powerpc64-gnu.tar.gz
         #     skip_tests: true
         #   - os-name: Linux-powerpc64le
-        #     runs-on: ubuntu-20.04
+        #     runs-on: ubuntu-24.04
         #     target: powerpc64le-unknown-linux-gnu
         #     bin: impit-cli
         #     name: impit-cli-Linux-powerpc64le.tar.gz
         #     skip_tests: true
         #   - os-name: Linux-riscv64
-        #     runs-on: ubuntu-20.04
+        #     runs-on: ubuntu-24.04
         #     target: riscv64gc-unknown-linux-gnu
         #     bin: impit-cli
         #     name: impit-cli-Linux-riscv64gc-gnu.tar.gz
         #   - os-name: Linux-s390x
-        #     runs-on: ubuntu-20.04
+        #     runs-on: ubuntu-24.04
         #     target: s390x-unknown-linux-gnu
         #     bin: impit-cli
         #     name: impit-cli-Linux-s390x-gnu.tar.gz
         #     skip_tests: true
         #   - os-name: NetBSD-x86_64
-        #     runs-on: ubuntu-20.04
+        #     runs-on: ubuntu-24.04
         #     target: x86_64-unknown-netbsd
         #     bin: impit-cli
         #     name: impit-cli-NetBSD-x86_64.tar.gz
