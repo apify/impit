@@ -86,6 +86,7 @@ pub struct ImpitBuilder {
     request_timeout: Duration,
     max_http_version: Version,
     redirect: RedirectBehavior,
+    store_cookies: bool,
 }
 
 impl Default for ImpitBuilder {
@@ -98,6 +99,7 @@ impl Default for ImpitBuilder {
             request_timeout: Duration::from_secs(30),
             max_http_version: Version::HTTP_2,
             redirect: RedirectBehavior::FollowRedirect(10),
+            store_cookies: true,
         }
     }
 }
@@ -165,6 +167,16 @@ impl ImpitBuilder {
         self
     }
 
+    /// Sets whether to store cookies in the internal Client cookie store.
+    /// 
+    /// If set to `true`, the client will store cookies in the internal cookie store.
+    /// If set to `false`, the client will not store cookies. Response headers will contain the
+    /// `Set-Cookie` header.
+    pub fn with_store_cookies(mut self, store_cookies: bool) -> Self {
+        self.store_cookies = store_cookies;
+        self
+    }
+
     /// Builds the [`Impit`] instance.
     pub fn build(self) -> Impit {
         Impit::new(self)
@@ -193,7 +205,7 @@ impl Impit {
             .danger_accept_invalid_certs(config.ignore_tls_errors)
             .danger_accept_invalid_hostnames(config.ignore_tls_errors)
             .use_preconfigured_tls(tls_config)
-            .cookie_store(true)
+            .cookie_store(config.store_cookies)
             .timeout(config.request_timeout);
 
         if config.max_http_version == Version::HTTP_3 {

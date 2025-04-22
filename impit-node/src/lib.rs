@@ -23,7 +23,11 @@ pub struct ImpitWrapper {
 impl ImpitWrapper {
   #[napi(constructor)]
   pub fn new(options: Option<ImpitOptions>) -> Result<Self, napi::Error> {
-    let config: ImpitBuilder = options.unwrap_or_default().into();
+    let config: ImpitBuilder = options
+      .unwrap_or_default()
+      .into();
+
+    let config = config.with_store_cookies(false);
 
     // `quinn` for h3 requires existing async runtime.
     // This runs the `config.build` function in the napi-managed tokio runtime which remains available

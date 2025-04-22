@@ -14,7 +14,7 @@ impit = { path="../impit" }
 rustls = { version="0.23.16" }
 tokio = { version="1.41.1", features = ["full"] }
 h2 = "0.4.7"
-reqwest = { version = "0.12.9", features = ["json", "gzip", "brotli", "zstd", "deflate", "rustls-tls", "http3", "stream"] }
+reqwest = "0.12.9"
 tokio-stream = "0.1.17"
 bytes = "1.9.0"
 
