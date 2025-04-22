@@ -5,10 +5,6 @@ class ResponsePatches {
         const buffer = await this.bytes();
         return this.decodeBuffer(buffer);
     }
-
-    static headers(headers) {
-        return new Headers(headers);
-    }
 }
 
 class Impit extends native.Impit {
@@ -20,7 +16,7 @@ class Impit extends native.Impit {
         });
 
         Object.defineProperty(originalResponse, 'headers', {
-            value: ResponsePatches.headers(originalResponse.headers)
+            value: new Headers(originalResponse.headers)
         });
 
         return originalResponse;
