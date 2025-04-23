@@ -20,20 +20,16 @@ export declare class ImpitResponse {
   get body(): ReadableStream<Uint8Array>
 }
 
-export declare const enum Browser {
-  Chrome = 'Chrome',
-  Firefox = 'Firefox'
-}
+export type Browser =  'chrome'|
+'firefox';
 
-export declare const enum HttpMethod {
-  Get = 'GET',
-  Post = 'POST',
-  Put = 'PUT',
-  Delete = 'DELETE',
-  Patch = 'PATCH',
-  Head = 'HEAD',
-  Options = 'OPTIONS'
-}
+export type HttpMethod =  'GET'|
+'POST'|
+'PUT'|
+'DELETE'|
+'PATCH'|
+'HEAD'|
+'OPTIONS';
 
 export interface ImpitOptions {
   browser?: Browser
