@@ -6,7 +6,7 @@ use impit::{
 };
 use napi_derive::napi;
 
-#[napi(string_enum)]
+#[napi(string_enum = "lowercase")]
 pub enum Browser {
   Chrome,
   Firefox,

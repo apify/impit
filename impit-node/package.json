@@ -37,8 +37,8 @@
   },
   "scripts": {
     "artifacts": "napi artifacts --output-dir ../artifacts --npm-dir npm",
-    "build": "napi build --platform --release",
-    "build:debug": "napi build --platform",
+    "build": "napi build --platform --release --no-const-enum",
+    "build:debug": "napi build --platform --no-const-enum",
     "prepublishOnly": "napi prepublish -t npm --no-gh-release",
     "test": "vitest --retry=3",
     "universal": "napi universal",
