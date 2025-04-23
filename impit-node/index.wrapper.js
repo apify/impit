@@ -15,6 +15,10 @@ class Impit extends native.Impit {
             value: ResponsePatches.text.bind(originalResponse)
         });
 
+        Object.defineProperty(originalResponse, 'headers', {
+            value: new Headers(originalResponse.headers)
+        });
+
         return originalResponse;
     }
 }

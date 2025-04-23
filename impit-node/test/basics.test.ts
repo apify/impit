@@ -61,14 +61,34 @@ describe.each([
             getHttpBinUrl('/headers'),
             {
                 headers: {
-                'Impit-Test': 'foo',
-                'Cookie': 'test=123; test2=456'
+                    'Impit-Test': 'foo',
+                    'Cookie': 'test=123; test2=456'
                 }
             }
             );
             const json = await response.json();
+            const headers = response.headers;
 
+            // request headers
             t.expect(json.headers?.['Impit-Test']).toBe('foo');
+
+            // response headers
+            t.expect(headers.get('content-type')).toEqual('application/json');
+        })
+
+        test('multiple same-named response headers work', async (t) => {
+            const impit = new Impit({ browser, followRedirects: false })
+
+            const { headers } = await impit.fetch(
+                getHttpBinUrl('/cookies/set?a=1&b=2&c=3'),
+            );
+
+            t.expect(headers.getSetCookie())
+                .toEqual([ 
+                    'a=1; Path=/',
+                    'b=2; Path=/',
+                    'c=3; Path=/'
+                ]);
         })
 
         test('overwriting impersonated headers works', async (t) => {
@@ -229,7 +249,7 @@ describe.each([
             );
 
             t.expect(response.status).toBe(302);
-            t.expect(response.headers['location']).toBe(getHttpBinUrl('/get', false));
+            t.expect(response.headers.get('location')).toBe(getHttpBinUrl('/get', false));
             t.expect(response.url).toBe(getHttpBinUrl('/absolute-redirect/1', true));
         });
 
