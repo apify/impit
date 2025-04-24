@@ -211,6 +211,7 @@ jobs:
       - name: Test bindings
         env:
             APIFY_HTTPBIN_TOKEN: ${{ secrets.APIFY_HTTPBIN_TOKEN }}
+            PROXY_PASSWORD: ${{ secrets.APIFY_TEST_USER_PROXY_PASSWORD }}
         run: yarn --cwd impit-node test
   test-linux-x64-gnu-binding:
     name: Test bindings on Linux-x64-gnu - node@${{ matrix.node }}
@@ -251,7 +252,10 @@ jobs:
         run: ls -R .
         shell: bash
       - name: Test bindings
-        run: docker run -e CI=1 -e APIFY_HTTPBIN_TOKEN=${{ secrets.APIFY_HTTPBIN_TOKEN }} --rm -v $(pwd):/build -w /build node:${{ matrix.node }}-slim sh -c "corepack enable && yarn --cwd impit-node test"
+        run: docker run -e CI=1 -e APIFY_HTTPBIN_TOKEN=${{ secrets.APIFY_HTTPBIN_TOKEN }} -e PROXY_PASSWORD=${{ secrets.APIFY_TEST_USER_PROXY_PASSWORD }} --rm -v $(pwd):/build -w /build node:${{ matrix.node }}-slim sh -c "corepack enable && yarn --cwd impit-node test"
+      - name: Additional test step
+        run: echo "Running additional tests"
+        shell: bash
 
   test-linux-aarch64-gnu-binding:
     name: Test bindings on Linux-aarch64-gnu - node@${{ matrix.node }}
@@ -295,6 +299,7 @@ jobs:
       - name: Test bindings
         env:
             APIFY_HTTPBIN_TOKEN: ${{ secrets.APIFY_HTTPBIN_TOKEN }}
+            PROXY_PASSWORD: ${{ secrets.APIFY_TEST_USER_PROXY_PASSWORD }}
         run: yarn --cwd impit-node test
 
   test-linux-aarch64-musl-binding:
@@ -336,7 +341,7 @@ jobs:
         shell: bash
       - name: Test bindings
         run: |
-          docker run -e CI=1 -e APIFY_HTTPBIN_TOKEN=${{ secrets.APIFY_HTTPBIN_TOKEN }} --rm -v $(pwd):/build -w /build arm64v8/node:${{ matrix.node }}-alpine sh -c "corepack enable && yarn --cwd impit-node install && yarn --cwd impit-node test"
+          docker run -e CI=1 -e APIFY_HTTPBIN_TOKEN=${{ secrets.APIFY_HTTPBIN_TOKEN }} -e PROXY_PASSWORD=${{ secrets.APIFY_TEST_USER_PROXY_PASSWORD }} --rm -v $(pwd):/build -w /build arm64v8/node:${{ matrix.node }}-alpine sh -c "corepack enable && yarn --cwd impit-node install && yarn --cwd impit-node test"
 
   test-linux-x64-musl-binding:
     name: Test bindings on x86_64-unknown-linux-musl - node@${{ matrix.node }}
@@ -377,5 +382,5 @@ jobs:
         shell: bash
       - name: Test bindings
         run: |
-          docker run -e CI=1 -e APIFY_HTTPBIN_TOKEN=${{ secrets.APIFY_HTTPBIN_TOKEN }} --rm -v $(pwd):/build -w /build node:${{ matrix.node }}-alpine sh -c "corepack enable && yarn --cwd impit-node install && yarn --cwd impit-node test"
+          docker run -e CI=1 -e APIFY_HTTPBIN_TOKEN=${{ secrets.APIFY_HTTPBIN_TOKEN }} -e PROXY_PASSWORD=${{ secrets.APIFY_TEST_USER_PROXY_PASSWORD }} --rm -v $(pwd):/build -w /build node:${{ matrix.node }}-alpine sh -c "corepack enable && yarn --cwd impit-node install && yarn --cwd impit-node test"
 

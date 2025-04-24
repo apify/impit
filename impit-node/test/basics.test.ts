@@ -3,6 +3,7 @@ import { test, describe, expect, beforeAll, afterAll } from 'vitest';
 import { HttpMethod, Impit, Browser } from '../index.wrapper.js';
 import { Server } from 'http';
 import { routes, runServer } from './mock.server.js';
+import { deepStrictEqual } from 'assert';
 
 function getHttpBinUrl(path: string, https?: boolean): string {
     https ??= true;
@@ -226,6 +227,21 @@ describe.each([
         }
 
         t.expect(found).toBe(true);
+        });
+    });
+
+    describe('Proxy', () => {
+        test('proxy works', async (t) => {
+            const impit = new Impit({
+                proxyUrl: `http://auto:${process.env.PROXY_PASSWORD}@proxy.apify.com:8000`,
+                browser,
+            });
+
+            const response = await impit.fetch(
+                getHttpBinUrl('/headers')
+            );
+
+            await response.text();
         });
     });
 
