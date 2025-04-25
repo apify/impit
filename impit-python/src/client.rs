@@ -5,14 +5,10 @@ use impit::{
     impit::{ErrorType, Impit, ImpitBuilder},
     request::RequestOptions,
 };
-use pyo3::{
-    exceptions::{PyRuntimeError, PyTypeError, PyValueError},
-    prelude::*,
-};
+use pyo3::prelude::*;
 
 use crate::{
-    request::{form_to_bytes, RequestBody},
-    response::{self, ImpitPyResponse},
+    errors::ImpitPyError, request::{form_to_bytes, RequestBody}, response::{self, ImpitPyResponse}
 };
 
 #[pyclass]
@@ -90,7 +86,7 @@ impl Client {
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
         force_http3: Option<bool>,
-    ) -> Result<response::ImpitPyResponse, PyErr> {
+    ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request("get", url, content, data, headers, timeout, force_http3)
     }
 
@@ -103,7 +99,7 @@ impl Client {
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
         force_http3: Option<bool>,
-    ) -> Result<response::ImpitPyResponse, PyErr> {
+    ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request("head", url, content, data, headers, timeout, force_http3)
     }
 
@@ -116,7 +112,7 @@ impl Client {
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
         force_http3: Option<bool>,
-    ) -> Result<response::ImpitPyResponse, PyErr> {
+    ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request("post", url, content, data, headers, timeout, force_http3)
     }
 
@@ -129,7 +125,7 @@ impl Client {
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
         force_http3: Option<bool>,
-    ) -> Result<response::ImpitPyResponse, PyErr> {
+    ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request("patch", url, content, data, headers, timeout, force_http3)
     }
 
@@ -142,7 +138,7 @@ impl Client {
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
         force_http3: Option<bool>,
-    ) -> Result<response::ImpitPyResponse, PyErr> {
+    ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request("put", url, content, data, headers, timeout, force_http3)
     }
 
@@ -155,7 +151,7 @@ impl Client {
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
         force_http3: Option<bool>,
-    ) -> Result<response::ImpitPyResponse, PyErr> {
+    ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request("delete", url, content, data, headers, timeout, force_http3)
     }
 
@@ -168,7 +164,7 @@ impl Client {
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
         force_http3: Option<bool>,
-    ) -> Result<response::ImpitPyResponse, PyErr> {
+    ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request("options", url, content, data, headers, timeout, force_http3)
     }
 
@@ -181,7 +177,7 @@ impl Client {
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
         force_http3: Option<bool>,
-    ) -> Result<response::ImpitPyResponse, PyErr> {
+    ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request("trace", url, content, data, headers, timeout, force_http3)
     }
 
@@ -195,7 +191,7 @@ impl Client {
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
         force_http3: Option<bool>,
-    ) -> Result<ImpitPyResponse, PyErr> {
+    ) -> Result<ImpitPyResponse, ImpitPyError> {
         let mut headers = headers.clone();
 
         if let Some(content) = content {
@@ -212,10 +208,9 @@ impl Client {
                     );
                     Ok(form_to_bytes(form))
                 }
-                RequestBody::CatchAll(e) => Err(PyErr::new::<PyTypeError, _>(format!(
-                    "Unsupported data type in request body: {:#?}",
-                    e
-                ))),
+                RequestBody::CatchAll(e) => Err(ImpitPyError::RequestError(
+                    format!("Unsupported data type: {:?}", e).to_string(),
+                )),
             },
             None => Ok(Vec::new()),
         }?;
@@ -241,9 +236,6 @@ impl Client {
                 }
             })
             .map(|response| ImpitPyResponse::from(response, self.default_encoding.clone()))
-            .map_err(|err| match err {
-                ErrorType::RequestError(r) => PyErr::new::<PyRuntimeError, _>(format!("{:#?}", r)),
-                e => PyErr::new::<PyValueError, _>(e.to_string()),
-            })
+            .map_err(|err| err.into())
     }
 }
