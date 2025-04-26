@@ -26,6 +26,13 @@ class TestBasicRequests:
         resp = impit.get(f'{protocol}example.org')
         assert resp.status_code == 200
 
+    def test_boringssl_based_server(self, browser: Browser) -> None:
+        impit = Client(browser=browser)
+
+        response = impit.get('https://www.google.com')
+        assert response.status_code == 200
+        assert response.text
+
     def test_content_encoding(self, browser: Browser) -> None:
         impit = Client(browser=browser)
 
