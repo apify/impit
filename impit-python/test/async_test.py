@@ -28,6 +28,14 @@ class TestBasicRequests:
         assert resp.status_code == 200
 
     @pytest.mark.asyncio
+    async def test_boringssl_based_server(self, browser: Browser) -> None:
+        impit = AsyncClient(browser=browser)
+
+        response = await impit.get('https://www.google.com')
+        assert response.status_code == 200
+        assert response.text
+
+    @pytest.mark.asyncio
     async def test_headers_work(self, browser: Browser) -> None:
         impit = AsyncClient(browser=browser)
 

@@ -55,6 +55,11 @@ describe.each([
             const response = impit.fetch(`${protocol}example.org`);
             await expect(response).resolves.toBeTruthy();
         });
+        
+        test('to a BoringSSL-based server', async () => {
+            const response = impit.fetch('https://www.google.com');
+            await expect(response).resolves.toBeTruthy();
+        });
 
         test('headers work', async (t) => {
             const response = await impit.fetch(
