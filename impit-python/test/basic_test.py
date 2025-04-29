@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from impit import Browser, Client
+from impit import Browser, Client, TooManyRedirects
 
 from .httpbin import get_httpbin_url
 
@@ -101,7 +101,7 @@ class TestBasicRequests:
 
         redirect_url = get_httpbin_url('/absolute-redirect/3')
 
-        with pytest.raises(RuntimeError, match='TooManyRedirects'):
+        with pytest.raises(TooManyRedirects):
             impit.get(redirect_url)
 
 

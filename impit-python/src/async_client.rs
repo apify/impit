@@ -2,12 +2,12 @@ use std::{collections::HashMap, time::Duration};
 
 use impit::{emulation::Browser, errors::ImpitError, impit::ImpitBuilder, request::RequestOptions};
 use pyo3::{
-    exceptions::{PyRuntimeError, PyTypeError, PyValueError},
+    exceptions::PyTypeError,
     prelude::*,
 };
 use tokio::sync::oneshot;
 
-use crate::{request::form_to_bytes, response::ImpitPyResponse, RequestBody};
+use crate::{request::form_to_bytes, response::ImpitPyResponse, errors::ImpitPyError, RequestBody};
 
 #[pyclass]
 pub(crate) struct AsyncClient {
@@ -311,12 +311,7 @@ impl AsyncClient {
 
             response
                 .map(|response| ImpitPyResponse::from(response, default_encoding))
-                .map_err(|err| match err {
-                    ImpitError::ReqwestError(r) => {
-                        PyErr::new::<PyRuntimeError, _>(format!("{:#?}", r))
-                    }
-                    e => PyErr::new::<PyValueError, _>(e.to_string()),
-                })
+                .map_err(|err| ImpitPyError(err).into())
         })
     }
 }

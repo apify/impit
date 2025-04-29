@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from impit import AsyncClient, Browser
+from impit import AsyncClient, Browser, TooManyRedirects
 
 from .httpbin import get_httpbin_url
 
@@ -102,7 +102,7 @@ class TestBasicRequests:
 
         redirect_url = get_httpbin_url('/absolute-redirect/3')
 
-        with pytest.raises(RuntimeError, match='TooManyRedirects'):
+        with pytest.raises(TooManyRedirects):
             await impit.get(redirect_url)
 
 
