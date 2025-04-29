@@ -56,24 +56,36 @@ describe.each([
             await expect(response).resolves.toBeTruthy();
         });
 
-        test('headers work', async (t) => {
+        test.each(
+            [
+            ['object', {
+                'Impit-Test': 'foo',
+                'Cookie': 'test=123; test2=456'
+            }],
+            ['array', [
+                ['Impit-Test', 'foo'],
+                ['Cookie', 'test=123; test2=456']
+            ]],
+            ['Headers', new Headers([
+                ['Impit-Test', 'foo'],
+                ['Cookie', 'test=123; test2=456']
+            ])],
+            ]
+        )('headers (%s) work', async (_, value) => {
             const response = await impit.fetch(
             getHttpBinUrl('/headers'),
             {
-                headers: {
-                    'Impit-Test': 'foo',
-                    'Cookie': 'test=123; test2=456'
-                }
+                headers: value
             }
             );
             const json = await response.json();
             const headers = response.headers;
 
             // request headers
-            t.expect(json.headers?.['Impit-Test']).toBe('foo');
+            expect(json.headers?.['Impit-Test']).toBe('foo');
 
             // response headers
-            t.expect(headers.get('content-type')).toEqual('application/json');
+            expect(headers.get('content-type')).toEqual('application/json');
         })
 
         test('multiple same-named response headers work', async (t) => {
