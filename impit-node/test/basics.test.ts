@@ -268,7 +268,7 @@ describe.each([
                 getHttpBinUrl('/absolute-redirect/2'),
             );
 
-            await t.expect(response).rejects.toThrowError('TooManyRedirects');
+            await t.expect(response).rejects.toThrowError('Too many redirects occurred. Maximum allowed');
         });
     })
 });

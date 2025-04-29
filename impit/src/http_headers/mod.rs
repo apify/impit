@@ -1,4 +1,4 @@
-use crate::emulation::Browser;
+use crate::{emulation::Browser, errors::ImpitError};
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 use std::{
     collections::{HashMap, HashSet},
@@ -23,7 +23,7 @@ impl HttpHeaders {
     }
 }
 
-impl From<HttpHeaders> for HeaderMap {
+impl From<HttpHeaders> for Result<HeaderMap, ImpitError> {
     fn from(val: HttpHeaders) -> Self {
         let impersonated_headers = match val.context.browser {
             Some(Browser::Chrome) => statics::CHROME_HEADERS,
@@ -60,13 +60,24 @@ impl From<HttpHeaders> for HeaderMap {
                 continue;
             }
 
-            headers.append(
-                HeaderName::from_str(name).unwrap(),
-                HeaderValue::from_str(value).unwrap(),
-            );
+            let header_name = HeaderName::from_str(name);
+            let header_value = HeaderValue::from_str(value);
+
+            match (header_name, header_value) {
+                (Err(_), _) => {
+                    return Err(ImpitError::InvalidHeaderName(name.to_string()));
+                }
+                (_, Err(_)) => {
+                    return Err(ImpitError::InvalidHeaderValue(value.to_string()));
+                }
+                (Ok(header_name), Ok(header_value)) => {
+                    headers.append(header_name, header_value);
+                }
+            }
+
             used_header_names.insert(name.to_lowercase());
         }
-        headers
+        Ok(headers)
     }
 }
 

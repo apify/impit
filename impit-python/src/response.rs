@@ -4,6 +4,8 @@ use impit::utils::ContentType;
 use pyo3::prelude::*;
 use reqwest::{Response, Version};
 
+use crate::errors::ImpitPyError;
+
 #[pyclass(name = "Response")]
 #[derive(Debug, Clone)]
 pub struct ImpitPyResponse {
@@ -41,6 +43,15 @@ pub struct ImpitPyResponse {
 impl ImpitPyResponse {
     fn __repr__(&self) -> String {
         format!("<Response [{} {}]>", self.status_code, self.reason_phrase)
+    }
+
+    fn raise_for_status(&self) -> PyResult<()> {
+        if self.status_code >= 400 {
+            return Err(
+                ImpitPyError(impit::errors::ImpitError::HTTPStatusError(self.status_code)).into(),
+            );
+        }
+        Ok(())
     }
 }
 

@@ -1,17 +1,10 @@
 use std::{collections::HashMap, time::Duration};
 
-use impit::{
-    emulation::Browser,
-    impit::{ErrorType, ImpitBuilder},
-    request::RequestOptions,
-};
-use pyo3::{
-    exceptions::{PyRuntimeError, PyTypeError, PyValueError},
-    prelude::*,
-};
+use impit::{emulation::Browser, errors::ImpitError, impit::ImpitBuilder, request::RequestOptions};
+use pyo3::{exceptions::PyTypeError, prelude::*};
 use tokio::sync::oneshot;
 
-use crate::{request::form_to_bytes, response::ImpitPyResponse, RequestBody};
+use crate::{errors::ImpitPyError, request::form_to_bytes, response::ImpitPyResponse, RequestBody};
 
 #[pyclass]
 pub(crate) struct AsyncClient {
@@ -302,7 +295,7 @@ impl AsyncClient {
                 "trace" => impit.trace(url, Some(options)).await,
                 "head" => impit.head(url, Some(options)).await,
                 "delete" => impit.delete(url, Some(options)).await,
-                _ => Err(ErrorType::InvalidMethod(method.to_string())),
+                _ => Err(ImpitError::InvalidMethod(method.to_string())),
             };
 
             tx.send(response).unwrap();
@@ -315,12 +308,7 @@ impl AsyncClient {
 
             response
                 .map(|response| ImpitPyResponse::from(response, default_encoding))
-                .map_err(|err| match err {
-                    ErrorType::RequestError(r) => {
-                        PyErr::new::<PyRuntimeError, _>(format!("{:#?}", r))
-                    }
-                    e => PyErr::new::<PyValueError, _>(e.to_string()),
-                })
+                .map_err(|err| ImpitPyError(err).into())
         })
     }
 }

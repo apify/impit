@@ -70,6 +70,9 @@ pub mod impit;
 /// Customizing request options.
 pub mod request;
 
+/// Errors and error handling.
+pub mod errors;
+
 /// Contains browser emulation-related types and functions.
 pub mod emulation {
 
