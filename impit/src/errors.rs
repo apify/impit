@@ -84,6 +84,10 @@ pub enum ImpitError {
     InvalidMethod(String),
     #[error("{0}")]
     BindingPassthroughError(String),
+    #[error("The header name `{0}` is invalid. Header names must be ASCII and cannot contain control characters or whitespace.")]
+    InvalidHeaderName(String),
+    #[error("The header value `{0}` is invalid.")]
+    InvalidHeaderValue(String),
     #[error("{0:#?}")]
     ReqwestError(reqwest::Error),
 }

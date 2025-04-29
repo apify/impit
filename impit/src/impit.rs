@@ -1,5 +1,5 @@
 use log::debug;
-use reqwest::{Method, Response, Version};
+use reqwest::{header::HeaderMap, Method, Response, Version};
 use std::{str::FromStr, time::Duration};
 use url::Url;
 
@@ -295,9 +295,11 @@ impl Impit {
             &self.base_client
         };
 
+        let header_map: Result<HeaderMap, ImpitError> = headers.into();
+
         let mut request = client
             .request(method.clone(), parsed_url.clone())
-            .headers(headers.into());
+            .headers(header_map?);
 
         if h3 {
             request = request.version(Version::HTTP_3);

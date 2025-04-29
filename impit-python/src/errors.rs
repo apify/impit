@@ -69,6 +69,8 @@ impl From<ImpitPyError> for pyo3::PyErr {
             ImpitPyError(ImpitError::ResponseNotRead) => ResponseNotRead::new_err(format!("{}", err.0)),
             ImpitPyError(ImpitError::RequestNotRead) => RequestNotRead::new_err(format!("{}", err.0)),
             ImpitPyError(ImpitError::StreamClosed) => StreamClosed::new_err(format!("{}", err.0)),
+            ImpitPyError(ImpitError::InvalidHeaderName(_)) => LocalProtocolError::new_err(format!("{}", err.0)),
+            ImpitPyError(ImpitError::InvalidHeaderValue(_)) => LocalProtocolError::new_err(format!("{}", err.0)),
             _ => HTTPError::new_err(format!("{}", err.0)),
         }
     }
