@@ -52,7 +52,7 @@ export interface ImpitOptions {
 
 export interface RequestInit {
   method?: HttpMethod
-  headers?: Record<string, string>
+  headers?: Headers | Record<string, string> | [string, string][]
   body?: string | Buffer
   /** Request timeout in milliseconds. Overrides the Impit-wide timeout option. */
   timeout?: number

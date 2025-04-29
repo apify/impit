@@ -1,4 +1,4 @@
-use std::{collections::HashMap, time::Duration};
+use std::time::Duration;
 
 /// A struct that holds the request options.
 ///
@@ -7,8 +7,8 @@ use std::{collections::HashMap, time::Duration};
 /// Used by the [`Impit`](crate::impit::Impit) struct's methods.
 #[derive(Debug, Clone, Default)]
 pub struct RequestOptions {
-    /// A `HashMap` that holds custom HTTP headers. These are added to the default headers and should never overwrite them.
-    pub headers: HashMap<String, String>,
+    /// A `Vec` of string pairs that represent custom HTTP request headers. These are added to the default headers.
+    pub headers: Vec<(String, String)>,
     /// The timeout for the request. This option overrides the global [`Impit`] timeout.
     pub timeout: Option<Duration>,
     /// Enforce the use of HTTP/3 for this request. This will cause broken responses from servers that don't support HTTP/3.
