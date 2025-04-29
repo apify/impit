@@ -1,6 +1,5 @@
 use napi::{bindgen_prelude::Buffer, Either};
 use napi_derive::napi;
-use std::collections::HashMap;
 
 #[derive(Default)]
 #[napi(string_enum = "UPPERCASE")]
@@ -26,7 +25,8 @@ pub(crate) fn serialize_body(body: &Either<String, Buffer>) -> Vec<u8> {
 #[napi(object)]
 pub struct RequestInit {
   pub method: Option<HttpMethod>,
-  pub headers: Option<HashMap<String, String>>,
+  #[napi(ts_type = "Headers | Record<string, string> | [string, string][]")]
+  pub headers: Option<Vec<(String, String)>>,
   pub body: Option<Either<String, Buffer>>,
   /// Request timeout in milliseconds. Overrides the Impit-wide timeout option.
   pub timeout: Option<u32>,

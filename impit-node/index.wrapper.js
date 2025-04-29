@@ -9,6 +9,14 @@ class ResponsePatches {
 
 class Impit extends native.Impit {
     async fetch(url, options) {
+        if (options?.headers) {
+            if (options.headers instanceof Headers) {
+                options.headers = [...options.headers.entries()];
+            } else if (!Array.isArray(options.headers)) {
+                options.headers = Object.entries(options.headers || {});
+            }
+        }
+        
         const originalResponse = await super.fetch(url, options);
 
         Object.defineProperty(originalResponse, 'text', {

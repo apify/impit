@@ -219,7 +219,11 @@ impl Client {
         }?;
 
         let options = RequestOptions {
-            headers: headers.unwrap_or_default(),
+            headers: headers
+                .unwrap_or_default()
+                .iter()
+                .map(|(k, v)| (k.clone(), v.clone()))
+                .collect(),
             timeout: timeout.map(Duration::from_secs_f64),
             http3_prior_knowledge: force_http3.unwrap_or(false),
         };
