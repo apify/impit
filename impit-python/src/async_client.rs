@@ -1,13 +1,10 @@
 use std::{collections::HashMap, time::Duration};
 
 use impit::{emulation::Browser, errors::ImpitError, impit::ImpitBuilder, request::RequestOptions};
-use pyo3::{
-    exceptions::PyTypeError,
-    prelude::*,
-};
+use pyo3::{exceptions::PyTypeError, prelude::*};
 use tokio::sync::oneshot;
 
-use crate::{request::form_to_bytes, response::ImpitPyResponse, errors::ImpitPyError, RequestBody};
+use crate::{errors::ImpitPyError, request::form_to_bytes, response::ImpitPyResponse, RequestBody};
 
 #[pyclass]
 pub(crate) struct AsyncClient {
