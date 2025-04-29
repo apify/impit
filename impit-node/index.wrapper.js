@@ -15,7 +15,22 @@ class Impit extends native.Impit {
             } else if (Buffer.isBuffer(options.body)) {
                 options.body = Uint8Array.from(options.body);
             } else if (options.body instanceof Blob) {
-                options.body = new Uint8Array.from(await options.body.arrayBuffer());
+                options.body = new Uint8Array(await options.body.arrayBuffer());
+            } else if (options.body instanceof DataView) {
+                options.body = new Uint8Array(options.body.buffer);
+            } else if (options.body instanceof FormData) {
+                const encoder = new TextEncoder();
+                const formDataString = [...options.body.entries()]
+                    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+                    .join('&');
+                options.body = encoder.encode(formDataString);
+                options.headers = options.headers || [];
+                options.headers.push(['Content-Type', 'application/x-www-form-urlencoded']);
+            } else if (options.body instanceof URLSearchParams) {
+                const encoder = new TextEncoder();
+                options.body = encoder.encode(options.body.toString());
+                options.headers = options.headers || [];
+                options.headers.push(['Content-Type', 'application/x-www-form-urlencoded']);
             }
             options.body = Uint8Array.from(options.body);
         }

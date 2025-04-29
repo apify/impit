@@ -13,7 +13,7 @@ mod response;
 
 use self::response::ImpitResponse;
 use impit_builder::ImpitOptions;
-use request::{serialize_body, HttpMethod, RequestInit};
+use request::{HttpMethod, RequestInit};
 
 #[napi(js_name = "Impit")]
 pub struct ImpitWrapper {
@@ -62,12 +62,8 @@ impl ImpitWrapper {
         .unwrap_or_default(),
     });
 
-    let body = request_init
-      .as_ref()
-      .and_then(|init| init.body.as_ref())
-      .map(serialize_body);
-
-    let method = request_init.unwrap_or_default().method.unwrap_or_default();
+    let method = request_init.as_ref().and_then(|init| init.method.to_owned()).unwrap_or_default();
+    let body = request_init.and_then(|init| init.body);
 
     let response = if matches!(method, HttpMethod::Get | HttpMethod::Head) && body.is_some() {
       Err(ImpitError::BindingPassthroughError(

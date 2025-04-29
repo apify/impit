@@ -1,8 +1,7 @@
-use napi::{bindgen_prelude::Buffer, Either};
 use napi_derive::napi;
 use std::collections::HashMap;
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 #[napi(string_enum = "UPPERCASE")]
 pub enum HttpMethod {
   #[default]
