@@ -2,8 +2,9 @@ use std::{collections::HashMap, time::Duration};
 
 use impit::{
     emulation::Browser,
-    impit::{ErrorType, ImpitBuilder},
+    impit::ImpitBuilder, 
     request::RequestOptions,
+    errors::ImpitError,
 };
 use pyo3::{
     exceptions::{PyRuntimeError, PyTypeError, PyValueError},
@@ -302,7 +303,7 @@ impl AsyncClient {
                 "trace" => impit.trace(url, Some(options)).await,
                 "head" => impit.head(url, Some(options)).await,
                 "delete" => impit.delete(url, Some(options)).await,
-                _ => Err(ErrorType::InvalidMethod(method.to_string())),
+                _ => Err(ImpitError::InvalidMethod(method.to_string())),
             };
 
             tx.send(response).unwrap();
@@ -316,7 +317,7 @@ impl AsyncClient {
             response
                 .map(|response| ImpitPyResponse::from(response, default_encoding))
                 .map_err(|err| match err {
-                    ErrorType::RequestError(r) => {
+                    ImpitError::ReqwestError(r) => {
                         PyErr::new::<PyRuntimeError, _>(format!("{:#?}", r))
                     }
                     e => PyErr::new::<PyValueError, _>(e.to_string()),

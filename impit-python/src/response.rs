@@ -47,11 +47,7 @@ impl ImpitPyResponse {
 
     fn raise_for_status(&self) -> PyResult<()> {
         if self.status_code >= 400 {
-            return Err(ImpitPyError::HttpStatusError(format!("{} {} {}",
-                self.status_code,
-                self.reason_phrase.clone(),
-                self.url.clone(),
-            )).into())
+            return Err(ImpitPyError(impit::errors::ImpitError::HTTPStatusError(self.status_code)).into());
         }
         Ok(())
     }

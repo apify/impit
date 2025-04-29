@@ -2,7 +2,8 @@ use std::{collections::HashMap, time::Duration};
 
 use impit::{
     emulation::Browser,
-    impit::{ErrorType, Impit, ImpitBuilder},
+    impit::{Impit, ImpitBuilder},
+    errors::ImpitError,
     request::RequestOptions,
 };
 use pyo3::prelude::*;
@@ -208,9 +209,7 @@ impl Client {
                     );
                     Ok(form_to_bytes(form))
                 }
-                RequestBody::CatchAll(e) => Err(ImpitPyError::RequestError(
-                    format!("Unsupported data type: {:?}", e).to_string(),
-                )),
+                RequestBody::CatchAll(e) => Err(ImpitPyError(ImpitError::BindingPassthroughError(format!("Unsupported data type: {:?}", e).to_string()))),
             },
             None => Ok(Vec::new()),
         }?;
@@ -232,7 +231,7 @@ impl Client {
                     "trace" => self.impit.trace(url, Some(options)).await,
                     "head" => self.impit.head(url, Some(options)).await,
                     "delete" => self.impit.delete(url, Some(options)).await,
-                    _ => Err(ErrorType::InvalidMethod(method.to_string())),
+                    _ => Err(ImpitError::InvalidMethod(method.to_string())),
                 }
             })
             .map(|response| ImpitPyResponse::from(response, self.default_encoding.clone()))

@@ -1,8 +1,9 @@
 use std::time::Duration;
 
 use impit::{
-  impit::{ErrorType, Impit, ImpitBuilder},
+  impit::{Impit, ImpitBuilder},
   request::RequestOptions,
+  errors::ImpitError,
 };
 use napi_derive::napi;
 
@@ -60,39 +61,48 @@ impl ImpitWrapper {
         .and_then(|init| init.force_http3)
         .unwrap_or_default(),
     });
+    
+    let body = request_init
+      .as_ref()
+      .and_then(|init| init.body.as_ref())
+      .map(serialize_body);
 
-    let body = request_init.as_ref().and_then(|init| init.body.as_ref());
+    let method = request_init.unwrap_or_default().method.unwrap_or_default();
 
-    let body: Option<Vec<u8>> = body.map(serialize_body);
-
-    let response = match request_init.unwrap_or_default().method.unwrap_or_default() {
-      HttpMethod::Get => self.inner.get(url, request_options).await,
-      HttpMethod::Post => self.inner.post(url, body, request_options).await,
-      HttpMethod::Put => self.inner.put(url, body, request_options).await,
-      HttpMethod::Delete => self.inner.delete(url, request_options).await,
-      HttpMethod::Patch => self.inner.patch(url, body, request_options).await,
-      HttpMethod::Head => self.inner.head(url, request_options).await,
-      HttpMethod::Options => self.inner.options(url, request_options).await,
+    let response = if matches!(method, HttpMethod::Get | HttpMethod::Head) && body.is_some() {
+      Err(ImpitError::BindingPassthroughError(
+        "GET/HEAD methods don't support passing a request body".to_string(),
+      ))
+    } else {
+      // Match the HTTP method and execute the corresponding request
+      match method {
+        HttpMethod::Get => self.inner.get(url, request_options).await,
+        HttpMethod::Head => self.inner.head(url, request_options).await,
+        HttpMethod::Post => self.inner.post(url, body, request_options).await,
+        HttpMethod::Put => self.inner.put(url, body, request_options).await,
+        HttpMethod::Delete => self.inner.delete(url, request_options).await,
+        HttpMethod::Patch => self.inner.patch(url, body, request_options).await,
+        HttpMethod::Options => self.inner.options(url, request_options).await,
+      }
     };
 
     match response {
       Ok(response) => Ok(ImpitResponse::from(response)),
       Err(err) => {
-        let status = match err {
-          ErrorType::UrlMissingHostnameError => napi::Status::InvalidArg,
-          ErrorType::UrlProtocolError(_) => napi::Status::InvalidArg,
-          ErrorType::UrlParsingError => napi::Status::InvalidArg,
-          ErrorType::InvalidMethod(_) => napi::Status::InvalidArg,
-          ErrorType::Http3Disabled => napi::Status::GenericFailure,
-          ErrorType::RequestError(_) => napi::Status::GenericFailure,
-        };
+      let status = match err {
+        ImpitError::UrlMissingHostnameError(_) => napi::Status::InvalidArg,
+        ImpitError::UrlProtocolError(_) => napi::Status::InvalidArg,
+        ImpitError::UrlParsingError => napi::Status::InvalidArg,
+        ImpitError::InvalidMethod(_) => napi::Status::InvalidArg,
+        ImpitError::Http3Disabled => napi::Status::GenericFailure,
+        _ => napi::Status::GenericFailure,
+      };
 
-        let reason = match err {
-          ErrorType::RequestError(r) => format!("{:#?}", r),
-          e => format!("{}", e),
-        };
+      let reason = match err {
+        e => format!("impit error: {}", e),
+      };
 
-        Err(napi::Error::new(status, reason))
+      Err(napi::Error::new(status, reason))
       }
     }
   }

@@ -1,32 +1,11 @@
 use log::debug;
 use reqwest::{Method, Response, Version};
 use std::{str::FromStr, time::Duration};
-use thiserror::Error;
 use url::Url;
 
 use crate::{
-    emulation::Browser, http3::H3Engine, http_headers::HttpHeaders, request::RequestOptions, tls,
+    emulation::Browser, errors::{ErrorContext, ImpitError}, http3::H3Engine, http_headers::HttpHeaders, request::RequestOptions, tls
 };
-
-/// Error types that can be returned by the [`Impit`] struct.
-///
-/// The `ErrorType` enum is used to represent the different types of errors that can occur when making requests.
-/// The `RequestError` variant is used to wrap the `reqwest::Error` type.
-#[derive(Error, Debug)]
-pub enum ErrorType {
-    #[error("The URL couldn't be parsed.")]
-    UrlParsingError,
-    #[error("The URL is missing the hostname.")]
-    UrlMissingHostnameError,
-    #[error("The URL uses an unsupported protocol (`{0}`). Currently, only HTTP and HTTPS are supported.")]
-    UrlProtocolError(String),
-    #[error("The request was made with http3_prior_knowledge, but HTTP/3 usage wasn't enabled.")]
-    Http3Disabled,
-    #[error("The request method `{0}` is invalid. Only GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS and TRACE are supported.")]
-    InvalidMethod(String),
-    #[error(transparent)]
-    RequestError(#[from] reqwest::Error),
-}
 
 /// Impit is the main struct used to make (impersonated) requests.
 ///
@@ -250,11 +229,11 @@ impl Impit {
         }
     }
 
-    fn parse_url(&self, url: String) -> Result<Url, ErrorType> {
-        let url = Url::parse(&url).map_err(|_| ErrorType::UrlParsingError)?;
+    fn parse_url(&self, url: String) -> Result<Url, ImpitError> {
+        let url = Url::parse(&url).map_err(|_| ImpitError::UrlParsingError)?;
 
         if url.host_str().is_none() {
-            return Err(ErrorType::UrlMissingHostnameError);
+            return Err(ImpitError::UrlMissingHostnameError(url.to_string()));
         }
 
         let protocol = url.scheme();
@@ -262,7 +241,7 @@ impl Impit {
         match protocol {
             "http" => Ok(url),
             "https" => Ok(url),
-            _ => Err(ErrorType::UrlProtocolError(protocol.to_string())),
+            _ => Err(ImpitError::UrlProtocolError(protocol.to_string())),
         }
     }
 
@@ -289,11 +268,11 @@ impl Impit {
         url: String,
         body: Option<Vec<u8>>,
         options: Option<RequestOptions>,
-    ) -> Result<Response, ErrorType> {
+    ) -> Result<Response, ImpitError> {
         let options = options.unwrap_or_default();
 
         if options.http3_prior_knowledge && self.config.max_http_version < Version::HTTP_3 {
-            return Err(ErrorType::Http3Disabled);
+            return Err(ImpitError::Http3Disabled);
         }
 
         let parsed_url = self.parse_url(url.clone())?;
@@ -317,7 +296,7 @@ impl Impit {
         };
 
         let mut request = client
-            .request(method.clone(), parsed_url)
+            .request(method.clone(), parsed_url.clone())
             .headers(headers.into());
 
         if h3 {
@@ -336,7 +315,24 @@ impl Impit {
         let response = request.send().await;
 
         if response.is_err() {
-            return Err(ErrorType::RequestError(response.err().unwrap()));
+            let max_redirects = match self.config.redirect {
+                RedirectBehavior::FollowRedirect(max) => max,
+                RedirectBehavior::ManualRedirect => 0,
+            };
+
+            return Err(
+                ImpitError::from(
+                    response.err().unwrap(), 
+                ErrorContext {
+
+
+                    timeout: options.timeout.unwrap_or(Duration::from_millis(0)),
+                    max_redirects,
+                    method: method.to_string(),
+                    protocol: parsed_url.scheme().to_string(),
+                    url: url.clone(),
+                }
+            ));
         }
 
         let response = response.unwrap();
@@ -371,7 +367,7 @@ impl Impit {
         &mut self,
         url: String,
         options: Option<RequestOptions>,
-    ) -> Result<Response, ErrorType> {
+    ) -> Result<Response, ImpitError> {
         self.make_request(Method::GET, url, None, options).await
     }
 
@@ -385,7 +381,7 @@ impl Impit {
         &mut self,
         url: String,
         options: Option<RequestOptions>,
-    ) -> Result<Response, ErrorType> {
+    ) -> Result<Response, ImpitError> {
         self.make_request(Method::HEAD, url, None, options).await
     }
 
@@ -399,7 +395,7 @@ impl Impit {
         &mut self,
         url: String,
         options: Option<RequestOptions>,
-    ) -> Result<Response, ErrorType> {
+    ) -> Result<Response, ImpitError> {
         self.make_request(Method::OPTIONS, url, None, options).await
     }
 
@@ -413,7 +409,7 @@ impl Impit {
         &mut self,
         url: String,
         options: Option<RequestOptions>,
-    ) -> Result<Response, ErrorType> {
+    ) -> Result<Response, ImpitError> {
         self.make_request(Method::TRACE, url, None, options).await
     }
 
@@ -427,7 +423,7 @@ impl Impit {
         &mut self,
         url: String,
         options: Option<RequestOptions>,
-    ) -> Result<Response, ErrorType> {
+    ) -> Result<Response, ImpitError> {
         self.make_request(Method::DELETE, url, None, options).await
     }
 
@@ -442,7 +438,7 @@ impl Impit {
         url: String,
         body: Option<Vec<u8>>,
         options: Option<RequestOptions>,
-    ) -> Result<Response, ErrorType> {
+    ) -> Result<Response, ImpitError> {
         self.make_request(Method::POST, url, body, options).await
     }
 
@@ -457,7 +453,7 @@ impl Impit {
         url: String,
         body: Option<Vec<u8>>,
         options: Option<RequestOptions>,
-    ) -> Result<Response, ErrorType> {
+    ) -> Result<Response, ImpitError> {
         self.make_request(Method::PUT, url, body, options).await
     }
 
@@ -472,7 +468,7 @@ impl Impit {
         url: String,
         body: Option<Vec<u8>>,
         options: Option<RequestOptions>,
-    ) -> Result<Response, ErrorType> {
+    ) -> Result<Response, ImpitError> {
         self.make_request(Method::PATCH, url, body, options).await
     }
 }
