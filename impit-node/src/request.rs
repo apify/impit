@@ -19,7 +19,9 @@ pub enum HttpMethod {
 pub struct RequestInit {
   pub method: Option<HttpMethod>,
   pub headers: Option<HashMap<String, String>>,
-  #[napi(ts_type = "string | ArrayBuffer | TypedArray | DataView | Blob | File | URLSearchParams | FormData | ReadableStream")]
+  #[napi(
+    ts_type = "string | ArrayBuffer | TypedArray | DataView | Blob | File | URLSearchParams | FormData | ReadableStream"
+  )]
   pub body: Option<Vec<u8>>,
   /// Request timeout in milliseconds. Overrides the Impit-wide timeout option.
   pub timeout: Option<u32>,

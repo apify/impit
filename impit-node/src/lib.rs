@@ -62,7 +62,10 @@ impl ImpitWrapper {
         .unwrap_or_default(),
     });
 
-    let method = request_init.as_ref().and_then(|init| init.method.to_owned()).unwrap_or_default();
+    let method = request_init
+      .as_ref()
+      .and_then(|init| init.method.to_owned())
+      .unwrap_or_default();
     let body = request_init.and_then(|init| init.body);
 
     let response = if matches!(method, HttpMethod::Get | HttpMethod::Head) && body.is_some() {
