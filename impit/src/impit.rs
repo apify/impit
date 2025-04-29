@@ -4,7 +4,12 @@ use std::{str::FromStr, time::Duration};
 use url::Url;
 
 use crate::{
-    emulation::Browser, errors::{ErrorContext, ImpitError}, http3::H3Engine, http_headers::HttpHeaders, request::RequestOptions, tls
+    emulation::Browser,
+    errors::{ErrorContext, ImpitError},
+    http3::H3Engine,
+    http_headers::HttpHeaders,
+    request::RequestOptions,
+    tls,
 };
 
 /// Impit is the main struct used to make (impersonated) requests.
@@ -322,18 +327,15 @@ impl Impit {
                 RedirectBehavior::ManualRedirect => 0,
             };
 
-            return Err(
-                ImpitError::from(
-                    response.err().unwrap(), 
+            return Err(ImpitError::from(
+                response.err().unwrap(),
                 ErrorContext {
-
-
                     timeout: options.timeout.unwrap_or(Duration::from_millis(0)),
                     max_redirects,
                     method: method.to_string(),
                     protocol: parsed_url.scheme().to_string(),
                     url: url.clone(),
-                }
+                },
             ));
         }
 

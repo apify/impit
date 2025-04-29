@@ -47,7 +47,9 @@ impl ImpitPyResponse {
 
     fn raise_for_status(&self) -> PyResult<()> {
         if self.status_code >= 400 {
-            return Err(ImpitPyError(impit::errors::ImpitError::HTTPStatusError(self.status_code)).into());
+            return Err(
+                ImpitPyError(impit::errors::ImpitError::HTTPStatusError(self.status_code)).into(),
+            );
         }
         Ok(())
     }

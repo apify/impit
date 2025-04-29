@@ -1,9 +1,9 @@
 use std::time::Duration;
 
 use impit::{
+  errors::ImpitError,
   impit::{Impit, ImpitBuilder},
   request::RequestOptions,
-  errors::ImpitError,
 };
 use napi_derive::napi;
 
@@ -61,7 +61,7 @@ impl ImpitWrapper {
         .and_then(|init| init.force_http3)
         .unwrap_or_default(),
     });
-    
+
     let body = request_init
       .as_ref()
       .and_then(|init| init.body.as_ref())
@@ -89,20 +89,18 @@ impl ImpitWrapper {
     match response {
       Ok(response) => Ok(ImpitResponse::from(response)),
       Err(err) => {
-      let status = match err {
-        ImpitError::UrlMissingHostnameError(_) => napi::Status::InvalidArg,
-        ImpitError::UrlProtocolError(_) => napi::Status::InvalidArg,
-        ImpitError::UrlParsingError => napi::Status::InvalidArg,
-        ImpitError::InvalidMethod(_) => napi::Status::InvalidArg,
-        ImpitError::Http3Disabled => napi::Status::GenericFailure,
-        _ => napi::Status::GenericFailure,
-      };
+        let status = match err {
+          ImpitError::UrlMissingHostnameError(_) => napi::Status::InvalidArg,
+          ImpitError::UrlProtocolError(_) => napi::Status::InvalidArg,
+          ImpitError::UrlParsingError => napi::Status::InvalidArg,
+          ImpitError::InvalidMethod(_) => napi::Status::InvalidArg,
+          ImpitError::Http3Disabled => napi::Status::GenericFailure,
+          _ => napi::Status::GenericFailure,
+        };
 
-      let reason = match err {
-        e => format!("impit error: {}", e),
-      };
+        let reason = format!("impit error: {}", err);
 
-      Err(napi::Error::new(status, reason))
+        Err(napi::Error::new(status, reason))
       }
     }
   }

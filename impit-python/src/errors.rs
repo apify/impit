@@ -43,9 +43,15 @@ impl From<ImpitPyError> for pyo3::PyErr {
     fn from(err: ImpitPyError) -> pyo3::PyErr {
         match err {
             ImpitPyError(ImpitError::RequestError) => RequestError::new_err(format!("{}", err.0)),
-            ImpitPyError(ImpitError::TransportError) => TransportError::new_err(format!("{}", err.0)),
-            ImpitPyError(ImpitError::TimeoutException(_)) => TimeoutException::new_err(format!("{}", err.0)),
-            ImpitPyError(ImpitError::ConnectTimeout) => ConnectTimeout::new_err(format!("{}", err.0)),
+            ImpitPyError(ImpitError::TransportError) => {
+                TransportError::new_err(format!("{}", err.0))
+            }
+            ImpitPyError(ImpitError::TimeoutException(_)) => {
+                TimeoutException::new_err(format!("{}", err.0))
+            }
+            ImpitPyError(ImpitError::ConnectTimeout) => {
+                ConnectTimeout::new_err(format!("{}", err.0))
+            }
             ImpitPyError(ImpitError::ReadTimeout) => ReadTimeout::new_err(format!("{}", err.0)),
             ImpitPyError(ImpitError::WriteTimeout) => WriteTimeout::new_err(format!("{}", err.0)),
             ImpitPyError(ImpitError::PoolTimeout) => PoolTimeout::new_err(format!("{}", err.0)),
@@ -55,22 +61,49 @@ impl From<ImpitPyError> for pyo3::PyErr {
             ImpitPyError(ImpitError::WriteError) => WriteError::new_err(format!("{}", err.0)),
             ImpitPyError(ImpitError::CloseError) => CloseError::new_err(format!("{}", err.0)),
             ImpitPyError(ImpitError::ProtocolError) => ProtocolError::new_err(format!("{}", err.0)),
-            ImpitPyError(ImpitError::LocalProtocolError) => LocalProtocolError::new_err(format!("{}", err.0)),
-            ImpitPyError(ImpitError::RemoteProtocolError) => RemoteProtocolError::new_err(format!("{}", err.0)),
+            ImpitPyError(ImpitError::LocalProtocolError) => {
+                LocalProtocolError::new_err(format!("{}", err.0))
+            }
+            ImpitPyError(ImpitError::RemoteProtocolError) => {
+                RemoteProtocolError::new_err(format!("{}", err.0))
+            }
             ImpitPyError(ImpitError::ProxyError(_)) => ProxyError::new_err(format!("{}", err.0)),
-            ImpitPyError(ImpitError::UnsupportedProtocol) => UnsupportedProtocol::new_err(format!("{}", err.0)),
+            ImpitPyError(ImpitError::UnsupportedProtocol) => {
+                UnsupportedProtocol::new_err(format!("{}", err.0))
+            }
             ImpitPyError(ImpitError::DecodingError) => DecodingError::new_err(format!("{}", err.0)),
-            ImpitPyError(ImpitError::TooManyRedirects(_)) => TooManyRedirects::new_err(format!("{}", err.0)),
-            ImpitPyError(ImpitError::HTTPStatusError(_)) => HTTPStatusError::new_err(format!("{}", err.0)),
-            ImpitPyError(ImpitError::InvalidURL) | ImpitPyError(ImpitError::UrlParsingError) | ImpitPyError(ImpitError::UrlMissingHostnameError(_)) | ImpitPyError(ImpitError::UrlProtocolError(_)) => InvalidURL::new_err(format!("{}", err.0)),
-            ImpitPyError(ImpitError::CookieConflict) => CookieConflict::new_err(format!("{}", err.0)),
+            ImpitPyError(ImpitError::TooManyRedirects(_)) => {
+                TooManyRedirects::new_err(format!("{}", err.0))
+            }
+            ImpitPyError(ImpitError::HTTPStatusError(_)) => {
+                HTTPStatusError::new_err(format!("{}", err.0))
+            }
+            ImpitPyError(ImpitError::InvalidURL)
+            | ImpitPyError(ImpitError::UrlParsingError)
+            | ImpitPyError(ImpitError::UrlMissingHostnameError(_))
+            | ImpitPyError(ImpitError::UrlProtocolError(_)) => {
+                InvalidURL::new_err(format!("{}", err.0))
+            }
+            ImpitPyError(ImpitError::CookieConflict) => {
+                CookieConflict::new_err(format!("{}", err.0))
+            }
             ImpitPyError(ImpitError::StreamError) => StreamError::new_err(format!("{}", err.0)),
-            ImpitPyError(ImpitError::StreamConsumed) => StreamConsumed::new_err(format!("{}", err.0)),
-            ImpitPyError(ImpitError::ResponseNotRead) => ResponseNotRead::new_err(format!("{}", err.0)),
-            ImpitPyError(ImpitError::RequestNotRead) => RequestNotRead::new_err(format!("{}", err.0)),
+            ImpitPyError(ImpitError::StreamConsumed) => {
+                StreamConsumed::new_err(format!("{}", err.0))
+            }
+            ImpitPyError(ImpitError::ResponseNotRead) => {
+                ResponseNotRead::new_err(format!("{}", err.0))
+            }
+            ImpitPyError(ImpitError::RequestNotRead) => {
+                RequestNotRead::new_err(format!("{}", err.0))
+            }
             ImpitPyError(ImpitError::StreamClosed) => StreamClosed::new_err(format!("{}", err.0)),
-            ImpitPyError(ImpitError::InvalidHeaderName(_)) => LocalProtocolError::new_err(format!("{}", err.0)),
-            ImpitPyError(ImpitError::InvalidHeaderValue(_)) => LocalProtocolError::new_err(format!("{}", err.0)),
+            ImpitPyError(ImpitError::InvalidHeaderName(_)) => {
+                LocalProtocolError::new_err(format!("{}", err.0))
+            }
+            ImpitPyError(ImpitError::InvalidHeaderValue(_)) => {
+                LocalProtocolError::new_err(format!("{}", err.0))
+            }
             _ => HTTPError::new_err(format!("{}", err.0)),
         }
     }

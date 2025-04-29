@@ -60,7 +60,7 @@ impl From<HttpHeaders> for Result<HeaderMap, ImpitError> {
                 continue;
             }
 
-            let header_name= HeaderName::from_str(name);
+            let header_name = HeaderName::from_str(name);
             let header_value = HeaderValue::from_str(value);
 
             match (header_name, header_value) {
@@ -71,13 +71,9 @@ impl From<HttpHeaders> for Result<HeaderMap, ImpitError> {
                     return Err(ImpitError::InvalidHeaderValue(value.to_string()));
                 }
                 (Ok(header_name), Ok(header_value)) => {
-                    headers.append(
-                        header_name,
-                        header_value
-                    );
-                },
+                    headers.append(header_name, header_value);
+                }
             }
-
 
             used_header_names.insert(name.to_lowercase());
         }

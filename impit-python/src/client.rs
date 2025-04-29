@@ -2,14 +2,16 @@ use std::{collections::HashMap, time::Duration};
 
 use impit::{
     emulation::Browser,
-    impit::{Impit, ImpitBuilder},
     errors::ImpitError,
+    impit::{Impit, ImpitBuilder},
     request::RequestOptions,
 };
 use pyo3::prelude::*;
 
 use crate::{
-    errors::ImpitPyError, request::{form_to_bytes, RequestBody}, response::{self, ImpitPyResponse}
+    errors::ImpitPyError,
+    request::{form_to_bytes, RequestBody},
+    response::{self, ImpitPyResponse},
 };
 
 #[pyclass]
@@ -209,7 +211,9 @@ impl Client {
                     );
                     Ok(form_to_bytes(form))
                 }
-                RequestBody::CatchAll(e) => Err(ImpitPyError(ImpitError::BindingPassthroughError(format!("Unsupported data type: {:?}", e).to_string()))),
+                RequestBody::CatchAll(e) => Err(ImpitPyError(ImpitError::BindingPassthroughError(
+                    format!("Unsupported data type: {:?}", e).to_string(),
+                ))),
             },
             None => Ok(Vec::new()),
         }?;

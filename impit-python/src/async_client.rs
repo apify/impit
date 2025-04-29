@@ -1,11 +1,6 @@
 use std::{collections::HashMap, time::Duration};
 
-use impit::{
-    emulation::Browser,
-    impit::ImpitBuilder, 
-    request::RequestOptions,
-    errors::ImpitError,
-};
+use impit::{emulation::Browser, errors::ImpitError, impit::ImpitBuilder, request::RequestOptions};
 use pyo3::{
     exceptions::{PyRuntimeError, PyTypeError, PyValueError},
     prelude::*,

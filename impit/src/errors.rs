@@ -96,11 +96,11 @@ impl ImpitError {
     pub fn from(error: reqwest::Error, context: ErrorContext) -> Self {
         if error.is_timeout() {
             return ImpitError::TimeoutException(context.timeout.as_millis());
-        } 
+        }
 
         if error.is_redirect() {
             return ImpitError::TooManyRedirects(context.max_redirects);
-        } 
+        }
 
         ImpitError::RequestError
     }
