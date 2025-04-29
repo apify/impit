@@ -5,6 +5,62 @@ from typing import Literal
 
 Browser = Literal['chrome', 'firefox']
 
+HTTPError: type
+"Represents an HTTP-related error."
+RequestError: type
+"Represents an error during the request process."
+TransportError: type
+"Represents a transport-layer error."
+TimeoutException: type
+"Represents a timeout error."
+ConnectTimeout: type
+"Represents a connection timeout error."
+ReadTimeout: type
+"Represents a read timeout error."
+WriteTimeout: type
+"Represents a write timeout error."
+PoolTimeout: type
+"Represents a connection pool timeout error."
+NetworkError: type
+"Represents a network-related error."
+ConnectError: type
+"Represents a connection error."
+ReadError: type
+"Represents a read error."
+WriteError: type
+"Represents a write error."
+CloseError: type
+"Represents an error when closing a connection."
+ProtocolError: type
+"Represents a protocol-related error."
+LocalProtocolError: type
+"Represents a local protocol error."
+RemoteProtocolError: type
+"Represents a remote protocol error."
+ProxyError: type
+"Represents a proxy-related error."
+UnsupportedProtocol: type
+"Represents an unsupported protocol error."
+DecodingError: type
+"Represents an error during response decoding."
+TooManyRedirects: type
+"Represents an error due to excessive redirects."
+HTTPStatusError: type
+"Represents an error related to HTTP status codes."
+InvalidURL: type
+"Represents an error due to an invalid URL."
+CookieConflict: type
+"Represents a cookie conflict error."
+StreamError: type
+"Represents a stream-related error."
+StreamConsumed: type
+"Represents an error when a stream is already consumed."
+ResponseNotRead: type
+"Represents an error when a response is not read."
+RequestNotRead: type
+"Represents an error when a request is not read."
+StreamClosed: type
+"Represents an error when a stream is closed."
 
 class Response:
     """Response object returned by impit requests."""
