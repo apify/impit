@@ -53,7 +53,7 @@ export interface ImpitOptions {
 export interface RequestInit {
   method?: HttpMethod
   headers?: Headers | Record<string, string> | [string, string][]
-  body?: string | Buffer
+  body?: string | ArrayBuffer | Uint8Array | DataView | Blob | File | URLSearchParams | FormData | ReadableStream
   /** Request timeout in milliseconds. Overrides the Impit-wide timeout option. */
   timeout?: number
   /** Force the request to use HTTP/3. If the server doesn't expect HTTP/3, the request will fail. */

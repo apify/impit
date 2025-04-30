@@ -159,32 +159,26 @@ describe.each([
     });
 
     describe('Request body', () => {
-        test('passing string body', async (t) => {
-            const response = await impit.fetch(
-            getHttpBinUrl('/post'),
-            {
-                    method: HttpMethod.Post,
-                    body: '{"Impit-Test":"foořžš"}',
-                    headers: { 'Content-Type': 'application/json' }
+        const STRING_PAYLOAD = '{"Impit-Test":"foořžš"}';
+        test.each([
+            ['string', STRING_PAYLOAD],
+            ['ArrayBuffer', new TextEncoder().encode(STRING_PAYLOAD).buffer],
+            ['TypedArray', new TextEncoder().encode(STRING_PAYLOAD)],
+            ['DataView', new DataView(new TextEncoder().encode(STRING_PAYLOAD).buffer)],
+            ['Blob', new Blob([STRING_PAYLOAD], { type: 'application/json' })],
+            ['File', new File([STRING_PAYLOAD], 'test.txt', { type: 'application/json' })],
+            ['URLSearchParams', new URLSearchParams(JSON.parse(STRING_PAYLOAD))],
+            ['FormData', (() => { const form = new FormData(); form.append('Impit-Test', 'foořžš'); return form; })()],
+            ['ReadableStream', new ReadableStream({ start(controller) { controller.enqueue(new TextEncoder().encode(STRING_PAYLOAD)); controller.close(); } })],
+        ])('passing %s body', async (type, body) => {
+            const response = await impit.fetch(getHttpBinUrl('/post'), { method: HttpMethod.Post, body });
+            const json = await response.json();
+
+            if (type === 'URLSearchParams' || type === 'FormData') {
+                expect(json.form).toEqual(JSON.parse(STRING_PAYLOAD));
+            } else {
+                expect(json.data).toEqual(STRING_PAYLOAD);
             }
-            );
-            const json = await response.json();
-
-            t.expect(json.data).toEqual('{"Impit-Test":"foořžš"}');
-        });
-
-        test('passing binary body', async (t) => {
-            const response = await impit.fetch(
-                getHttpBinUrl('/post'),
-                {
-                    method: HttpMethod.Post,
-                    body: Uint8Array.from([0x49, 0x6d, 0x70, 0x69, 0x74, 0x2d, 0x54, 0x65, 0x73, 0x74, 0x3a, 0x66, 0x6f, 0x6f, 0xc5, 0x99, 0xc5, 0xbe, 0xc5, 0xa1]),
-                    headers: { 'Content-Type': 'application/json' }
-                }
-            );
-            const json = await response.json();
-
-            t.expect(json.data).toEqual('Impit-Test:foořžš');
         });
 
         test.each(['post', 'put', 'patch'])('using %s method', async (method) => {

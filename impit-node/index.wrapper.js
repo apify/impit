@@ -1,3 +1,4 @@
+const { castToTypedArray } = require('./request.js');
 const native = require('./index.js');
 
 class ResponsePatches {
@@ -9,37 +10,20 @@ class ResponsePatches {
 
 class Impit extends native.Impit {
     async fetch(url, options) {
-        if (options?.body) {
-            if (typeof options.body === 'string') {
-                options.body = new TextEncoder().encode(options.body);
-            } else if (Buffer.isBuffer(options.body)) {
-                options.body = Uint8Array.from(options.body);
-            } else if (options.body instanceof Blob) {
-                options.body = new Uint8Array(await options.body.arrayBuffer());
-            } else if (options.body instanceof DataView) {
-                options.body = new Uint8Array(options.body.buffer);
-            } else if (options.body instanceof FormData) {
-                const encoder = new TextEncoder();
-                const formDataString = [...options.body.entries()]
-                    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
-                    .join('&');
-                options.body = encoder.encode(formDataString);
-                options.headers = options.headers || [];
-                options.headers.push(['Content-Type', 'application/x-www-form-urlencoded']);
-            } else if (options.body instanceof URLSearchParams) {
-                const encoder = new TextEncoder();
-                options.body = encoder.encode(options.body.toString());
-                options.headers = options.headers || [];
-                options.headers.push(['Content-Type', 'application/x-www-form-urlencoded']);
-            }
-            options.body = Uint8Array.from(options.body);
-        }
-
         if (options?.headers) {
             if (options.headers instanceof Headers) {
                 options.headers = [...options.headers.entries()];
             } else if (!Array.isArray(options.headers)) {
                 options.headers = Object.entries(options.headers || {});
+            }
+        }
+
+        if (options?.body) {
+            const { body, type } = await castToTypedArray(options.body);
+            options.body = body;
+            if (type) {
+                options.headers = options.headers || [];
+                options.headers.push(['Content-Type', type]);
             }
         }
         
