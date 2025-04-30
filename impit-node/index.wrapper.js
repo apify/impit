@@ -9,7 +9,7 @@ class ResponsePatches {
 
 class Impit extends native.Impit {
     async fetch(url, options) {
-        if (options.body) {
+        if (options?.body) {
             if (typeof options.body === 'string') {
                 options.body = new TextEncoder().encode(options.body);
             } else if (Buffer.isBuffer(options.body)) {
@@ -35,6 +35,14 @@ class Impit extends native.Impit {
             options.body = Uint8Array.from(options.body);
         }
 
+        if (options?.headers) {
+            if (options.headers instanceof Headers) {
+                options.headers = [...options.headers.entries()];
+            } else if (!Array.isArray(options.headers)) {
+                options.headers = Object.entries(options.headers || {});
+            }
+        }
+        
         const originalResponse = await super.fetch(url, options);
 
         Object.defineProperty(originalResponse, 'text', {

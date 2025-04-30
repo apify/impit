@@ -1,5 +1,4 @@
 use napi_derive::napi;
-use std::collections::HashMap;
 
 #[derive(Default, Clone)]
 #[napi(string_enum = "UPPERCASE")]
@@ -18,7 +17,8 @@ pub enum HttpMethod {
 #[napi(object)]
 pub struct RequestInit {
   pub method: Option<HttpMethod>,
-  pub headers: Option<HashMap<String, String>>,
+  #[napi(ts_type = "Headers | Record<string, string> | [string, string][]")]
+  pub headers: Option<Vec<(String, String)>>,
   #[napi(
     ts_type = "string | ArrayBuffer | TypedArray | DataView | Blob | File | URLSearchParams | FormData | ReadableStream"
   )]

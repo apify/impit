@@ -1,9 +1,6 @@
 use crate::{emulation::Browser, errors::ImpitError};
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
-use std::{
-    collections::{HashMap, HashSet},
-    str::FromStr,
-};
+use std::{collections::HashSet, str::FromStr};
 
 mod statics;
 
@@ -86,7 +83,7 @@ pub struct HttpHeadersBuilder {
     host: String,
     browser: Option<Browser>,
     https: bool,
-    custom_headers: HashMap<String, String>,
+    custom_headers: Vec<(String, String)>,
 }
 
 impl HttpHeadersBuilder {
@@ -106,7 +103,7 @@ impl HttpHeadersBuilder {
         self
     }
 
-    pub fn with_custom_headers(&mut self, custom_headers: &HashMap<String, String>) -> &mut Self {
+    pub fn with_custom_headers(&mut self, custom_headers: &Vec<(String, String)>) -> &mut Self {
         self.custom_headers = custom_headers.to_owned();
         self
     }
