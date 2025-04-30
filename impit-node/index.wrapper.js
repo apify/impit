@@ -1,3 +1,4 @@
+const { castToTypedArray } = require('./request.js');
 const native = require('./index.js');
 
 class ResponsePatches {
@@ -14,6 +15,15 @@ class Impit extends native.Impit {
                 options.headers = [...options.headers.entries()];
             } else if (!Array.isArray(options.headers)) {
                 options.headers = Object.entries(options.headers || {});
+            }
+        }
+
+        if (options?.body) {
+            const { body, type } = await castToTypedArray(options.body);
+            options.body = body;
+            if (type) {
+                options.headers = options.headers || [];
+                options.headers.push(['Content-Type', type]);
             }
         }
         
