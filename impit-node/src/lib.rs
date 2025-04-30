@@ -66,7 +66,9 @@ impl ImpitWrapper {
       .as_ref()
       .and_then(|init| init.method.to_owned())
       .unwrap_or_default();
-    let body = request_init.and_then(|init| init.body).map(|array| array.to_vec());
+    let body = request_init
+      .and_then(|init| init.body)
+      .map(|array| array.to_vec());
 
     let response = if matches!(method, HttpMethod::Get | HttpMethod::Head) && body.is_some() {
       Err(ImpitError::BindingPassthroughError(
