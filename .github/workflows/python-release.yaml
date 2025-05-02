@@ -31,7 +31,7 @@ jobs:
             python-version: 3.x
 
         - name: Set up uv package manager
-          uses: astral-sh/setup-uv@v5
+          uses: astral-sh/setup-uv@v6
 
         - name: Use Node.js
           uses: actions/setup-node@v4
