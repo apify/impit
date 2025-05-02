@@ -19,6 +19,7 @@ permissions:
     paths:
       - 'impit-node/**'
       - 'impit/**'
+      - '.github/workflows/node-test.yaml'
   workflow_call:
 
 jobs:
@@ -36,7 +37,7 @@ jobs:
           - host: windows-latest
             build: yarn --cwd impit-node build --target x86_64-pc-windows-msvc
             target: x86_64-pc-windows-msvc
-          - host: ubuntu-latest
+          - host: ubuntu-22.04
             target: x86_64-unknown-linux-gnu
             docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian
             build: yarn --cwd impit-node build --target x86_64-unknown-linux-gnu
@@ -54,7 +55,7 @@ jobs:
                 yarn global add pnpm lerna &&
                 corepack enable &&
                 yarn --cwd impit-node build
-          - host: ubuntu-24.04-arm
+          - host: ubuntu-22.04-arm
             target: aarch64-unknown-linux-gnu
             build: yarn --cwd impit-node build --target aarch64-unknown-linux-gnu
           - host: ubuntu-latest
