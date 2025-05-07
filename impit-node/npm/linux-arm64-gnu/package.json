@@ -1,7 +1,7 @@
 {
   "name": "impit-linux-arm64-gnu",
   "homepage": "https://apify.github.io/impit/",
-  "version": "0.4.4",
+  "version": "0.4.5",
   "repository": {
     "url": "https://github.com/apify/impit"
   },
