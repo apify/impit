@@ -45,13 +45,13 @@ split_commits = false
 # Assigns commits to groups.
 # Optionally sets the commit's scope and can decide to exclude commits from further processing.
 commit_parsers = [
-    { message = "^feat", group = "Features", default_scope = "general" },
-    { message = "^fix", group = "Bug Fixes", default_scope = "general" },
-    { message = "^perf", group = "Performance", default_scope = "general" },
-    { message = "^refactor", group = "Refactor", default_scope = "general" },
-    { message = "^style", group = "Styling", default_scope = "general" },
-    { message = "^test", group = "Testing", default_scope = "general" },
-    { body = ".*security", group = "Security", default_scope = "general" },
+    { message = "^feat", group = "Features" },
+    { message = "^fix", group = "Bug Fixes" },
+    { message = "^perf", group = "Performance" },
+    { message = "^refactor", group = "Refactor" },
+    { message = "^style", group = "Styling" },
+    { message = "^test", group = "Testing" },
+    { body = ".*security", group = "Security" },
 ]
 # Exclude commits that are not matched by any commit parser.
 filter_commits = true
