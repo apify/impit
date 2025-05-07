@@ -111,6 +111,7 @@ jobs:
         - name: Checkout
           uses: actions/checkout@v4
           with:
+            ref: master
             fetch-depth: 0
   
         - name: Generate a changelog
