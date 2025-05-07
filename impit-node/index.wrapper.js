@@ -13,8 +13,8 @@ This can have several reasons:
         If you still want to skip installing other optional dependencies, please install the native bindings for your platform as a direct dependency of your project.
 - You are using a non-standard Node.js runtime (e.g. Deno, Bun, Cloudflare workers etc.) that might not support native modules.
 
-Run your script with IMPIT_IMPORT_VERBOSE_ERROR=1 environment variable to get more information about the error.
-`, process.env['IMPIT_IMPORT_VERBOSE_ERROR'] === '1' ? { cause: e } : undefined);
+Run your script with IMPIT_VERBOSE=1 environment variable to get more information about the error.
+`, process.env['IMPIT_VERBOSE'] === '1' ? { cause: e } : undefined);
 }
 
 class ResponsePatches {
