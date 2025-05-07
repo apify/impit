@@ -21,116 +21,94 @@ permissions:
           - 'patch'
 
 jobs:
-    # test:
-    #     name: Build and test
-    #     uses: ./.github/workflows/node-test.yaml
-    #     secrets: inherit
+    test:
+        name: Build and test
+        uses: ./.github/workflows/node-test.yaml
+        secrets: inherit
 
-    # publish:
-    #     outputs:
-    #       bumped-version-commit-sha: ${{ steps.commit.outputs.commit_long_sha || github.sha }}
-    #       new_version: ${{ steps.get-new-version.outputs.TARGET_VERSION }}
-    #     defaults:
-    #       run:
-    #         working-directory: impit-node
-    #     name: Publish
-    #     runs-on: ubuntu-latest
-    #     needs: [test]
-    #     steps:
-    #       - uses: actions/checkout@v4
-    #         with:
-    #           token: ${{ secrets.APIFY_SERVICE_ACCOUNT_GITHUB_TOKEN }}
+    publish:
+        outputs:
+          bumped-version-commit-sha: ${{ steps.commit.outputs.commit_long_sha || github.sha }}
+          new_version: ${{ steps.get-new-version.outputs.TARGET_VERSION }}
+        defaults:
+          run:
+            working-directory: impit-node
+        name: Publish
+        runs-on: ubuntu-latest
+        needs: [test]
+        steps:
+          - uses: actions/checkout@v4
+            with:
+              token: ${{ secrets.APIFY_SERVICE_ACCOUNT_GITHUB_TOKEN }}
 
-    #       - name: Setup node
-    #         uses: actions/setup-node@v4
-    #         with:
-    #           node-version: 20
+          - name: Setup node
+            uses: actions/setup-node@v4
+            with:
+              node-version: 20
 
-    #       - name: Enable Corepack
-    #         run: |
-    #           corepack enable
-    #           corepack prepare yarn@stable --activate
+          - name: Enable Corepack
+            run: |
+              corepack enable
+              corepack prepare yarn@stable --activate
 
-    #       - name: Activate cache for Node.js
-    #         uses: actions/setup-node@v4
-    #         with:
-    #           cache: yarn
-    #           cache-dependency-path: impit-node/yarn.lock
+          - name: Activate cache for Node.js
+            uses: actions/setup-node@v4
+            with:
+              cache: yarn
+              cache-dependency-path: impit-node/yarn.lock
 
-    #       - name: Install dependencies
-    #         run: yarn install
+          - name: Install dependencies
+            run: yarn install
 
-    #       - name: Download all artifacts
-    #         uses: actions/download-artifact@v4
-    #         with:
-    #           path: artifacts
+          - name: Download all artifacts
+            uses: actions/download-artifact@v4
+            with:
+              path: artifacts
 
-    #       - name: Move artifacts
-    #         run: yarn artifacts
+          - name: Move artifacts
+            run: yarn artifacts
 
-    #       - name: List packages
-    #         run: ls -R ./npm
-    #         shell: bash
+          - name: List packages
+            run: ls -R ./npm
+            shell: bash
 
-    #       - name: Calculate version
-    #         id: get-new-version
-    #         run: |
-    #           echo ::set-output name=TARGET_VERSION::$(npx semver --increment ${{ github.event.inputs.bump }} $(npm show impit version))
+          - name: Calculate version
+            id: get-new-version
+            run: |
+              echo ::set-output name=TARGET_VERSION::$(npx semver --increment ${{ github.event.inputs.bump }} $(npm show impit version))
 
-    #       - name: Set version
-    #         run: |
-    #           yarn version ${{ steps.get-new-version.outputs.TARGET_VERSION }}
-    #           yarn copy-version
+          - name: Set version
+            run: |
+              yarn version ${{ steps.get-new-version.outputs.TARGET_VERSION }}
+              yarn copy-version
 
-    #       - name: Publish to npm
-    #         run: |
-    #           echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
-    #           npm publish --access public
-    #         env:
-    #           GITHUB_TOKEN: ${{ secrets.APIFY_SERVICE_ACCOUNT_GITHUB_TOKEN }}
-    #           NPM_TOKEN: ${{ secrets.APIFY_SERVICE_ACCOUNT_NPM_TOKEN }}
+          - name: Publish to npm
+            run: |
+              echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
+              npm publish --access public
+            env:
+              GITHUB_TOKEN: ${{ secrets.APIFY_SERVICE_ACCOUNT_GITHUB_TOKEN }}
+              NPM_TOKEN: ${{ secrets.APIFY_SERVICE_ACCOUNT_NPM_TOKEN }}
 
-    #       - name: Commit changes
-    #         id: commit
-    #         uses: EndBug/add-and-commit@v9
-    #         with:
-    #             author_name: Apify Release Bot
-    #             author_email: noreply@apify.com
-    #             message: "chore(js-release): Update package version [skip ci]"
-    #             tag: "js-${{ steps.get-new-version.outputs.TARGET_VERSION }}"
-
-    date:
-      name: Commit date
-      runs-on: ubuntu-latest
-      steps:
-        - name: Checkout
-          uses: actions/checkout@v4
-          with:
-            fetch-depth: 0
-
-        - name: Create a random file
-          run: |
-              date > impit-node/date.txt
-        
-        - name: Commit random file
-          id: commit
-          uses: EndBug/add-and-commit@v9
-          with:
-            author_name: github-actions[bot]
-            author_email: github-actions[bot]@users.noreply.github.com
-            message: "docs: update random file [skip ci]"
-            add: 'impit-node/date.txt'
+          - name: Commit changes
+            id: commit
+            uses: EndBug/add-and-commit@v9
+            with:
+                author_name: Apify Release Bot
+                author_email: noreply@apify.com
+                message: "chore(js-release): Update package version [skip ci]"
+                tag: "js-${{ steps.get-new-version.outputs.TARGET_VERSION }}"
     
     changelog:
       name: Generate changelog
-      needs: [date]
+      needs: [publish]
       runs-on: ubuntu-latest
       steps:
         - name: Checkout
           uses: actions/checkout@v4
           with:
             fetch-depth: 0
-            ref: chore/changelog-comitting
+            ref: master
 
         - name: Generate a changelog
           uses: orhun/git-cliff-action@v4
@@ -151,10 +129,10 @@ jobs:
             message: "docs: update changelog [skip ci]"
             add: 'impit-node/CHANGELOG.md'
 
-        # - name: Create release
-        #   uses: softprops/action-gh-release@v2
-        #   with:
-        #     tag_name: "js-${{ needs.publish.outputs.new_version }}"
-        #     name: "impit-node@${{ needs.publish.outputs.new_version }}"
-        #     target_commitish: ${{ needs.publish.outputs.bumped-version-commit-sha }}
-        #     body: ${{ steps.git-cliff.outputs.content }}
+        - name: Create release
+          uses: softprops/action-gh-release@v2
+          with:
+            tag_name: "js-${{ needs.publish.outputs.new_version }}"
+            name: "impit-node@${{ needs.publish.outputs.new_version }}"
+            target_commitish: ${{ needs.publish.outputs.bumped-version-commit-sha }}
+            body: ${{ steps.git-cliff.outputs.content }}
