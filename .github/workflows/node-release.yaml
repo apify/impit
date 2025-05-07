@@ -98,10 +98,9 @@ jobs:
     #             author_email: noreply@apify.com
     #             message: "chore(js-release): Update package version [skip ci]"
     #             tag: "js-${{ steps.get-new-version.outputs.TARGET_VERSION }}"
-    
-    changelog:
-      name: Generate changelog
-      # needs: [publish]
+
+    date:
+      name: Commit date
       runs-on: ubuntu-latest
       steps:
         - name: Checkout
@@ -121,7 +120,17 @@ jobs:
             author_email: github-actions[bot]@users.noreply.github.com
             message: "docs: update random file [skip ci]"
             add: 'impit-node/date.txt'
-  
+    
+    changelog:
+      name: Generate changelog
+      needs: [date]
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v4
+          with:
+            fetch-depth: 0
+
         - name: Generate a changelog
           uses: orhun/git-cliff-action@v4
           id: git-cliff
