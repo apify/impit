@@ -107,6 +107,7 @@ jobs:
         - name: Checkout
           uses: actions/checkout@v4
           with:
+            token: ${{ secrets.APIFY_SERVICE_ACCOUNT_GITHUB_TOKEN }}
             fetch-depth: 0
             ref: master
 
