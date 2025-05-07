@@ -20,6 +20,7 @@ jobs:
       runs-on: ubuntu-latest
       outputs:
         bumped-version-commit-sha: ${{ steps.commit_version.outputs.commit_long_sha || github.sha }}
+        new_version: ${{ steps.increment_version.outputs.new_version }}
       steps:
         - uses: actions/checkout@v4
           with:
@@ -61,8 +62,9 @@ jobs:
           with:
             author_name: github-actions[bot]
             author_email: github-actions[bot]@users.noreply.github.com
-            message: "chore(py): bump `pyproject.toml` version"
+            message: "chore(py-release): bump `pyproject.toml` version [skip ci]"
             add: 'impit-python/pyproject.toml'
+            tag: "py-${{ steps.increment_version.outputs.new_version }}"
 
     test:
         needs: [get_version]
@@ -98,4 +100,44 @@ jobs:
             uses: pypa/gh-action-pypi-publish@release/v1
             with:
               packages-dir: impit-python/wheels
+
+    changelog:
+      name: Generate changelog
+      needs: [publish, get_version]
+      runs-on: ubuntu-latest
+      outputs:
+        release_body: ${{ steps.git-cliff.outputs.content }}
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v4
+          with:
+            fetch-depth: 0
+            ref: ${{ needs.get_version.outputs.bumped-version-commit-sha }}
+  
+        - name: Generate a changelog
+          uses: orhun/git-cliff-action@v4
+          id: git-cliff
+          with:
+            config: cliff.toml
+            args: --ignore-tags="(js|cli)-*" --include-path="./impit-python/**" --include-path="./impit/**"
+          env:
+            OUTPUT: impit-python/CHANGELOG.md
+            GITHUB_REPO: ${{ github.repository }}
+
+        - name: Commit new changelog
+          id: commit_changelog
+          uses: EndBug/add-and-commit@v9
+          with:
+            author_name: github-actions[bot]
+            author_email: github-actions[bot]@users.noreply.github.com
+            message: "docs: update changelog [skip ci]"
+            add: 'impit-python/CHANGELOG.md'
+
+        - name: Create release
+          uses: softprops/action-gh-release@v2
+          with:
+            tag_name: "py-${{ needs.get_version.outputs.new_version }}"
+            name: "impit-python@${{ needs.get_version.outputs.new_version }}"
+            target_commitish: ${{ needs.get_version.outputs.bumped-version-commit-sha }}
+            body: ${{ steps.git-cliff.outputs.content }}
 
