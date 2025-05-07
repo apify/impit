@@ -27,6 +27,9 @@ jobs:
         secrets: inherit
 
     publish:
+        outputs:
+          bumped-version-commit-sha: ${{ steps.commit.outputs.commit_long_sha || github.sha }}
+          new_version: ${{ steps.get-new-version.outputs.TARGET_VERSION }}
         defaults:
           run:
             working-directory: impit-node
@@ -95,3 +98,41 @@ jobs:
                 author_email: noreply@apify.com
                 message: "chore(js-release): Update package version [skip ci]"
                 tag: "js-${{ steps.get-new-version.outputs.TARGET_VERSION }}"
+    
+    changelog:
+      name: Generate changelog
+      needs: [publish]
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v4
+          with:
+            fetch-depth: 0
+            ref: ${{ needs.publish.outputs.bumped-version-commit-sha }}
+  
+        - name: Generate a changelog
+          uses: orhun/git-cliff-action@v4
+          id: git-cliff
+          with:
+            config: cliff.toml
+            args: --ignore-tags="(py|cli)-*" --include-path="./impit-node/**" --include-path="./impit/**"
+          env:
+            OUTPUT: impit-node/CHANGELOG.md
+            GITHUB_REPO: ${{ github.repository }}
+
+        - name: Commit new changelog
+          id: commit_changelog
+          uses: EndBug/add-and-commit@v9
+          with:
+            author_name: github-actions[bot]
+            author_email: github-actions[bot]@users.noreply.github.com
+            message: "docs: update changelog [skip ci]"
+            add: 'impit-node/CHANGELOG.md'
+
+        - name: Create release
+          uses: softprops/action-gh-release@v2
+          with:
+            tag_name: "js-${{ needs.publish.outputs.new_version }}"
+            name: "impit-node@${{ needs.publish.outputs.new_version }}"
+            target_commitish: ${{ needs.publish.outputs.bumped-version-commit-sha }}
+            body: ${{ steps.git-cliff.outputs.content }}
