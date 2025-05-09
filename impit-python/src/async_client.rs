@@ -14,6 +14,23 @@ pub(crate) struct AsyncClient {
 
 #[pymethods]
 impl AsyncClient {
+    pub fn __aenter__(
+        slf: Py<Self>,
+        py: Python<'_>,
+    ) -> Result<pyo3::Bound<'_, pyo3::PyAny>, pyo3::PyErr> {
+        pyo3_async_runtimes::async_std::future_into_py::<_, Py<AsyncClient>>(py, async { Ok(slf) })
+    }
+
+    pub fn __aexit__<'python>(
+        &mut self,
+        _exc_type: &crate::Bound<'_, crate::PyAny>,
+        _exc_value: &crate::Bound<'_, crate::PyAny>,
+        _traceback: &crate::Bound<'_, crate::PyAny>,
+        py: Python<'python>,
+    ) -> Result<pyo3::Bound<'python, pyo3::PyAny>, pyo3::PyErr> {
+        pyo3_async_runtimes::async_std::future_into_py::<_, ()>(py, async { Ok(()) })
+    }
+
     #[new]
     #[pyo3(signature = (browser=None, http3=None, proxy=None, timeout=None, verify=None, default_encoding=None, follow_redirects=None, max_redirects=Some(20)))]
     pub fn new(

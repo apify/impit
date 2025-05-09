@@ -22,6 +22,18 @@ pub(crate) struct Client {
 
 #[pymethods]
 impl Client {
+    pub fn __enter__(slf: Py<Self>) -> Py<Self> {
+        slf
+    }
+
+    pub fn __exit__(
+        &mut self,
+        _exc_type: &crate::Bound<'_, crate::PyAny>,
+        _exc_value: &crate::Bound<'_, crate::PyAny>,
+        _traceback: &crate::Bound<'_, crate::PyAny>,
+    ) {
+    }
+
     #[new]
     #[pyo3(signature = (browser=None, http3=None, proxy=None, timeout=None, verify=None, default_encoding=None, follow_redirects=None, max_redirects=Some(20)))]
     pub fn new(

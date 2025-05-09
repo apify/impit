@@ -28,6 +28,12 @@ class TestBasicRequests:
         assert resp.status_code == 200
 
     @pytest.mark.asyncio
+    async def test_context_manager(self, browser: Browser) -> None:
+        async with AsyncClient(browser=browser) as impit:
+            resp = await impit.get('https://example.org')
+            assert resp.status_code == 200
+
+    @pytest.mark.asyncio
     async def test_boringssl_based_server(self, browser: Browser) -> None:
         impit = AsyncClient(browser=browser)
 
