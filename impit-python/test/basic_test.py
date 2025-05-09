@@ -26,6 +26,11 @@ class TestBasicRequests:
         resp = impit.get(f'{protocol}example.org')
         assert resp.status_code == 200
 
+    def test_context_manager(self, browser: Browser) -> None:
+        with Client(browser=browser) as impit:
+            resp = impit.get('https://example.org')
+            assert resp.status_code == 200
+
     def test_boringssl_based_server(self, browser: Browser) -> None:
         impit = Client(browser=browser)
 
