@@ -96,6 +96,13 @@ class Response:
 class Client:
     """Synchronous HTTP client with browser impersonation capabilities."""
 
+    def __enter__(self) -> Client:
+        """Enter the runtime context related to this object."""
+    
+    def __exit__(self, exc_type: type[BaseException] | None, exc_value: BaseException | None, traceback: object | None) -> None:
+        """Exit the runtime context related to this object."""
+
+
     def __init__(
         self,
         browser: Browser | None = None,
@@ -307,6 +314,12 @@ class Client:
 
 class AsyncClient:
     """Asynchronous HTTP client with browser impersonation capabilities."""
+    
+    async def __aenter__(self) -> AsyncClient:
+        """Enter the runtime context related to this object."""
+    
+    async def __aexit__(self, exc_type: type[BaseException] | None, exc_value: BaseException | None, traceback: object | None) -> None:
+        """Exit the runtime context related to this object."""
 
     def __init__(
         self,
