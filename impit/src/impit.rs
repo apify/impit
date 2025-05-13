@@ -76,7 +76,7 @@ pub struct ImpitBuilder<CookieStoreImpl: CookieStore + 'static> {
 impl<CookieStoreImpl: CookieStore + 'static> Clone for ImpitBuilder<CookieStoreImpl> {
     fn clone(&self) -> Self {
         ImpitBuilder {
-            browser: self.browser.clone(),
+            browser: self.browser,
             ignore_tls_errors: self.ignore_tls_errors,
             vanilla_fallback: self.vanilla_fallback,
             proxy_url: self.proxy_url.clone(),

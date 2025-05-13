@@ -4,9 +4,8 @@ use std::{
 };
 
 use napi::{
-  bindgen_prelude::{FromNapiValue, JsValuesTupleIntoVec, Promise, Uint8Array},
+  bindgen_prelude::{FromNapiValue, Function, JsValuesTupleIntoVec, Promise, Uint8Array},
   threadsafe_function::ThreadsafeFunction,
-  JsFunction,
 };
 use napi_derive::napi;
 use reqwest::{cookie::CookieStore, header::HeaderValue, Url};
@@ -123,7 +122,9 @@ impl CookieStore for NodeCookieJar {
 
 impl NodeCookieJar {
   pub fn new(tough_cookie: napi::JsObject) -> Result<Self, napi::Error> {
-    let set_cookie_js_method = match tough_cookie.get_named_property::<JsFunction>("setCookie") {
+    let set_cookie_js_method = match tough_cookie
+      .get_named_property::<Function<'_, (String, String), Promise<()>>>("setCookie")
+    {
       Ok(method) => method,
       Err(e) => {
         return Err(napi::Error::new(
@@ -136,31 +137,30 @@ impl NodeCookieJar {
       }
     };
 
-    let get_cookie_js_method =
-      match tough_cookie.get_named_property::<JsFunction>("getCookieString") {
-        Ok(method) => method,
-        Err(e) => {
-          return Err(napi::Error::new(
-            napi::Status::GenericFailure,
-            format!(
-              "[impit] Couldn't find `getCookieString` method on the external cookie store: {}",
-              e
-            ),
-          ));
-        }
-      };
+    let get_cookie_js_method = match tough_cookie
+      .get_named_property::<Function<'_, String, Promise<String>>>("getCookieString")
+    {
+      Ok(method) => method,
+      Err(e) => {
+        return Err(napi::Error::new(
+          napi::Status::GenericFailure,
+          format!(
+            "[impit] Couldn't find `getCookieString` method on the external cookie store: {}",
+            e
+          ),
+        ));
+      }
+    };
 
-    let set_cookie = set_cookie_js_method.create_threadsafe_function::<(std::string::String, std::string::String), (std::string::String, std::string::String), Promise<()>, _, false, false, 0>(
-        |ctx| {
-          Ok(ctx.value)
-        }
-      ).unwrap();
+    let set_cookie = set_cookie_js_method
+      .build_threadsafe_function::<(std::string::String, std::string::String)>()
+      .build_callback(|ctx| Ok(ctx.value))
+      .unwrap();
 
-    let get_cookies = get_cookie_js_method.create_threadsafe_function::<std::string::String, std::string::String, Promise<String>, _, false, false, 0>(
-        |ctx| {
-          Ok(ctx.value)
-        }
-      ).unwrap();
+    let get_cookies = get_cookie_js_method
+      .build_threadsafe_function::<std::string::String>()
+      .build_callback(|ctx| Ok(ctx.value))
+      .unwrap();
 
     Ok(Self {
       set_cookie_tsfn: set_cookie,
