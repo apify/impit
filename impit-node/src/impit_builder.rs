@@ -6,6 +6,8 @@ use impit::{
 };
 use napi_derive::napi;
 
+use crate::request::NodeCookieJar;
+
 #[napi(string_enum = "lowercase")]
 pub enum Browser {
   Chrome,
@@ -38,10 +40,15 @@ pub struct ImpitOptions {
   ///
   /// If this number is exceeded, the request will be rejected with an error.
   pub max_redirects: Option<u32>,
+  /// Pass a ToughCookie instance to Impit.
+  #[napi(
+    ts_type = "{ setCookie: (cookie: string, url: string, cb?: any) => Promise<void> | void, getCookieString: (url: string) => Promise<string> | string }"
+  )]
+  pub cookie_jar: Option<napi::JsObject>,
 }
 
-impl From<ImpitOptions> for ImpitBuilder {
-  fn from(val: ImpitOptions) -> Self {
+impl From<ImpitOptions> for Result<ImpitBuilder<NodeCookieJar>, napi::Error> {
+  fn from(val: ImpitOptions) -> Result<ImpitBuilder<NodeCookieJar>, napi::Error> {
     let mut config = ImpitBuilder::default();
     if let Some(browser) = val.browser {
       config = config.with_browser(browser.into());
@@ -63,6 +70,14 @@ impl From<ImpitOptions> for ImpitBuilder {
         config = config.with_http3();
       }
     }
+    if let Some(cookie_jar) = val.cookie_jar {
+      match NodeCookieJar::new(cookie_jar) {
+        Ok(cookie_jar) => {
+          config = config.with_cookie_store(cookie_jar);
+        }
+        Err(e) => return Err(e),
+      }
+    }
 
     let follow_redirects: bool = val.follow_redirects.unwrap_or(true);
     let max_redirects: usize = val.max_redirects.unwrap_or(10).try_into().unwrap();
@@ -73,6 +88,6 @@ impl From<ImpitOptions> for ImpitBuilder {
       config = config.with_redirect(RedirectBehavior::FollowRedirect(max_redirects));
     }
 
-    config
+    Ok(config)
   }
 }
