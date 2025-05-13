@@ -1,3 +1,4 @@
+
 use std::{
   thread::{self, sleep},
   time::Duration,
@@ -6,6 +7,7 @@ use std::{
 use napi::{
   bindgen_prelude::{FromNapiValue, Function, JsValuesTupleIntoVec, Promise, Uint8Array},
   threadsafe_function::ThreadsafeFunction,
+  Env,
 };
 use napi_derive::napi;
 use reqwest::{cookie::CookieStore, header::HeaderValue, Url};
@@ -121,7 +123,7 @@ impl CookieStore for NodeCookieJar {
 }
 
 impl NodeCookieJar {
-  pub fn new(tough_cookie: napi::JsObject) -> Result<Self, napi::Error> {
+  pub fn new(env: &Env, tough_cookie: napi::JsObject) -> Result<Self, napi::Error> {
     let set_cookie_js_method = match tough_cookie
       .get_named_property::<Function<'_, (String, String), Promise<()>>>("setCookie")
     {
@@ -152,15 +154,22 @@ impl NodeCookieJar {
       }
     };
 
-    let set_cookie = set_cookie_js_method
+    let mut set_cookie = set_cookie_js_method
       .build_threadsafe_function::<(std::string::String, std::string::String)>()
       .build_callback(|ctx| Ok(ctx.value))
       .unwrap();
 
-    let get_cookies = get_cookie_js_method
+    let mut get_cookies = get_cookie_js_method
       .build_threadsafe_function::<std::string::String>()
       .build_callback(|ctx| Ok(ctx.value))
       .unwrap();
+
+    // Unless the `ThreadsafeFunction` is unreferenced, the Node.JS application will hang on exit
+    // https://nodejs.github.io/node-addon-examples/special-topics/thread-safe-functions/#q-my-application-isnt-exiting-correctly-it-just-hangs
+    #[allow(deprecated)]
+    let _ = set_cookie.unref(env);
+    #[allow(deprecated)]
+    let _ = get_cookies.unref(env);
 
     Ok(Self {
       set_cookie_tsfn: set_cookie,

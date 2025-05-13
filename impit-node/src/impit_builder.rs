@@ -4,6 +4,7 @@ use impit::{
   emulation::Browser as ImpitBrowser,
   impit::{ImpitBuilder, RedirectBehavior},
 };
+use napi::Env;
 use napi_derive::napi;
 
 use crate::request::NodeCookieJar;
@@ -47,31 +48,31 @@ pub struct ImpitOptions {
   pub cookie_jar: Option<napi::JsObject>,
 }
 
-impl From<ImpitOptions> for Result<ImpitBuilder<NodeCookieJar>, napi::Error> {
-  fn from(val: ImpitOptions) -> Result<ImpitBuilder<NodeCookieJar>, napi::Error> {
+impl ImpitOptions {
+  pub fn into_builder(self, env: &Env) -> Result<ImpitBuilder<NodeCookieJar>, napi::Error> {
     let mut config = ImpitBuilder::default();
-    if let Some(browser) = val.browser {
+    if let Some(browser) = self.browser {
       config = config.with_browser(browser.into());
     }
-    if let Some(ignore_tls_errors) = val.ignore_tls_errors {
+    if let Some(ignore_tls_errors) = self.ignore_tls_errors {
       config = config.with_ignore_tls_errors(ignore_tls_errors);
     }
-    if let Some(vanilla_fallback) = val.vanilla_fallback {
+    if let Some(vanilla_fallback) = self.vanilla_fallback {
       config = config.with_fallback_to_vanilla(vanilla_fallback);
     }
-    if let Some(proxy_url) = val.proxy_url {
+    if let Some(proxy_url) = self.proxy_url {
       config = config.with_proxy(proxy_url);
     }
-    if let Some(timeout) = val.timeout {
+    if let Some(timeout) = self.timeout {
       config = config.with_default_timeout(Duration::from_millis(timeout.into()));
     }
-    if let Some(http3) = val.http3 {
+    if let Some(http3) = self.http3 {
       if http3 {
         config = config.with_http3();
       }
     }
-    if let Some(cookie_jar) = val.cookie_jar {
-      match NodeCookieJar::new(cookie_jar) {
+    if let Some(cookie_jar) = self.cookie_jar {
+      match NodeCookieJar::new(env, cookie_jar) {
         Ok(cookie_jar) => {
           config = config.with_cookie_store(cookie_jar);
         }
@@ -79,8 +80,8 @@ impl From<ImpitOptions> for Result<ImpitBuilder<NodeCookieJar>, napi::Error> {
       }
     }
 
-    let follow_redirects: bool = val.follow_redirects.unwrap_or(true);
-    let max_redirects: usize = val.max_redirects.unwrap_or(10).try_into().unwrap();
+    let follow_redirects: bool = self.follow_redirects.unwrap_or(true);
+    let max_redirects: usize = self.max_redirects.unwrap_or(10).try_into().unwrap();
 
     if !follow_redirects {
       config = config.with_redirect(RedirectBehavior::ManualRedirect);

@@ -5,6 +5,7 @@ use impit::{
   impit::{Impit, ImpitBuilder},
   request::RequestOptions,
 };
+use napi::Env;
 use napi_derive::napi;
 
 mod impit_builder;
@@ -23,9 +24,9 @@ pub struct ImpitWrapper {
 #[napi]
 impl ImpitWrapper {
   #[napi(constructor)]
-  pub fn new(options: Option<ImpitOptions>) -> Result<Self, napi::Error> {
+  pub fn new(env: &Env, options: Option<ImpitOptions>) -> Result<Self, napi::Error> {
     let config: Result<ImpitBuilder<NodeCookieJar>, napi::Error> =
-      options.unwrap_or_default().into();
+      options.unwrap_or_default().into_builder(env);
 
     // `quinn` for h3 requires existing async runtime.
     // This runs the `config.build` function in the napi-managed tokio runtime which remains available
