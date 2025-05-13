@@ -8,7 +8,7 @@ use crate::{errors::ImpitPyError, request::form_to_bytes, response::ImpitPyRespo
 
 #[pyclass]
 pub(crate) struct AsyncClient {
-    impit_config: ImpitBuilder,
+    impit_config: ImpitBuilder<impit::cookie::Jar>,
     default_encoding: Option<String>,
 }
 

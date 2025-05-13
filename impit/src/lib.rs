@@ -95,3 +95,9 @@ pub mod utils {
     pub use crate::response_parsing::ContentType;
     pub use encoding::all as encodings;
 }
+
+/// Reexports reqwest cookie-related types and functions.
+/// This module is used to provide a default cookie store for the `Impit` struct.
+pub mod cookie {
+    pub use reqwest::cookie::*;
+}
