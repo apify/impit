@@ -74,7 +74,7 @@ class TestBasicRequests:
                 discard=False,
                 comment=None,
                 comment_url=None,
-                rest=None,
+                rest={},
             )
         )
 
