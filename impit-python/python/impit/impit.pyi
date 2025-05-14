@@ -128,7 +128,7 @@ class Client:
                 header and bytestream prescan.
             follow_redirects: Whether to follow redirects (default: False)
             max_redirects: Maximum number of redirects to follow (default: 20)
-            cookie_jar: Cookie jar to store cookies
+            cookie_jar: Cookie jar to store cookies in
         """
 
     def get(
@@ -334,6 +334,7 @@ class AsyncClient:
         default_encoding: str | None = None,
         follow_redirects: bool | None = None,
         max_redirects: int | None = None,
+        cookie_jar: CookieJar | None = None,
     ) -> None:
         """Initialize an asynchronous HTTP client.
 
@@ -347,6 +348,7 @@ class AsyncClient:
                 header and bytestream prescan.
             follow_redirects: Whether to follow redirects (default: False)
             max_redirects: Maximum number of redirects to follow (default: 20)
+            cookie_jar: Cookie jar to store cookies in
         """
 
     async def get(

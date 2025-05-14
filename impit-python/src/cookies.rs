@@ -40,7 +40,12 @@ impl CookieStore for PythonCookieJar {
                     .unwrap();
                 kwargs.set_item("secure", cookie.secure()).unwrap();
                 kwargs
-                    .set_item("domain", cookie.domain().unwrap_or_default())
+                    .set_item(
+                        "domain",
+                        cookie
+                            .domain()
+                            .unwrap_or(url.host_str().unwrap_or_default()),
+                    )
                     .unwrap();
                 kwargs.set_item("comment", None::<&str>).unwrap();
                 kwargs.set_item("comment_url", None::<&str>).unwrap();
@@ -61,15 +66,13 @@ impl CookieStore for PythonCookieJar {
                 kwargs
                     .set_item(
                         "domain_initial_dot",
-                        cookie.domain().and_then(|d| Some(d.starts_with('.'))),
+                        cookie.domain().map(|d| d.starts_with('.')),
                     )
                     .unwrap();
                 kwargs
                     .set_item(
                         "expires",
-                        cookie
-                            .expires_datetime()
-                            .and_then(|f| Some(f.unix_timestamp())),
+                        cookie.expires_datetime().map(|f| f.unix_timestamp()),
                     )
                     .unwrap();
                 kwargs.set_item("version", None::<&str>).unwrap();
@@ -90,7 +93,7 @@ impl CookieStore for PythonCookieJar {
         Python::with_gil(|py| {
             let cookie_list = PyIterator::from_object(&self.cookie_jar.bind_borrowed(py)).unwrap();
 
-            return cookie_list
+            cookie_list
                 .filter_map(|py_cookie| {
                     let py_cookie = py_cookie.unwrap();
 
@@ -129,7 +132,7 @@ impl CookieStore for PythonCookieJar {
                                 SystemTime::now()
                                     .duration_since(UNIX_EPOCH)
                                     .ok()
-                                    .and_then(|now| Some(now.as_secs())),
+                                    .map(|now| now.as_secs()),
                             )]
                             .into_py_dict(py)
                             .ok()
@@ -157,7 +160,7 @@ impl CookieStore for PythonCookieJar {
                 .collect::<Vec<String>>()
                 .join("; ")
                 .parse::<reqwest::header::HeaderValue>()
-                .ok();
+                .ok()
         })
     }
 }
