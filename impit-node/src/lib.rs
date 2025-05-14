@@ -5,7 +5,6 @@ use impit::{
   impit::{Impit, ImpitBuilder},
   request::RequestOptions,
 };
-use napi::Env;
 use napi_derive::napi;
 
 mod impit_builder;
@@ -14,26 +13,25 @@ mod response;
 
 use self::response::ImpitResponse;
 use impit_builder::ImpitOptions;
-use request::{HttpMethod, NodeCookieJar, RequestInit};
+use request::{HttpMethod, RequestInit};
 
 #[napi(js_name = "Impit")]
 pub struct ImpitWrapper {
-  inner: Impit<NodeCookieJar>,
+  inner: Impit<impit::cookie::Jar>,
 }
 
 #[napi]
 impl ImpitWrapper {
   #[napi(constructor)]
-  pub fn new(env: &Env, options: Option<ImpitOptions>) -> Result<Self, napi::Error> {
-    let config: Result<ImpitBuilder<NodeCookieJar>, napi::Error> =
-      options.unwrap_or_default().into_builder(env);
+  pub fn new(options: Option<ImpitOptions>) -> Result<Self, napi::Error> {
+    let config: ImpitBuilder<impit::cookie::Jar> = options.unwrap_or_default().into();
 
     // `quinn` for h3 requires existing async runtime.
     // This runs the `config.build` function in the napi-managed tokio runtime which remains available
     // throughout the lifetime of the `ImpitWrapper` instance.
     napi::bindgen_prelude::block_on(async {
       Ok(Self {
-        inner: config?.build(),
+        inner: config.build(),
       })
     })
   }

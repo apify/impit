@@ -4,8 +4,6 @@ import { HttpMethod, Impit, Browser } from '../index.wrapper.js';
 import { Server } from 'http';
 import { routes, runServer } from './mock.server.js';
 
-import { CookieJar } from 'tough-cookie';
-
 function getHttpBinUrl(path: string, https?: boolean): string {
     https ??= true;
 
@@ -108,39 +106,6 @@ describe.each([
                     'b=2; Path=/',
                     'c=3; Path=/'
                 ]);
-        })
-
-        test('impit accepts custom cookie jars', async (t) => {
-            const cookieJar = new CookieJar();
-            cookieJar.setCookieSync('preset-cookie=123; Path=/', getHttpBinUrl('/cookies/'));
-
-            const impit = new Impit({ 
-                cookieJar,
-                browser, 
-            })
-
-            const response1 = await impit.fetch(
-                getHttpBinUrl('/cookies/'),
-            ).then(x => x.json());
-
-            t.expect(response1.cookies).toEqual({
-                'preset-cookie': '123'
-            });
-
-            await impit.fetch(
-                getHttpBinUrl('/cookies/set?set-by-server=321'),
-            );
-
-            const response2 = await impit.fetch(
-                getHttpBinUrl('/cookies/'),
-            ).then(x => x.json());
-
-            t.expect(response2.cookies).toEqual({
-                'preset-cookie': '123',
-                'set-by-server': '321'
-            });
-
-            t.expect(cookieJar.serializeSync()?.cookies).toHaveLength(2);
         })
 
         test('overwriting impersonated headers works', async (t) => {
