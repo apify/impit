@@ -27,6 +27,7 @@
     "@types/express": "^5.0.0",
     "@types/node": "^22.13.1",
     "express": "^5.0.0",
+    "tough-cookie": "^5.1.2",
     "vitest": "^3.0.5"
   },
   "ava": {
