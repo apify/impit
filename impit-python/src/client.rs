@@ -16,7 +16,7 @@ use crate::{
 
 #[pyclass]
 pub(crate) struct Client {
-    impit: Impit,
+    impit: Impit<impit::cookie::Jar>,
     default_encoding: Option<String>,
 }
 

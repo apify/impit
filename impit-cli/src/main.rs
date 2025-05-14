@@ -89,7 +89,7 @@ struct CliArgs {
 async fn main() {
     let args = CliArgs::parse();
 
-    let mut client = Impit::builder()
+    let mut client = Impit::<impit::cookie::Jar>::builder()
         .with_ignore_tls_errors(args.ignore_tls_errors)
         .with_fallback_to_vanilla(args.fallback);
 

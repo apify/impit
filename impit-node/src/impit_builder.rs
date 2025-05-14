@@ -40,7 +40,7 @@ pub struct ImpitOptions {
   pub max_redirects: Option<u32>,
 }
 
-impl From<ImpitOptions> for ImpitBuilder {
+impl From<ImpitOptions> for ImpitBuilder<impit::cookie::Jar> {
   fn from(val: ImpitOptions) -> Self {
     let mut config = ImpitBuilder::default();
     if let Some(browser) = val.browser {

@@ -1,6 +1,6 @@
 use log::debug;
-use reqwest::{header::HeaderMap, Method, Response, Version};
-use std::{str::FromStr, time::Duration};
+use reqwest::{cookie::CookieStore, header::HeaderMap, Method, Response, Version};
+use std::{fmt::Debug, str::FromStr, sync::Arc, time::Duration};
 use url::Url;
 
 use crate::{
@@ -17,16 +17,16 @@ use crate::{
 /// It uses `reqwest::Client` to make requests and holds info about the impersonated browser.
 ///
 /// To create a new [`Impit`] instance, use the [`Impit::builder()`](ImpitBuilder) method.
-pub struct Impit {
+pub struct Impit<CookieStoreImpl: CookieStore + 'static> {
     pub(self) base_client: reqwest::Client,
     pub(self) h3_client: Option<reqwest::Client>,
     h3_engine: Option<H3Engine>,
-    config: ImpitBuilder,
+    config: ImpitBuilder<CookieStoreImpl>,
 }
 
-impl Default for Impit {
+impl<CookieStoreImpl: CookieStore + 'static> Default for Impit<CookieStoreImpl> {
     fn default() -> Self {
-        ImpitBuilder::default().build()
+        ImpitBuilder::<CookieStoreImpl>::default().build()
     }
 }
 
@@ -61,8 +61,8 @@ pub enum RedirectBehavior {
 ///
 /// let response = impit.get("https://example.com".to_string(), None).await;
 /// ```
-#[derive(Debug, Clone)]
-pub struct ImpitBuilder {
+#[derive(Debug)]
+pub struct ImpitBuilder<CookieStoreImpl: CookieStore + 'static> {
     browser: Option<Browser>,
     ignore_tls_errors: bool,
     vanilla_fallback: bool,
@@ -70,10 +70,25 @@ pub struct ImpitBuilder {
     request_timeout: Duration,
     max_http_version: Version,
     redirect: RedirectBehavior,
-    store_cookies: bool,
+    cookie_store: Option<Arc<CookieStoreImpl>>,
 }
 
-impl Default for ImpitBuilder {
+impl<CookieStoreImpl: CookieStore + 'static> Clone for ImpitBuilder<CookieStoreImpl> {
+    fn clone(&self) -> Self {
+        ImpitBuilder {
+            browser: self.browser,
+            ignore_tls_errors: self.ignore_tls_errors,
+            vanilla_fallback: self.vanilla_fallback,
+            proxy_url: self.proxy_url.clone(),
+            request_timeout: self.request_timeout,
+            max_http_version: self.max_http_version,
+            redirect: self.redirect.clone(),
+            cookie_store: self.cookie_store.clone(),
+        }
+    }
+}
+
+impl<CookieStoreImpl: CookieStore + 'static> Default for ImpitBuilder<CookieStoreImpl> {
     fn default() -> Self {
         ImpitBuilder {
             browser: None,
@@ -83,12 +98,12 @@ impl Default for ImpitBuilder {
             request_timeout: Duration::from_secs(30),
             max_http_version: Version::HTTP_2,
             redirect: RedirectBehavior::FollowRedirect(10),
-            store_cookies: true,
+            cookie_store: None,
         }
     }
 }
 
-impl ImpitBuilder {
+impl<CookieStoreImpl: CookieStore + 'static> ImpitBuilder<CookieStoreImpl> {
     /// Sets the browser to impersonate.
     ///
     /// The [`Browser`] enum is used to set the HTTP headers, TLS behaviour and other markers to impersonate a specific browser.
@@ -156,23 +171,25 @@ impl ImpitBuilder {
     /// If set to `true`, the client will store cookies in the internal cookie store.
     /// If set to `false`, the client will not store cookies. Response headers will contain the
     /// `Set-Cookie` header.
-    pub fn with_store_cookies(mut self, store_cookies: bool) -> Self {
-        self.store_cookies = store_cookies;
+    pub fn with_cookie_store(mut self, cookie_store: CookieStoreImpl) -> Self {
+        self.cookie_store = Some(Arc::new(cookie_store));
         self
     }
 
     /// Builds the [`Impit`] instance.
-    pub fn build(self) -> Impit {
+    pub fn build(self) -> Impit<CookieStoreImpl> {
         Impit::new(self)
     }
 }
 
-impl Impit {
-    pub fn builder() -> ImpitBuilder {
+impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
+    pub fn builder() -> ImpitBuilder<CookieStoreImpl> {
         ImpitBuilder::default()
     }
 
-    fn new_reqwest_client(config: &ImpitBuilder) -> Result<reqwest::Client, reqwest::Error> {
+    fn new_reqwest_client(
+        config: &ImpitBuilder<CookieStoreImpl>,
+    ) -> Result<reqwest::Client, reqwest::Error> {
         let mut client = reqwest::Client::builder();
         let mut tls_config_builder = tls::TlsConfig::builder();
         let mut tls_config_builder = tls_config_builder.with_browser(config.browser);
@@ -189,8 +206,11 @@ impl Impit {
             .danger_accept_invalid_certs(config.ignore_tls_errors)
             .danger_accept_invalid_hostnames(config.ignore_tls_errors)
             .use_preconfigured_tls(tls_config)
-            .cookie_store(config.store_cookies)
             .timeout(config.request_timeout);
+
+        if let Some(cookie_provider) = &config.cookie_store {
+            client = client.cookie_provider(cookie_provider.clone());
+        }
 
         if config.max_http_version == Version::HTTP_3 {
             client = client.http3_prior_knowledge();
@@ -213,13 +233,13 @@ impl Impit {
     }
 
     /// Creates a new [`Impit`] instance based on the options stored in the [`ImpitBuilder`] instance.
-    fn new(config: ImpitBuilder) -> Self {
+    fn new(config: ImpitBuilder<CookieStoreImpl>) -> Self {
         let mut h3_client: Option<reqwest::Client> = None;
         let mut base_client = Self::new_reqwest_client(&config).unwrap();
 
         if config.max_http_version == Version::HTTP_3 {
             h3_client = Some(base_client);
-            base_client = Self::new_reqwest_client(&ImpitBuilder {
+            base_client = Self::new_reqwest_client(&ImpitBuilder::<CookieStoreImpl> {
                 max_http_version: Version::HTTP_2,
                 ..config.clone()
             })

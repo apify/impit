@@ -17,16 +17,14 @@ use request::{HttpMethod, RequestInit};
 
 #[napi(js_name = "Impit")]
 pub struct ImpitWrapper {
-  inner: Impit,
+  inner: Impit<impit::cookie::Jar>,
 }
 
 #[napi]
 impl ImpitWrapper {
   #[napi(constructor)]
   pub fn new(options: Option<ImpitOptions>) -> Result<Self, napi::Error> {
-    let config: ImpitBuilder = options.unwrap_or_default().into();
-
-    let config = config.with_store_cookies(false);
+    let config: ImpitBuilder<impit::cookie::Jar> = options.unwrap_or_default().into();
 
     // `quinn` for h3 requires existing async runtime.
     // This runs the `config.build` function in the napi-managed tokio runtime which remains available
