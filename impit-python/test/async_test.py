@@ -1,8 +1,7 @@
 import json
+from http.cookiejar import Cookie, CookieJar
 
 import pytest
-
-from http.cookiejar import CookieJar, Cookie
 
 from impit import AsyncClient, Browser, TooManyRedirects
 
@@ -58,45 +57,53 @@ class TestBasicRequests:
         cookie_jar = CookieJar()
 
         url = get_httpbin_url('/cookies/')
-        cookie_jar.set_cookie(Cookie(
-            version=None,
-            name='preset-cookie',
-            value='123',
-            port=None,
-            port_specified=False,
-            domain=url.split('/')[2],
-            domain_specified=True,
-            domain_initial_dot=False,
-            path='/',
-            path_specified=True,
-            secure=False,
-            expires=None,
-            discard=False,
-            comment=None,
-            comment_url=None,
-            rest=None,
-        ))
+        cookie_jar.set_cookie(
+            Cookie(
+                version=None,
+                name='preset-cookie',
+                value='123',
+                port=None,
+                port_specified=False,
+                domain=url.split('/')[2],
+                domain_specified=True,
+                domain_initial_dot=False,
+                path='/',
+                path_specified=True,
+                secure=False,
+                expires=None,
+                discard=False,
+                comment=None,
+                comment_url=None,
+                rest=None,
+            )
+        )
 
         impit = AsyncClient(
             browser=browser,
             cookie_jar=cookie_jar,
         )
 
-        response = json.loads((await impit.get(
-            get_httpbin_url('/cookies/'),
-        )).text)
+        response = json.loads(
+            (
+                await impit.get(
+                    get_httpbin_url('/cookies/'),
+                )
+            ).text
+        )
 
-        assert response['cookies'] == {
-            'preset-cookie': '123'
-        }
+        assert response['cookies'] == {'preset-cookie': '123'}
 
         await impit.get(
             get_httpbin_url('/cookies/set', query={'set-by-server': '321'}),
         )
 
-        response = json.loads((await impit.get(
-            get_httpbin_url('/cookies/'),
-        )).text)
+        response = json.loads(
+            (
+                await impit.get(
+                    get_httpbin_url('/cookies/'),
+                )
+            ).text
+        )
 
         assert response['cookies'] == {
             'preset-cookie': '123',
