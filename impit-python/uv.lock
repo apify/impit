@@ -110,7 +110,7 @@ wheels = [
 [[package]]
 name = "impit"
 version = "0.2.3"
-source = { virtual = "." }
+source = { editable = "." }
 
 [package.dev-dependencies]
 dev = [
