@@ -2,6 +2,7 @@ use pyo3::prelude::*;
 
 mod async_client;
 mod client;
+mod cookies;
 mod errors;
 mod request;
 mod response;
@@ -88,6 +89,7 @@ fn impit(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
                 #[pyfunction]
                 #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
                 fn $name(
+                    _py: Python,
                     url: String,
                     content: Option<Vec<u8>>,
                     data: Option<RequestBody>,
@@ -95,7 +97,7 @@ fn impit(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
                     timeout: Option<f64>,
                     force_http3: Option<bool>,
                 ) -> Result<response::ImpitPyResponse, errors::ImpitPyError> {
-                    let mut client = Client::new(None, None, None, None, None, None, None, None);
+                    let mut client = Client::new(_py, None, None, None, None, None, None, None, None, None);
 
                     client.$name(url, content, data, headers, timeout, force_http3)
                 }

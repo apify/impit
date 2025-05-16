@@ -20,6 +20,7 @@ pyo3-async-runtimes = { version = "0.24", features = ["attributes", "async-std-r
 openssl = { version = "*", features = ["vendored"] }
 urlencoding = "2.1.3"
 encoding = "0.2.33"
+cookie = "0.18.1"
 
 [build-dependencies]
 napi-build = "2.1.4"

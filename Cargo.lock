@@ -1507,6 +1507,7 @@ name = "impit-python"
 version = "0.0.0"
 dependencies = [
  "bytes",
+ "cookie",
  "encoding",
  "h2",
  "impit",
