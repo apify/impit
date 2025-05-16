@@ -5,7 +5,7 @@ __metadata:
   version: 8
   cacheKey: 10c0
 
-"@emnapi/core@npm:^1.4.0":
+"@emnapi/core@npm:^1.4.3":
   version: 1.4.3
   resolution: "@emnapi/core@npm:1.4.3"
   dependencies:
@@ -15,7 +15,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@emnapi/runtime@npm:^1.4.0":
+"@emnapi/runtime@npm:^1.4.3":
   version: 1.4.3
   resolution: "@emnapi/runtime@npm:1.4.3"
   dependencies:
@@ -464,8 +464,8 @@ __metadata:
   linkType: hard
 
 "@napi-rs/cli@npm:^3.0.0-alpha.70":
-  version: 3.0.0-alpha.78
-  resolution: "@napi-rs/cli@npm:3.0.0-alpha.78"
+  version: 3.0.0-alpha.79
+  resolution: "@napi-rs/cli@npm:3.0.0-alpha.79"
   dependencies:
     "@inquirer/prompts": "npm:^7.4.0"
     "@napi-rs/cross-toolchain": "npm:^0.0.19"
@@ -492,7 +492,7 @@ __metadata:
   bin:
     napi: ./dist/cli.js
     napi-raw: ./cli.mjs
-  checksum: 10c0/26fb7021f4982543c723f0c3a1b5ce7563911c0cbb86d30b6f303eb41f0038ab67db12681b94b4bf8b18d40fba7ed61d5b0e8ece2881df8556e5e171b8c87285
+  checksum: 10c0/8fcb832299b750de0533a9cda54b8791aa53de573811311a505487d1ff8cdd1994287f582dfaa00125b44eae6c744c19afa68d29ecfb5040b6b58918b057cba9
   languageName: node
   linkType: hard
 
@@ -880,13 +880,13 @@ __metadata:
   linkType: hard
 
 "@napi-rs/wasm-runtime@npm:^0.2.7, @napi-rs/wasm-runtime@npm:^0.2.9":
-  version: 0.2.9
-  resolution: "@napi-rs/wasm-runtime@npm:0.2.9"
+  version: 0.2.10
+  resolution: "@napi-rs/wasm-runtime@npm:0.2.10"
   dependencies:
-    "@emnapi/core": "npm:^1.4.0"
-    "@emnapi/runtime": "npm:^1.4.0"
+    "@emnapi/core": "npm:^1.4.3"
+    "@emnapi/runtime": "npm:^1.4.3"
     "@tybys/wasm-util": "npm:^0.9.0"
-  checksum: 10c0/1cc40b854b255f84e12ade634456ba489f6bf90659ef8164a16823c515c294024c96ee2bb81ab51f35493ba9496f62842b960f915dbdcdc1791f221f989e9e59
+  checksum: 10c0/4dce9bbb94a8969805574e1b55fdbeb7623348190265d77f6507ba32e535610deeb53a33ba0bb8b05a6520f379d418b92e8a01c5cd7b9486b136d2c0c26be0bd
   languageName: node
   linkType: hard
 
@@ -2354,58 +2354,58 @@ __metadata:
   languageName: node
   linkType: hard
 
-"impit-darwin-arm64@npm:0.4.5":
-  version: 0.4.5
-  resolution: "impit-darwin-arm64@npm:0.4.5"
+"impit-darwin-arm64@npm:0.4.6":
+  version: 0.4.6
+  resolution: "impit-darwin-arm64@npm:0.4.6"
   conditions: os=darwin & cpu=arm64
   languageName: node
   linkType: hard
 
-"impit-darwin-x64@npm:0.4.5":
-  version: 0.4.5
-  resolution: "impit-darwin-x64@npm:0.4.5"
+"impit-darwin-x64@npm:0.4.6":
+  version: 0.4.6
+  resolution: "impit-darwin-x64@npm:0.4.6"
   conditions: os=darwin & cpu=x64
   languageName: node
   linkType: hard
 
-"impit-linux-arm64-gnu@npm:0.4.5":
-  version: 0.4.5
-  resolution: "impit-linux-arm64-gnu@npm:0.4.5"
+"impit-linux-arm64-gnu@npm:0.4.6":
+  version: 0.4.6
+  resolution: "impit-linux-arm64-gnu@npm:0.4.6"
   conditions: os=linux & cpu=arm64 & libc=glibc
   languageName: node
   linkType: hard
 
-"impit-linux-arm64-musl@npm:0.4.5":
-  version: 0.4.5
-  resolution: "impit-linux-arm64-musl@npm:0.4.5"
+"impit-linux-arm64-musl@npm:0.4.6":
+  version: 0.4.6
+  resolution: "impit-linux-arm64-musl@npm:0.4.6"
   conditions: os=linux & cpu=arm64 & libc=musl
   languageName: node
   linkType: hard
 
-"impit-linux-x64-gnu@npm:0.4.5":
-  version: 0.4.5
-  resolution: "impit-linux-x64-gnu@npm:0.4.5"
+"impit-linux-x64-gnu@npm:0.4.6":
+  version: 0.4.6
+  resolution: "impit-linux-x64-gnu@npm:0.4.6"
   conditions: os=linux & cpu=x64 & libc=glibc
   languageName: node
   linkType: hard
 
-"impit-linux-x64-musl@npm:0.4.5":
-  version: 0.4.5
-  resolution: "impit-linux-x64-musl@npm:0.4.5"
+"impit-linux-x64-musl@npm:0.4.6":
+  version: 0.4.6
+  resolution: "impit-linux-x64-musl@npm:0.4.6"
   conditions: os=linux & cpu=x64 & libc=musl
   languageName: node
   linkType: hard
 
-"impit-win32-arm64-msvc@npm:0.4.5":
-  version: 0.4.5
-  resolution: "impit-win32-arm64-msvc@npm:0.4.5"
+"impit-win32-arm64-msvc@npm:0.4.6":
+  version: 0.4.6
+  resolution: "impit-win32-arm64-msvc@npm:0.4.6"
   conditions: os=win32 & cpu=arm64
   languageName: node
   linkType: hard
 
-"impit-win32-x64-msvc@npm:0.4.5":
-  version: 0.4.5
-  resolution: "impit-win32-x64-msvc@npm:0.4.5"
+"impit-win32-x64-msvc@npm:0.4.6":
+  version: 0.4.6
+  resolution: "impit-win32-x64-msvc@npm:0.4.6"
   conditions: os=win32 & cpu=x64
   languageName: node
   linkType: hard
@@ -2418,14 +2418,14 @@ __metadata:
     "@types/express": "npm:^5.0.0"
     "@types/node": "npm:^22.13.1"
     express: "npm:^5.0.0"
-    impit-darwin-arm64: "npm:0.4.5"
-    impit-darwin-x64: "npm:0.4.5"
-    impit-linux-arm64-gnu: "npm:0.4.5"
-    impit-linux-arm64-musl: "npm:0.4.5"
-    impit-linux-x64-gnu: "npm:0.4.5"
-    impit-linux-x64-musl: "npm:0.4.5"
-    impit-win32-arm64-msvc: "npm:0.4.5"
-    impit-win32-x64-msvc: "npm:0.4.5"
+    impit-darwin-arm64: "npm:0.4.6"
+    impit-darwin-x64: "npm:0.4.6"
+    impit-linux-arm64-gnu: "npm:0.4.6"
+    impit-linux-arm64-musl: "npm:0.4.6"
+    impit-linux-x64-gnu: "npm:0.4.6"
+    impit-linux-x64-musl: "npm:0.4.6"
+    impit-win32-arm64-msvc: "npm:0.4.6"
+    impit-win32-x64-msvc: "npm:0.4.6"
     vitest: "npm:^3.0.5"
   dependenciesMeta:
     impit-darwin-arm64:
