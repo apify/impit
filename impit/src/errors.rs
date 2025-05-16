@@ -1,4 +1,4 @@
-use std::{error::Error, time::Duration};
+use std::time::Duration;
 
 use thiserror::Error;
 
@@ -100,10 +100,6 @@ impl ImpitError {
 
         if error.is_redirect() {
             return ImpitError::TooManyRedirects(context.max_redirects);
-        }
-
-        if let Some(source) = error.source() {
-            return ImpitError::ReqwestError(format!("{:#?}", source));
         }
 
         ImpitError::ReqwestError(format!("{:#?}", error))
