@@ -1,7 +1,7 @@
 #![allow(clippy::await_holding_refcell_ref, deprecated)]
 use impit::utils::{decode, ContentType};
 use napi::{
-  bindgen_prelude::{Buffer, FromNapiValue, ReadableStream, Result, This, ToNapiValue},
+  bindgen_prelude::{Buffer, FromNapiValue, Function, ReadableStream, Result, This, ToNapiValue},
   sys, Env, JsFunction, JsObject, JsUnknown,
 };
 use napi_derive::napi;
@@ -136,13 +136,32 @@ impl ImpitResponse {
     Ok(string)
   }
 
-  #[napi(ts_return_type = "Promise<Uint8Array>")]
-  pub fn bytes(&self, env: &Env, this: This<JsObject>) -> Result<JsUnknown> {
+  #[napi(ts_return_type = "Promise<ArrayBuffer>")]
+  pub fn array_buffer(&self, env: &Env, this: This<JsObject>) -> Result<JsObject> {
     let response = self.get_inner_response(env, this)?;
 
     response
-      .get_named_property::<JsFunction>("bytes")?
-      .call_without_args(Some(&response))
+      .get_named_property::<JsFunction>("arrayBuffer")?
+      .call_without_args(Some(&response))?
+      .coerce_to_object()
+  }
+
+  #[napi(ts_return_type = "Promise<Uint8Array>")]
+  pub fn bytes(&self, env: &Env, this: This<JsObject>) -> Result<JsUnknown> {
+    let array_buffer_promise = self.array_buffer(env, this)?;
+    let then: JsFunction = array_buffer_promise.get_named_property("then")?;
+
+    let cb: Function<'_, JsObject, _> = env.create_function_from_closure("callback", |ctx| {
+      let result = ctx.get::<JsObject>(0)?;
+
+      ctx
+        .env
+        .get_global()?
+        .get_named_property::<JsFunction>("Uint8Array")?
+        .new_instance(&[result])
+    })?;
+
+    then.call(Some(&array_buffer_promise), &[cb])
   }
 
   #[napi(ts_return_type = "Promise<string>")]
