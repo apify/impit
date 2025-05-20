@@ -3,6 +3,15 @@
 All notable changes to this project will be documented in this file.
 
 
+## js-0.4.7 - 2025-05-20
+
+#### Features
+
+- Add `resp.arrayBuffer`, improve Node <22 compatibility (#188)
+  - Adds new `response.arrayBuffer` method ([MDN](https://developer.mozilla.org/en-US/docs/Web/API/Response/arrayBuffer)) and implements `response.bytes` using `arrayBuffer()` to improve compatibility with Node < 22 (`.bytes()` support was rather experimental until this version).
+
+
+
 ## js-0.4.6 - 2025-05-16
 
 #### Features
