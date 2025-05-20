@@ -213,11 +213,19 @@ describe.each([
         });
 
         test('.bytes() method works', async (t) => {
-        const response = await impit.fetch(getHttpBinUrl('/xml'));
-        const bytes = await response.bytes();
+            const response = await impit.fetch(getHttpBinUrl('/xml'));
+            const bytes = await response.bytes();
 
-        // test that first 5 bytes of the response are the `<?xml` XML declaration
-        t.expect(bytes.slice(0, 5)).toEqual(Uint8Array.from([0x3c, 0x3f, 0x78, 0x6d, 0x6c]));
+            // test that first 5 bytes of the response are the `<?xml` XML declaration
+            t.expect(bytes.slice(0, 5)).toEqual(Uint8Array.from([0x3c, 0x3f, 0x78, 0x6d, 0x6c]));
+        });
+        
+        test('.arrayBuffer() method works', async (t) => {
+            const response = await impit.fetch(getHttpBinUrl('/xml'));
+            const bytes = await response.arrayBuffer();
+
+            // test that first 5 bytes of the response are the `<?xml` XML declaration
+            t.expect(new Uint8Array(bytes.slice(0, 5))).toEqual(Uint8Array.from([0x3c, 0x3f, 0x78, 0x6d, 0x6c]));
         });
 
         test('streaming response body works', async (t) => {
