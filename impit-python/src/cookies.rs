@@ -13,23 +13,17 @@ pub struct PythonCookieJar {
 }
 
 impl CookieStore for PythonCookieJar {
-    // todo - we might want to check url
     fn set_cookies(
         &self,
         cookie_headers: &mut dyn Iterator<Item = &reqwest::header::HeaderValue>,
         url: &Url,
     ) {
         Python::with_gil(|py| {
-            println!("Setting cookies in Python cookie jar");
             for header_value in cookie_headers {
-                println!("Header value: {:?}", header_value);
-
                 let cookie = std::str::from_utf8(header_value.as_bytes())
                     .map_err(cookie::ParseError::from)
                     .and_then(Cookie::parse)
                     .unwrap();
-
-                println!("Parsed cookie: {:#?}", cookie);
 
                 let kwargs = PyDict::new(py);
 
