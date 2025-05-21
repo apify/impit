@@ -87,7 +87,7 @@ fn impit(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
         ($($name:ident),*) => {
             $(
                 #[pyfunction]
-                #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
+                #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false, cookie_jar=None))]
                 fn $name(
                     _py: Python,
                     url: String,
@@ -96,8 +96,9 @@ fn impit(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
                     headers: Option<HashMap<String, String>>,
                     timeout: Option<f64>,
                     force_http3: Option<bool>,
+                    cookie_jar: Option<pyo3::Bound<'_, pyo3::PyAny>>,
                 ) -> Result<response::ImpitPyResponse, errors::ImpitPyError> {
-                    let mut client = Client::new(_py, None, None, None, None, None, None, None, None, None);
+                    let mut client = Client::new(_py, None, None, None, None, None, None, None, None, cookie_jar);
 
                     client.$name(url, content, data, headers, timeout, force_http3)
                 }
