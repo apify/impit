@@ -3,6 +3,21 @@
 All notable changes to this project will be documented in this file.
 
 
+## js-0.5.0 - 2025-05-29
+
+#### Bug Fixes
+
+- Support `null` request payload, don't modify options (#190)
+  - Removes parameter reassignment code smell. Fixes errors on `null` (or other nullish, but not expected) body.
+
+
+#### Features
+
+- Support for custom cookie stores for Node.JS (#181)
+  - Adds `cookieJar` constructor parameter for `Impit` class, accepting `tough-cookie`'s `CookieJar` (or a custom implementation thereof, implementing at least `setCookie(cookie: string, url: string)` and `getCookieString(url: string)`).  `impit` will write to and read from this custom cookie store.  Related to #123
+
+
+
 ## js-0.4.7 - 2025-05-20
 
 #### Features
