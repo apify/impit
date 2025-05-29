@@ -88,8 +88,8 @@ pub enum ImpitError {
     InvalidHeaderName(String),
     #[error("The header value `{0}` is invalid.")]
     InvalidHeaderValue(String),
-    #[error("{0:#?}")]
-    ReqwestError(reqwest::Error),
+    #[error("The internal HTTP library has thrown an error:\n{0}")]
+    ReqwestError(String),
 }
 
 impl ImpitError {
@@ -102,6 +102,6 @@ impl ImpitError {
             return ImpitError::TooManyRedirects(context.max_redirects);
         }
 
-        ImpitError::RequestError
+        ImpitError::ReqwestError(format!("{:#?}", error))
     }
 }
