@@ -121,7 +121,7 @@ impl CookieStore for NodeCookieJar {
         if header.is_empty() {
           return None;
         }
-        
+
         HeaderValue::from_str(&header).ok()
       })
   }
