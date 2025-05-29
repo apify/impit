@@ -25,6 +25,17 @@ class ResponsePatches {
 }
 
 class Impit extends native.Impit {
+    constructor(options) {
+        const jsCookieJar = options?.cookieJar;
+        super({
+            ...options,
+            cookieJar: jsCookieJar ? {
+                setCookie: async (args) => jsCookieJar.setCookie?.bind?.(jsCookieJar)(...args),
+                getCookieString: async (args) => jsCookieJar.getCookieString?.bind?.(jsCookieJar)(args),
+            } : undefined,
+        });
+    }
+
     async fetch(url, opts) {
         let options = { ...opts };
 

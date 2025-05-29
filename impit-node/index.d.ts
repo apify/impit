@@ -49,6 +49,8 @@ export interface ImpitOptions {
    * If this number is exceeded, the request will be rejected with an error.
    */
   maxRedirects?: number
+  /** Pass a ToughCookie instance to Impit. */
+cookieJar?: { setCookie: (cookie: string, url: string, cb?: any) => Promise<void> | void, getCookieString: (url: string) => Promise<string> | string }
 }
 
 export interface RequestInit {
