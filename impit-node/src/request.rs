@@ -117,7 +117,13 @@ impl CookieStore for NodeCookieJar {
 
     await_promise(&self.get_cookies_tsfn, url.clone())
       .ok()
-      .and_then(|header| HeaderValue::from_str(&header).ok())
+      .and_then(|header| {
+        if header.is_empty() {
+          return None;
+        }
+        
+        HeaderValue::from_str(&header).ok()
+      })
   }
 }
 
