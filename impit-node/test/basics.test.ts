@@ -170,12 +170,16 @@ describe.each([
             ['URLSearchParams', new URLSearchParams(JSON.parse(STRING_PAYLOAD))],
             ['FormData', (() => { const form = new FormData(); form.append('Impit-Test', 'foořžš'); return form; })()],
             ['ReadableStream', new ReadableStream({ start(controller) { controller.enqueue(new TextEncoder().encode(STRING_PAYLOAD)); controller.close(); } })],
+            ['undefined', undefined],
+            ['null', null],
         ])('passing %s body', async (type, body) => {
             const response = await impit.fetch(getHttpBinUrl('/post'), { method: HttpMethod.Post, body });
             const json = await response.json();
 
             if (type === 'URLSearchParams' || type === 'FormData') {
                 expect(json.form).toEqual(JSON.parse(STRING_PAYLOAD));
+            } else if (type === 'undefined' || type === 'null') {
+                expect(json.data).toEqual('');
             } else {
                 expect(json.data).toEqual(STRING_PAYLOAD);
             }
