@@ -54,6 +54,8 @@ class Impit extends native.Impit {
                 options.headers = options.headers || [];
                 options.headers.push(['Content-Type', type]);
             }
+        } else {
+            delete options.body;
         }
         
         const originalResponse = await super.fetch(url, options);
