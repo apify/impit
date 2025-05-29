@@ -25,27 +25,27 @@ class ResponsePatches {
 }
 
 class Impit extends native.Impit {
-    async fetch(url, options) {
-        let headers;
+    async fetch(url, opts) {
+        let options = { ...opts };
+
         if (options?.headers) {
             if (options.headers instanceof Headers) {
-                headers = [...options.headers.entries()];
+                options.headers = [...options.headers.entries()];
             } else if (!Array.isArray(options.headers)) {
-                headers = Object.entries(options.headers || {});
+                options.headers = Object.entries(options.headers || {});
             }
         }
 
-        let body;
         if (options?.body) {
             const { body: requestBody, type } = await castToTypedArray(options.body);
-            body = requestBody;
+            options.body = requestBody;
             if (type) {
-                headers = options.headers || [];
-                headers.push(['Content-Type', type]);
+                options.headers = options.headers || [];
+                options.headers.push(['Content-Type', type]);
             }
         }
         
-        const originalResponse = await super.fetch(url, { ...options, headers, body });
+        const originalResponse = await super.fetch(url, options);
 
         Object.defineProperty(originalResponse, 'text', {
             value: ResponsePatches.text.bind(originalResponse)
