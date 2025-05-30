@@ -4,10 +4,13 @@ use std::{
 };
 
 use napi::{
-  bindgen_prelude::{FromNapiValue, Function, JsValuesTupleIntoVec, Promise, Uint8Array},
+  bindgen_prelude::{
+    FromNapiValue, Function, JsObjectValue, JsValuesTupleIntoVec, Object, Promise, Uint8Array,
+  },
   threadsafe_function::ThreadsafeFunction,
   Env,
 };
+
 use napi_derive::napi;
 use reqwest::{cookie::CookieStore, header::HeaderValue, Url};
 use tokio::sync::oneshot;
@@ -128,7 +131,7 @@ impl CookieStore for NodeCookieJar {
 }
 
 impl NodeCookieJar {
-  pub fn new(env: &Env, tough_cookie: napi::JsObject) -> Result<Self, napi::Error> {
+  pub fn new(env: &Env, tough_cookie: Object) -> Result<Self, napi::Error> {
     let set_cookie_js_method = match tough_cookie
       .get_named_property::<Function<'_, (String, String), Promise<()>>>("setCookie")
     {

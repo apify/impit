@@ -4,7 +4,7 @@ use impit::{
   emulation::Browser as ImpitBrowser,
   impit::{ImpitBuilder, RedirectBehavior},
 };
-use napi::Env;
+use napi::{bindgen_prelude::Object, Env};
 use napi_derive::napi;
 
 use crate::request::NodeCookieJar;
@@ -26,7 +26,7 @@ impl From<Browser> for ImpitBrowser {
 
 #[derive(Default)]
 #[napi(object)]
-pub struct ImpitOptions {
+pub struct ImpitOptions<'a> {
   pub browser: Option<Browser>,
   pub ignore_tls_errors: Option<bool>,
   pub vanilla_fallback: Option<bool>,
@@ -45,10 +45,10 @@ pub struct ImpitOptions {
   #[napi(
     ts_type = "{ setCookie: (cookie: string, url: string, cb?: any) => Promise<void> | void, getCookieString: (url: string) => Promise<string> | string }"
   )]
-  pub cookie_jar: Option<napi::JsObject>,
+  pub cookie_jar: Option<Object<'a>>,
 }
 
-impl ImpitOptions {
+impl ImpitOptions<'_> {
   pub fn into_builder(self, env: &Env) -> Result<ImpitBuilder<NodeCookieJar>, napi::Error> {
     let mut config = ImpitBuilder::default();
     if let Some(browser) = self.browser {
