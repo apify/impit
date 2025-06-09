@@ -13,7 +13,7 @@
     "impit-node.darwin-x64.node"
   ],
   "description": "Impit for JavaScript",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "engines": {
     "node": ">= 10"
   },
