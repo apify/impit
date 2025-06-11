@@ -27,6 +27,7 @@
     "@types/express": "^5.0.0",
     "@types/node": "^22.13.1",
     "express": "^5.0.0",
+    "socksv5": "^0.0.6",
     "tough-cookie": "^5.1.2",
     "vitest": "^3.0.5"
   },

@@ -5,6 +5,7 @@ import { Server } from 'http';
 import { routes, runServer } from './mock.server.js';
 
 import { CookieJar } from 'tough-cookie';
+import socks from 'socksv5';
 
 function getHttpBinUrl(path: string, https?: boolean): string {
     https ??= true;
@@ -27,18 +28,37 @@ async function getServer() {
     return localServer;
 }
 
+async function startSocksServer() {
+    return new Promise<Server>((resolve, reject) => {
+        const srv = (socks as any).createServer((info, accept, deny) => accept());
+        srv.listen(7625, 'localhost', () => {
+            resolve(srv);
+        });
+        srv.on('error', (err: Error) => {
+            reject(err);
+        });
+        srv.useAuth(socks.auth.None());
+    });
+}
+
+let socksServer: Server | null = null;
 beforeAll(async () => {
     // Warms up the httpbin instance, so that the first tests don't timeout.
     // Has a longer timeout itself (5s vs 30s) to avoid flakiness.
     await fetch(getHttpBinUrl('/get'));
     // Start the local server
     await getServer();
+
+    socksServer = await startSocksServer();
 }, 30e3);
 
 afterAll(async () => {
     const server = await getServer();
-    new Promise<void>(res => {
+    await new Promise<void>(res => {
         server?.close(() => res())
+    });
+    await new Promise<void>(res => {
+        socksServer?.close(() => res())
     });
 });
 
@@ -108,7 +128,24 @@ describe.each([
                     'b=2; Path=/',
                     'c=3; Path=/'
                 ]);
-        })
+        });
+
+        test('supports socks proxy', async (t) => {
+            const impit = new Impit({
+                browser,
+                proxyUrl: 'socks5://localhost:7625',
+            });
+
+            const response = await impit.fetch(
+                getHttpBinUrl('/get'),
+            );
+
+            t.expect(response.status).toBe(200);
+            const json = await response.json();
+            expect(json).toHaveProperty('url');
+            expect(json).toHaveProperty('headers');
+            expect(json).toHaveProperty('origin');
+        });
 
         test('impit accepts custom cookie jars', async (t) => {
             const cookieJar = new CookieJar();
