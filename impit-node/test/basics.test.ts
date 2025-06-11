@@ -57,7 +57,9 @@ afterAll(async () => {
     await new Promise<void>(res => {
         server?.close(() => res())
     });
-    socksServer?.close();
+    await new Promise<void>(res => {
+        socksServer?.close(() => res())
+    });
 });
 
 describe.each([
