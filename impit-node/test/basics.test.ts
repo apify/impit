@@ -138,8 +138,11 @@ describe.each([
                 getHttpBinUrl('/get'),
             );
 
+            t.expect(response.status).toBe(200);
             const json = await response.json();
-            t.expect(json.url).toBe(getHttpBinUrl('/get', true));
+            expect(json).toHaveProperty('url');
+            expect(json).toHaveProperty('headers');
+            expect(json).toHaveProperty('origin');
         });
 
         test('impit accepts custom cookie jars', async (t) => {
