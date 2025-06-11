@@ -3,6 +3,21 @@
 All notable changes to this project will be documented in this file.
 
 
+## js-0.5.1 - 2025-06-11
+
+#### Bug Fixes
+
+- Solve memory leak on response read (#191)
+  - Memory leak in `napi-rs`'s implementation of `ReadableStream` was causing `impit` to leak small amounts of memory on response read (`.text()`, `.json()`, `.bytes()` etc.).
+
+
+#### Features
+
+- Support `socks` proxy (#197)
+  - Enables support for `socks` proxies to `impit-node`. This theoretically enables `socks` proxies for CLI and the Python binding as well, but this behaviour is untested due to a lack of working socks proxy server implementations in Python.
+
+
+
 ## js-0.5.0 - 2025-05-29
 
 #### Bug Fixes
