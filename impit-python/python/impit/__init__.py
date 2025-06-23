@@ -49,6 +49,7 @@ __all__ = [
     'CloseError',
     'ConnectError',
     'ConnectTimeout',
+    'Cookies'
     'CookieConflict',
     'DecodingError',
     'HTTPError',
