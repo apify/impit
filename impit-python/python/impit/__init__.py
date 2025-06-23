@@ -42,6 +42,8 @@ from .impit import (
     trace,
 )
 
+from .cookies import Cookies
+
 __all__ = [
     'AsyncClient',
     'Browser',

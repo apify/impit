@@ -169,4 +169,8 @@ impl PythonCookieJar {
             cookie_constructor,
         }
     }
+
+    pub fn from_httpx_cookies(py: Python<'_>, cookies: Py<PyAny>) -> Self {
+        PythonCookieJar::new(py, cookies.getattr(py, "jar").unwrap())
+    }
 }

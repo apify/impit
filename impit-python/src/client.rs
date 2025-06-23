@@ -36,7 +36,7 @@ impl Client {
     }
 
     #[new]
-    #[pyo3(signature = (browser=None, http3=None, proxy=None, timeout=None, verify=None, default_encoding=None, follow_redirects=None, max_redirects=Some(20), cookie_jar=None))]
+    #[pyo3(signature = (browser=None, http3=None, proxy=None, timeout=None, verify=None, default_encoding=None, follow_redirects=None, max_redirects=Some(20), cookie_jar=None, cookies=None))]
     pub fn new(
         py: Python<'_>,
         browser: Option<String>,
@@ -48,6 +48,7 @@ impl Client {
         follow_redirects: Option<bool>,
         max_redirects: Option<u16>,
         cookie_jar: Option<crate::Bound<'_, crate::PyAny>>,
+        cookies: Option<crate::Bound<'_, crate::PyAny>>,
     ) -> Self {
         let builder = ImpitBuilder::default();
 
@@ -87,11 +88,17 @@ impl Client {
             _ => builder.with_redirect(impit::impit::RedirectBehavior::ManualRedirect),
         };
 
-        let builder = match cookie_jar {
-            Some(cookie_jar) => {
+        let builder = match (cookie_jar, cookies) {
+            (Some(_), Some(_)) => {
+                panic!("Both cookie_jar and cookies cannot be provided at the same time")
+            },
+            (Some(cookie_jar), None) => {
                 builder.with_cookie_store(PythonCookieJar::new(py, cookie_jar.into()))
-            }
-            None => builder,
+            },
+            (None, Some(cookies)) => {
+                builder.with_cookie_store(PythonCookieJar::from_httpx_cookies(py, cookies.into()))
+            },
+            (None, None) => builder,
         };
         pyo3_async_runtimes::tokio::get_runtime().block_on(async {
             Self {
