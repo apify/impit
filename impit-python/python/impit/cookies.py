@@ -50,10 +50,10 @@ class Cookies(typing.MutableMapping[str, str]):
             'rest': {'HttpOnly': None},
             'rfc2109': False,
         }
-        cookie = Cookie(**kwargs)
+        cookie = Cookie(**kwargs)  # type: ignore[arg-type]
         self.jar.set_cookie(cookie)
 
-    def get(
+    def get(  # type: ignore[override]
         self,
         name: str,
         default: str | None = None,
@@ -116,7 +116,7 @@ class Cookies(typing.MutableMapping[str, str]):
             args.append(path)
         self.jar.clear(*args)
 
-    def update(self, cookies: CookieTypes | None = None) -> None:
+    def update(self, cookies: CookieTypes | None = None) -> None:  # type: ignore[override]
         """Update the cookie jar with new cookies. Accepts various types."""
         cookies = Cookies(cookies)
         for cookie in cookies.jar:

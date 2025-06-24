@@ -1,5 +1,6 @@
 from __future__ import annotations
 from http.cookiejar import CookieJar
+from .cookies import Cookies
 
 from typing import Literal
 
@@ -99,7 +100,7 @@ class Client:
 
     def __enter__(self) -> Client:
         """Enter the runtime context related to this object."""
-    
+
     def __exit__(self, exc_type: type[BaseException] | None, exc_value: BaseException | None, traceback: object | None) -> None:
         """Exit the runtime context related to this object."""
 
@@ -115,6 +116,7 @@ class Client:
         follow_redirects: bool | None = None,
         max_redirects: int | None = None,
         cookie_jar: CookieJar | None = None,
+        cookies: Cookies | None = None,
     ) -> None:
         """Initialize a synchronous HTTP client.
 
@@ -317,10 +319,10 @@ class Client:
 
 class AsyncClient:
     """Asynchronous HTTP client with browser impersonation capabilities."""
-    
+
     async def __aenter__(self) -> AsyncClient:
         """Enter the runtime context related to this object."""
-    
+
     async def __aexit__(self, exc_type: type[BaseException] | None, exc_value: BaseException | None, traceback: object | None) -> None:
         """Exit the runtime context related to this object."""
 
@@ -335,6 +337,7 @@ class AsyncClient:
         follow_redirects: bool | None = None,
         max_redirects: int | None = None,
         cookie_jar: CookieJar | None = None,
+        cookies: Cookies | None = None,
     ) -> None:
         """Initialize an asynchronous HTTP client.
 
