@@ -1,9 +1,8 @@
 import json
-from http.cookiejar import Cookie, CookieJar
 
 import pytest
 
-from impit import AsyncClient, Browser, TooManyRedirects
+from impit import AsyncClient, Browser, TooManyRedirects, Cookies
 
 from .httpbin import get_httpbin_url
 
@@ -53,42 +52,18 @@ class TestBasicRequests:
         assert json.loads(response.text)['headers']['Impit-Test'] == 'foo'
 
     @pytest.mark.asyncio
-    async def test_custom_cookie_store_works(self, browser: Browser) -> None:
-        cookie_jar = CookieJar()
-
-        url = get_httpbin_url('/cookies/')
-        cookie_jar.set_cookie(
-            Cookie(
-                version=None,
-                name='preset-cookie',
-                value='123',
-                port=None,
-                port_specified=False,
-                domain=url.split('/')[2],
-                domain_specified=True,
-                domain_initial_dot=False,
-                path='/',
-                path_specified=True,
-                secure=False,
-                expires=None,
-                discard=False,
-                comment=None,
-                comment_url=None,
-                rest={},
-            )
-        )
+    async def test_cookie_jar_works(self, browser: Browser) -> None:
+        cookies = Cookies({'preset-cookie': '123'})
 
         impit = AsyncClient(
             browser=browser,
-            cookie_jar=cookie_jar,
+            cookie_jar=cookies.jar,
         )
 
         response = json.loads(
-            (
-                await impit.get(
-                    get_httpbin_url('/cookies/'),
-                )
-            ).text
+            (await impit.get(
+                get_httpbin_url('/cookies/'),
+            )).text
         )
 
         assert response['cookies'] == {'preset-cookie': '123'}
@@ -98,11 +73,9 @@ class TestBasicRequests:
         )
 
         response = json.loads(
-            (
-                await impit.get(
-                    get_httpbin_url('/cookies/'),
-                )
-            ).text
+            (await impit.get(
+                get_httpbin_url('/cookies/'),
+            )).text
         )
 
         assert response['cookies'] == {
@@ -110,7 +83,43 @@ class TestBasicRequests:
             'set-by-server': '321',
         }
 
-        assert len(cookie_jar) == 2
+        assert len(cookies.jar) == 2
+
+    @pytest.mark.asyncio
+    async def test_cookies_param_works(self, browser: Browser) -> None:
+        cookies = Cookies({'preset-cookie': '123'})
+
+        impit = AsyncClient(
+            browser=browser,
+            cookies=cookies,
+        )
+
+        response = json.loads(
+            (await impit.get(
+                get_httpbin_url('/cookies/'),
+            )).text
+        )
+
+        assert response['cookies'] == {'preset-cookie': '123'}
+
+        await impit.get(
+            get_httpbin_url('/cookies/set', query={'set-by-server': '321'}),
+        )
+
+        response = json.loads(
+            (await impit.get(
+                get_httpbin_url('/cookies/'),
+            )).text
+        )
+
+        assert response['cookies'] == {
+            'preset-cookie': '123',
+            'set-by-server': '321',
+        }
+
+        assert len(cookies) == 2
+        assert cookies.get('preset-cookie') == '123'
+        assert cookies.get('set-by-server') == '321'
 
     @pytest.mark.asyncio
     async def test_overwriting_headers_work(self, browser: Browser) -> None:
