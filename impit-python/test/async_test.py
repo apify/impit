@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from impit import AsyncClient, Browser, TooManyRedirects, Cookies
+from impit import AsyncClient, Browser, Cookies, TooManyRedirects
 
 from .httpbin import get_httpbin_url
 
@@ -61,9 +61,11 @@ class TestBasicRequests:
         )
 
         response = json.loads(
-            (await impit.get(
-                get_httpbin_url('/cookies/'),
-            )).text
+            (
+                await impit.get(
+                    get_httpbin_url('/cookies/'),
+                )
+            ).text
         )
 
         assert response['cookies'] == {'preset-cookie': '123'}
@@ -73,9 +75,11 @@ class TestBasicRequests:
         )
 
         response = json.loads(
-            (await impit.get(
-                get_httpbin_url('/cookies/'),
-            )).text
+            (
+                await impit.get(
+                    get_httpbin_url('/cookies/'),
+                )
+            ).text
         )
 
         assert response['cookies'] == {
@@ -95,9 +99,11 @@ class TestBasicRequests:
         )
 
         response = json.loads(
-            (await impit.get(
-                get_httpbin_url('/cookies/'),
-            )).text
+            (
+                await impit.get(
+                    get_httpbin_url('/cookies/'),
+                )
+            ).text
         )
 
         assert response['cookies'] == {'preset-cookie': '123'}
@@ -107,9 +113,11 @@ class TestBasicRequests:
         )
 
         response = json.loads(
-            (await impit.get(
-                get_httpbin_url('/cookies/'),
-            )).text
+            (
+                await impit.get(
+                    get_httpbin_url('/cookies/'),
+                )
+            ).text
         )
 
         assert response['cookies'] == {

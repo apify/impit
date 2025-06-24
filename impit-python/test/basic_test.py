@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from impit import Browser, Client, TooManyRedirects, Cookies
+from impit import Browser, Client, Cookies, TooManyRedirects
 
 from .httpbin import get_httpbin_url
 

@@ -1,5 +1,6 @@
 from typing import Literal
 
+from .cookies import Cookies
 from .impit import (
     AsyncClient,
     Client,
@@ -42,8 +43,6 @@ from .impit import (
     trace,
 )
 
-from .cookies import Cookies
-
 __all__ = [
     'AsyncClient',
     'Browser',
@@ -51,8 +50,8 @@ __all__ = [
     'CloseError',
     'ConnectError',
     'ConnectTimeout',
-    'Cookies'
     'CookieConflict',
+    'Cookies',
     'DecodingError',
     'HTTPError',
     'HTTPStatusError',
