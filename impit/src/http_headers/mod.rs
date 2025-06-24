@@ -103,9 +103,23 @@ impl HttpHeadersBuilder {
         self
     }
 
-    pub fn with_custom_headers(&mut self, custom_headers: &Vec<(String, String)>) -> &mut Self {
-        self.custom_headers = custom_headers.to_owned();
-        self
+    pub fn with_custom_headers(
+        &mut self,
+        custom_headers: Option<Vec<(String, String)>>,
+    ) -> &mut Self {
+        match custom_headers {
+            Some(headers) => {
+                // Later call to with_custom_headers will override existing headers.
+                // We need to prepend the new headers to the existing ones.
+                self.custom_headers = headers
+                    .iter()
+                    .chain(self.custom_headers.iter())
+                    .map(|(k, v)| (k.to_owned(), v.to_owned()))
+                    .collect();
+                self
+            }
+            None => self,
+        }
     }
 
     pub fn build(&self) -> HttpHeaders {
