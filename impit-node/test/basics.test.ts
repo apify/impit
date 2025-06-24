@@ -77,7 +77,7 @@ describe.each([
             const response = impit.fetch(`${protocol}example.org`);
             await expect(response).resolves.toBeTruthy();
         });
-        
+
         test('to a BoringSSL-based server', async () => {
             const response = impit.fetch('https://www.google.com');
             await expect(response).resolves.toBeTruthy();
@@ -123,7 +123,7 @@ describe.each([
             );
 
             t.expect(headers.getSetCookie())
-                .toEqual([ 
+                .toEqual([
                     'a=1; Path=/',
                     'b=2; Path=/',
                     'c=3; Path=/'
@@ -151,9 +151,9 @@ describe.each([
             const cookieJar = new CookieJar();
             cookieJar.setCookieSync('preset-cookie=123; Path=/', getHttpBinUrl('/cookies/'));
 
-            const impit = new Impit({ 
+            const impit = new Impit({
                 cookieJar,
-                browser, 
+                browser,
             })
 
             const response1 = await impit.fetch(
@@ -192,6 +192,25 @@ describe.each([
             const json = await response.json();
 
             t.expect(json.headers?.['User-Agent']).toBe('this is impit!');
+        })
+
+        test('client-scoped headers work', async (t) => {
+            const impit = new Impit({
+                browser,
+                headers: {
+                    'User-Agent': 'client-scoped user agent',
+                }
+            });
+
+            const response = await impit.fetch(getHttpBinUrl('/headers'));
+            const json = await response.json();
+
+            t.expect(json.headers?.['User-Agent']).toBe('client-scoped user agent');
+
+            const response2 = await impit.fetch(getHttpBinUrl('/headers'), { headers: { 'User-Agent': 'overwritten user agent' } });
+            const json2 = await response2.json();
+
+            t.expect(json2.headers?.['User-Agent']).toBe('overwritten user agent');
         })
 
         test('http3 works', async (t) => {
@@ -295,7 +314,7 @@ describe.each([
             // test that first 5 bytes of the response are the `<?xml` XML declaration
             t.expect(bytes.slice(0, 5)).toEqual(Uint8Array.from([0x3c, 0x3f, 0x78, 0x6d, 0x6c]));
         });
-        
+
         test('.arrayBuffer() method works', async (t) => {
             const response = await impit.fetch(getHttpBinUrl('/xml'));
             const bytes = await response.arrayBuffer();
