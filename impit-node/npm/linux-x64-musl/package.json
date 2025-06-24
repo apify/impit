@@ -1,7 +1,7 @@
 {
   "name": "impit-linux-x64-musl",
   "homepage": "https://apify.github.io/impit/",
-  "version": "0.4.5",
+  "version": "0.5.1",
   "os": [
     "linux"
   ],
@@ -13,7 +13,7 @@
     "impit-node.linux-x64-musl.node"
   ],
   "description": "Impit for JavaScript",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "engines": {
     "node": ">= 10"
   },

@@ -4,6 +4,9 @@ import { HttpMethod, Impit, Browser } from '../index.wrapper.js';
 import { Server } from 'http';
 import { routes, runServer } from './mock.server.js';
 
+import { CookieJar } from 'tough-cookie';
+import socks from 'socksv5';
+
 function getHttpBinUrl(path: string, https?: boolean): string {
     https ??= true;
 
@@ -25,18 +28,37 @@ async function getServer() {
     return localServer;
 }
 
+async function startSocksServer() {
+    return new Promise<Server>((resolve, reject) => {
+        const srv = (socks as any).createServer((info, accept, deny) => accept());
+        srv.listen(7625, 'localhost', () => {
+            resolve(srv);
+        });
+        srv.on('error', (err: Error) => {
+            reject(err);
+        });
+        srv.useAuth(socks.auth.None());
+    });
+}
+
+let socksServer: Server | null = null;
 beforeAll(async () => {
     // Warms up the httpbin instance, so that the first tests don't timeout.
     // Has a longer timeout itself (5s vs 30s) to avoid flakiness.
     await fetch(getHttpBinUrl('/get'));
     // Start the local server
     await getServer();
+
+    socksServer = await startSocksServer();
 }, 30e3);
 
 afterAll(async () => {
     const server = await getServer();
-    new Promise<void>(res => {
+    await new Promise<void>(res => {
         server?.close(() => res())
+    });
+    await new Promise<void>(res => {
+        socksServer?.close(() => res())
     });
 });
 
@@ -106,6 +128,56 @@ describe.each([
                     'b=2; Path=/',
                     'c=3; Path=/'
                 ]);
+        });
+
+        test('supports socks proxy', async (t) => {
+            const impit = new Impit({
+                browser,
+                proxyUrl: 'socks5://localhost:7625',
+            });
+
+            const response = await impit.fetch(
+                getHttpBinUrl('/get'),
+            );
+
+            t.expect(response.status).toBe(200);
+            const json = await response.json();
+            expect(json).toHaveProperty('url');
+            expect(json).toHaveProperty('headers');
+            expect(json).toHaveProperty('origin');
+        });
+
+        test('impit accepts custom cookie jars', async (t) => {
+            const cookieJar = new CookieJar();
+            cookieJar.setCookieSync('preset-cookie=123; Path=/', getHttpBinUrl('/cookies/'));
+
+            const impit = new Impit({ 
+                cookieJar,
+                browser, 
+            })
+
+            const response1 = await impit.fetch(
+                getHttpBinUrl('/cookies/'),
+            ).then(x => x.json());
+
+            t.expect(response1.cookies).toEqual({
+                'preset-cookie': '123'
+            });
+
+            await impit.fetch(
+                getHttpBinUrl('/cookies/set?set-by-server=321'),
+            );
+
+            const response2 = await impit.fetch(
+                getHttpBinUrl('/cookies/'),
+            ).then(x => x.json());
+
+            t.expect(response2.cookies).toEqual({
+                'preset-cookie': '123',
+                'set-by-server': '321'
+            });
+
+            t.expect(cookieJar.serializeSync()?.cookies).toHaveLength(2);
         })
 
         test('overwriting impersonated headers works', async (t) => {
@@ -170,12 +242,16 @@ describe.each([
             ['URLSearchParams', new URLSearchParams(JSON.parse(STRING_PAYLOAD))],
             ['FormData', (() => { const form = new FormData(); form.append('Impit-Test', 'foořžš'); return form; })()],
             ['ReadableStream', new ReadableStream({ start(controller) { controller.enqueue(new TextEncoder().encode(STRING_PAYLOAD)); controller.close(); } })],
+            ['undefined', undefined],
+            ['null', null],
         ])('passing %s body', async (type, body) => {
             const response = await impit.fetch(getHttpBinUrl('/post'), { method: HttpMethod.Post, body });
             const json = await response.json();
 
             if (type === 'URLSearchParams' || type === 'FormData') {
                 expect(json.form).toEqual(JSON.parse(STRING_PAYLOAD));
+            } else if (type === 'undefined' || type === 'null') {
+                expect(json.data).toEqual('');
             } else {
                 expect(json.data).toEqual(STRING_PAYLOAD);
             }
@@ -213,11 +289,19 @@ describe.each([
         });
 
         test('.bytes() method works', async (t) => {
-        const response = await impit.fetch(getHttpBinUrl('/xml'));
-        const bytes = await response.bytes();
+            const response = await impit.fetch(getHttpBinUrl('/xml'));
+            const bytes = await response.bytes();
 
-        // test that first 5 bytes of the response are the `<?xml` XML declaration
-        t.expect(bytes.slice(0, 5)).toEqual(Uint8Array.from([0x3c, 0x3f, 0x78, 0x6d, 0x6c]));
+            // test that first 5 bytes of the response are the `<?xml` XML declaration
+            t.expect(bytes.slice(0, 5)).toEqual(Uint8Array.from([0x3c, 0x3f, 0x78, 0x6d, 0x6c]));
+        });
+        
+        test('.arrayBuffer() method works', async (t) => {
+            const response = await impit.fetch(getHttpBinUrl('/xml'));
+            const bytes = await response.arrayBuffer();
+
+            // test that first 5 bytes of the response are the `<?xml` XML declaration
+            t.expect(new Uint8Array(bytes.slice(0, 5))).toEqual(Uint8Array.from([0x3c, 0x3f, 0x78, 0x6d, 0x6c]));
         });
 
         test('streaming response body works', async (t) => {

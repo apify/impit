@@ -1,7 +1,7 @@
 {
   "name": "impit-win32-x64-msvc",
   "homepage": "https://apify.github.io/impit/",
-  "version": "0.4.5",
+  "version": "0.5.1",
   "os": [
     "win32"
   ],
@@ -13,7 +13,7 @@
     "impit-node.win32-x64-msvc.node"
   ],
   "description": "Impit for JavaScript",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "engines": {
     "node": ">= 10"
   },

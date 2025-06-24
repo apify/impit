@@ -1,7 +1,7 @@
 {
   "name": "impit",
   "homepage": "https://apify.github.io/impit/",
-  "version": "0.4.5",
+  "version": "0.5.1",
   "main": "index.wrapper.js",
   "types": "index.d.ts",
   "napi": {
@@ -21,12 +21,14 @@
     "type": "git",
     "url": "git+https://github.com/apify/impit.git"
   },
-  "license": "MIT",
+  "license": "Apache-2.0",
   "devDependencies": {
     "@napi-rs/cli": "^3.0.0-alpha.70",
     "@types/express": "^5.0.0",
     "@types/node": "^22.13.1",
     "express": "^5.0.0",
+    "socksv5": "^0.0.6",
+    "tough-cookie": "^5.1.2",
     "vitest": "^3.0.5"
   },
   "ava": {
@@ -44,16 +46,16 @@
     "universal": "napi universal",
     "copy-version": "napi version"
   },
-  "packageManager": "yarn@4.9.1",
+  "packageManager": "yarn@4.9.2",
   "description": "Impit for JavaScript",
   "optionalDependencies": {
-    "impit-darwin-arm64": "0.4.5",
-    "impit-darwin-x64": "0.4.5",
-    "impit-linux-arm64-gnu": "0.4.5",
-    "impit-linux-arm64-musl": "0.4.5",
-    "impit-linux-x64-gnu": "0.4.5",
-    "impit-linux-x64-musl": "0.4.5",
-    "impit-win32-arm64-msvc": "0.4.5",
-    "impit-win32-x64-msvc": "0.4.5"
+    "impit-darwin-x64": "0.5.1",
+    "impit-darwin-arm64": "0.5.1",
+    "impit-win32-x64-msvc": "0.5.1",
+    "impit-win32-arm64-msvc": "0.5.1",
+    "impit-linux-x64-gnu": "0.5.1",
+    "impit-linux-x64-musl": "0.5.1",
+    "impit-linux-arm64-gnu": "0.5.1",
+    "impit-linux-arm64-musl": "0.5.1"
   }
 }

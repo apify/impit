@@ -14,6 +14,7 @@ export declare class ImpitResponse {
   ok: boolean
   url: string
   decodeBuffer(buffer: Buffer): string
+  arrayBuffer(this: object): Promise<ArrayBuffer>
   bytes(this: object): Promise<Uint8Array>
   text(this: object): Promise<string>
   json(this: object): Promise<any>
@@ -48,6 +49,8 @@ export interface ImpitOptions {
    * If this number is exceeded, the request will be rejected with an error.
    */
   maxRedirects?: number
+  /** Pass a ToughCookie instance to Impit. */
+cookieJar?: { setCookie: (cookie: string, url: string, cb?: any) => Promise<void> | void, getCookieString: (url: string) => Promise<string> | string }
 }
 
 export interface RequestInit {

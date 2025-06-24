@@ -25,7 +25,20 @@ class ResponsePatches {
 }
 
 class Impit extends native.Impit {
-    async fetch(url, options) {
+    constructor(options) {
+        const jsCookieJar = options?.cookieJar;
+        super({
+            ...options,
+            cookieJar: jsCookieJar ? {
+                setCookie: async (args) => jsCookieJar.setCookie?.bind?.(jsCookieJar)(...args),
+                getCookieString: async (args) => jsCookieJar.getCookieString?.bind?.(jsCookieJar)(args),
+            } : undefined,
+        });
+    }
+
+    async fetch(url, opts) {
+        let options = { ...opts };
+
         if (options?.headers) {
             if (options.headers instanceof Headers) {
                 options.headers = [...options.headers.entries()];
@@ -35,12 +48,14 @@ class Impit extends native.Impit {
         }
 
         if (options?.body) {
-            const { body, type } = await castToTypedArray(options.body);
-            options.body = body;
+            const { body: requestBody, type } = await castToTypedArray(options.body);
+            options.body = requestBody;
             if (type) {
                 options.headers = options.headers || [];
                 options.headers.push(['Content-Type', type]);
             }
+        } else {
+            delete options.body;
         }
         
         const originalResponse = await super.fetch(url, options);

@@ -1,8 +1,11 @@
 #![allow(clippy::await_holding_refcell_ref, deprecated)]
 use impit::utils::{decode, ContentType};
+use napi::bindgen_prelude::JsObjectValue;
 use napi::{
-  bindgen_prelude::{Buffer, FromNapiValue, ReadableStream, Result, This, ToNapiValue},
-  sys, Env, JsFunction, JsObject, JsUnknown,
+  bindgen_prelude::{
+    Buffer, FromNapiValue, Function, Object, ReadableStream, Result, This, ToNapiValue,
+  },
+  sys, Env, JsValue, Unknown,
 };
 use napi_derive::napi;
 use reqwest::Response;
@@ -77,8 +80,8 @@ impl ImpitResponse {
     }
   }
 
-  fn get_inner_response(&self, env: &Env, mut this: This<JsObject>) -> Result<napi::JsObject> {
-    let cached_response = this.get::<JsObject>(INNER_RESPONSE_PROPERTY_NAME)?;
+  fn get_inner_response(&self, env: &Env, mut this: This<Object>) -> Result<Object> {
+    let cached_response = this.get::<Object>(INNER_RESPONSE_PROPERTY_NAME)?;
 
     if cached_response.is_none() {
       let mut response = self.inner.borrow_mut();
@@ -107,12 +110,12 @@ impl ImpitResponse {
 
       let response_constructor = env
         .get_global()
-        .and_then(|global| global.get_named_property::<JsFunction>("Response"))
+        .and_then(|global| global.get_named_property::<Function>("Response"))
         .expect("fatal: Couldn't get Response constructor");
 
       this.set(
         INNER_RESPONSE_PROPERTY_NAME,
-        response_constructor.new_instance(&[js_stream])?,
+        response_constructor.new_instance(js_stream.to_unknown())?,
       )?;
     }
 
@@ -136,31 +139,46 @@ impl ImpitResponse {
     Ok(string)
   }
 
-  #[napi(ts_return_type = "Promise<Uint8Array>")]
-  pub fn bytes(&self, env: &Env, this: This<JsObject>) -> Result<JsUnknown> {
+  #[napi(ts_return_type = "Promise<ArrayBuffer>")]
+  pub fn array_buffer(&self, env: &Env, this: This<Object>) -> Result<Object> {
     let response = self.get_inner_response(env, this)?;
 
     response
-      .get_named_property::<JsFunction>("bytes")?
-      .call_without_args(Some(&response))
+      .get_named_property::<Function<'_, (), Object>>("arrayBuffer")?
+      .apply(Some(&response), ())?
+      .coerce_to_object()
+  }
+
+  #[napi(ts_return_type = "Promise<Uint8Array>")]
+  pub fn bytes(&self, env: &Env, this: This<Object>) -> Result<Object> {
+    let array_buffer_promise = self.array_buffer(env, this)?;
+    let then: Function<'_, Function<Object, Unknown>, Object> =
+      array_buffer_promise.get_named_property("then")?;
+
+    let cb = env
+      .get_global()?
+      .get_named_property::<Function<'_, String, Function<Object, Unknown>>>("eval")?
+      .call("(buf) => new Uint8Array(buf)".to_string())?;
+
+    then.apply(Some(&array_buffer_promise), cb)
   }
 
   #[napi(ts_return_type = "Promise<string>")]
-  pub fn text(&self, env: &Env, this: This<JsObject>) -> Result<JsUnknown> {
+  pub fn text(&self, env: &Env, this: This<Object>) -> Result<Unknown> {
     let response = self.get_inner_response(env, this)?;
 
     response
-      .get_named_property::<JsFunction>("text")?
-      .call_without_args(Some(&response))
+      .get_named_property::<Function<'_, (), Unknown>>("text")?
+      .apply(response, ())
   }
 
   #[napi(ts_return_type = "Promise<any>")]
-  pub fn json(&self, env: &Env, this: This<JsObject>) -> Result<JsUnknown> {
+  pub fn json(&self, env: &Env, this: This<Object>) -> Result<Unknown> {
     let response = self.get_inner_response(env, this)?;
 
     response
-      .get_named_property::<JsFunction>("json")?
-      .call_without_args(Some(&response))
+      .get_named_property::<Function<'_, (), Unknown>>("json")?
+      .apply(response, ())
   }
 
   #[napi(
@@ -168,7 +186,7 @@ impl ImpitResponse {
     js_name = "body",
     ts_return_type = "ReadableStream<Uint8Array>"
   )]
-  pub fn body(&self, env: &Env, this: This<JsObject>) -> Result<napi::JsObject> {
+  pub fn body(&self, env: &Env, this: This<Object>) -> Result<Object> {
     let response = self.get_inner_response(env, this)?;
 
     response.get_named_property("body")
