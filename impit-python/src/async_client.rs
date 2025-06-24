@@ -4,11 +4,14 @@ use impit::{emulation::Browser, errors::ImpitError, impit::ImpitBuilder, request
 use pyo3::{exceptions::PyTypeError, prelude::*};
 use tokio::sync::oneshot;
 
-use crate::{errors::ImpitPyError, request::form_to_bytes, response::ImpitPyResponse, RequestBody};
+use crate::{
+    cookies::PythonCookieJar, errors::ImpitPyError, request::form_to_bytes,
+    response::ImpitPyResponse, RequestBody,
+};
 
 #[pyclass]
 pub(crate) struct AsyncClient {
-    impit_config: ImpitBuilder<impit::cookie::Jar>,
+    impit_config: ImpitBuilder<PythonCookieJar>,
     default_encoding: Option<String>,
 }
 
@@ -32,8 +35,9 @@ impl AsyncClient {
     }
 
     #[new]
-    #[pyo3(signature = (browser=None, http3=None, proxy=None, timeout=None, verify=None, default_encoding=None, follow_redirects=None, max_redirects=Some(20)))]
+    #[pyo3(signature = (browser=None, http3=None, proxy=None, timeout=None, verify=None, default_encoding=None, follow_redirects=None, max_redirects=Some(20), cookie_jar=None, cookies=None))]
     pub fn new(
+        py: Python<'_>,
         browser: Option<String>,
         http3: Option<bool>,
         proxy: Option<String>,
@@ -42,6 +46,8 @@ impl AsyncClient {
         default_encoding: Option<String>,
         follow_redirects: Option<bool>,
         max_redirects: Option<u16>,
+        cookie_jar: Option<crate::Bound<'_, crate::PyAny>>,
+        cookies: Option<crate::Bound<'_, crate::PyAny>>,
     ) -> Self {
         let builder = ImpitBuilder::default();
 
@@ -79,6 +85,19 @@ impl AsyncClient {
                 max_redirects.unwrap_or(20).into(),
             )),
             _ => builder.with_redirect(impit::impit::RedirectBehavior::ManualRedirect),
+        };
+
+        let builder = match (cookie_jar, cookies) {
+            (Some(_), Some(_)) => {
+                panic!("Both cookie_jar and cookies cannot be provided at the same time")
+            }
+            (Some(cookie_jar), None) => {
+                builder.with_cookie_store(PythonCookieJar::new(py, cookie_jar.into()))
+            }
+            (None, Some(cookies)) => {
+                builder.with_cookie_store(PythonCookieJar::from_httpx_cookies(py, cookies.into()))
+            }
+            (None, None) => builder,
         };
 
         Self {
