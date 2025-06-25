@@ -109,8 +109,8 @@ impl HttpHeadersBuilder {
     ) -> &mut Self {
         match custom_headers {
             Some(headers) => {
-                // Later call to with_custom_headers will override existing headers.
-                // We need to prepend the new headers to the existing ones.
+                // Later call to with_custom_headers should override existing headers.
+                // We need to prepend the new headers (higher prio) to the existing ones (lower prio).
                 self.custom_headers = headers
                     .iter()
                     .chain(self.custom_headers.iter())
