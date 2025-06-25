@@ -3,6 +3,15 @@
 All notable changes to this project will be documented in this file.
 
 
+## js-0.5.2 - 2025-06-25
+
+#### Features
+
+- Client-scoped `headers` option (#200)
+  - Adds `headers` setting to `Impit` constructor to set headers to be included in every request made by the built [`Impit`] instance.  This can be used to add e.g. custom user-agent or authorization headers that should be included in every request. These headers override the "impersonation" headers set by the `with_browser` method. In turn, these are overridden by request-specific `headers` setting.
+
+
+
 ## js-0.5.1 - 2025-06-11
 
 #### Bug Fixes
