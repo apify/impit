@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from impit import Browser, Client, TooManyRedirects
+from impit import Browser, Client, Cookies, TooManyRedirects
 
 from .httpbin import get_httpbin_url
 
@@ -53,6 +53,74 @@ class TestBasicRequests:
         )
         assert response.status_code == 200
         assert json.loads(response.text)['headers']['Impit-Test'] == 'foo'
+
+    def test_cookie_jar_works(self, browser: Browser) -> None:
+        cookies = Cookies({'preset-cookie': '123'})
+
+        impit = Client(
+            browser=browser,
+            cookie_jar=cookies.jar,
+        )
+
+        response = json.loads(
+            impit.get(
+                get_httpbin_url('/cookies/'),
+            ).text
+        )
+
+        assert response['cookies'] == {'preset-cookie': '123'}
+
+        impit.get(
+            get_httpbin_url('/cookies/set', query={'set-by-server': '321'}),
+        )
+
+        response = json.loads(
+            impit.get(
+                get_httpbin_url('/cookies/'),
+            ).text
+        )
+
+        assert response['cookies'] == {
+            'preset-cookie': '123',
+            'set-by-server': '321',
+        }
+
+        assert len(cookies.jar) == 2
+
+    def test_cookies_param_works(self, browser: Browser) -> None:
+        cookies = Cookies({'preset-cookie': '123'})
+
+        impit = Client(
+            browser=browser,
+            cookies=cookies,
+        )
+
+        response = json.loads(
+            impit.get(
+                get_httpbin_url('/cookies/'),
+            ).text
+        )
+
+        assert response['cookies'] == {'preset-cookie': '123'}
+
+        impit.get(
+            get_httpbin_url('/cookies/set', query={'set-by-server': '321'}),
+        )
+
+        response = json.loads(
+            impit.get(
+                get_httpbin_url('/cookies/'),
+            ).text
+        )
+
+        assert response['cookies'] == {
+            'preset-cookie': '123',
+            'set-by-server': '321',
+        }
+
+        assert len(cookies) == 2
+        assert cookies.get('preset-cookie') == '123'
+        assert cookies.get('set-by-server') == '321'
 
     def test_overwriting_headers_work(self, browser: Browser) -> None:
         impit = Client(browser=browser)
