@@ -3,6 +3,31 @@
 All notable changes to this project will be documented in this file.
 
 
+## py-0.3.0 - 2025-06-25
+
+#### Features
+
+- Add support for custom cookie store implementations (#179)
+  - Allows to pass custom cookie store implementations to the `ImpitBuilder` struct (using the new `with_cookie_store` builder method). Without passing the store implementation, `impit` client in both bindings is by default stateless (doesn't store cookies).  Enables implementing custom support for language-specific cookie stores (in JS and Python).
+
+
+- Show the underlying `reqwest` error on unrecognized error type (#183)
+  - Improve error logs in bindings by tunneling the lower-level `reqwest` errors through to binding users.
+
+
+- Support `socks` proxy (#197)
+  - Enables support for `socks` proxies to `impit-node`. This theoretically enables `socks` proxies for CLI and the Python binding as well, but this behaviour is untested due to a lack of working socks proxy server implementations in Python.
+
+
+- Support for custom cookie stores for Python (#182)
+  - Adds `cookie_jar` constructor parameter for `Client` and `AsyncClient` classes, accepting `http.cookiejar`'s `CookieJar` (or a custom implementation thereof, implementing at least `setCookie(cookie: http.cookiejar.Cookie)` and `iter(): Cookie[]`.  impit will write to and read from this custom cookie store.  Related to #123
+
+
+- Client-scoped `headers` option (#200)
+  - Adds `headers` setting to `Impit` constructor to set headers to be included in every request made by the built [`Impit`] instance.  This can be used to add e.g. custom user-agent or authorization headers that should be included in every request. These headers override the "impersonation" headers set by the `with_browser` method. In turn, these are overridden by request-specific `headers` setting.
+
+
+
 ## py-0.2.3 - 2025-05-09
 
 #### Features
