@@ -48,11 +48,24 @@ class TestBasicRequests:
     def test_headers_work(self, browser: Browser) -> None:
         impit = Client(browser=browser)
 
-        response = impit.get(
-            get_httpbin_url('/headers'), headers={'Impit-Test': 'foo', 'Cookie': 'test=123; test2=456'}
-        )
+        response = impit.get(get_httpbin_url('/headers'), headers={'Impit-Test': 'foo'})
         assert response.status_code == 200
         assert json.loads(response.text)['headers']['Impit-Test'] == 'foo'
+
+    def test_client_wide_headers_work(self, browser: Browser) -> None:
+        impit = Client(browser=browser, headers={'Impit-Test': 'foo'})
+
+        response = impit.get(get_httpbin_url('/headers'))
+        assert response.status_code == 200
+        assert json.loads(response.text)['headers']['Impit-Test'] == 'foo'
+
+    def test_request_headers_over_client_headers(self, browser: Browser) -> None:
+        impit = Client(browser=browser, headers={'Auth': '123', 'Exception': 'nope'})
+
+        response = impit.get(get_httpbin_url('/headers'), headers={'Exception': 'yes'})
+        assert response.status_code == 200
+        assert json.loads(response.text)['headers']['Auth'] == '123'
+        assert json.loads(response.text)['headers']['Exception'] == 'yes'
 
     def test_cookie_jar_works(self, browser: Browser) -> None:
         cookies = Cookies({'preset-cookie': '123'})

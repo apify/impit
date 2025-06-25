@@ -117,6 +117,7 @@ class Client:
         max_redirects: int | None = None,
         cookie_jar: CookieJar | None = None,
         cookies: Cookies | None = None,
+        headers: dict[str, str] | None = None,
     ) -> None:
         """Initialize a synchronous HTTP client.
 
@@ -338,6 +339,7 @@ class AsyncClient:
         max_redirects: int | None = None,
         cookie_jar: CookieJar | None = None,
         cookies: Cookies | None = None,
+        headers: dict[str, str] | None = None,
     ) -> None:
         """Initialize an asynchronous HTTP client.
 

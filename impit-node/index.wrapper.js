@@ -4,7 +4,7 @@ try {
     native = require('./index.js');
 } catch (e) {
     throw new Error(`
-impit couldn't load native bindings. 
+impit couldn't load native bindings.
 
 This can have several reasons:
 - The native bindings are not compiled for your platform (${process.platform}-${process.arch}).
@@ -24,6 +24,17 @@ class ResponsePatches {
     }
 }
 
+function canonicalizeHeaders(headers) {
+    if (headers instanceof Headers) {
+        return [...headers.entries()];
+    } else if (Array.isArray(headers)) {
+        return headers;
+    } else if (typeof headers === 'object') {
+        return Object.entries(headers || {});
+    }
+    return [];
+}
+
 class Impit extends native.Impit {
     constructor(options) {
         const jsCookieJar = options?.cookieJar;
@@ -33,31 +44,25 @@ class Impit extends native.Impit {
                 setCookie: async (args) => jsCookieJar.setCookie?.bind?.(jsCookieJar)(...args),
                 getCookieString: async (args) => jsCookieJar.getCookieString?.bind?.(jsCookieJar)(args),
             } : undefined,
+            headers: canonicalizeHeaders(options?.headers),
         });
     }
 
     async fetch(url, opts) {
         let options = { ...opts };
 
-        if (options?.headers) {
-            if (options.headers instanceof Headers) {
-                options.headers = [...options.headers.entries()];
-            } else if (!Array.isArray(options.headers)) {
-                options.headers = Object.entries(options.headers || {});
-            }
-        }
+        options.headers = canonicalizeHeaders(options?.headers);
 
         if (options?.body) {
             const { body: requestBody, type } = await castToTypedArray(options.body);
             options.body = requestBody;
             if (type) {
-                options.headers = options.headers || [];
                 options.headers.push(['Content-Type', type]);
             }
         } else {
             delete options.body;
         }
-        
+
         const originalResponse = await super.fetch(url, options);
 
         Object.defineProperty(originalResponse, 'text', {

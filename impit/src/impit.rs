@@ -71,6 +71,7 @@ pub struct ImpitBuilder<CookieStoreImpl: CookieStore + 'static> {
     max_http_version: Version,
     redirect: RedirectBehavior,
     cookie_store: Option<Arc<CookieStoreImpl>>,
+    headers: Option<Vec<(String, String)>>,
 }
 
 impl<CookieStoreImpl: CookieStore + 'static> Clone for ImpitBuilder<CookieStoreImpl> {
@@ -84,6 +85,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Clone for ImpitBuilder<CookieStoreI
             max_http_version: self.max_http_version,
             redirect: self.redirect.clone(),
             cookie_store: self.cookie_store.clone(),
+            headers: self.headers.clone(),
         }
     }
 }
@@ -99,6 +101,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Default for ImpitBuilder<CookieStor
             max_http_version: Version::HTTP_2,
             redirect: RedirectBehavior::FollowRedirect(10),
             cookie_store: None,
+            headers: None,
         }
     }
 }
@@ -173,6 +176,17 @@ impl<CookieStoreImpl: CookieStore + 'static> ImpitBuilder<CookieStoreImpl> {
     /// `Set-Cookie` header.
     pub fn with_cookie_store(mut self, cookie_store: CookieStoreImpl) -> Self {
         self.cookie_store = Some(Arc::new(cookie_store));
+        self
+    }
+
+    /// Sets additional headers to include in every request made by the built [`Impit`] instance.
+    ///
+    /// This can be used to add e.g. custom user-agent or authorization headers that should be included in every request.
+    /// These headers override the "impersonation" headers set by the `with_browser` method.
+    ///
+    /// If you want to add custom headers to a specific request, use the `RequestOptions` struct instead.
+    pub fn with_headers(mut self, headers: Vec<(String, String)>) -> Self {
+        self.headers = Some(headers);
         self
     }
 
@@ -309,7 +323,8 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
             .with_browser(&self.config.browser)
             .with_host(&host)
             .with_https(parsed_url.scheme() == "https")
-            .with_custom_headers(&options.headers)
+            .with_custom_headers(self.config.headers.to_owned())
+            .with_custom_headers(Some(options.headers))
             .build();
 
         let client = if h3 {

@@ -36,7 +36,7 @@ impl Client {
     }
 
     #[new]
-    #[pyo3(signature = (browser=None, http3=None, proxy=None, timeout=None, verify=None, default_encoding=None, follow_redirects=None, max_redirects=Some(20), cookie_jar=None, cookies=None))]
+    #[pyo3(signature = (browser=None, http3=None, proxy=None, timeout=None, verify=None, default_encoding=None, follow_redirects=None, max_redirects=Some(20), cookie_jar=None, cookies=None, headers=None))]
     pub fn new(
         py: Python<'_>,
         browser: Option<String>,
@@ -49,6 +49,7 @@ impl Client {
         max_redirects: Option<u16>,
         cookie_jar: Option<crate::Bound<'_, crate::PyAny>>,
         cookies: Option<crate::Bound<'_, crate::PyAny>>,
+        headers: Option<HashMap<String, String>>,
     ) -> Self {
         let builder = ImpitBuilder::default();
 
@@ -86,6 +87,11 @@ impl Client {
                 max_redirects.unwrap_or(20).into(),
             )),
             _ => builder.with_redirect(impit::impit::RedirectBehavior::ManualRedirect),
+        };
+
+        let builder = match headers {
+            Some(headers) => builder.with_headers(headers.into_iter().collect::<Vec<_>>()),
+            None => builder,
         };
 
         let builder = match (cookie_jar, cookies) {

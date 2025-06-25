@@ -46,6 +46,9 @@ pub struct ImpitOptions<'a> {
     ts_type = "{ setCookie: (cookie: string, url: string, cb?: any) => Promise<void> | void, getCookieString: (url: string) => Promise<string> | string }"
   )]
   pub cookie_jar: Option<Object<'a>>,
+  /// Additional headers to include in every request made by this Impit instance.
+  #[napi(ts_type = "Headers | Record<string, string> | [string, string][]")]
+  pub headers: Option<Vec<(String, String)>>,
 }
 
 impl ImpitOptions<'_> {
@@ -78,6 +81,9 @@ impl ImpitOptions<'_> {
         }
         Err(e) => return Err(e),
       }
+    }
+    if let Some(headers) = self.headers {
+      config = config.with_headers(headers);
     }
 
     let follow_redirects: bool = self.follow_redirects.unwrap_or(true);

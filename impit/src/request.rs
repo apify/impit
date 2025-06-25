@@ -7,7 +7,8 @@ use std::time::Duration;
 /// Used by the [`Impit`](crate::impit::Impit) struct's methods.
 #[derive(Debug, Clone, Default)]
 pub struct RequestOptions {
-    /// A `Vec` of string pairs that represent custom HTTP request headers. These are added to the default headers.
+    /// A `Vec` of string pairs that represent custom HTTP request headers. These take precedence over the headers set in [`ImpitBuilder`](crate::impit::ImpitBuilder)
+    /// (both from the `with_headers` and the `with_browser` methods).
     pub headers: Vec<(String, String)>,
     /// The timeout for the request. This option overrides the global [`Impit`] timeout.
     pub timeout: Option<Duration>,

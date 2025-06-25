@@ -51,6 +51,8 @@ export interface ImpitOptions {
   maxRedirects?: number
   /** Pass a ToughCookie instance to Impit. */
 cookieJar?: { setCookie: (cookie: string, url: string, cb?: any) => Promise<void> | void, getCookieString: (url: string) => Promise<string> | string }
+/** Additional headers to include in every request made by this Impit instance. */
+headers?: Headers | Record<string, string> | [string, string][]
 }
 
 export interface RequestInit {
