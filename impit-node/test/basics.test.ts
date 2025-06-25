@@ -195,11 +195,12 @@ describe.each([
         })
 
         test('client-scoped headers work', async (t) => {
+            const headers = new Headers();
+            headers.set('User-Agent', 'client-scoped user agent');
+
             const impit = new Impit({
                 browser,
-                headers: {
-                    'User-Agent': 'client-scoped user agent',
-                }
+                headers
             });
 
             const response = await impit.fetch(getHttpBinUrl('/headers'));

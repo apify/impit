@@ -47,6 +47,7 @@ pub struct ImpitOptions<'a> {
   )]
   pub cookie_jar: Option<Object<'a>>,
   /// Additional headers to include in every request made by this Impit instance.
+  #[napi(ts_type = "Headers | Record<string, string> | [string, string][]")]
   pub headers: Option<Vec<(String, String)>>,
 }
 
