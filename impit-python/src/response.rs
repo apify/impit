@@ -11,7 +11,7 @@ use std::pin::Pin;
 use crate::errors::ImpitPyError;
 
 #[pyclass]
-struct BytesIterator {
+struct PyResponseBytesIterator {
     ready_content: Option<Vec<u8>>,
     stream: Option<Pin<Box<dyn Stream<Item = reqwest::Result<Bytes>> + Send + Sync>>>,
     runtime: tokio::runtime::Handle,
@@ -20,7 +20,7 @@ struct BytesIterator {
 }
 
 #[pymethods]
-impl BytesIterator {
+impl PyResponseBytesIterator {
     fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
         slf
     }
@@ -33,6 +33,15 @@ impl BytesIterator {
 
         if slf.content_returned {
             return None;
+        }
+
+        if let Some(parent) = &slf.parent_response {
+            let is_parent_closed = Python::with_gil(|py| parent.borrow(py).is_closed);
+
+            if is_parent_closed && !slf.content_returned {
+                slf.content_returned = true;
+                return None;
+            }
         }
 
         let runtime = slf.runtime.clone();
@@ -172,7 +181,7 @@ impl ImpitPyResponse {
         }
     }
 
-    fn iter_bytes(slf: Py<Self>, py: Python) -> PyResult<BytesIterator> {
+    fn iter_bytes(slf: Py<Self>, py: Python) -> PyResult<PyResponseBytesIterator> {
         let runtime = pyo3_async_runtimes::tokio::get_runtime().handle().clone();
 
         let (current_state, content, response) = {
@@ -190,7 +199,7 @@ impl ImpitPyResponse {
         };
 
         match current_state {
-            InnerResponseState::Read => Ok(BytesIterator {
+            InnerResponseState::Read => Ok(PyResponseBytesIterator {
                 ready_content: content,
                 stream: None,
                 runtime,
@@ -201,7 +210,7 @@ impl ImpitPyResponse {
                 let response = response
                     .ok_or_else(|| ImpitPyError(impit::errors::ImpitError::StreamClosed))?;
 
-                Ok(BytesIterator {
+                Ok(PyResponseBytesIterator {
                     ready_content: None,
                     stream: Some(Box::pin(response.bytes_stream())),
                     runtime,
@@ -215,10 +224,14 @@ impl ImpitPyResponse {
 
     fn close(&mut self) -> PyResult<()> {
         if self.is_closed {
-            return Err(ImpitPyError(impit::errors::ImpitError::StreamClosed).into());
+            return Ok(());
         }
-        self.is_closed = true;
+
+        self.inner = None;
         self.inner_state = InnerResponseState::StreamingClosed;
+        self.is_closed = true;
+        self.is_stream_consumed = true;
+
         Ok(())
     }
 
