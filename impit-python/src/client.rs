@@ -276,7 +276,7 @@ impl Client {
                     _ => Err(ImpitError::InvalidMethod(method.to_string())),
                 }
             })
-            .map(|response| ImpitPyResponse::from(response, self.default_encoding.clone()))
+            .map(|response| ImpitPyResponse::from(response, self.default_encoding.clone(), true))
             .map_err(|err| err.into())
     }
 }

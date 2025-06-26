@@ -21,6 +21,4 @@ openssl = { version = "*", features = ["vendored"] }
 urlencoding = "2.1.3"
 encoding = "0.2.33"
 cookie = "0.18.1"
-
-[build-dependencies]
-napi-build = "2.1.4"
+futures = "0.3.31"

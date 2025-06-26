@@ -353,7 +353,7 @@ impl AsyncClient {
             let response = rx.await.unwrap();
 
             response
-                .map(|response| ImpitPyResponse::from(response, default_encoding))
+                .map(|response| ImpitPyResponse::from(response, default_encoding, false))
                 .map_err(|err| ImpitPyError(err).into())
         })
     }
