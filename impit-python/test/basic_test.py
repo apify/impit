@@ -310,7 +310,7 @@ class TestRequestBody:
         assert response.content == content
 
         assert response.is_closed is True
-        assert response.is_stream_consumed is True
+        assert response.is_stream_consumed is True  # type: ignore[unreachable] # Mypy can't detect a change of state
 
     def test_iter_bytes_with_stream(self, browser: Browser) -> None:
         impit = Client(browser=browser)
@@ -328,7 +328,7 @@ class TestRequestBody:
         assert response.content == content
 
         assert response.is_closed is True
-        assert response.is_stream_consumed is True
+        assert response.is_stream_consumed is True  # type: ignore[unreachable] # Mypy can't detect a change of state
 
     def test_iter_bytes_with_context_manager(self, browser: Browser) -> None:
         impit = Client(browser=browser)
@@ -341,6 +341,5 @@ class TestRequestBody:
             iterator = response.iter_bytes()
             next(iterator)
 
-
         assert response.is_closed is True
-        assert response.is_stream_consumed is True
+        assert response.is_stream_consumed is True  # type: ignore[unreachable] # Mypy can't detect a change of state
