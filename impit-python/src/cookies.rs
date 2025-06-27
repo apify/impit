@@ -69,8 +69,8 @@ impl CookieStore for PythonCookieJar {
                         cookie.expires_datetime().map(|f| f.unix_timestamp()),
                     )
                     .unwrap();
-                kwargs.set_item("version", None::<&str>).unwrap();
-                kwargs.set_item("rest", None::<&str>).unwrap();
+                kwargs.set_item("version", 0).unwrap();
+                kwargs.set_item("rest", PyDict::new(py)).unwrap();
 
                 let py_cookie = self.cookie_constructor.call(py, (), Some(&kwargs)).unwrap();
 
