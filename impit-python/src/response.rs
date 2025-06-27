@@ -65,10 +65,10 @@ impl PyResponseBytesIterator {
                             }
                         });
                     }
-                    return Err(pyo3::exceptions::PyRuntimeError::new_err(format!(
+                    Err(pyo3::exceptions::PyRuntimeError::new_err(format!(
                         "Stream error: {}",
                         e
-                    )));
+                    )))
                 }
                 None => {
                     slf.content_returned = true;
@@ -308,7 +308,7 @@ impl ImpitPyResponse {
                 let response = slf_ref
                     .inner
                     .take()
-                    .ok_or_else(|| ImpitPyError(impit::errors::ImpitError::StreamClosed))?;
+                    .ok_or(ImpitPyError(impit::errors::ImpitError::StreamClosed))?;
 
                 drop(slf_ref);
 
@@ -354,7 +354,7 @@ impl ImpitPyResponse {
                 let response = slf_ref
                     .inner
                     .take()
-                    .ok_or_else(|| ImpitPyError(impit::errors::ImpitError::StreamClosed))?;
+                    .ok_or(ImpitPyError(impit::errors::ImpitError::StreamClosed))?;
 
                 drop(slf_ref);
 
@@ -470,7 +470,7 @@ impl ImpitPyResponse {
                 let response = self
                     .inner
                     .take()
-                    .ok_or_else(|| ImpitPyError(impit::errors::ImpitError::StreamClosed))?;
+                    .ok_or(ImpitPyError(impit::errors::ImpitError::StreamClosed))?;
 
                 let content = pyo3_async_runtimes::tokio::get_runtime().block_on(async {
                     response
