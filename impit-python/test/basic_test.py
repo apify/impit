@@ -284,7 +284,7 @@ class TestRequestBody:
         assert response.status_code == 200
         assert json.loads(response.text)['data'] == 'foo'
 
-    async def test_content(self, browser: Browser) -> None:
+    def test_content(self, browser: Browser) -> None:
         impit = Client(browser=browser)
 
         response = impit.get(get_httpbin_url('/'))
@@ -293,3 +293,54 @@ class TestRequestBody:
         assert isinstance(response.content, bytes)
         assert isinstance(response.text, str)
         assert response.content.decode('utf-8') == response.text
+
+    def test_read_with_streaming(self, browser: Browser) -> None:
+        impit = Client(browser=browser)
+
+        response = impit.stream('GET', get_httpbin_url('/'))
+
+        assert response.status_code == 200
+        assert response.is_closed is False
+        assert response.is_stream_consumed is False
+
+        content = response.read()
+
+        assert isinstance(content, bytes)
+        assert content.decode('utf-8') == response.text
+        assert response.content == content
+
+        assert response.is_closed is True
+        assert response.is_stream_consumed is True
+
+    def test_iter_bytes_with_stream(self, browser: Browser) -> None:
+        impit = Client(browser=browser)
+
+        response = impit.stream('GET', get_httpbin_url('/'))
+
+        assert response.status_code == 200
+        assert response.is_closed is False
+        assert response.is_stream_consumed is False
+
+        content = b''.join(response.iter_bytes())
+
+        assert isinstance(content, bytes)
+        assert content.decode('utf-8') == response.text
+        assert response.content == content
+
+        assert response.is_closed is True
+        assert response.is_stream_consumed is True
+
+    def test_iter_bytes_with_context_manager(self, browser: Browser) -> None:
+        impit = Client(browser=browser)
+
+        with impit.stream('GET', get_httpbin_url('/')) as response:
+            assert response.status_code == 200
+            assert response.is_closed is False
+            assert response.is_stream_consumed is False
+
+            iterator = response.iter_bytes()
+            next(iterator)
+
+
+        assert response.is_closed is True
+        assert response.is_stream_consumed is True
