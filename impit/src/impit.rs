@@ -328,10 +328,10 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
             .build();
 
         let client = if h3 {
-            debug!("Using QUIC for request to {}", url);
+            debug!("Using QUIC for request to {url}");
             self.h3_client.as_ref().unwrap()
         } else {
-            debug!("{} doesn't seem to have HTTP3 support", url);
+            debug!("{url} doesn't seem to have HTTP3 support");
             &self.base_client
         };
 
@@ -383,10 +383,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
                 if let Some(alt_svc) = response.headers().get("Alt-Svc") {
                     let alt_svc = alt_svc.to_str().unwrap();
                     if alt_svc.contains("h3") {
-                        debug!(
-                            "{} supports HTTP/3 (alt-svc header), adding to Alt-Svc cache",
-                            host
-                        );
+                        debug!("{host} supports HTTP/3 (alt-svc header), adding to Alt-Svc cache",);
                         h3_engine.set_h3_support(&host, true);
                     }
                 }

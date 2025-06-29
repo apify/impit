@@ -102,6 +102,6 @@ impl ImpitError {
             return ImpitError::TooManyRedirects(context.max_redirects);
         }
 
-        ImpitError::ReqwestError(format!("{:#?}", error))
+        ImpitError::ReqwestError(format!("{error:#?}"))
     }
 }
