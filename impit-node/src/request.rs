@@ -66,10 +66,7 @@ fn await_promise<
       Err(e) => {
         let _ = tx.send(Err(napi::Error::new(
           napi::Status::GenericFailure,
-          format!(
-            "[impit] failed to retrieve cookies from the external cookie store: {}",
-            e
-          ),
+          format!("[impit] failed to retrieve cookies from the external cookie store: {e}"),
         )));
       }
     });
@@ -139,10 +136,7 @@ impl NodeCookieJar {
       Err(e) => {
         return Err(napi::Error::new(
           napi::Status::GenericFailure,
-          format!(
-            "[impit] Couldn't find `setCookie` method on the external cookie store: {}",
-            e
-          ),
+          format!("[impit] Couldn't find `setCookie` method on the external cookie store: {e}"),
         ));
       }
     };
@@ -155,8 +149,7 @@ impl NodeCookieJar {
         return Err(napi::Error::new(
           napi::Status::GenericFailure,
           format!(
-            "[impit] Couldn't find `getCookieString` method on the external cookie store: {}",
-            e
+            "[impit] Couldn't find `getCookieString` method on the external cookie store: {e}"
           ),
         ));
       }

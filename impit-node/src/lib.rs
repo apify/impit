@@ -99,7 +99,7 @@ impl ImpitWrapper {
           _ => napi::Status::GenericFailure,
         };
 
-        let reason = format!("impit error: {}", err);
+        let reason = format!("impit error: {err}");
 
         Err(napi::Error::new(status, reason))
       }

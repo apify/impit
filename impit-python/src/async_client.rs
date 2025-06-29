@@ -307,8 +307,7 @@ impl AsyncClient {
                     Ok(form_to_bytes(form))
                 }
                 RequestBody::CatchAll(e) => Err(PyErr::new::<PyTypeError, _>(format!(
-                    "Unsupported data type in request body: {:#?}",
-                    e
+                    "Unsupported data type in request body: {e:#?}"
                 ))),
             },
             None => Ok(Vec::new()),

@@ -102,7 +102,7 @@ impl ImpitResponse {
         }
         Err(e) => Some(Err(napi::Error::new(
           napi::Status::Unknown,
-          format!("Error reading response stream: {:?}", e),
+          format!("Error reading response stream: {e:?}"),
         ))),
       });
 
