@@ -13,12 +13,7 @@ def get_httpbin_url(path: str, *, query: dict[str, str] | None = None, https: bo
         url = url._replace(query=urllib.parse.urlencode(query, doseq=True))
     else:
         url = urllib.parse.urlparse('https://httpbin.org')
-        if query:
-            url = url._replace(query=urllib.parse.urlencode(query, doseq=True))
-
     scheme = 'https' if https else 'http'
     url = url._replace(scheme=scheme)
-    result_url = url._replace(path=path).geturl()
-    result_url = result_url.removesuffix('/')
 
-    return result_url
+    return url._replace(path=path).geturl()
