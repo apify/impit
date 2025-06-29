@@ -1,4 +1,5 @@
 import json
+from http.cookiejar import CookieJar
 
 import pytest
 
@@ -65,6 +66,17 @@ class TestBasicRequests:
         assert response.status_code == 200
         assert json.loads(response.text)['headers']['Auth'] == '123'
         assert json.loads(response.text)['headers']['Exception'] == 'yes'
+
+    @pytest.mark.asyncio
+    async def test_cookies_nonstandard(self, browser: Browser) -> None:
+        cookies_jar = CookieJar()
+
+        impit = AsyncClient(browser=browser, cookie_jar=cookies_jar, follow_redirects=True)
+
+        await impit.get(get_httpbin_url('/cookies/set', query={'set-by-server': '321'}))
+
+        for cookie in cookies_jar:
+            assert cookie.has_nonstandard_attr('HttpOnly') is not None
 
     @pytest.mark.asyncio
     async def test_cookie_jar_works(self, browser: Browser) -> None:
