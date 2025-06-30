@@ -342,7 +342,7 @@ impl Client {
                     Ok(form_to_bytes(form))
                 }
                 RequestBody::CatchAll(e) => Err(ImpitPyError(ImpitError::BindingPassthroughError(
-                    format!("Unsupported data type: {:?}", e).to_string(),
+                    format!("Unsupported data type: {e:?}").to_string(),
                 ))),
             },
             None => Ok(Vec::new()),
