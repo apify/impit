@@ -60,14 +60,12 @@ impl PyResponseBytesIterator {
                         Python::with_gil(|py| {
                             if let Ok(mut parent_ref) = parent.try_borrow_mut(py) {
                                 parent_ref.inner_state = InnerResponseState::StreamingClosed;
-                                parent_ref.is_stream_consumed = true;
                                 parent_ref.is_closed = true;
                             }
                         });
                     }
                     Err(pyo3::exceptions::PyRuntimeError::new_err(format!(
-                        "Stream error: {}",
-                        e
+                        "Stream error: {e}"
                     )))
                 }
                 None => {
@@ -81,7 +79,7 @@ impl PyResponseBytesIterator {
                             }
                         });
                     }
-                    Ok(None)
+                Ok(None)
                 }
             }
         } else {
@@ -157,14 +155,12 @@ impl PyResponseAsyncBytesIterator {
                         Python::with_gil(|py| {
                             if let Ok(mut parent_ref) = parent.try_borrow_mut(py) {
                                 parent_ref.inner_state = InnerResponseState::StreamingClosed;
-                                parent_ref.is_stream_consumed = true;
                                 parent_ref.is_closed = true;
                             }
                         });
                     }
                     Err(pyo3::exceptions::PyStopAsyncIteration::new_err(format!(
-                        "Stream error: {}",
-                        e
+                        "Stream error: {e}"
                     )))
                 }
                 None => {
@@ -303,7 +299,6 @@ impl ImpitPyResponse {
             }
             InnerResponseState::Unread => {
                 slf_ref.inner_state = InnerResponseState::Streaming;
-                slf_ref.is_stream_consumed = true;
 
                 let response = slf_ref
                     .inner
@@ -349,7 +344,6 @@ impl ImpitPyResponse {
             }
             InnerResponseState::Unread => {
                 slf_ref.inner_state = InnerResponseState::Streaming;
-                slf_ref.is_stream_consumed = true;
 
                 let response = slf_ref
                     .inner
@@ -377,20 +371,17 @@ impl ImpitPyResponse {
     }
 
     fn aread(slf: Py<Self>, py: Python<'_>) -> PyResult<Bound<'_, PyAny>> {
-        let is_closed = slf.borrow(py).is_closed;
-        if is_closed {
-            return Err(ImpitPyError(impit::errors::ImpitError::StreamClosed).into());
-        }
-
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
-            let (state, response_option, content_option) = Python::with_gil(|py| {
-                let mut slf_ref = slf.borrow_mut(py);
-                (
-                    slf_ref.inner_state,
-                    slf_ref.inner.take(),
-                    slf_ref.content.clone(),
-                )
-            });
+            let (state, response_option, content_option, is_stream_consumed) =
+                Python::with_gil(|py| {
+                    let mut slf_ref = slf.borrow_mut(py);
+                    (
+                        slf_ref.inner_state,
+                        slf_ref.inner.take(),
+                        slf_ref.content.clone(),
+                        slf_ref.is_stream_consumed,
+                    )
+                });
 
             match state {
                 InnerResponseState::Read => Ok(content_option.unwrap_or_default()),
@@ -415,13 +406,17 @@ impl ImpitPyResponse {
                     }
                 }
                 InnerResponseState::Streaming | InnerResponseState::StreamingClosed => {
-                    Err(ImpitPyError(impit::errors::ImpitError::StreamConsumed).into())
+                    if is_stream_consumed {
+                        Err(ImpitPyError(impit::errors::ImpitError::StreamConsumed).into())
+                    } else {
+                        Err(ImpitPyError(impit::errors::ImpitError::StreamClosed).into())
+                    }
                 }
             }
         })
     }
 
-    fn close(&mut self) -> PyResult<()> {
+    pub fn close(&mut self) -> PyResult<()> {
         if self.is_closed {
             return Ok(());
         }
@@ -432,7 +427,6 @@ impl ImpitPyResponse {
             _ => self.inner_state,
         };
         self.is_closed = true;
-        self.is_stream_consumed = true;
 
         Ok(())
     }
@@ -464,7 +458,11 @@ impl ImpitPyResponse {
                 .cloned()
                 .ok_or_else(|| ImpitPyError(impit::errors::ImpitError::ResponseNotRead).into()),
             InnerResponseState::Streaming | InnerResponseState::StreamingClosed => {
-                Err(ImpitPyError(impit::errors::ImpitError::StreamConsumed).into())
+                if self.is_stream_consumed {
+                    Err(ImpitPyError(impit::errors::ImpitError::StreamConsumed).into())
+                } else {
+                    Err(ImpitPyError(impit::errors::ImpitError::StreamClosed).into())
+                }
             }
             InnerResponseState::Unread => {
                 let response = self
