@@ -79,7 +79,7 @@ impl PyResponseBytesIterator {
                             }
                         });
                     }
-                Ok(None)
+                    Ok(None)
                 }
             }
         } else {
