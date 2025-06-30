@@ -101,11 +101,11 @@ class Response:
     is_stream_consumed: bool
     """Whether the response stream has been consumed or closed"""
 
-    def __aenter__(self) -> Response:
+    async def __aenter__(self) -> Response:
         """Enter the asynchronous runtime context related to this object."""
         return self
 
-    def __aexit__(self, exc_type: type[BaseException] | None, exc_value: BaseException | None, traceback: object | None) -> None:
+    async def __aexit__(self, exc_type: type[BaseException] | None, exc_value: BaseException | None, traceback: object | None) -> bool | None:
         """Exit the asynchronous runtime context related to this object."""
         pass
 
@@ -126,7 +126,7 @@ class Response:
     async def aread(self) -> bytes:
         """Asynchronously read the response content as bytes."""
     
-    async def aiter_bytes(self) -> AsyncIterator[bytes]:
+    def aiter_bytes(self) -> AsyncIterator[bytes]:
         """Asynchronously iterate over the response content in chunks."""
     
     def close(self) -> None:
