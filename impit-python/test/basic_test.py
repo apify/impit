@@ -1,4 +1,5 @@
 import json
+from http.cookiejar import CookieJar
 
 import pytest
 
@@ -66,6 +67,16 @@ class TestBasicRequests:
         assert response.status_code == 200
         assert json.loads(response.text)['headers']['Auth'] == '123'
         assert json.loads(response.text)['headers']['Exception'] == 'yes'
+
+    def test_cookies_nonstandard(self, browser: Browser) -> None:
+        cookies_jar = CookieJar()
+
+        impit = Client(browser=browser, cookie_jar=cookies_jar, follow_redirects=True)
+
+        impit.get(get_httpbin_url('/cookies/set', query={'set-by-server': '321'}))
+
+        for cookie in cookies_jar:
+            assert cookie.has_nonstandard_attr('HttpOnly') is not None
 
     def test_cookie_jar_works(self, browser: Browser) -> None:
         cookies = Cookies({'preset-cookie': '123'})
