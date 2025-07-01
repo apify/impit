@@ -70,7 +70,12 @@ impl CookieStore for PythonCookieJar {
                     )
                     .unwrap();
                 kwargs.set_item("version", 0).unwrap();
-                kwargs.set_item("rest", PyDict::new(py)).unwrap();
+
+                let rest = PyDict::new(py);
+                if let Some(http_only) = cookie.http_only() {
+                    rest.set_item("HttpOnly", http_only).unwrap();
+                }
+                kwargs.set_item("rest", rest).unwrap();
 
                 let py_cookie = self.cookie_constructor.call(py, (), Some(&kwargs)).unwrap();
 
