@@ -3,7 +3,7 @@ from http.cookiejar import CookieJar
 
 import pytest
 
-from impit import Browser, Client, Cookies, TooManyRedirects
+from impit import Browser, Client, Cookies, StreamClosed, StreamConsumed, TooManyRedirects
 
 from .httpbin import get_httpbin_url
 
@@ -295,7 +295,7 @@ class TestRequestBody:
         assert response.status_code == 200
         assert json.loads(response.text)['data'] == 'foo'
 
-    async def test_content(self, browser: Browser) -> None:
+    def test_content(self, browser: Browser) -> None:
         impit = Client(browser=browser)
 
         response = impit.get(get_httpbin_url('/'))
@@ -304,3 +304,121 @@ class TestRequestBody:
         assert isinstance(response.content, bytes)
         assert isinstance(response.text, str)
         assert response.content.decode('utf-8') == response.text
+
+
+@pytest.mark.parametrize(
+    ('browser'),
+    [
+        'chrome',
+        'firefox',
+        None,
+    ],
+)
+class TestStreamRequest:
+    def test_read(self, browser: Browser) -> None:
+        impit = Client(browser=browser)
+
+        with impit.stream('GET', get_httpbin_url('/')) as response:
+            assert response.status_code == 200
+            assert response.is_closed is False
+            assert response.is_stream_consumed is False
+
+            content = response.read()
+
+            assert isinstance(content, bytes)
+            assert content.decode('utf-8') == response.text
+            assert response.content == content
+
+            assert response.is_closed is True
+            assert response.is_stream_consumed is True  # type: ignore[unreachable] # Mypy can't detect a change of state
+
+    def test_iter_bytes(self, browser: Browser) -> None:
+        impit = Client(browser=browser)
+
+        with impit.stream('GET', get_httpbin_url('/')) as response:
+            assert response.status_code == 200
+            assert response.is_closed is False
+            assert response.is_stream_consumed is False
+
+            content = b''.join(response.iter_bytes())
+
+            assert isinstance(content, bytes)
+            assert len(content) > 0
+
+            # After `iter_bytes`` we should get an error since `content` and `text` are not cached
+            with pytest.raises(StreamConsumed):
+                _ = response.text
+
+            with pytest.raises(StreamConsumed):
+                _ = response.content
+
+            assert response.is_closed is True
+            assert response.is_stream_consumed is True  # type: ignore[unreachable] # Mypy can't detect a change of state
+
+    def test_response_with_context_manager(self, browser: Browser) -> None:
+        impit = Client(browser=browser)
+
+        with impit.stream('GET', get_httpbin_url('/')) as response:
+            assert response.status_code == 200
+            assert response.is_closed is False
+            assert response.is_stream_consumed is False
+
+        assert response.is_closed is True
+        assert response.is_stream_consumed is False  # type: ignore[unreachable] # Mypy can't detect a change of state
+
+    def test_read_after_close(self, browser: Browser) -> None:
+        impit = Client(browser=browser)
+
+        with impit.stream('GET', get_httpbin_url('/')) as response:
+            assert response.status_code == 200
+
+        assert response.is_closed is True
+
+        with pytest.raises(StreamClosed):
+            _ = response.read()
+
+    def test_two_read_calls(self, browser: Browser) -> None:
+        impit = Client(browser=browser)
+
+        with impit.stream('GET', get_httpbin_url('/')) as response:
+            assert response.status_code == 200
+
+            content = response.read()
+            assert isinstance(content, bytes)
+            assert content == response.content
+
+            # Return content from cache
+            assert response.read() == response.content
+
+    def test_two_iter_bytes_calls(self, browser: Browser) -> None:
+        impit = Client(browser=browser)
+
+        with impit.stream('GET', get_httpbin_url('/')) as response:
+            assert response.status_code == 200
+
+            content = b''.join(response.iter_bytes())
+            assert isinstance(content, bytes)
+            assert len(content) > 0
+
+            # `iter_bytes` don't cache content
+            with pytest.raises(StreamConsumed):
+                _ = b''.join(response.iter_bytes())
+
+    def test_iter_bytes_without_consumed(self, browser: Browser) -> None:
+        impit = Client(browser=browser)
+
+        with impit.stream('GET', get_httpbin_url('/')) as response:
+            assert response.status_code == 200
+
+            iterator = response.iter_bytes()
+
+            _ = next(iterator)
+
+        assert response.is_closed is True
+        assert response.is_stream_consumed is False
+
+        with pytest.raises(StreamClosed):
+            _ = response.text
+
+        with pytest.raises(StreamClosed):
+            _ = response.content
