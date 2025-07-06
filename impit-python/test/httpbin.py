@@ -21,4 +21,3 @@ def get_httpbin_url(path: str, *, query: dict[str, str] | None = None, https: bo
     result_url = url._replace(path=path).geturl()
 
     return result_url.removesuffix('/')
-
