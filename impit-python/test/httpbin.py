@@ -19,6 +19,6 @@ def get_httpbin_url(path: str, *, query: dict[str, str] | None = None, https: bo
     scheme = 'https' if https else 'http'
     url = url._replace(scheme=scheme)
     result_url = url._replace(path=path).geturl()
-    result_url = result_url.removesuffix('/')
 
-    return result_url
+    return result_url.removesuffix('/')
+
