@@ -4,6 +4,7 @@ from .cookies import Cookies
 
 from typing import Literal
 from collections.abc import Iterator, AsyncIterator
+from contextlib import AbstractAsyncContextManager, AbstractContextManager
 
 
 Browser = Literal['chrome', 'firefox']
@@ -100,22 +101,6 @@ class Response:
 
     is_stream_consumed: bool
     """Whether the response stream has been consumed or closed"""
-
-    async def __aenter__(self) -> Response:
-        """Enter the asynchronous runtime context related to this object."""
-        return self
-
-    async def __aexit__(self, exc_type: type[BaseException] | None, exc_value: BaseException | None, traceback: object | None) -> bool | None:
-        """Exit the asynchronous runtime context related to this object."""
-        pass
-
-    def __enter__(self) -> Response:
-        """Enter the runtime context related to this object."""
-        return self
-
-    def __exit__(self, exc_type: type[BaseException] | None, exc_value: BaseException | None, traceback: object | None) -> None:
-        """Exit the runtime context related to this object."""
-        pass
 
     def read(self) -> bytes:
         """Read the response content as bytes."""
@@ -368,7 +353,7 @@ class Client:
         headers: dict[str, str] | None = None,
         timeout: float | None = None,
         force_http3: bool | None = None,
-    ) -> Response:
+    ) -> AbstractContextManager[Response]:
         """Make a streaming request with the specified method.
 
         Args:
@@ -605,7 +590,7 @@ class AsyncClient:
             force_http3: Force HTTP/3 protocol
         """
 
-    async def stream(
+    def stream(
         self,
         method: str,
         url: str,
@@ -614,7 +599,7 @@ class AsyncClient:
         headers: dict[str, str] | None = None,
         timeout: float | None = None,
         force_http3: bool | None = None,
-    ) -> Response:
+    ) -> AbstractAsyncContextManager[Response]:
         """Make an asynchronous streaming request with the specified method.
 
         Args:

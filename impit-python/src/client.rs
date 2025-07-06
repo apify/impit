@@ -6,7 +6,7 @@ use impit::{
     impit::{Impit, ImpitBuilder},
     request::RequestOptions,
 };
-use pyo3::prelude::*;
+use pyo3::{ffi::c_str, prelude::*};
 
 use crate::{
     cookies::PythonCookieJar,
@@ -291,8 +291,9 @@ impl Client {
     }
 
     #[pyo3(signature = (method, url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
-    pub fn stream(
+    pub fn stream<'python>(
         &mut self,
+        py: Python<'python>,
         method: &str,
         url: String,
         content: Option<Vec<u8>>,
@@ -300,8 +301,8 @@ impl Client {
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
         force_http3: Option<bool>,
-    ) -> Result<response::ImpitPyResponse, ImpitPyError> {
-        self.request(
+    ) -> Result<Bound<'python, PyAny>, PyErr> {
+        let response = self.request(
             method,
             url,
             content,
@@ -310,7 +311,28 @@ impl Client {
             timeout,
             force_http3,
             Some(true),
-        )
+        )?;
+
+        let fun: Py<PyAny> = PyModule::from_code(
+            py,
+            c_str!(
+                "def wrap_with_context_manager(response):
+    class SyncContextManager:
+        def __enter__(self):
+            self.response = response
+            return self.response
+        def __exit__(self, exc_type, exc_value, traceback):
+            self.response.close()
+    return SyncContextManager()"
+            ),
+            c_str!(""),
+            c_str!(""),
+        )?
+        .getattr("wrap_with_context_manager")?
+        .into();
+
+        let wrapped_response = fun.call1(py, (response,))?;
+        Ok(wrapped_response.into_bound(py))
     }
 
     #[pyo3(signature = (method, url, content=None, data=None, headers=None, timeout=None, force_http3=false, stream=false))]

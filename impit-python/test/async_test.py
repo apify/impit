@@ -328,7 +328,7 @@ class TestStreamRequest:
     async def test_read(self, browser: Browser) -> None:
         impit = AsyncClient(browser=browser)
 
-        async with await impit.stream('GET', get_httpbin_url('/')) as response:
+        async with impit.stream('GET', get_httpbin_url('/')) as response:
             assert response.status_code == 200
             assert response.is_closed is False
             assert response.is_stream_consumed is False
@@ -345,7 +345,7 @@ class TestStreamRequest:
     async def test_iter_bytes(self, browser: Browser) -> None:
         impit = AsyncClient(browser=browser)
 
-        async with await impit.stream('GET', get_httpbin_url('/')) as response:
+        async with impit.stream('GET', get_httpbin_url('/')) as response:
             assert response.status_code == 200
             assert response.is_closed is False
             assert response.is_stream_consumed is False
@@ -368,7 +368,7 @@ class TestStreamRequest:
     async def test_response_with_context_manager(self, browser: Browser) -> None:
         impit = AsyncClient(browser=browser)
 
-        async with await impit.stream('GET', get_httpbin_url('/')) as response:
+        async with impit.stream('GET', get_httpbin_url('/')) as response:
             assert response.status_code == 200
             assert response.is_closed is False
             assert response.is_stream_consumed is False
@@ -379,7 +379,7 @@ class TestStreamRequest:
     async def test_read_after_close(self, browser: Browser) -> None:
         impit = AsyncClient(browser=browser)
 
-        async with await impit.stream('GET', get_httpbin_url('/')) as response:
+        async with impit.stream('GET', get_httpbin_url('/')) as response:
             assert response.status_code == 200
 
         assert response.is_closed is True
@@ -390,7 +390,7 @@ class TestStreamRequest:
     async def test_two_read_calls(self, browser: Browser) -> None:
         impit = AsyncClient(browser=browser)
 
-        async with await impit.stream('GET', get_httpbin_url('/')) as response:
+        async with impit.stream('GET', get_httpbin_url('/')) as response:
             assert response.status_code == 200
 
             content = response.read()
@@ -403,7 +403,7 @@ class TestStreamRequest:
     async def test_two_iter_bytes_calls(self, browser: Browser) -> None:
         impit = AsyncClient(browser=browser)
 
-        async with await impit.stream('GET', get_httpbin_url('/')) as response:
+        async with impit.stream('GET', get_httpbin_url('/')) as response:
             assert response.status_code == 200
 
             content = b''.join([item async for item in response.aiter_bytes()])
@@ -417,7 +417,7 @@ class TestStreamRequest:
     async def test_iter_bytes_without_consumed(self, browser: Browser) -> None:
         impit = AsyncClient(browser=browser)
 
-        async with await impit.stream('GET', get_httpbin_url('/')) as response:
+        async with impit.stream('GET', get_httpbin_url('/')) as response:
             assert response.status_code == 200
 
             iterator = response.aiter_bytes()

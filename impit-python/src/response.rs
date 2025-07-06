@@ -242,39 +242,6 @@ impl ImpitPyResponse {
         Ok(())
     }
 
-    fn __enter__(slf: Py<Self>) -> Py<Self> {
-        slf
-    }
-
-    fn __exit__(
-        &mut self,
-        _exc_type: &Bound<'_, PyAny>,
-        _exc_value: &Bound<'_, PyAny>,
-        _traceback: &Bound<'_, PyAny>,
-    ) -> PyResult<()> {
-        self.close()
-    }
-
-    fn __aenter__(
-        slf: Py<Self>,
-        py: Python<'_>,
-    ) -> Result<pyo3::Bound<'_, pyo3::PyAny>, pyo3::PyErr> {
-        pyo3_async_runtimes::tokio::future_into_py::<_, Py<ImpitPyResponse>>(py, async { Ok(slf) })
-    }
-
-    fn __aexit__<'python>(
-        slf: Py<Self>,
-        _exc_type: &crate::Bound<'_, crate::PyAny>,
-        _exc_value: &crate::Bound<'_, crate::PyAny>,
-        _traceback: &crate::Bound<'_, crate::PyAny>,
-        py: Python<'python>,
-    ) -> Result<pyo3::Bound<'python, pyo3::PyAny>, pyo3::PyErr> {
-        pyo3_async_runtimes::tokio::future_into_py(py, async move {
-            Self::close_async_impl(slf)?;
-            Ok(false)
-        })
-    }
-
     fn aclose(slf: Py<Self>, py: Python<'_>) -> PyResult<Bound<'_, PyAny>> {
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             Self::close_async_impl(slf)?;

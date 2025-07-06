@@ -1,7 +1,7 @@
 use std::{collections::HashMap, time::Duration};
 
 use impit::{emulation::Browser, errors::ImpitError, impit::ImpitBuilder, request::RequestOptions};
-use pyo3::{exceptions::PyTypeError, prelude::*};
+use pyo3::{exceptions::PyTypeError, ffi::c_str, prelude::*};
 use tokio::sync::oneshot;
 
 use crate::{
@@ -316,7 +316,7 @@ impl AsyncClient {
         timeout: Option<f64>,
         force_http3: Option<bool>,
     ) -> Result<pyo3::Bound<'python, PyAny>, PyErr> {
-        self.request(
+        let response = self.request(
             py,
             method,
             url,
@@ -326,7 +326,28 @@ impl AsyncClient {
             timeout,
             force_http3,
             Some(true),
-        )
+        )?;
+
+        let fun: Py<PyAny> = PyModule::from_code(
+            py,
+            c_str!(
+                "def wrap_with_context_manager(response):
+            class AsyncContextManager:
+                async def __aenter__(self):
+                    self.response = await response
+                    return self.response
+                async def __aexit__(self, exc_type, exc_value, traceback):
+                    await self.response.aclose()
+            return AsyncContextManager()"
+            ),
+            c_str!(""),
+            c_str!(""),
+        )?
+        .getattr("wrap_with_context_manager")?
+        .into();
+
+        let wrapped_response = fun.call1(py, (response,))?;
+        Ok(wrapped_response.into_bound(py))
     }
 
     #[pyo3(signature = (method, url, content=None, data=None, headers=None, timeout=None, force_http3=false, stream=false))]
