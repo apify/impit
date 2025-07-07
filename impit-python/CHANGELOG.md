@@ -3,6 +3,21 @@
 All notable changes to this project will be documented in this file.
 
 
+## py-0.4.0 - 2025-07-07
+
+#### Bug Fixes
+
+- Fix the data types for `rest` and `version` with which the `Cookie` object is created. (#202)
+  - Fix the data types with which a `Cookie` object is created, such as `rest` and `version`.
+
+
+#### Features
+
+- Add `(Async)Client.stream()` method for Python (#201)
+  - Adds `stream` support for `Client` and `AsyncClient`. Implements for `Response` support for the `read` and `iter_bytes` methods, and their counterparts `aread` and `aiter_bytes` according to the `httpx` API  closes https://github.com/apify/impit/issues/142
+
+
+
 ## py-0.3.0 - 2025-06-25
 
 #### Features
