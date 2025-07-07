@@ -9,62 +9,118 @@ from contextlib import AbstractAsyncContextManager, AbstractContextManager
 
 Browser = Literal['chrome', 'firefox']
 
-HTTPError: type
-"Represents an HTTP-related error."
-RequestError: type
-"Represents an error during the request process."
-TransportError: type
-"Represents a transport-layer error."
-TimeoutException: type
-"Represents a timeout error."
-ConnectTimeout: type
-"Represents a connection timeout error."
-ReadTimeout: type
-"Represents a read timeout error."
-WriteTimeout: type
-"Represents a write timeout error."
-PoolTimeout: type
-"Represents a connection pool timeout error."
-NetworkError: type
-"Represents a network-related error."
-ConnectError: type
-"Represents a connection error."
-ReadError: type
-"Represents a read error."
-WriteError: type
-"Represents a write error."
-CloseError: type
-"Represents an error when closing a connection."
-ProtocolError: type
-"Represents a protocol-related error."
-LocalProtocolError: type
-"Represents a local protocol error."
-RemoteProtocolError: type
-"Represents a remote protocol error."
-ProxyError: type
-"Represents a proxy-related error."
-UnsupportedProtocol: type
-"Represents an unsupported protocol error."
-DecodingError: type
-"Represents an error during response decoding."
-TooManyRedirects: type
-"Represents an error due to excessive redirects."
-HTTPStatusError: type
-"Represents an error related to HTTP status codes."
-InvalidURL: type
-"Represents an error due to an invalid URL."
-CookieConflict: type
-"Represents a cookie conflict error."
-StreamError: type
-"Represents a stream-related error."
-StreamConsumed: type
-"Represents an error when a stream is already consumed."
-ResponseNotRead: type
-"Represents an error when a response is not read."
-RequestNotRead: type
-"Represents an error when a request is not read."
-StreamClosed: type
-"Represents an error when a stream is closed."
+
+class HTTPError(Exception):
+    """Represents an HTTP-related error."""
+
+
+class RequestError(HTTPError):
+    """Represents an error during the request process."""
+
+
+class TransportError(RequestError):
+    """Represents a transport-layer error."""
+
+
+class TimeoutException(TransportError):
+    """Represents a timeout error."""
+
+
+class ConnectTimeout(TimeoutException):
+    """Represents a connection timeout error."""
+
+
+class ReadTimeout(TimeoutException):
+    """Represents a read timeout error."""
+
+
+class WriteTimeout(TimeoutException):
+    """Represents a write timeout error."""
+
+
+class PoolTimeout(TimeoutException):
+    """Represents a connection pool timeout error."""
+
+
+class NetworkError(TransportError):
+    """Represents a network-related error."""
+
+
+class ConnectError(NetworkError):
+    """Represents a connection error."""
+
+
+class ReadError(NetworkError):
+    """Represents a read error."""
+
+
+class WriteError(NetworkError):
+    """Represents a write error."""
+
+
+class CloseError(NetworkError):
+    """Represents an error when closing a connection."""
+
+
+class ProtocolError(TransportError):
+    """Represents a protocol-related error."""
+
+
+class LocalProtocolError(ProtocolError):
+    """Represents a local protocol error."""
+
+
+class RemoteProtocolError(ProtocolError):
+    """Represents a remote protocol error."""
+
+
+class ProxyError(TransportError):
+    """Represents a proxy-related error."""
+
+
+class UnsupportedProtocol(TransportError):
+    """Represents an unsupported protocol error."""
+
+
+class DecodingError(RequestError):
+    """Represents an error during response decoding."""
+
+
+class TooManyRedirects(RequestError):
+    """Represents an error due to excessive redirects."""
+
+
+class HTTPStatusError(HTTPError):
+    """Represents an error related to HTTP status codes."""
+
+
+class InvalidURL(Exception):
+    """Represents an error due to an invalid URL."""
+
+
+class CookieConflict(Exception):
+    """Represents a cookie conflict error."""
+
+
+class StreamError(Exception):
+    """Represents a stream-related error."""
+
+
+class StreamConsumed(StreamError):
+    """Represents an error when a stream is already consumed."""
+
+
+class ResponseNotRead(StreamError):
+    """Represents an error when a response is not read."""
+
+
+class RequestNotRead(StreamError):
+    """Represents an error when a request is not read."""
+
+
+class StreamClosed(StreamError):
+    """Represents an error when a stream is closed."""
+
 
 class Response:
     """Response object returned by impit requests."""
@@ -577,6 +633,7 @@ class AsyncClient:
         headers: dict[str, str] | None = None,
         timeout: float | None = None,
         force_http3: bool | None = None,
+        stream: bool = False,
     ) -> Response:
         """Make an asynchronous HTTP request with the specified method.
 
@@ -588,6 +645,7 @@ class AsyncClient:
             headers: HTTP headers
             timeout: Request timeout in seconds (overrides default timeout)
             force_http3: Force HTTP/3 protocol
+            stream: Whether to return a streaming response (default: False)
         """
 
     def stream(
