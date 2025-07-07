@@ -6,7 +6,7 @@ use impit::{
     impit::{Impit, ImpitBuilder},
     request::RequestOptions,
 };
-use pyo3::prelude::*;
+use pyo3::{ffi::c_str, prelude::*};
 
 use crate::{
     cookies::PythonCookieJar,
@@ -124,7 +124,16 @@ impl Client {
         timeout: Option<f64>,
         force_http3: Option<bool>,
     ) -> Result<response::ImpitPyResponse, ImpitPyError> {
-        self.request("get", url, content, data, headers, timeout, force_http3)
+        self.request(
+            "get",
+            url,
+            content,
+            data,
+            headers,
+            timeout,
+            force_http3,
+            Some(false),
+        )
     }
 
     #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
@@ -137,7 +146,16 @@ impl Client {
         timeout: Option<f64>,
         force_http3: Option<bool>,
     ) -> Result<response::ImpitPyResponse, ImpitPyError> {
-        self.request("head", url, content, data, headers, timeout, force_http3)
+        self.request(
+            "head",
+            url,
+            content,
+            data,
+            headers,
+            timeout,
+            force_http3,
+            Some(false),
+        )
     }
 
     #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
@@ -150,7 +168,16 @@ impl Client {
         timeout: Option<f64>,
         force_http3: Option<bool>,
     ) -> Result<response::ImpitPyResponse, ImpitPyError> {
-        self.request("post", url, content, data, headers, timeout, force_http3)
+        self.request(
+            "post",
+            url,
+            content,
+            data,
+            headers,
+            timeout,
+            force_http3,
+            Some(false),
+        )
     }
 
     #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
@@ -163,7 +190,16 @@ impl Client {
         timeout: Option<f64>,
         force_http3: Option<bool>,
     ) -> Result<response::ImpitPyResponse, ImpitPyError> {
-        self.request("patch", url, content, data, headers, timeout, force_http3)
+        self.request(
+            "patch",
+            url,
+            content,
+            data,
+            headers,
+            timeout,
+            force_http3,
+            Some(false),
+        )
     }
 
     #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
@@ -176,7 +212,16 @@ impl Client {
         timeout: Option<f64>,
         force_http3: Option<bool>,
     ) -> Result<response::ImpitPyResponse, ImpitPyError> {
-        self.request("put", url, content, data, headers, timeout, force_http3)
+        self.request(
+            "put",
+            url,
+            content,
+            data,
+            headers,
+            timeout,
+            force_http3,
+            Some(false),
+        )
     }
 
     #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
@@ -189,7 +234,16 @@ impl Client {
         timeout: Option<f64>,
         force_http3: Option<bool>,
     ) -> Result<response::ImpitPyResponse, ImpitPyError> {
-        self.request("delete", url, content, data, headers, timeout, force_http3)
+        self.request(
+            "delete",
+            url,
+            content,
+            data,
+            headers,
+            timeout,
+            force_http3,
+            Some(false),
+        )
     }
 
     #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
@@ -202,7 +256,16 @@ impl Client {
         timeout: Option<f64>,
         force_http3: Option<bool>,
     ) -> Result<response::ImpitPyResponse, ImpitPyError> {
-        self.request("options", url, content, data, headers, timeout, force_http3)
+        self.request(
+            "options",
+            url,
+            content,
+            data,
+            headers,
+            timeout,
+            force_http3,
+            Some(false),
+        )
     }
 
     #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
@@ -215,10 +278,64 @@ impl Client {
         timeout: Option<f64>,
         force_http3: Option<bool>,
     ) -> Result<response::ImpitPyResponse, ImpitPyError> {
-        self.request("trace", url, content, data, headers, timeout, force_http3)
+        self.request(
+            "trace",
+            url,
+            content,
+            data,
+            headers,
+            timeout,
+            force_http3,
+            Some(false),
+        )
     }
 
     #[pyo3(signature = (method, url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
+    pub fn stream<'python>(
+        &mut self,
+        py: Python<'python>,
+        method: &str,
+        url: String,
+        content: Option<Vec<u8>>,
+        data: Option<RequestBody>,
+        headers: Option<HashMap<String, String>>,
+        timeout: Option<f64>,
+        force_http3: Option<bool>,
+    ) -> Result<Bound<'python, PyAny>, PyErr> {
+        let response = self.request(
+            method,
+            url,
+            content,
+            data,
+            headers,
+            timeout,
+            force_http3,
+            Some(true),
+        )?;
+
+        let fun: Py<PyAny> = PyModule::from_code(
+            py,
+            c_str!(
+                "def wrap_with_context_manager(response):
+    class SyncContextManager:
+        def __enter__(self):
+            self.response = response
+            return self.response
+        def __exit__(self, exc_type, exc_value, traceback):
+            self.response.close()
+    return SyncContextManager()"
+            ),
+            c_str!(""),
+            c_str!(""),
+        )?
+        .getattr("wrap_with_context_manager")?
+        .into();
+
+        let wrapped_response = fun.call1(py, (response,))?;
+        Ok(wrapped_response.into_bound(py))
+    }
+
+    #[pyo3(signature = (method, url, content=None, data=None, headers=None, timeout=None, force_http3=false, stream=false))]
     pub fn request(
         &mut self,
         method: &str,
@@ -228,6 +345,7 @@ impl Client {
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
         force_http3: Option<bool>,
+        stream: Option<bool>,
     ) -> Result<ImpitPyResponse, ImpitPyError> {
         let mut headers = headers.clone();
 
@@ -276,7 +394,13 @@ impl Client {
                     _ => Err(ImpitError::InvalidMethod(method.to_string())),
                 }
             })
-            .map(|response| ImpitPyResponse::from(response, self.default_encoding.clone()))
+            .map(|response| {
+                ImpitPyResponse::from(
+                    response,
+                    self.default_encoding.clone(),
+                    stream.unwrap_or(false),
+                )
+            })
             .map_err(|err| err.into())
     }
 }

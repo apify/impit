@@ -3,6 +3,8 @@ from http.cookiejar import CookieJar
 from .cookies import Cookies
 
 from typing import Literal
+from collections.abc import Iterator, AsyncIterator
+from contextlib import AbstractAsyncContextManager, AbstractContextManager
 
 
 Browser = Literal['chrome', 'firefox']
@@ -94,6 +96,29 @@ class Response:
     content: bytes
     """Response body as bytes"""
 
+    is_closed: bool
+    """Whether the response is closed"""
+
+    is_stream_consumed: bool
+    """Whether the response stream has been consumed or closed"""
+
+    def read(self) -> bytes:
+        """Read the response content as bytes."""
+
+    def iter_bytes(self) -> Iterator[bytes]:
+        """Iterate over the response content in chunks."""
+    
+    async def aread(self) -> bytes:
+        """Asynchronously read the response content as bytes."""
+    
+    def aiter_bytes(self) -> AsyncIterator[bytes]:
+        """Asynchronously iterate over the response content in chunks."""
+    
+    def close(self) -> None:
+        """Close the response and release resources."""
+    
+    async def aclose(self) -> None:
+        """Asynchronously close the response and release resources."""
 
 class Client:
     """Synchronous HTTP client with browser impersonation capabilities."""
@@ -304,6 +329,7 @@ class Client:
         headers: dict[str, str] | None = None,
         timeout: float | None = None,
         force_http3: bool | None = None,
+        stream: bool = False,
     ) -> Response:
         """Make an HTTP request with the specified method.
 
@@ -315,6 +341,32 @@ class Client:
             headers: HTTP headers
             timeout: Request timeout in seconds (overrides default timeout)
             force_http3: Force HTTP/3 protocol
+            stream: Whether to return a streaming response (default: False)
+        """
+
+    def stream(
+        self,
+        method: str,
+        url: str,
+        content: bytes | bytearray | list[int] | None = None,
+        data: dict[str, str] | None = None,
+        headers: dict[str, str] | None = None,
+        timeout: float | None = None,
+        force_http3: bool | None = None,
+    ) -> AbstractContextManager[Response]:
+        """Make a streaming request with the specified method.
+
+        Args:
+            method: HTTP method (e.g., "get", "post")
+            url: URL to request
+            content: Raw content to send
+            data: Form data to send in request body
+            headers: HTTP headers
+            timeout: Request timeout in seconds (overrides default timeout)
+            force_http3: Force HTTP/3 protocol
+
+        Returns:
+            Response object
         """
 
 
@@ -527,6 +579,28 @@ class AsyncClient:
         force_http3: bool | None = None,
     ) -> Response:
         """Make an asynchronous HTTP request with the specified method.
+
+        Args:
+            method: HTTP method (e.g., "get", "post")
+            url: URL to request
+            content: Raw content to send
+            data: Form data to send in request body
+            headers: HTTP headers
+            timeout: Request timeout in seconds (overrides default timeout)
+            force_http3: Force HTTP/3 protocol
+        """
+
+    def stream(
+        self,
+        method: str,
+        url: str,
+        content: bytes | bytearray | list[int] | None = None,
+        data: dict[str, str] | None = None,
+        headers: dict[str, str] | None = None,
+        timeout: float | None = None,
+        force_http3: bool | None = None,
+    ) -> AbstractAsyncContextManager[Response]:
+        """Make an asynchronous streaming request with the specified method.
 
         Args:
             method: HTTP method (e.g., "get", "post")

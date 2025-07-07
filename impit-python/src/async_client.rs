@@ -1,7 +1,7 @@
 use std::{collections::HashMap, time::Duration};
 
 use impit::{emulation::Browser, errors::ImpitError, impit::ImpitBuilder, request::RequestOptions};
-use pyo3::{exceptions::PyTypeError, prelude::*};
+use pyo3::{exceptions::PyTypeError, ffi::c_str, prelude::*};
 use tokio::sync::oneshot;
 
 use crate::{
@@ -123,7 +123,17 @@ impl AsyncClient {
         timeout: Option<f64>,
         force_http3: Option<bool>,
     ) -> Result<pyo3::Bound<'python, PyAny>, PyErr> {
-        self.request(py, "get", url, content, data, headers, timeout, force_http3)
+        self.request(
+            py,
+            "get",
+            url,
+            content,
+            data,
+            headers,
+            timeout,
+            force_http3,
+            Some(false),
+        )
     }
 
     #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
@@ -146,6 +156,7 @@ impl AsyncClient {
             headers,
             timeout,
             force_http3,
+            Some(false),
         )
     }
 
@@ -169,6 +180,7 @@ impl AsyncClient {
             headers,
             timeout,
             force_http3,
+            Some(false),
         )
     }
 
@@ -192,6 +204,7 @@ impl AsyncClient {
             headers,
             timeout,
             force_http3,
+            Some(false),
         )
     }
 
@@ -206,7 +219,17 @@ impl AsyncClient {
         timeout: Option<f64>,
         force_http3: Option<bool>,
     ) -> Result<pyo3::Bound<'python, PyAny>, PyErr> {
-        self.request(py, "put", url, content, data, headers, timeout, force_http3)
+        self.request(
+            py,
+            "put",
+            url,
+            content,
+            data,
+            headers,
+            timeout,
+            force_http3,
+            Some(false),
+        )
     }
 
     #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
@@ -229,6 +252,7 @@ impl AsyncClient {
             headers,
             timeout,
             force_http3,
+            Some(false),
         )
     }
 
@@ -252,6 +276,7 @@ impl AsyncClient {
             headers,
             timeout,
             force_http3,
+            Some(false),
         )
     }
 
@@ -275,10 +300,57 @@ impl AsyncClient {
             headers,
             timeout,
             force_http3,
+            Some(false),
         )
     }
 
     #[pyo3(signature = (method, url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
+    pub fn stream<'python>(
+        &self,
+        py: Python<'python>,
+        method: &str,
+        url: String,
+        content: Option<Vec<u8>>,
+        data: Option<RequestBody>,
+        headers: Option<HashMap<String, String>>,
+        timeout: Option<f64>,
+        force_http3: Option<bool>,
+    ) -> Result<pyo3::Bound<'python, PyAny>, PyErr> {
+        let response = self.request(
+            py,
+            method,
+            url,
+            content,
+            data,
+            headers,
+            timeout,
+            force_http3,
+            Some(true),
+        )?;
+
+        let fun: Py<PyAny> = PyModule::from_code(
+            py,
+            c_str!(
+                "def wrap_with_context_manager(response):
+            class AsyncContextManager:
+                async def __aenter__(self):
+                    self.response = await response
+                    return self.response
+                async def __aexit__(self, exc_type, exc_value, traceback):
+                    await self.response.aclose()
+            return AsyncContextManager()"
+            ),
+            c_str!(""),
+            c_str!(""),
+        )?
+        .getattr("wrap_with_context_manager")?
+        .into();
+
+        let wrapped_response = fun.call1(py, (response,))?;
+        Ok(wrapped_response.into_bound(py))
+    }
+
+    #[pyo3(signature = (method, url, content=None, data=None, headers=None, timeout=None, force_http3=false, stream=false))]
     pub fn request<'python>(
         &self,
         py: Python<'python>,
@@ -289,6 +361,7 @@ impl AsyncClient {
         headers: Option<HashMap<String, String>>,
         timeout: Option<f64>,
         force_http3: Option<bool>,
+        stream: Option<bool>,
     ) -> Result<pyo3::Bound<'python, PyAny>, PyErr> {
         let mut headers = headers.clone();
 
@@ -348,11 +421,13 @@ impl AsyncClient {
 
         let default_encoding = self.default_encoding.clone();
 
-        pyo3_async_runtimes::async_std::future_into_py::<_, ImpitPyResponse>(py, async {
+        pyo3_async_runtimes::async_std::future_into_py::<_, ImpitPyResponse>(py, async move {
             let response = rx.await.unwrap();
 
             response
-                .map(|response| ImpitPyResponse::from(response, default_encoding))
+                .map(|response| {
+                    ImpitPyResponse::from(response, default_encoding, stream.unwrap_or(false))
+                })
                 .map_err(|err| ImpitPyError(err).into())
         })
     }
