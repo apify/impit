@@ -1,0 +1,44 @@
+name: ZenHub - move draft PRs to "In Progress"
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - converted_to_draft
+      - edited
+      - ready_for_review
+    branches:
+      - "master"
+
+jobs:
+  move_issue_to_in_progress:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '24'
+
+      - name: Get linked issues
+        id: get_linked_issues
+        if: github.event.pull_request.draft == true
+        run: |
+          GITHUB_API_RESPONSE=$(gh api graphql -F query='query($owner: String!, $repoName: String!, $pr: Int!) { repository(owner: $owner, name: $repoName) { pullRequest(number: $pr) { closingIssuesReferences(first: 10) { nodes { number } } } } }' -F owner=${{ github.repository_owner }} -F repoName=${{ github.event.repository.name }} -F pr=${{ github.event.pull_request.number }} --jq '.data.repository')
+          echo "gh_api_response=$GITHUB_API_RESPONSE" >> $GITHUB_ENV
+
+      - name: Call ZenHub Issue Manager
+        if: github.event.pull_request.draft == true
+        env:
+          ZENHUB_API_TOKEN: secrets.PULL_REQUEST_TOOLKIT_ACTION_ZENHUB_TOKEN
+        run: |
+          for issue in $(echo ${{ env.gh_api_response }} | jq -r '.pullRequest.closingIssuesReferences.nodes[].number'); do
+            npx zenhub-issue-manager move --repository-id ${{ github.event.repository.id }} --issue-number $issue --pipeline Z2lkOi8vcmFwdG9yL1BpcGVsaW5lLzIyMTA5MzU
+          done
