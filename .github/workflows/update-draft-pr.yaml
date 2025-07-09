@@ -39,7 +39,7 @@ jobs:
       - name: Call ZenHub Issue Manager
         if: github.event.pull_request.draft == true
         env:
-          ZENHUB_API_TOKEN: secrets.ZENHUB_API_TOKEN
+          ZENHUB_API_TOKEN: ${{ secrets.PULL_REQUEST_TOOLKIT_ACTION_ZENHUB_TOKEN }}
         run: |
           for issue in $(echo '${{ env.gh_api_response }}' | jq -r '.pullRequest.closingIssuesReferences.nodes[].number'); do
             npx zenhub-issue-manager move --repository-id ${{ github.event.repository.id }} --issue-number $issue --pipeline Z2lkOi8vcmFwdG9yL1BpcGVsaW5lLzIyMTA5MzU
