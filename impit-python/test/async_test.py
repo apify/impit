@@ -222,7 +222,7 @@ class TestBasicRequests:
         target_url = 'https://example.org/'
         redirect_url = get_httpbin_url('/redirect-to', query={'url': target_url})
 
-        response = await impit.request("get", redirect_url, stream=True)
+        response = await impit.request('get', redirect_url, stream=True)
 
         assert response.status_code == 200
         assert not response.is_redirect
