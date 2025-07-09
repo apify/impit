@@ -216,7 +216,7 @@ class TestBasicRequests:
         assert response.url == target_url
 
     @pytest.mark.asyncio
-    async def test_follow_redirects_with_streaming_respobnse(self, browser: Browser) -> None:
+    async def test_follow_redirects_with_streaming_response(self, browser: Browser) -> None:
         impit = AsyncClient(browser=browser, follow_redirects=True)
 
         target_url = 'https://example.org/'
