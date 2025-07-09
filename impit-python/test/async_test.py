@@ -216,6 +216,19 @@ class TestBasicRequests:
         assert response.url == target_url
 
     @pytest.mark.asyncio
+    async def test_follow_redirects_with_streaming_respobnse(self, browser: Browser) -> None:
+        impit = AsyncClient(browser=browser, follow_redirects=True)
+
+        target_url = 'https://example.org/'
+        redirect_url = get_httpbin_url('/redirect-to', query={'url': target_url})
+
+        response = await impit.request("get", redirect_url, stream=True)
+
+        assert response.status_code == 200
+        assert not response.is_redirect
+        assert response.url == target_url
+
+    @pytest.mark.asyncio
     async def test_limit_redirects(self, browser: Browser) -> None:
         impit = AsyncClient(browser=browser, follow_redirects=True, max_redirects=1)
 
