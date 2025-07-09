@@ -30,6 +30,8 @@ jobs:
       - name: Get linked issues
         id: get_linked_issues
         if: github.event.pull_request.draft == true
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           GITHUB_API_RESPONSE=$(gh api graphql -F query='query($owner: String!, $repoName: String!, $pr: Int!) { repository(owner: $owner, name: $repoName) { pullRequest(number: $pr) { closingIssuesReferences(first: 10) { nodes { number } } } } }' -F owner=${{ github.repository_owner }} -F repoName=${{ github.event.repository.name }} -F pr=${{ github.event.pull_request.number }} --jq '.data.repository')
           echo "gh_api_response=$GITHUB_API_RESPONSE" >> $GITHUB_ENV
