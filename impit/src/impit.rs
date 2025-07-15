@@ -1,3 +1,5 @@
+use tokio::sync::RwLock;
+
 use log::debug;
 use reqwest::{cookie::CookieStore, header::HeaderMap, Method, Response, Version};
 use std::{fmt::Debug, str::FromStr, sync::Arc, time::Duration};
@@ -20,7 +22,7 @@ use crate::{
 pub struct Impit<CookieStoreImpl: CookieStore + 'static> {
     pub(self) base_client: reqwest::Client,
     pub(self) h3_client: Option<reqwest::Client>,
-    h3_engine: Option<H3Engine>,
+    h3_engine: Arc<RwLock<Option<H3Engine>>>,
     config: ImpitBuilder<CookieStoreImpl>,
 }
 
@@ -264,7 +266,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
             base_client,
             h3_client,
             config,
-            h3_engine: None,
+            h3_engine: Arc::new(RwLock::new(None)),
         }
     }
 
@@ -284,25 +286,30 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
         }
     }
 
-    async fn should_use_h3(&mut self, host: &String) -> bool {
+    async fn should_use_h3(&self, host: &String) -> bool {
         if self.config.max_http_version < Version::HTTP_3 {
             debug!("HTTP/3 is disabled, falling back to TCP-based requests.");
             return false;
         }
 
-        if self.h3_engine.is_none() {
-            self.h3_engine = Some(H3Engine::init().await);
+        {
+            let engine_guard = self.h3_engine.read().await;
+            if let Some(engine) = engine_guard.as_ref() {
+                return engine.host_supports_h3(host).await;
+            }
         }
 
-        self.h3_engine
-            .as_mut()
-            .unwrap()
-            .host_supports_h3(host)
-            .await
+        {
+            let mut engine_guard = self.h3_engine.write().await;
+            if engine_guard.is_none() {
+                *engine_guard = Some(H3Engine::init().await);
+            }
+            engine_guard.as_ref().unwrap().host_supports_h3(host).await
+        }
     }
 
     async fn make_request(
-        &mut self,
+        &self,
         method: Method,
         url: String,
         body: Option<Vec<u8>>,
@@ -377,14 +384,15 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
         let response = response.unwrap();
 
         if !h3 {
-            if let Some(h3_engine) = self.h3_engine.as_mut() {
-                h3_engine.set_h3_support(&host, false);
+            let engine_guard = self.h3_engine.read().await;
+            if let Some(h3_engine) = engine_guard.as_ref() {
+                h3_engine.set_h3_support(&host, false).await;
 
                 if let Some(alt_svc) = response.headers().get("Alt-Svc") {
                     let alt_svc = alt_svc.to_str().unwrap();
                     if alt_svc.contains("h3") {
-                        debug!("{host} supports HTTP/3 (alt-svc header), adding to Alt-Svc cache",);
-                        h3_engine.set_h3_support(&host, true);
+                        debug!("{host} supports HTTP/3 (alt-svc header), adding to Alt-Svc cache");
+                        h3_engine.set_h3_support(&host, true).await;
                     }
                 }
             }
@@ -400,7 +408,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
     ///
     /// If the request is successful, the `reqwest::Response` struct is returned.
     pub async fn get(
-        &mut self,
+        &self,
         url: String,
         options: Option<RequestOptions>,
     ) -> Result<Response, ImpitError> {
@@ -414,7 +422,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
     ///
     /// If the request is successful, the `reqwest::Response` struct is returned.
     pub async fn head(
-        &mut self,
+        &self,
         url: String,
         options: Option<RequestOptions>,
     ) -> Result<Response, ImpitError> {
@@ -428,7 +436,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
     ///
     /// If the request is successful, the `reqwest::Response` struct is returned.
     pub async fn options(
-        &mut self,
+        &self,
         url: String,
         options: Option<RequestOptions>,
     ) -> Result<Response, ImpitError> {
@@ -442,7 +450,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
     ///
     /// If the request is successful, the `reqwest::Response` struct is returned.
     pub async fn trace(
-        &mut self,
+        &self,
         url: String,
         options: Option<RequestOptions>,
     ) -> Result<Response, ImpitError> {
@@ -456,7 +464,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
     ///
     /// If the request is successful, the `reqwest::Response` struct is returned.
     pub async fn delete(
-        &mut self,
+        &self,
         url: String,
         options: Option<RequestOptions>,
     ) -> Result<Response, ImpitError> {
@@ -470,7 +478,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
     ///
     /// If the request is successful, the `reqwest::Response` struct is returned.
     pub async fn post(
-        &mut self,
+        &self,
         url: String,
         body: Option<Vec<u8>>,
         options: Option<RequestOptions>,
@@ -485,7 +493,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
     ///
     /// If the request is successful, the `reqwest::Response` struct is returned.
     pub async fn put(
-        &mut self,
+        &self,
         url: String,
         body: Option<Vec<u8>>,
         options: Option<RequestOptions>,
@@ -500,7 +508,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
     ///
     /// If the request is successful, the `reqwest::Response` struct is returned.
     pub async fn patch(
-        &mut self,
+        &self,
         url: String,
         body: Option<Vec<u8>>,
         options: Option<RequestOptions>,

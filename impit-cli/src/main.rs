@@ -117,7 +117,7 @@ async fn main() {
         .data
         .map(|data| data.into_string().unwrap().into_bytes());
 
-    let mut client = client.build();
+    let client = client.build();
 
     let timeout = args.max_time.map(std::time::Duration::from_secs);
 
