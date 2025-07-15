@@ -4,7 +4,7 @@ import os
 import urllib.parse
 
 
-def get_httpbin_url(path: str, *, query: dict[str, str] | None = None, https: bool = True) -> str:
+def get_httpbin_url(path: str, *, query: dict[str, list[str] | str] | None = None, https: bool = True) -> str:
     query = query or {}
     url = None
     if os.environ.get('APIFY_HTTPBIN_TOKEN'):
