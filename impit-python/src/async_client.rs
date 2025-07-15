@@ -25,7 +25,7 @@ impl AsyncClient {
     }
 
     pub fn __aexit__<'python>(
-        &mut self,
+        &self,
         _exc_type: &crate::Bound<'_, crate::PyAny>,
         _exc_value: &crate::Bound<'_, crate::PyAny>,
         _traceback: &crate::Bound<'_, crate::PyAny>,
