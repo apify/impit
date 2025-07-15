@@ -83,12 +83,19 @@ class TestBasicRequests:
 
         impit = Client(browser=browser, cookie_jar=cookies_jar, follow_redirects=True)
 
-        url = get_httpbin_url('/response-headers', query={'set-cookie': ['basic=1; Path=/; HttpOnly; SameSite=Lax',
-                                                                                 'withpath=2; Path=/html; SameSite=None',
-                                                                                 'strict=3; Path=/; SameSite=Strict',
-                                                                                 'secure=4; Path=/; HttpOnly; Secure; SameSite=Strict',
-                                                                                 'short=5; Path=/;',
-                                                                                 'domain=6; Path=/; Domain=.127.0.0.1;']})
+        url = get_httpbin_url(
+            '/response-headers',
+            query={
+                'set-cookie': [
+                    'basic=1; Path=/; HttpOnly; SameSite=Lax',
+                    'withpath=2; Path=/html; SameSite=None',
+                    'strict=3; Path=/; SameSite=Strict',
+                    'secure=4; Path=/; HttpOnly; Secure; SameSite=Strict',
+                    'short=5; Path=/;',
+                    'domain=6; Path=/; Domain=.127.0.0.1;',
+                ]
+            },
+        )
 
         impit.get(url)
 

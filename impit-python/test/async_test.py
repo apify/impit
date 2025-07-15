@@ -83,12 +83,19 @@ class TestBasicRequests:
 
         impit = AsyncClient(browser=browser, cookie_jar=cookies_jar, follow_redirects=True)
 
-        url = get_httpbin_url('/response-headers', query={'set-cookie': ['basic=1; Path=/; HttpOnly; SameSite=Lax',
-                                                                                 'withpath=2; Path=/html; SameSite=None',
-                                                                                 'strict=3; Path=/; SameSite=Strict',
-                                                                                 'secure=4; Path=/; HttpOnly; Secure; SameSite=Strict',
-                                                                                 'short=5; Path=/;',
-                                                                                 'domain=6; Path=/; Domain=.127.0.0.1;']})
+        url = get_httpbin_url(
+            '/response-headers',
+            query={
+                'set-cookie': [
+                    'basic=1; Path=/; HttpOnly; SameSite=Lax',
+                    'withpath=2; Path=/html; SameSite=None',
+                    'strict=3; Path=/; SameSite=Strict',
+                    'secure=4; Path=/; HttpOnly; Secure; SameSite=Strict',
+                    'short=5; Path=/;',
+                    'domain=6; Path=/; Domain=.127.0.0.1;',
+                ]
+            },
+        )
 
         await impit.get(url)
 
@@ -120,7 +127,6 @@ class TestBasicRequests:
                 # Crate cookies, ignores the starting dot in the domain
                 # but it's ok - https://www.rfc-editor.org/rfc/rfc6265#section-4.1.2.3
                 assert cookie.domain == '127.0.0.1'
-
 
     @pytest.mark.asyncio
     async def test_cookie_jar_works(self, browser: Browser) -> None:
