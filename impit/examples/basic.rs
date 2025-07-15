@@ -1,4 +1,3 @@
-
 use impit::emulation::Browser;
 use impit::impit::Impit;
 

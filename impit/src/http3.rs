@@ -52,16 +52,18 @@ impl H3Engine {
                 return supports_h3;
             }
         }
-    
+
         let domain_name = Name::from_utf8(host).unwrap();
 
         let response = {
             let mut client = self.client.lock().await;
-            client.query(
-                domain_name,
-                hickory_proto::rr::DNSClass::IN,
-                hickory_proto::rr::RecordType::HTTPS,
-            ).await
+            client
+                .query(
+                    domain_name,
+                    hickory_proto::rr::DNSClass::IN,
+                    hickory_proto::rr::RecordType::HTTPS,
+                )
+                .await
         };
 
         let dns_h3_support = response.is_ok_and(|response| {
