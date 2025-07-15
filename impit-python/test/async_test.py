@@ -103,15 +103,18 @@ class TestBasicRequests:
         for cookie in cookies_jar:
             if cookie.name == 'basic':
                 assert cookie.value == '1'
+                assert cookie.secure is False
                 assert cookie.has_nonstandard_attr('HttpOnly') is True
                 assert cookie.get_nonstandard_attr('SameSite') == 'Lax'
             elif cookie.name == 'withpath':
                 assert cookie.value == '2'
+                assert cookie.secure is False
                 assert cookie.get_nonstandard_attr('SameSite') == 'None'
                 assert cookie.has_nonstandard_attr('HttpOnly') is False
                 assert cookie.path == '/html'
             elif cookie.name == 'strict':
                 assert cookie.value == '3'
+                assert cookie.secure is False
                 assert cookie.has_nonstandard_attr('HttpOnly') is False
                 assert cookie.get_nonstandard_attr('SameSite') == 'Strict'
             elif cookie.name == 'secure':
@@ -121,9 +124,11 @@ class TestBasicRequests:
                 assert cookie.get_nonstandard_attr('SameSite') == 'Strict'
             elif cookie.name == 'short':
                 assert cookie.value == '5'
+                assert cookie.secure is False
                 assert cookie.has_nonstandard_attr('SameSite') is False
             elif cookie.name == 'domain':
                 assert cookie.value == '6'
+                assert cookie.secure is False
                 # Crate cookies, ignores the starting dot in the domain
                 # but it's ok - https://www.rfc-editor.org/rfc/rfc6265#section-4.1.2.3
                 assert cookie.domain == '127.0.0.1'

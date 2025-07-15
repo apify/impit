@@ -32,7 +32,7 @@ impl CookieStore for PythonCookieJar {
                 kwargs
                     .set_item("path", cookie.path().unwrap_or(""))
                     .unwrap();
-                kwargs.set_item("secure", cookie.secure()).unwrap();
+                kwargs.set_item("secure", cookie.secure().unwrap_or(false)).unwrap();
                 kwargs
                     .set_item(
                         "domain",
