@@ -3,7 +3,7 @@ use impit::impit::Impit;
 
 #[tokio::main]
 async fn main() {
-    let mut impit = Impit::builder()
+    let impit = Impit::builder()
         .with_browser(Browser::Firefox)
         .with_http3()
         .build();

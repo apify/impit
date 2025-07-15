@@ -99,7 +99,7 @@ fn impit(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
                     cookie_jar: Option<pyo3::Bound<'_, pyo3::PyAny>>,
                     cookies: Option<pyo3::Bound<'_, pyo3::PyAny>>,
                 ) -> Result<response::ImpitPyResponse, errors::ImpitPyError> {
-                    let mut client = Client::new(_py, None, None, None, None, None, None, None, None, cookie_jar, cookies, None);
+                    let client = Client::new(_py, None, None, None, None, None, None, None, None, cookie_jar, cookies, None);
 
                     client.$name(url, content, data, headers, timeout, force_http3)
                 }

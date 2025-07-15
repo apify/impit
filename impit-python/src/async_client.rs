@@ -25,7 +25,7 @@ impl AsyncClient {
     }
 
     pub fn __aexit__<'python>(
-        &mut self,
+        &self,
         _exc_type: &crate::Bound<'_, crate::PyAny>,
         _exc_value: &crate::Bound<'_, crate::PyAny>,
         _traceback: &crate::Bound<'_, crate::PyAny>,
@@ -402,7 +402,7 @@ impl AsyncClient {
         let method = method.to_string();
 
         pyo3_async_runtimes::tokio::get_runtime().spawn(async move {
-            let mut impit = impit_config.build();
+            let impit = impit_config.build();
 
             let response = match method.to_lowercase().as_str() {
                 "get" => impit.get(url, Some(options)).await,

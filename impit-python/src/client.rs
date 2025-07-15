@@ -28,7 +28,7 @@ impl Client {
     }
 
     pub fn __exit__(
-        &mut self,
+        &self,
         _exc_type: &crate::Bound<'_, crate::PyAny>,
         _exc_value: &crate::Bound<'_, crate::PyAny>,
         _traceback: &crate::Bound<'_, crate::PyAny>,
@@ -116,7 +116,7 @@ impl Client {
 
     #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
     pub fn get(
-        &mut self,
+        &self,
         url: String,
         content: Option<Vec<u8>>,
         data: Option<RequestBody>,
@@ -138,7 +138,7 @@ impl Client {
 
     #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
     pub fn head(
-        &mut self,
+        &self,
         url: String,
         content: Option<Vec<u8>>,
         data: Option<RequestBody>,
@@ -160,7 +160,7 @@ impl Client {
 
     #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
     pub fn post(
-        &mut self,
+        &self,
         url: String,
         content: Option<Vec<u8>>,
         data: Option<RequestBody>,
@@ -182,7 +182,7 @@ impl Client {
 
     #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
     pub fn patch(
-        &mut self,
+        &self,
         url: String,
         content: Option<Vec<u8>>,
         data: Option<RequestBody>,
@@ -204,7 +204,7 @@ impl Client {
 
     #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
     pub fn put(
-        &mut self,
+        &self,
         url: String,
         content: Option<Vec<u8>>,
         data: Option<RequestBody>,
@@ -226,7 +226,7 @@ impl Client {
 
     #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
     pub fn delete(
-        &mut self,
+        &self,
         url: String,
         content: Option<Vec<u8>>,
         data: Option<RequestBody>,
@@ -248,7 +248,7 @@ impl Client {
 
     #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
     pub fn options(
-        &mut self,
+        &self,
         url: String,
         content: Option<Vec<u8>>,
         data: Option<RequestBody>,
@@ -270,7 +270,7 @@ impl Client {
 
     #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
     pub fn trace(
-        &mut self,
+        &self,
         url: String,
         content: Option<Vec<u8>>,
         data: Option<RequestBody>,
@@ -292,7 +292,7 @@ impl Client {
 
     #[pyo3(signature = (method, url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
     pub fn stream<'python>(
-        &mut self,
+        &self,
         py: Python<'python>,
         method: &str,
         url: String,
@@ -337,7 +337,7 @@ impl Client {
 
     #[pyo3(signature = (method, url, content=None, data=None, headers=None, timeout=None, force_http3=false, stream=false))]
     pub fn request(
-        &mut self,
+        &self,
         method: &str,
         url: String,
         content: Option<Vec<u8>>,

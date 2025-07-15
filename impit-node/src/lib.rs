@@ -38,11 +38,10 @@ impl ImpitWrapper {
     })
   }
 
-  #[allow(clippy::missing_safety_doc)] // This method is `unsafe`, but is only ever used from the Node.JS bindings.
   #[napi]
   /// Fetch a URL with the given options.
-  pub async unsafe fn fetch(
-    &mut self,
+  pub async fn fetch(
+    &self,
     url: String,
     request_init: Option<RequestInit>,
   ) -> Result<ImpitResponse, napi::Error> {
