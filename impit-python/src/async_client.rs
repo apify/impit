@@ -1,8 +1,12 @@
-use std::{collections::HashMap, time::Duration};
+use std::{collections::HashMap, sync::Arc, time::Duration};
 
-use impit::{emulation::Browser, errors::ImpitError, impit::ImpitBuilder, request::RequestOptions};
+use impit::{
+    emulation::Browser,
+    errors::ImpitError,
+    impit::{Impit, ImpitBuilder},
+    request::RequestOptions,
+};
 use pyo3::{exceptions::PyTypeError, ffi::c_str, prelude::*};
-use tokio::sync::oneshot;
 
 use crate::{
     cookies::PythonCookieJar, errors::ImpitPyError, request::form_to_bytes,
@@ -11,7 +15,7 @@ use crate::{
 
 #[pyclass]
 pub(crate) struct AsyncClient {
-    impit_config: ImpitBuilder<PythonCookieJar>,
+    impit: Arc<Impit<PythonCookieJar>>,
     default_encoding: Option<String>,
 }
 
@@ -21,7 +25,7 @@ impl AsyncClient {
         slf: Py<Self>,
         py: Python<'_>,
     ) -> Result<pyo3::Bound<'_, pyo3::PyAny>, pyo3::PyErr> {
-        pyo3_async_runtimes::async_std::future_into_py::<_, Py<AsyncClient>>(py, async { Ok(slf) })
+        pyo3_async_runtimes::tokio::future_into_py::<_, Py<AsyncClient>>(py, async { Ok(slf) })
     }
 
     pub fn __aexit__<'python>(
@@ -31,7 +35,7 @@ impl AsyncClient {
         _traceback: &crate::Bound<'_, crate::PyAny>,
         py: Python<'python>,
     ) -> Result<pyo3::Bound<'python, pyo3::PyAny>, pyo3::PyErr> {
-        pyo3_async_runtimes::async_std::future_into_py::<_, ()>(py, async { Ok(()) })
+        pyo3_async_runtimes::tokio::future_into_py::<_, ()>(py, async { Ok(()) })
     }
 
     #[new]
@@ -49,14 +53,18 @@ impl AsyncClient {
         cookie_jar: Option<crate::Bound<'_, crate::PyAny>>,
         cookies: Option<crate::Bound<'_, crate::PyAny>>,
         headers: Option<HashMap<String, String>>,
-    ) -> Self {
+    ) -> PyResult<Self> {
         let builder = ImpitBuilder::default();
 
         let builder = match browser {
             Some(browser) => match browser.to_lowercase().as_str() {
                 "chrome" => builder.with_browser(Browser::Chrome),
                 "firefox" => builder.with_browser(Browser::Firefox),
-                _ => panic!("Unsupported browser"),
+                _ => {
+                    return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(
+                        "Unsupported browser",
+                    ))
+                }
             },
             None => builder,
         };
@@ -90,7 +98,9 @@ impl AsyncClient {
 
         let builder = match (cookie_jar, cookies) {
             (Some(_), Some(_)) => {
-                panic!("Both cookie_jar and cookies cannot be provided at the same time")
+                return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(
+                    "Both cookie_jar and cookies cannot be provided at the same time",
+                ));
             }
             (Some(cookie_jar), None) => {
                 builder.with_cookie_store(PythonCookieJar::new(py, cookie_jar.into()))
@@ -106,10 +116,13 @@ impl AsyncClient {
             None => builder,
         };
 
-        Self {
-            impit_config: builder,
+        let impit =
+            pyo3_async_runtimes::tokio::get_runtime().block_on(async { Arc::new(builder.build()) });
+
+        Ok(Self {
+            impit,
             default_encoding,
-        }
+        })
     }
 
     #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
@@ -396,15 +409,13 @@ impl AsyncClient {
             http3_prior_knowledge: force_http3.unwrap_or(false),
         };
 
-        let (tx, rx) = oneshot::channel();
+        let method_str = method.to_string();
+        let default_encoding = self.default_encoding.clone();
+        let stream_value = stream.unwrap_or(false);
+        let impit = Arc::clone(&self.impit);
 
-        let impit_config = self.impit_config.clone();
-        let method = method.to_string();
-
-        pyo3_async_runtimes::tokio::get_runtime().spawn(async move {
-            let impit = impit_config.build();
-
-            let response = match method.to_lowercase().as_str() {
+        pyo3_async_runtimes::tokio::future_into_py::<_, ImpitPyResponse>(py, async move {
+            let response = match method_str.to_lowercase().as_str() {
                 "get" => impit.get(url, Some(options)).await,
                 "post" => impit.post(url, Some(body), Some(options)).await,
                 "patch" => impit.patch(url, Some(body), Some(options)).await,
@@ -413,22 +424,17 @@ impl AsyncClient {
                 "trace" => impit.trace(url, Some(options)).await,
                 "head" => impit.head(url, Some(options)).await,
                 "delete" => impit.delete(url, Some(options)).await,
-                _ => Err(ImpitError::InvalidMethod(method.to_string())),
+                _ => Err(ImpitError::InvalidMethod(method_str.to_string())),
             };
 
-            tx.send(response).unwrap();
-        });
-
-        let default_encoding = self.default_encoding.clone();
-
-        pyo3_async_runtimes::async_std::future_into_py::<_, ImpitPyResponse>(py, async move {
-            let response = rx.await.unwrap();
-
-            response
-                .map(|response| {
-                    ImpitPyResponse::from(response, default_encoding, stream.unwrap_or(false))
-                })
-                .map_err(|err| ImpitPyError(err).into())
+            match response {
+                Ok(response) => {
+                    let py_response =
+                        ImpitPyResponse::from_async(response, default_encoding, stream_value).await;
+                    Ok(py_response)
+                }
+                Err(err) => Err(ImpitPyError(err).into()),
+            }
         })
     }
 }
