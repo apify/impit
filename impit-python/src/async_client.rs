@@ -402,7 +402,7 @@ impl AsyncClient {
         let method = method.to_string();
 
         pyo3_async_runtimes::tokio::get_runtime().spawn(async move {
-            let mut impit = impit_config.build();
+            let impit = impit_config.build();
 
             let response = match method.to_lowercase().as_str() {
                 "get" => impit.get(url, Some(options)).await,
