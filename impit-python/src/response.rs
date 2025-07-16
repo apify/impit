@@ -464,6 +464,87 @@ impl ImpitPyResponse {
         })
     }
 
+    pub async fn from_async(
+        val: Response,
+        preferred_encoding: Option<String>,
+        stream: bool,
+    ) -> Self {
+        let status_code = val.status().as_u16();
+        let url = val.url().to_string();
+        let reason_phrase = val
+            .status()
+            .canonical_reason()
+            .unwrap_or_default()
+            .to_string();
+        let http_version = match val.version() {
+            Version::HTTP_09 => "HTTP/0.9".to_string(),
+            Version::HTTP_10 => "HTTP/1.0".to_string(),
+            Version::HTTP_11 => "HTTP/1.1".to_string(),
+            Version::HTTP_2 => "HTTP/2".to_string(),
+            Version::HTTP_3 => "HTTP/3".to_string(),
+            _ => "Unknown".to_string(),
+        };
+        let is_redirect = val.status().is_redirection();
+        let headers = HashMap::from_iter(val.headers().iter().map(|(k, v)| {
+            (
+                k.as_str().to_string(),
+                v.to_str().unwrap_or_default().to_string(),
+            )
+        }));
+
+        let content_type_charset = headers
+            .get("content-type")
+            .and_then(|ct| ContentType::from(ct).ok())
+            .and_then(|ct| ct.into());
+
+        let (content, inner_state, encoding, inner, is_closed, is_stream_consumed) = if !stream {
+            let content = val.bytes().await.map(|b| b.to_vec()).unwrap_or_default();
+            let encoding = preferred_encoding
+                .and_then(|e| encoding_from_whatwg_label(&e))
+                .or(content_type_charset)
+                .or(impit::utils::determine_encoding(content.as_slice()))
+                .unwrap_or(impit::utils::encodings::UTF_8);
+
+            (
+                Some(content),
+                InnerResponseState::Read,
+                encoding,
+                None,
+                true,
+                true,
+            )
+        } else {
+            let encoding = preferred_encoding
+                .and_then(|e| encoding_from_whatwg_label(&e))
+                .or(content_type_charset)
+                .unwrap_or(impit::utils::encodings::UTF_8);
+            (
+                None,
+                InnerResponseState::Unread,
+                encoding,
+                Some(val),
+                false,
+                false,
+            )
+        };
+
+        ImpitPyResponse {
+            status_code,
+            url,
+            reason_phrase,
+            http_version,
+            is_redirect,
+            headers,
+            encoding: encoding.name().to_string(),
+            text: None,
+            content,
+            is_closed,
+            is_stream_consumed,
+            inner_state,
+            inner,
+        }
+    }
+
     pub fn from(val: Response, preferred_encoding: Option<String>, stream: bool) -> Self {
         let status_code = val.status().as_u16();
         let url = val.url().to_string();
