@@ -74,7 +74,7 @@ describe.each([
             'http://',
             'https://',
         ])('to an %s domain', async (protocol) => {
-            const response = impit.fetch(`${protocol}example.org`);
+            const response = impit.fetch(`${protocol}example.com`);
             await expect(response).resolves.toBeTruthy();
         });
 
@@ -243,7 +243,7 @@ describe.each([
             'HEAD',
             'OPTIONS'
         ] as HttpMethod[])('%s', async (method) => {
-            const response = impit.fetch(`https://example.org`, {
+            const response = impit.fetch(`https://example.com`, {
                 method
             });
             await expect(response).resolves.toBeTruthy();
@@ -278,7 +278,7 @@ describe.each([
         });
 
         test.each(['post', 'put', 'patch'])('using %s method', async (method) => {
-            const response = impit.fetch('https://example.org', {
+            const response = impit.fetch('https://example.com', {
                 method: method.toUpperCase() as HttpMethod,
                 body: 'foo'
             });
