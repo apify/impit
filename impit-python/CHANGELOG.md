@@ -3,6 +3,19 @@
 All notable changes to this project will be documented in this file.
 
 
+## py-0.4.1 - 2025-07-22
+
+#### Bug Fixes
+
+- Exception class types are inheriting from `Exception` (#207)
+
+- Fix cookies with attributes 'SameSite' and `domain` (#213)
+
+#### Refactor
+
+- Improve thread safety, make `Impit` `Sync` (#212)
+
+
 ## py-0.4.0 - 2025-07-07
 
 #### Bug Fixes
