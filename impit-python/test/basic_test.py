@@ -25,7 +25,7 @@ class TestBasicRequests:
         impit = Client(browser=browser)
 
         resp = impit.get(f'{protocol}apify.com')
-        assert resp.status_code == 301 if protocol == 'https://' else resp.status_code == 200
+        assert resp.status_code == 200 if protocol == 'https://' else resp.status_code == 301
 
     def test_context_manager(self, browser: Browser) -> None:
         with Client(browser=browser) as impit:

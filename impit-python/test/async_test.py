@@ -26,7 +26,7 @@ class TestBasicRequests:
         impit = AsyncClient(browser=browser)
 
         resp = await impit.get(f'{protocol}apify.com')
-        assert resp.status_code == 301 if protocol == 'https://' else resp.status_code == 200
+        assert resp.status_code == 200 if protocol == 'https://' else resp.status_code == 301
 
     @pytest.mark.asyncio
     async def test_context_manager(self, browser: Browser) -> None:
