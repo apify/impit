@@ -231,7 +231,7 @@ class TestBasicRequests:
     def test_default_no_redirect(self, browser: Browser) -> None:
         impit = Client(browser=browser)
 
-        target_url = 'https://crawlee.dev'
+        target_url = 'https://crawlee.dev/'
         redirect_url = get_httpbin_url('/redirect-to', query={'url': target_url})
 
         response = impit.get(redirect_url)
@@ -245,7 +245,7 @@ class TestBasicRequests:
     def test_follow_redirects(self, browser: Browser) -> None:
         impit = Client(browser=browser, follow_redirects=True)
 
-        target_url = 'https://crawlee.dev'
+        target_url = 'https://crawlee.dev/'
         redirect_url = get_httpbin_url('/redirect-to', query={'url': target_url})
 
         response = impit.get(redirect_url)

@@ -53,13 +53,22 @@ beforeAll(async () => {
 }, 30e3);
 
 afterAll(async () => {
-    const server = await getServer();
-    await new Promise<void>(res => {
-        server?.close(() => res())
-    });
-    await new Promise<void>(res => {
-        socksServer?.close(() => res())
-    });
+    await Promise.all([
+        new Promise<void>(async (res) => {
+            const server = await getServer();
+            server?.close(() => res())
+        }),
+        Promise.race([
+            new Promise<void>(res => {
+                socksServer?.close(() => res())
+            }),
+            new Promise<void>(res => {
+                setTimeout(() => {
+                    res();
+                }, 5000);
+            })
+        ]),
+    ]);
 });
 
 describe.each([
