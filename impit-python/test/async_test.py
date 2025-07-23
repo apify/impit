@@ -25,13 +25,13 @@ class TestBasicRequests:
     async def test_basic_requests(self, protocol: str, browser: Browser) -> None:
         impit = AsyncClient(browser=browser)
 
-        resp = await impit.get(f'{protocol}example.org')
-        assert resp.status_code == 200
+        resp = await impit.get(f'{protocol}apify.com')
+        assert resp.status_code == 200 if protocol == 'https://' else resp.status_code == 301
 
     @pytest.mark.asyncio
     async def test_context_manager(self, browser: Browser) -> None:
         async with AsyncClient(browser=browser) as impit:
-            resp = await impit.get('https://example.org')
+            resp = await impit.get(get_httpbin_url('/get'))
             assert resp.status_code == 200
 
     @pytest.mark.asyncio
@@ -239,13 +239,13 @@ class TestBasicRequests:
 
         m = getattr(impit, method.lower())
 
-        await m('https://example.org')
+        await m(get_httpbin_url('/anything'))
 
     @pytest.mark.asyncio
     async def test_default_no_redirect(self, browser: Browser) -> None:
         impit = AsyncClient(browser=browser)
 
-        target_url = 'https://example.org/'
+        target_url = 'https://crawlee.dev/'
         redirect_url = get_httpbin_url('/redirect-to', query={'url': target_url})
 
         response = await impit.get(redirect_url)
@@ -260,7 +260,7 @@ class TestBasicRequests:
     async def test_follow_redirects(self, browser: Browser) -> None:
         impit = AsyncClient(browser=browser, follow_redirects=True)
 
-        target_url = 'https://example.org/'
+        target_url = 'https://crawlee.dev/'
         redirect_url = get_httpbin_url('/redirect-to', query={'url': target_url})
 
         response = await impit.get(redirect_url)
