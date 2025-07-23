@@ -243,7 +243,7 @@ describe.each([
             'HEAD',
             'OPTIONS'
         ] as HttpMethod[])('%s', async (method) => {
-            const response = impit.fetch(`https://example.com`, {
+            const response = impit.fetch(getHttpBinUrl('/anything'), {
                 method
             });
             await expect(response).resolves.toBeTruthy();
@@ -278,7 +278,7 @@ describe.each([
         });
 
         test.each(['post', 'put', 'patch'])('using %s method', async (method) => {
-            const response = impit.fetch('https://example.com', {
+            const response = impit.fetch(getHttpBinUrl('/anything'), {
                 method: method.toUpperCase() as HttpMethod,
                 body: 'foo'
             });

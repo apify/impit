@@ -29,7 +29,7 @@ class TestBasicRequests:
 
     def test_context_manager(self, browser: Browser) -> None:
         with Client(browser=browser) as impit:
-            resp = impit.get('https://example.com')
+            resp = impit.get(get_httpbin_url('/get'))
             assert resp.status_code == 200
 
     def test_boringssl_based_server(self, browser: Browser) -> None:
@@ -226,7 +226,7 @@ class TestBasicRequests:
 
         m = getattr(impit, method.lower())
 
-        m('https://example.com')
+        m(get_httpbin_url('/anything'))
 
     def test_default_no_redirect(self, browser: Browser) -> None:
         impit = Client(browser=browser)
@@ -245,7 +245,7 @@ class TestBasicRequests:
     def test_follow_redirects(self, browser: Browser) -> None:
         impit = Client(browser=browser, follow_redirects=True)
 
-        target_url = 'https://example.com/'
+        target_url = get_httpbin_url('/get')
         redirect_url = get_httpbin_url('/redirect-to', query={'url': target_url})
 
         response = impit.get(redirect_url)
