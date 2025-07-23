@@ -32,13 +32,15 @@ impl CookieStore for PythonCookieJar {
                 kwargs
                     .set_item("path", cookie.path().unwrap_or(""))
                     .unwrap();
-                kwargs.set_item("secure", cookie.secure()).unwrap();
+                kwargs
+                    .set_item("secure", cookie.secure().unwrap_or(false))
+                    .unwrap();
                 kwargs
                     .set_item(
                         "domain",
                         cookie
                             .domain()
-                            .unwrap_or(url.host_str().unwrap_or_default()),
+                            .unwrap_or_else(|| url.host_str().unwrap_or_default()),
                     )
                     .unwrap();
                 kwargs.set_item("comment", None::<&str>).unwrap();
@@ -75,6 +77,16 @@ impl CookieStore for PythonCookieJar {
                 if let Some(http_only) = cookie.http_only() {
                     rest.set_item("HttpOnly", http_only).unwrap();
                 }
+
+                if let Some(same_site) = cookie.same_site() {
+                    let same_site_str = match same_site {
+                        cookie::SameSite::Strict => "Strict",
+                        cookie::SameSite::Lax => "Lax",
+                        cookie::SameSite::None => "None",
+                    };
+                    rest.set_item("SameSite", same_site_str).unwrap();
+                }
+
                 kwargs.set_item("rest", rest).unwrap();
 
                 let py_cookie = self.cookie_constructor.call(py, (), Some(&kwargs)).unwrap();

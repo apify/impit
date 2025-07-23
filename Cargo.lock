@@ -2546,8 +2546,8 @@ dependencies = [
 
 [[package]]
 name = "rustls"
-version = "0.23.26"
-source = "git+https://github.com/apify/rustls?branch=main#a90f77d960c4a00767bd6d51e67eee028f88d6fc"
+version = "0.23.29"
+source = "git+https://github.com/apify/rustls?branch=main#f384c6c18eb2bfe850d142a4cc7dfe5dc376e7e3"
 dependencies = [
  "aws-lc-rs",
  "brotli",
@@ -2573,9 +2573,9 @@ dependencies = [
 
 [[package]]
 name = "rustls-webpki"
-version = "0.103.3"
+version = "0.103.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e4a72fe2bcf7a6ac6fd7d0b9e5cb68aeb7d4c0a0271730218b3e92d43b4eb435"
+checksum = "0a17884ae0c1b773f1ccd2bd4a8c72f16da897310a98b0e84bf349ad5ead92fc"
 dependencies = [
  "aws-lc-rs",
  "ring",

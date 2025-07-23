@@ -25,13 +25,13 @@ class TestBasicRequests:
     async def test_basic_requests(self, protocol: str, browser: Browser) -> None:
         impit = AsyncClient(browser=browser)
 
-        resp = await impit.get(f'{protocol}example.org')
-        assert resp.status_code == 200
+        resp = await impit.get(f'{protocol}apify.com')
+        assert resp.status_code == 200 if protocol == 'https://' else resp.status_code == 301
 
     @pytest.mark.asyncio
     async def test_context_manager(self, browser: Browser) -> None:
         async with AsyncClient(browser=browser) as impit:
-            resp = await impit.get('https://example.org')
+            resp = await impit.get(get_httpbin_url('/get'))
             assert resp.status_code == 200
 
     @pytest.mark.asyncio
@@ -77,6 +77,61 @@ class TestBasicRequests:
 
         for cookie in cookies_jar:
             assert cookie.has_nonstandard_attr('HttpOnly') is not None
+
+    async def test_complex_cookies(self, browser: Browser) -> None:
+        cookies_jar = CookieJar()
+
+        impit = AsyncClient(browser=browser, cookie_jar=cookies_jar, follow_redirects=True)
+
+        url = get_httpbin_url(
+            '/response-headers',
+            query={
+                'set-cookie': [
+                    'basic=1; Path=/; HttpOnly; SameSite=Lax',
+                    'withpath=2; Path=/html; SameSite=None',
+                    'strict=3; Path=/; SameSite=Strict',
+                    'secure=4; Path=/; HttpOnly; Secure; SameSite=Strict',
+                    'short=5; Path=/;',
+                    'domain=6; Path=/; Domain=.127.0.0.1;',
+                ]
+            },
+        )
+
+        await impit.get(url)
+
+        assert len(cookies_jar) == 6
+        for cookie in cookies_jar:
+            if cookie.name == 'basic':
+                assert cookie.value == '1'
+                assert cookie.secure is False
+                assert cookie.has_nonstandard_attr('HttpOnly') is True
+                assert cookie.get_nonstandard_attr('SameSite') == 'Lax'
+            elif cookie.name == 'withpath':
+                assert cookie.value == '2'
+                assert cookie.secure is False
+                assert cookie.get_nonstandard_attr('SameSite') == 'None'
+                assert cookie.has_nonstandard_attr('HttpOnly') is False
+                assert cookie.path == '/html'
+            elif cookie.name == 'strict':
+                assert cookie.value == '3'
+                assert cookie.secure is False
+                assert cookie.has_nonstandard_attr('HttpOnly') is False
+                assert cookie.get_nonstandard_attr('SameSite') == 'Strict'
+            elif cookie.name == 'secure':
+                assert cookie.value == '4'
+                assert cookie.secure is True
+                assert cookie.has_nonstandard_attr('HttpOnly') is True
+                assert cookie.get_nonstandard_attr('SameSite') == 'Strict'
+            elif cookie.name == 'short':
+                assert cookie.value == '5'
+                assert cookie.secure is False
+                assert cookie.has_nonstandard_attr('SameSite') is False
+            elif cookie.name == 'domain':
+                assert cookie.value == '6'
+                assert cookie.secure is False
+                # Crate cookies, ignores the starting dot in the domain
+                # but it's ok - https://www.rfc-editor.org/rfc/rfc6265#section-4.1.2.3
+                assert cookie.domain == '127.0.0.1'
 
     @pytest.mark.asyncio
     async def test_cookie_jar_works(self, browser: Browser) -> None:
@@ -184,13 +239,13 @@ class TestBasicRequests:
 
         m = getattr(impit, method.lower())
 
-        await m('https://example.org')
+        await m(get_httpbin_url('/anything'))
 
     @pytest.mark.asyncio
     async def test_default_no_redirect(self, browser: Browser) -> None:
         impit = AsyncClient(browser=browser)
 
-        target_url = 'https://example.org/'
+        target_url = 'https://crawlee.dev/'
         redirect_url = get_httpbin_url('/redirect-to', query={'url': target_url})
 
         response = await impit.get(redirect_url)
@@ -205,7 +260,7 @@ class TestBasicRequests:
     async def test_follow_redirects(self, browser: Browser) -> None:
         impit = AsyncClient(browser=browser, follow_redirects=True)
 
-        target_url = 'https://example.org/'
+        target_url = 'https://crawlee.dev/'
         redirect_url = get_httpbin_url('/redirect-to', query={'url': target_url})
 
         response = await impit.get(redirect_url)
