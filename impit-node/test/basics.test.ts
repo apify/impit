@@ -74,7 +74,7 @@ describe.each([
             'http://',
             'https://',
         ])('to an %s domain', async (protocol) => {
-            const response = impit.fetch(`${protocol}example.com`);
+            const response = impit.fetch(`${protocol}apify.com`);
             await expect(response).resolves.toBeTruthy();
         });
 

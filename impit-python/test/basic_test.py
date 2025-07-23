@@ -24,7 +24,7 @@ class TestBasicRequests:
     def test_basic_requests(self, protocol: str, browser: Browser) -> None:
         impit = Client(browser=browser)
 
-        resp = impit.get(f'{protocol}example.com')
+        resp = impit.get(f'{protocol}apify.com')
         assert resp.status_code == 200
 
     def test_context_manager(self, browser: Browser) -> None:
@@ -231,7 +231,7 @@ class TestBasicRequests:
     def test_default_no_redirect(self, browser: Browser) -> None:
         impit = Client(browser=browser)
 
-        target_url = 'https://example.com/'
+        target_url = 'https://apify.com/'
         redirect_url = get_httpbin_url('/redirect-to', query={'url': target_url})
 
         response = impit.get(redirect_url)
