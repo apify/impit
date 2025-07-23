@@ -403,7 +403,7 @@ impl Client {
                     .await;
                     Ok(py_response)
                 }
-                Err(err) => Err(ImpitPyError(err).into()),
+                Err(err) => Err(ImpitPyError(err)),
             }
         })
     }
