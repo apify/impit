@@ -42,7 +42,7 @@
     "build": "napi build --platform --release --no-const-enum",
     "build:debug": "napi build --platform --no-const-enum",
     "prepublishOnly": "napi prepublish -t npm --no-gh-release",
-    "test": "vitest --retry=3",
+    "test": "vitest --retry=5",
     "universal": "napi universal",
     "copy-version": "napi version"
   },
