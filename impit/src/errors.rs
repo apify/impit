@@ -22,7 +22,7 @@ pub enum ImpitError {
     RequestError,
     #[error("Transport error occurred.")]
     TransportError,
-    #[error("Request timeout ({0}) ms exceeded.")]
+    #[error("Request timeout ({0} ms) exceeded.")]
     TimeoutException(u128),
     #[error("Connection timed out.")]
     ConnectTimeout,

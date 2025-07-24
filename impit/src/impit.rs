@@ -372,7 +372,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
             return Err(ImpitError::from(
                 response.err().unwrap(),
                 ErrorContext {
-                    timeout: options.timeout.unwrap_or(Duration::from_millis(0)),
+                    timeout: options.timeout.unwrap_or(self.config.request_timeout),
                     max_redirects,
                     method: method.to_string(),
                     protocol: parsed_url.scheme().to_string(),
