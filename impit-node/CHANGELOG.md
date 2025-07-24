@@ -3,6 +3,19 @@
 All notable changes to this project will be documented in this file.
 
 
+## js-0.5.3 - 2025-07-24
+
+#### Bug Fixes
+
+- Log correct timeout duration on `TimeoutException` (#222)
+  - Logs the default `Impit`-instance-wide timeout if the request-specific timeout is missing.
+
+
+#### Refactor
+
+- Improve thread safety, make `Impit` `Sync` (#212)
+
+
 ## js-0.5.2 - 2025-06-25
 
 #### Features
