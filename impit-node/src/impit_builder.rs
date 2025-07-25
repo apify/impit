@@ -49,6 +49,10 @@ pub struct ImpitOptions<'a> {
   /// Additional headers to include in every request made by this Impit instance.
   #[napi(ts_type = "Headers | Record<string, string> | [string, string][]")]
   pub headers: Option<Vec<(String, String)>>,
+  /// Local address to bind the client to. Useful for testing purposes or when you want to bind the client to a specific network interface.
+  ///
+  /// Can be an IP address in the format "xxx.xxx.xxx.xxx" (for IPv4) or "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff" (for IPv6).
+  pub local_address: Option<String>,
 }
 
 impl ImpitOptions<'_> {
@@ -93,6 +97,12 @@ impl ImpitOptions<'_> {
       config = config.with_redirect(RedirectBehavior::ManualRedirect);
     } else {
       config = config.with_redirect(RedirectBehavior::FollowRedirect(max_redirects));
+    }
+
+    if let Some(local_address) = self.local_address {
+      config = config
+        .with_local_address(local_address)
+        .map_err(|e| napi::Error::from_reason(e.to_string()))?;
     }
 
     Ok(config)

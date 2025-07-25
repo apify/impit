@@ -2,7 +2,7 @@ use tokio::sync::RwLock;
 
 use log::debug;
 use reqwest::{cookie::CookieStore, header::HeaderMap, Method, Response, Version};
-use std::{fmt::Debug, str::FromStr, sync::Arc, time::Duration};
+use std::{fmt::Debug, net::IpAddr, str::FromStr, sync::Arc, time::Duration};
 use url::Url;
 
 use crate::{
@@ -74,6 +74,7 @@ pub struct ImpitBuilder<CookieStoreImpl: CookieStore + 'static> {
     redirect: RedirectBehavior,
     cookie_store: Option<Arc<CookieStoreImpl>>,
     headers: Option<Vec<(String, String)>>,
+    local_address: Option<IpAddr>,
 }
 
 impl<CookieStoreImpl: CookieStore + 'static> Clone for ImpitBuilder<CookieStoreImpl> {
@@ -88,6 +89,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Clone for ImpitBuilder<CookieStoreI
             redirect: self.redirect.clone(),
             cookie_store: self.cookie_store.clone(),
             headers: self.headers.clone(),
+            local_address: self.local_address,
         }
     }
 }
@@ -104,6 +106,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Default for ImpitBuilder<CookieStor
             redirect: RedirectBehavior::FollowRedirect(10),
             cookie_store: None,
             headers: None,
+            local_address: None,
         }
     }
 }
@@ -181,6 +184,20 @@ impl<CookieStoreImpl: CookieStore + 'static> ImpitBuilder<CookieStoreImpl> {
         self
     }
 
+    /// Sets the local address to bind the client to.
+    ///
+    /// This is useful for testing purposes or when you want to bind the client to a specific network interface.
+    /// Note that this address should be a valid IP address in the format "xxx.xxx.xxx.xxx" (for IPv4) or
+    /// "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff" (for IPv6).
+    pub fn with_local_address(mut self, local_address: String) -> Result<Self, ImpitError> {
+        let ip_addr = local_address.parse::<IpAddr>().map_err(|_| {
+            ImpitError::ReqwestError(format!("Invalid local address: {local_address}"))
+        })?;
+
+        self.local_address = Some(ip_addr);
+        Ok(self)
+    }
+
     /// Sets additional headers to include in every request made by the built [`Impit`] instance.
     ///
     /// This can be used to add e.g. custom user-agent or authorization headers that should be included in every request.
@@ -234,6 +251,10 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
 
         if !config.proxy_url.is_empty() {
             client = client.proxy(reqwest::Proxy::all(&config.proxy_url)?);
+        }
+
+        if let Some(ip_addr) = config.local_address {
+            client = client.local_address(ip_addr);
         }
 
         match config.redirect {
