@@ -36,7 +36,7 @@ impl Client {
     }
 
     #[new]
-    #[pyo3(signature = (browser=None, http3=None, proxy=None, timeout=None, verify=None, default_encoding=None, follow_redirects=None, max_redirects=Some(20), cookie_jar=None, cookies=None, headers=None))]
+    #[pyo3(signature = (browser=None, http3=None, proxy=None, timeout=None, verify=None, default_encoding=None, follow_redirects=None, max_redirects=Some(20), cookie_jar=None, cookies=None, headers=None, local_address=None))]
     pub fn new(
         py: Python<'_>,
         browser: Option<String>,
@@ -50,7 +50,8 @@ impl Client {
         cookie_jar: Option<crate::Bound<'_, crate::PyAny>>,
         cookies: Option<crate::Bound<'_, crate::PyAny>>,
         headers: Option<HashMap<String, String>>,
-    ) -> Self {
+        local_address: Option<String>,
+    ) -> Result<Self, ImpitPyError> {
         let builder = ImpitBuilder::default();
 
         let builder = match browser {
@@ -106,11 +107,20 @@ impl Client {
             }
             (None, None) => builder,
         };
+
+        let builder = match local_address {
+            Some(local_address) => builder
+                .with_local_address(local_address)
+                .map_err(ImpitPyError)?,
+            None => builder,
+        };
+
         pyo3_async_runtimes::tokio::get_runtime().block_on(async {
-            Self {
-                impit: builder.build(),
+            let impit = builder.build();
+            Ok(Self {
+                impit,
                 default_encoding,
-            }
+            })
         })
     }
 
