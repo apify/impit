@@ -3,6 +3,15 @@
 All notable changes to this project will be documented in this file.
 
 
+## py-0.5.0 - 2025-07-30
+
+#### Bug Fixes
+
+- Log correct timeout duration on `TimeoutException` (#222)
+  - Logs the default `Impit`-instance-wide timeout if the request-specific timeout is missing.
+
+
+
 ## py-0.4.1 - 2025-07-22
 
 #### Bug Fixes
