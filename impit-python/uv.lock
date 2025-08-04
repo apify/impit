@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.9"
 
 [[package]]
@@ -113,7 +113,7 @@ wheels = [
 
 [[package]]
 name = "impit"
-version = "0.4.0"
+version = "0.5.0"
 source = { editable = "." }
 
 [package.dev-dependencies]
