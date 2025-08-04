@@ -281,7 +281,6 @@ class TestBasicRequests:
         with pytest.raises(TooManyRedirects):
             impit.get(redirect_url)
 
-
     def test_thread_server(self, browser: Browser) -> None:
         port_holder = [0]
         thread = threading.Thread(target=thread_server, args=(port_holder,))

@@ -25,6 +25,7 @@ def thread_server(port_holder: list[int]) -> None:
     conn.close()
     server.close()
 
+
 @pytest.mark.parametrize(
     ('browser'),
     [
@@ -295,7 +296,6 @@ class TestBasicRequests:
 
         with pytest.raises(TooManyRedirects):
             await impit.get(redirect_url)
-
 
     @pytest.mark.asyncio
     async def test_async_socket_server(self, browser: Browser) -> None:
