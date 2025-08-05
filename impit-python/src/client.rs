@@ -117,6 +117,7 @@ impl Client {
     #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
     pub fn get(
         &self,
+        py: Python<'_>,
         url: String,
         content: Option<Vec<u8>>,
         data: Option<RequestBody>,
@@ -125,6 +126,7 @@ impl Client {
         force_http3: Option<bool>,
     ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request(
+            py,
             "get",
             url,
             content,
@@ -139,6 +141,7 @@ impl Client {
     #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
     pub fn head(
         &self,
+        py: Python<'_>,
         url: String,
         content: Option<Vec<u8>>,
         data: Option<RequestBody>,
@@ -147,6 +150,7 @@ impl Client {
         force_http3: Option<bool>,
     ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request(
+            py,
             "head",
             url,
             content,
@@ -161,6 +165,7 @@ impl Client {
     #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
     pub fn post(
         &self,
+        py: Python<'_>,
         url: String,
         content: Option<Vec<u8>>,
         data: Option<RequestBody>,
@@ -169,6 +174,7 @@ impl Client {
         force_http3: Option<bool>,
     ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request(
+            py,
             "post",
             url,
             content,
@@ -183,6 +189,7 @@ impl Client {
     #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
     pub fn patch(
         &self,
+        py: Python<'_>,
         url: String,
         content: Option<Vec<u8>>,
         data: Option<RequestBody>,
@@ -191,6 +198,7 @@ impl Client {
         force_http3: Option<bool>,
     ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request(
+            py,
             "patch",
             url,
             content,
@@ -205,6 +213,7 @@ impl Client {
     #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
     pub fn put(
         &self,
+        py: Python<'_>,
         url: String,
         content: Option<Vec<u8>>,
         data: Option<RequestBody>,
@@ -213,6 +222,7 @@ impl Client {
         force_http3: Option<bool>,
     ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request(
+            py,
             "put",
             url,
             content,
@@ -227,6 +237,7 @@ impl Client {
     #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
     pub fn delete(
         &self,
+        py: Python<'_>,
         url: String,
         content: Option<Vec<u8>>,
         data: Option<RequestBody>,
@@ -235,6 +246,7 @@ impl Client {
         force_http3: Option<bool>,
     ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request(
+            py,
             "delete",
             url,
             content,
@@ -249,6 +261,7 @@ impl Client {
     #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
     pub fn options(
         &self,
+        py: Python<'_>,
         url: String,
         content: Option<Vec<u8>>,
         data: Option<RequestBody>,
@@ -257,6 +270,7 @@ impl Client {
         force_http3: Option<bool>,
     ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request(
+            py,
             "options",
             url,
             content,
@@ -271,6 +285,7 @@ impl Client {
     #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
     pub fn trace(
         &self,
+        py: Python<'_>,
         url: String,
         content: Option<Vec<u8>>,
         data: Option<RequestBody>,
@@ -279,6 +294,7 @@ impl Client {
         force_http3: Option<bool>,
     ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request(
+            py,
             "trace",
             url,
             content,
@@ -303,6 +319,7 @@ impl Client {
         force_http3: Option<bool>,
     ) -> Result<Bound<'python, PyAny>, PyErr> {
         let response = self.request(
+            py,
             method,
             url,
             content,
@@ -338,6 +355,7 @@ impl Client {
     #[pyo3(signature = (method, url, content=None, data=None, headers=None, timeout=None, force_http3=false, stream=false))]
     pub fn request(
         &self,
+        py: Python<'_>,
         method: &str,
         url: String,
         content: Option<Vec<u8>>,
@@ -380,31 +398,33 @@ impl Client {
             http3_prior_knowledge: force_http3.unwrap_or(false),
         };
 
-        pyo3_async_runtimes::tokio::get_runtime().block_on(async {
-            let response = match method.to_lowercase().as_str() {
-                "get" => self.impit.get(url, Some(options)).await,
-                "post" => self.impit.post(url, Some(body), Some(options)).await,
-                "patch" => self.impit.patch(url, Some(body), Some(options)).await,
-                "put" => self.impit.put(url, Some(body), Some(options)).await,
-                "options" => self.impit.options(url, Some(options)).await,
-                "trace" => self.impit.trace(url, Some(options)).await,
-                "head" => self.impit.head(url, Some(options)).await,
-                "delete" => self.impit.delete(url, Some(options)).await,
-                _ => Err(ImpitError::InvalidMethod(method.to_string())),
-            };
+        py.allow_threads(|| {
+            pyo3_async_runtimes::tokio::get_runtime().block_on(async {
+                let response = match method.to_lowercase().as_str() {
+                    "get" => self.impit.get(url, Some(options)).await,
+                    "post" => self.impit.post(url, Some(body), Some(options)).await,
+                    "patch" => self.impit.patch(url, Some(body), Some(options)).await,
+                    "put" => self.impit.put(url, Some(body), Some(options)).await,
+                    "options" => self.impit.options(url, Some(options)).await,
+                    "trace" => self.impit.trace(url, Some(options)).await,
+                    "head" => self.impit.head(url, Some(options)).await,
+                    "delete" => self.impit.delete(url, Some(options)).await,
+                    _ => Err(ImpitError::InvalidMethod(method.to_string())),
+                };
 
-            match response {
-                Ok(response) => {
-                    let py_response = ImpitPyResponse::from_async(
-                        response,
-                        self.default_encoding.clone(),
-                        stream.unwrap_or(false),
-                    )
-                    .await;
-                    Ok(py_response)
+                match response {
+                    Ok(response) => {
+                        let py_response = ImpitPyResponse::from_async(
+                            response,
+                            self.default_encoding.clone(),
+                            stream.unwrap_or(false),
+                        )
+                        .await;
+                        Ok(py_response)
+                    }
+                    Err(err) => Err(ImpitPyError(err)),
                 }
-                Err(err) => Err(ImpitPyError(err)),
-            }
+            })
         })
     }
 }

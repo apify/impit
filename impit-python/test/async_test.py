@@ -1,4 +1,7 @@
+import asyncio
 import json
+import socket
+import threading
 from http.cookiejar import CookieJar
 
 import pytest
@@ -6,6 +9,21 @@ import pytest
 from impit import AsyncClient, Browser, Cookies, StreamClosed, StreamConsumed, TooManyRedirects
 
 from .httpbin import get_httpbin_url
+
+
+def thread_server(port_holder: list[int]) -> None:
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    server.bind(('localhost', 0))
+    port_holder[0] = server.getsockname()[1]
+    server.listen(1)
+
+    conn, _ = server.accept()
+    conn.recv(1024)
+    response = b'HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n'
+    conn.send(response)
+    conn.close()
+    server.close()
 
 
 @pytest.mark.parametrize(
@@ -278,6 +296,19 @@ class TestBasicRequests:
 
         with pytest.raises(TooManyRedirects):
             await impit.get(redirect_url)
+
+    @pytest.mark.asyncio
+    async def test_async_socket_server(self, browser: Browser) -> None:
+        port_holder = [0]
+        thread = threading.Thread(target=thread_server, args=(port_holder,))
+        thread.start()
+        await asyncio.sleep(0.1)
+
+        impit = AsyncClient(browser=browser)
+
+        response = await impit.get(f'http://127.0.0.1:{port_holder[0]}/', timeout=5)
+        assert response.status_code == 200
+        thread.join()
 
 
 @pytest.mark.parametrize(

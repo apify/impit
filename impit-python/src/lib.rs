@@ -84,30 +84,30 @@ fn impit(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add("StreamClosed", m.py().get_type::<errors::StreamClosed>())?;
 
     macro_rules! http_no_client {
-        ($($name:ident),*) => {
-            $(
-                #[pyfunction]
-                #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false, cookie_jar=None, cookies=None))]
-                fn $name(
-                    _py: Python,
-                    url: String,
-                    content: Option<Vec<u8>>,
-                    data: Option<RequestBody>,
-                    headers: Option<HashMap<String, String>>,
-                    timeout: Option<f64>,
-                    force_http3: Option<bool>,
-                    cookie_jar: Option<pyo3::Bound<'_, pyo3::PyAny>>,
-                    cookies: Option<pyo3::Bound<'_, pyo3::PyAny>>,
-                ) -> Result<response::ImpitPyResponse, errors::ImpitPyError> {
-                    let client = Client::new(_py, None, None, None, None, None, None, None, None, cookie_jar, cookies, None);
+    ($($name:ident),*) => {
+        $(
+            #[pyfunction]
+            #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false, cookie_jar=None, cookies=None))]
+            fn $name(
+                _py: Python,
+                url: String,
+                content: Option<Vec<u8>>,
+                data: Option<RequestBody>,
+                headers: Option<HashMap<String, String>>,
+                timeout: Option<f64>,
+                force_http3: Option<bool>,
+                cookie_jar: Option<pyo3::Bound<'_, pyo3::PyAny>>,
+                cookies: Option<pyo3::Bound<'_, pyo3::PyAny>>,
+            ) -> Result<response::ImpitPyResponse, errors::ImpitPyError> {
+                let client = Client::new(_py, None, None, None, None, None, None, None, None, cookie_jar, cookies, None);
 
-                    client.$name(url, content, data, headers, timeout, force_http3)
-                }
+                client.$name(_py, url, content, data, headers, timeout, force_http3)
+            }
 
-                m.add_function(wrap_pyfunction!($name, m)?)?;
-            )*
-        };
-    }
+            m.add_function(wrap_pyfunction!($name, m)?)?;
+        )*
+    };
+}
 
     http_no_client!(get, post, put, head, patch, delete, options, trace);
 
