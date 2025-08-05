@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 
 
+## py-0.5.1 - 2025-08-05
+
+#### Bug Fixes
+
+- Resolve blocking behavior in `impit.Client` during multithreaded operations (#230)
+
+
 ## py-0.5.0 - 2025-07-30
 
 #### Bug Fixes
