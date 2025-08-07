@@ -542,7 +542,7 @@ class TestResponseObject:
 
         assert getattr(response, 'test', None) is None
 
-        setattr(response, 'test', 'test_value')
+        setattr(response, 'test', 'test_value')  # noqa: B010
 
         assert getattr(response, 'test', None) == 'test_value'
 
@@ -554,7 +554,7 @@ class TestResponseObject:
         assert response.content == b''
         assert response.text == ''
 
-        setattr(response, 'test', 'test_value')
+        setattr(response, 'test', 'test_value')  # noqa: B010
 
         assert getattr(response, 'test', None) == 'test_value'
 
