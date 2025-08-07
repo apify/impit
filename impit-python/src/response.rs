@@ -251,7 +251,7 @@ impl ImpitPyResponse {
             headers: headers.unwrap_or_default(),
             encoding: encoding.unwrap_or_else(|| "utf-8".to_string()),
             is_redirect: false,
-            url: url.unwrap_or_else(|| "".to_string()),
+            url: url.unwrap_or_default(),
             is_closed: true,
             is_stream_consumed: true,
             text: None,
