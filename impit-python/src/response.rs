@@ -41,7 +41,8 @@ impl PyResponseBytesIterator {
         }
 
         if let Some(parent) = &slf.parent_response {
-            let is_parent_closed = Python::with_gil(|py| parent.borrow(py).is_closed);
+            let py = slf.py();
+            let is_parent_closed = parent.borrow(py).is_closed;
 
             if is_parent_closed && !slf.content_returned {
                 slf.content_returned = true;
@@ -50,34 +51,33 @@ impl PyResponseBytesIterator {
         }
 
         let runtime = slf.runtime.clone();
+        let py = slf.py();
 
         if let Some(stream) = &mut slf.stream {
-            match runtime.block_on(stream.next()) {
+            let result = py.allow_threads(|| runtime.block_on(stream.next()));
+
+            match result {
                 Some(Ok(chunk)) => Ok(Some(chunk.to_vec())),
                 Some(Err(e)) => {
                     slf.content_returned = true;
                     if let Some(parent) = &slf.parent_response {
-                        Python::with_gil(|py| {
-                            if let Ok(mut parent_ref) = parent.try_borrow_mut(py) {
-                                parent_ref.inner_state = InnerResponseState::StreamingClosed;
-                                parent_ref.is_closed = true;
-                            }
-                        });
+                        if let Ok(mut parent_ref) = parent.try_borrow_mut(py) {
+                            parent_ref.inner_state = InnerResponseState::StreamingClosed;
+                            parent_ref.is_closed = true;
+                        }
                     }
-                    Err(pyo3::exceptions::PyRuntimeError::new_err(format!(
+                    Err(pyo3::exceptions::PyStopIteration::new_err(format!(
                         "Stream error: {e}"
                     )))
                 }
                 None => {
                     slf.content_returned = true;
                     if let Some(parent) = &slf.parent_response {
-                        Python::with_gil(|py| {
-                            if let Ok(mut parent_ref) = parent.try_borrow_mut(py) {
-                                parent_ref.inner_state = InnerResponseState::StreamingClosed;
-                                parent_ref.is_stream_consumed = true;
-                                parent_ref.is_closed = true;
-                            }
-                        });
+                        if let Ok(mut parent_ref) = parent.try_borrow_mut(py) {
+                            parent_ref.inner_state = InnerResponseState::StreamingClosed;
+                            parent_ref.is_stream_consumed = true;
+                            parent_ref.is_closed = true;
+                        }
                     }
                     Ok(None)
                 }
@@ -399,17 +399,17 @@ impl ImpitPyResponse {
     }
 
     #[getter]
-    fn content(&mut self) -> PyResult<Vec<u8>> {
-        self.read()
+    fn content(&mut self, py: Python<'_>) -> PyResult<Vec<u8>> {
+        self.read(py)
     }
 
     #[getter]
-    fn text(&mut self) -> PyResult<String> {
+    fn text(&mut self, py: Python<'_>) -> PyResult<String> {
         if let Some(cached_text) = &self.text {
             return Ok(cached_text.clone());
         }
 
-        let content_bytes = self.read()?;
+        let content_bytes = self.read(py)?;
         let decoder = encoding_from_whatwg_label(&self.encoding);
         let decoded_text = impit::utils::decode(&content_bytes, decoder);
 
@@ -417,7 +417,7 @@ impl ImpitPyResponse {
         Ok(decoded_text)
     }
 
-    fn read(&mut self) -> PyResult<Vec<u8>> {
+    fn read(&mut self, py: Python<'_>) -> PyResult<Vec<u8>> {
         match self.inner_state {
             InnerResponseState::Read => self
                 .content
@@ -437,12 +437,15 @@ impl ImpitPyResponse {
                     .take()
                     .ok_or(ImpitPyError(impit::errors::ImpitError::StreamClosed))?;
 
-                let content = pyo3_async_runtimes::tokio::get_runtime().block_on(async {
-                    response
-                        .bytes()
-                        .await
-                        .map(|b| b.to_vec())
-                        .map_err(|_| ImpitPyError(impit::errors::ImpitError::NetworkError))
+                let runtime = pyo3_async_runtimes::tokio::get_runtime();
+                let content = py.allow_threads(|| {
+                    runtime.block_on(async {
+                        response
+                            .bytes()
+                            .await
+                            .map(|b| b.to_vec())
+                            .map_err(|_| ImpitPyError(impit::errors::ImpitError::NetworkError))
+                    })
                 })?;
 
                 self.content = Some(content.clone());
