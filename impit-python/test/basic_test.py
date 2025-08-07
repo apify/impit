@@ -6,7 +6,7 @@ from http.cookiejar import CookieJar
 
 import pytest
 
-from impit import Browser, Client, Cookies, StreamClosed, StreamConsumed, TooManyRedirects
+from impit import Browser, Client, Cookies, Response, StreamClosed, StreamConsumed, TooManyRedirects
 
 from .httpbin import get_httpbin_url
 
@@ -507,3 +507,70 @@ class TestStreamRequest:
 
         with pytest.raises(StreamClosed):
             _ = response.content
+
+
+class TestResponseObject:
+    def test_setattr(self) -> None:
+        client = Client()
+
+        response = client.get(get_httpbin_url('/'))
+
+        assert response.status_code == 200
+
+        assert getattr(response, 'test', None) is None
+
+        response.test = 'test_value'
+
+        assert getattr(response, 'test', None) == 'test_value'
+
+    def test_response_empty_constructor(self) -> None:
+        # Create a new empty response object
+        response = Response()
+
+        assert response.status_code == 200
+        assert response.content == b''
+        assert response.text == ''
+
+        response.test = 'test_value'
+
+        assert getattr(response, 'test', None) == 'test_value'
+
+    def test_response_constructor_with_status(self) -> None:
+        # Create a new response object with a specific status code
+        response = Response(status_code=404)
+
+        assert response.status_code == 404
+        assert response.content == b''
+        assert response.text == ''
+
+        assert response.reason_phrase == 'Not Found'
+
+    def test_response_constructor_with_content(self) -> None:
+        # Create a new response object with content
+        response = Response(content=b'Test content')
+
+        assert response.status_code == 200
+        assert response.content == b'Test content'
+        assert response.text == 'Test content'
+
+    def test_response_constructor_with_headers(self) -> None:
+        # Create a new response object with headers
+        response = Response(headers={'Content-Type': 'application/json'})
+
+        assert response.status_code == 200
+        assert response.headers['Content-Type'] == 'application/json'
+
+    @pytest.mark.parametrize(
+        ('status_code', 'reason_phrase'),
+        [
+            (200, 'OK'),
+            (404, 'Not Found'),
+            (500, 'Internal Server Error'),
+            (301, 'Unknown'),
+        ],
+    )
+    def test_response_constructor_with_status_reason(self, status_code: int, reason_phrase: str) -> None:
+        response = Response(status_code=status_code)
+
+        assert response.status_code == status_code
+        assert response.reason_phrase == reason_phrase

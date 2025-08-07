@@ -190,7 +190,7 @@ pub enum InnerResponseState {
     StreamingClosed,
 }
 
-#[pyclass(name = "Response")]
+#[pyclass(name = "Response", dict, weakref)]
 #[derive(Debug)]
 pub struct ImpitPyResponse {
     #[pyo3(get)]
@@ -229,6 +229,38 @@ pub struct ImpitPyResponse {
 
 #[pymethods]
 impl ImpitPyResponse {
+    #[new]
+    #[pyo3(signature = (status_code=200, content=None, headers=None, url=None, encoding=None))]
+    fn new(
+        status_code: Option<u16>,
+        content: Option<Vec<u8>>,
+        headers: Option<HashMap<String, String>>,
+        url: Option<String>,
+        encoding: Option<String>,
+    ) -> Self {
+        Self {
+            status_code: status_code.unwrap_or(200),
+            reason_phrase: match status_code.unwrap_or(200) {
+                200 => "OK",
+                404 => "Not Found",
+                500 => "Internal Server Error",
+                _ => "Unknown",
+            }
+            .to_string(),
+            http_version: "HTTP/1.1".to_string(),
+            headers: headers.unwrap_or_default(),
+            encoding: encoding.unwrap_or_else(|| "utf-8".to_string()),
+            is_redirect: false,
+            url: url.unwrap_or_else(|| "".to_string()),
+            is_closed: true,
+            is_stream_consumed: true,
+            text: None,
+            content: Some(content.unwrap_or_default()),
+            inner: None,
+            inner_state: InnerResponseState::Read,
+        }
+    }
+
     fn __repr__(&self) -> String {
         format!("<Response [{} {}]>", self.status_code, self.reason_phrase)
     }
