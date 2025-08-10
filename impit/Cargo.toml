@@ -18,5 +18,5 @@ scraper = "0.23.0"
 thiserror = "2.0.12"
 tokio = { version="1.40.0", features = ["full"] }
 url = "2.5.2"
-webpki-roots = "0.26.6"
+webpki-roots = "1.0.0"
 
