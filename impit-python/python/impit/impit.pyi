@@ -159,11 +159,12 @@ class Response:
 
     def __init__(
         self,
-        status_code: int = 200,
+        status_code: int,
+        *,
         content: bytes | None = None,
         headers: dict[str, str] | None = None,
+        default_encoding: str | None = None,
         url: str | None = None,
-        encoding: str | None = None,
     ) -> None:
         """Initialize a Response object.
 
@@ -171,8 +172,8 @@ class Response:
             status_code: HTTP status code
             content: Response body as bytes
             headers: Response headers as a dictionary
+            default_encoding: Default encoding for the response text. Used only if `content-type` header is not present or does not specify a charset.
             url: Final URL of the response
-            encoding: Encoding for the response text
         """
 
     def read(self) -> bytes:
@@ -180,16 +181,16 @@ class Response:
 
     def iter_bytes(self) -> Iterator[bytes]:
         """Iterate over the response content in chunks."""
-    
+
     async def aread(self) -> bytes:
         """Asynchronously read the response content as bytes."""
-    
+
     def aiter_bytes(self) -> AsyncIterator[bytes]:
         """Asynchronously iterate over the response content in chunks."""
-    
+
     def close(self) -> None:
         """Close the response and release resources."""
-    
+
     async def aclose(self) -> None:
         """Asynchronously close the response and release resources."""
 

@@ -7,7 +7,7 @@ use encoding::label::encoding_from_whatwg_label;
 use futures::{Stream, StreamExt};
 use impit::utils::ContentType;
 use pyo3::prelude::*;
-use reqwest::{Response, Version};
+use reqwest::{Response, StatusCode, Version};
 use std::pin::Pin;
 
 use crate::errors::ImpitPyError;
@@ -230,26 +230,34 @@ pub struct ImpitPyResponse {
 #[pymethods]
 impl ImpitPyResponse {
     #[new]
-    #[pyo3(signature = (status_code=200, content=None, headers=None, url=None, encoding=None))]
+    #[pyo3(signature = (status_code, content=None, headers=None, url=None, default_encoding="utf-8"))]
     fn new(
-        status_code: Option<u16>,
+        status_code: u16,
         content: Option<Vec<u8>>,
         headers: Option<HashMap<String, String>>,
         url: Option<String>,
-        encoding: Option<String>,
+        default_encoding: Option<&str>,
     ) -> Self {
+        let headers = headers.unwrap_or_default();
+
+        let encoding = match headers.iter().find(|(k, _)| k.to_lowercase() == "content-type") {
+            Some((_, ct)) => ContentType::from(ct)
+                .ok()
+                .and_then(|ct| Some(ct.charset))
+                .unwrap_or_else(|| default_encoding.unwrap_or("utf-8").to_string()),
+            None => default_encoding.unwrap_or("utf-8").to_string(),
+        };
+
+        let reason_phrase = StatusCode::from_u16(status_code)
+            .map(|s| s.canonical_reason().unwrap_or("Unknown").to_string())
+            .unwrap_or_else(|_| "Unknown".to_string());
+
         Self {
-            status_code: status_code.unwrap_or(200),
-            reason_phrase: match status_code.unwrap_or(200) {
-                200 => "OK",
-                404 => "Not Found",
-                500 => "Internal Server Error",
-                _ => "Unknown",
-            }
-            .to_string(),
+            status_code,
+            reason_phrase,
             http_version: "HTTP/1.1".to_string(),
-            headers: headers.unwrap_or_default(),
-            encoding: encoding.unwrap_or_else(|| "utf-8".to_string()),
+            headers,
+            encoding,
             is_redirect: false,
             url: url.unwrap_or_default(),
             is_closed: true,
