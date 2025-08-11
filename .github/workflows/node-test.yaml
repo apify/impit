@@ -95,7 +95,7 @@ jobs:
       - name: Use Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Enable Corepack
         run: |
@@ -106,7 +106,7 @@ jobs:
         uses: actions/setup-node@v4
         if: ${{ matrix.settings.target != 'x86_64-unknown-linux-musl' }}
         with:
-          node-version: 20
+          node-version: 22
           cache: yarn
           cache-dependency-path: impit-node/yarn.lock
       - name: Install
