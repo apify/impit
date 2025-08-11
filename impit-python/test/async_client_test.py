@@ -6,7 +6,7 @@ from http.cookiejar import CookieJar
 
 import pytest
 
-from impit import AsyncClient, Browser, Cookies, Response, StreamClosed, StreamConsumed, TooManyRedirects
+from impit import AsyncClient, Browser, Cookies, StreamClosed, StreamConsumed, TooManyRedirects
 
 from .httpbin import get_httpbin_url
 
