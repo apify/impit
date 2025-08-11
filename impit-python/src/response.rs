@@ -7,7 +7,7 @@ use encoding::label::encoding_from_whatwg_label;
 use futures::{Stream, StreamExt};
 use impit::utils::ContentType;
 use pyo3::prelude::*;
-use reqwest::{Response, Version};
+use reqwest::{Response, StatusCode, Version};
 use std::pin::Pin;
 
 use crate::errors::ImpitPyError;
@@ -190,7 +190,7 @@ pub enum InnerResponseState {
     StreamingClosed,
 }
 
-#[pyclass(name = "Response")]
+#[pyclass(name = "Response", dict, weakref)]
 #[derive(Debug)]
 pub struct ImpitPyResponse {
     #[pyo3(get)]
@@ -229,6 +229,49 @@ pub struct ImpitPyResponse {
 
 #[pymethods]
 impl ImpitPyResponse {
+    #[new]
+    #[pyo3(signature = (status_code, content=None, headers=None, url=None, default_encoding="utf-8"))]
+    fn new(
+        status_code: u16,
+        content: Option<Vec<u8>>,
+        headers: Option<HashMap<String, String>>,
+        url: Option<String>,
+        default_encoding: Option<&str>,
+    ) -> Self {
+        let headers = headers.unwrap_or_default();
+
+        let encoding = match headers
+            .iter()
+            .find(|(k, _)| k.to_lowercase() == "content-type")
+        {
+            Some((_, ct)) => ContentType::from(ct)
+                .ok()
+                .map(|ct| ct.charset)
+                .unwrap_or_else(|| default_encoding.unwrap_or("utf-8").to_string()),
+            None => default_encoding.unwrap_or("utf-8").to_string(),
+        };
+
+        let reason_phrase = StatusCode::from_u16(status_code)
+            .map(|s| s.canonical_reason().unwrap_or("Unknown").to_string())
+            .unwrap_or_else(|_| "Unknown".to_string());
+
+        Self {
+            status_code,
+            reason_phrase,
+            http_version: "HTTP/1.1".to_string(),
+            headers,
+            encoding,
+            is_redirect: false,
+            url: url.unwrap_or_default(),
+            is_closed: true,
+            is_stream_consumed: true,
+            text: None,
+            content: Some(content.unwrap_or_default()),
+            inner: None,
+            inner_state: InnerResponseState::Read,
+        }
+    }
+
     fn __repr__(&self) -> String {
         format!("<Response [{} {}]>", self.status_code, self.reason_phrase)
     }
