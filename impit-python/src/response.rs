@@ -240,10 +240,13 @@ impl ImpitPyResponse {
     ) -> Self {
         let headers = headers.unwrap_or_default();
 
-        let encoding = match headers.iter().find(|(k, _)| k.to_lowercase() == "content-type") {
+        let encoding = match headers
+            .iter()
+            .find(|(k, _)| k.to_lowercase() == "content-type")
+        {
             Some((_, ct)) => ContentType::from(ct)
                 .ok()
-                .and_then(|ct| Some(ct.charset))
+                .map(|ct| ct.charset)
                 .unwrap_or_else(|| default_encoding.unwrap_or("utf-8").to_string()),
             None => default_encoding.unwrap_or("utf-8").to_string(),
         };
