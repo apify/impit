@@ -1,6 +1,7 @@
 import pytest
 from impit import Response
 
+
 async def test_setattr() -> None:
     response = Response(200)
 
@@ -8,6 +9,7 @@ async def test_setattr() -> None:
     assert getattr(response, 'test', None) is None
     setattr(response, 'test', 'test_value')  # noqa: B010
     assert getattr(response, 'test', None) == 'test_value'
+
 
 def test_response_constructor_with_status() -> None:
     # Create a new response object with a specific status code
@@ -19,6 +21,7 @@ def test_response_constructor_with_status() -> None:
 
     assert response.reason_phrase == 'Not Found'
 
+
 def test_response_constructor_with_content() -> None:
     # Create a new response object with content
     response = Response(200, content=b'Test content')
@@ -27,6 +30,7 @@ def test_response_constructor_with_content() -> None:
     assert response.content == b'Test content'
     assert response.text == 'Test content'
 
+
 def test_response_constructor_with_headers() -> None:
     # Create a new response object with headers
     response = Response(200, headers={'Content-Type': 'application/json'})
@@ -34,18 +38,21 @@ def test_response_constructor_with_headers() -> None:
     assert response.status_code == 200
     assert response.headers['Content-Type'] == 'application/json'
 
+
 def test_response_headers_encoding() -> None:
-    response = Response(200, headers={
-        'Content-Type': 'text/plain; charset=cp1250'
-    }, content=[0x9e, 0x64, 0xe1, 0xf8, 0x65, 0x6e, 0xed])
+    response = Response(
+        200, headers={'Content-Type': 'text/plain; charset=cp1250'}, content=b'\x9e\x64\xe1\xf8\x65\x6e\xed'
+    )
 
     assert response.text == 'ždáření'
 
+
 def test_response_headers_explicit_encoding() -> None:
-    response = Response(200, content=[0xa6, 0xcd, 0xd0, 0xa6, 0xd4, 0x20, 0xd2, 0xd5, 0xcc, 0xc5, 0xd3], default_encoding='koi8-u')
+    response = Response(200, content=b'\xa6\xcd\xd0\xa6\xd4\x20\xd2\xd5\xcc\xc5\xd3', default_encoding='koi8-u')
 
     assert response.text == 'імпіт рулес'
     assert response.content == b'\xa6\xcd\xd0\xa6\xd4 \xd2\xd5\xcc\xc5\xd3'
+
 
 @pytest.mark.parametrize(
     ('status_code', 'reason_phrase'),
