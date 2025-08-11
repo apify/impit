@@ -52,7 +52,7 @@ impl FromNapiValue for Headers {
 }
 
 #[napi]
-impl ImpitResponse {
+impl<'env> ImpitResponse {
   pub(crate) fn from(response: Response) -> Self {
     let status = response.status().as_u16();
     let status_text = response
@@ -80,7 +80,7 @@ impl ImpitResponse {
     }
   }
 
-  fn get_inner_response(&self, env: &Env, mut this: This<Object>) -> Result<Object> {
+  fn get_inner_response(&self, env: &Env, mut this: This<Object>) -> Result<Object<'_>> {
     let cached_response = this.get::<Object>(INNER_RESPONSE_PROPERTY_NAME)?;
 
     if cached_response.is_none() {
@@ -140,7 +140,7 @@ impl ImpitResponse {
   }
 
   #[napi(ts_return_type = "Promise<ArrayBuffer>")]
-  pub fn array_buffer(&self, env: &Env, this: This<Object>) -> Result<Object> {
+  pub fn array_buffer(&'env self, env: &'env Env, this: This<'env>) -> Result<Object<'env>> {
     let response = self.get_inner_response(env, this)?;
 
     response
@@ -150,7 +150,7 @@ impl ImpitResponse {
   }
 
   #[napi(ts_return_type = "Promise<Uint8Array>")]
-  pub fn bytes(&self, env: &Env, this: This<Object>) -> Result<Object> {
+  pub fn bytes(&'env self, env: &'env Env, this: This<'env>) -> Result<Object<'env>> {
     let array_buffer_promise = self.array_buffer(env, this)?;
     let then: Function<'_, Function<Object, Unknown>, Object> =
       array_buffer_promise.get_named_property("then")?;
@@ -164,7 +164,7 @@ impl ImpitResponse {
   }
 
   #[napi(ts_return_type = "Promise<string>")]
-  pub fn text(&self, env: &Env, this: This<Object>) -> Result<Unknown> {
+  pub fn text(&'env self, env: &'env Env, this: This<'env>) -> Result<Unknown<'env>> {
     let response = self.get_inner_response(env, this)?;
 
     response
@@ -173,7 +173,7 @@ impl ImpitResponse {
   }
 
   #[napi(ts_return_type = "Promise<any>")]
-  pub fn json(&self, env: &Env, this: This<Object>) -> Result<Unknown> {
+  pub fn json(&'env self, env: &'env Env, this: This<'env>) -> Result<Unknown<'env>> {
     let response = self.get_inner_response(env, this)?;
 
     response
@@ -186,7 +186,7 @@ impl ImpitResponse {
     js_name = "body",
     ts_return_type = "ReadableStream<Uint8Array>"
   )]
-  pub fn body(&self, env: &Env, this: This<Object>) -> Result<Object> {
+  pub fn body(&'env self, env: &'env Env, this: This<'env>) -> Result<Object<'env>> {
     let response = self.get_inner_response(env, this)?;
 
     response.get_named_property("body")
