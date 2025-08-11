@@ -37,7 +37,7 @@ jobs:
         runs-on: ubuntu-latest
         needs: [test]
         steps:
-          - uses: actions/checkout@v4
+          - uses: actions/checkout@v5
             with:
               token: ${{ secrets.APIFY_SERVICE_ACCOUNT_GITHUB_TOKEN }}
 
@@ -105,7 +105,7 @@ jobs:
       runs-on: ubuntu-latest
       steps:
         - name: Checkout
-          uses: actions/checkout@v4
+          uses: actions/checkout@v5
           with:
             token: ${{ secrets.APIFY_SERVICE_ACCOUNT_GITHUB_TOKEN }}
             fetch-depth: 0
