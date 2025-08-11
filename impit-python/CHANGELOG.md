@@ -3,6 +3,21 @@
 All notable changes to this project will be documented in this file.
 
 
+## py-0.5.2 - 2025-08-11
+
+#### Bug Fixes
+
+- Resolve blocking behavior in synchronous `Client` while reading response (#234)
+  - - Resolve blocking behavior for read stream `Response` for `impit.Client`
+
+
+#### Features
+
+- Add constructor for `Response` (#233)
+  - - Add constructor for `Response`. This can be useful when creating tests and mocks. - Allow to set custom attributes in `Response`  ---------
+
+
+
 ## py-0.5.1 - 2025-08-05
 
 #### Bug Fixes
