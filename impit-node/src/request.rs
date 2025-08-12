@@ -9,6 +9,7 @@ use napi::{
   },
   threadsafe_function::ThreadsafeFunction,
   Env,
+  Status
 };
 
 use napi_derive::napi;
@@ -49,7 +50,7 @@ fn await_promise<
   CallbackArgs: JsValuesTupleIntoVec,
   RustReturn: FromNapiValue + std::fmt::Debug + Sync + Send,
 >(
-  tsfn: &ThreadsafeFunction<T, Promise<RustReturn>, CallbackArgs, false>,
+  tsfn: &ThreadsafeFunction<T, Promise<RustReturn>, CallbackArgs, Status, false>,
   args: T,
 ) -> Result<RustReturn, napi::Error> {
   thread::scope(|scope| {
@@ -94,8 +95,8 @@ fn await_promise<
 }
 
 pub struct NodeCookieJar {
-  set_cookie_tsfn: ThreadsafeFunction<(String, String), Promise<()>, (String, String), false>,
-  get_cookies_tsfn: ThreadsafeFunction<String, Promise<String>, String, false>,
+  set_cookie_tsfn: ThreadsafeFunction<(String, String), Promise<()>, (String, String), Status, false>,
+  get_cookies_tsfn: ThreadsafeFunction<String, Promise<String>, String, Status, false>,
 }
 
 impl CookieStore for NodeCookieJar {
