@@ -8,8 +8,7 @@ use napi::{
     FromNapiValue, Function, JsObjectValue, JsValuesTupleIntoVec, Object, Promise, Uint8Array,
   },
   threadsafe_function::ThreadsafeFunction,
-  Env,
-  Status
+  Env, Status,
 };
 
 use napi_derive::napi;
@@ -95,7 +94,8 @@ fn await_promise<
 }
 
 pub struct NodeCookieJar {
-  set_cookie_tsfn: ThreadsafeFunction<(String, String), Promise<()>, (String, String), Status, false>,
+  set_cookie_tsfn:
+    ThreadsafeFunction<(String, String), Promise<()>, (String, String), Status, false>,
   get_cookies_tsfn: ThreadsafeFunction<String, Promise<String>, String, Status, false>,
 }
 
