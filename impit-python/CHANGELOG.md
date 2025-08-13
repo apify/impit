@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 
 
+## py-0.5.3 - 2025-08-13
+
+#### Bug Fixes
+
+- Allow passing request body in all HTTP methods except `TRACE` (#238)
+
+
 ## py-0.5.2 - 2025-08-11
 
 #### Bug Fixes
