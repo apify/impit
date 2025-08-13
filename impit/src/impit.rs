@@ -410,9 +410,10 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
     pub async fn get(
         &self,
         url: String,
+        body: Option<Vec<u8>>,
         options: Option<RequestOptions>,
     ) -> Result<Response, ImpitError> {
-        self.make_request(Method::GET, url, None, options).await
+        self.make_request(Method::GET, url, body, options).await
     }
 
     /// Makes a `HEAD` request to the specified URL.
@@ -424,9 +425,10 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
     pub async fn head(
         &self,
         url: String,
+        body: Option<Vec<u8>>,
         options: Option<RequestOptions>,
     ) -> Result<Response, ImpitError> {
-        self.make_request(Method::HEAD, url, None, options).await
+        self.make_request(Method::HEAD, url, body, options).await
     }
 
     /// Makes an OPTIONS request to the specified URL.
@@ -438,9 +440,10 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
     pub async fn options(
         &self,
         url: String,
+        body: Option<Vec<u8>>,
         options: Option<RequestOptions>,
     ) -> Result<Response, ImpitError> {
-        self.make_request(Method::OPTIONS, url, None, options).await
+        self.make_request(Method::OPTIONS, url, body, options).await
     }
 
     /// Makes a `TRACE` request to the specified URL.
@@ -466,9 +469,10 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
     pub async fn delete(
         &self,
         url: String,
+        body: Option<Vec<u8>>,
         options: Option<RequestOptions>,
     ) -> Result<Response, ImpitError> {
-        self.make_request(Method::DELETE, url, None, options).await
+        self.make_request(Method::DELETE, url, body, options).await
     }
 
     /// Makes a `POST` request to the specified URL.

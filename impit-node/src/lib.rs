@@ -76,13 +76,13 @@ impl ImpitWrapper {
     } else {
       // Match the HTTP method and execute the corresponding request
       match method {
-        HttpMethod::Get => self.inner.get(url, request_options).await,
-        HttpMethod::Head => self.inner.head(url, request_options).await,
+        HttpMethod::Get => self.inner.get(url, body, request_options).await,
+        HttpMethod::Head => self.inner.head(url, body, request_options).await,
         HttpMethod::Post => self.inner.post(url, body, request_options).await,
         HttpMethod::Put => self.inner.put(url, body, request_options).await,
-        HttpMethod::Delete => self.inner.delete(url, request_options).await,
+        HttpMethod::Delete => self.inner.delete(url, body, request_options).await,
         HttpMethod::Patch => self.inner.patch(url, body, request_options).await,
-        HttpMethod::Options => self.inner.options(url, request_options).await,
+        HttpMethod::Options => self.inner.options(url, body, request_options).await,
       }
     };
 
