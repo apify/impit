@@ -401,13 +401,13 @@ impl Client {
         py.allow_threads(|| {
             pyo3_async_runtimes::tokio::get_runtime().block_on(async {
                 let response = match method.to_lowercase().as_str() {
-                    "get" => self.impit.get(url, Some(options)).await,
+                    "get" => self.impit.get(url, Some(body), Some(options)).await,
                     "post" => self.impit.post(url, Some(body), Some(options)).await,
                     "patch" => self.impit.patch(url, Some(body), Some(options)).await,
                     "put" => self.impit.put(url, Some(body), Some(options)).await,
-                    "options" => self.impit.options(url, Some(options)).await,
+                    "options" => self.impit.options(url, Some(body), Some(options)).await,
                     "trace" => self.impit.trace(url, Some(options)).await,
-                    "head" => self.impit.head(url, Some(options)).await,
+                    "head" => self.impit.head(url, Some(body), Some(options)).await,
                     "delete" => self.impit.delete(url, Some(body), Some(options)).await,
                     _ => Err(ImpitError::InvalidMethod(method.to_string())),
                 };
