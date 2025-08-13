@@ -408,7 +408,7 @@ impl Client {
                     "options" => self.impit.options(url, Some(options)).await,
                     "trace" => self.impit.trace(url, Some(options)).await,
                     "head" => self.impit.head(url, Some(options)).await,
-                    "delete" => self.impit.delete(url, Some(options)).await,
+                    "delete" => self.impit.delete(url, Some(body), Some(options)).await,
                     _ => Err(ImpitError::InvalidMethod(method.to_string())),
                 };
 

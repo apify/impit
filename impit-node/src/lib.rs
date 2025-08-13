@@ -80,7 +80,7 @@ impl ImpitWrapper {
         HttpMethod::Head => self.inner.head(url, request_options).await,
         HttpMethod::Post => self.inner.post(url, body, request_options).await,
         HttpMethod::Put => self.inner.put(url, body, request_options).await,
-        HttpMethod::Delete => self.inner.delete(url, request_options).await,
+        HttpMethod::Delete => self.inner.delete(url, body, request_options).await,
         HttpMethod::Patch => self.inner.patch(url, body, request_options).await,
         HttpMethod::Options => self.inner.options(url, request_options).await,
       }

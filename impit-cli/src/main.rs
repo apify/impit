@@ -131,7 +131,7 @@ async fn main() {
         Method::Get => client.get(args.url, Some(options)).await.unwrap(),
         Method::Post => client.post(args.url, body, Some(options)).await.unwrap(),
         Method::Put => client.put(args.url, body, Some(options)).await.unwrap(),
-        Method::Delete => client.delete(args.url, Some(options)).await.unwrap(),
+        Method::Delete => client.delete(args.url, body, Some(options)).await.unwrap(),
         Method::Patch => client.patch(args.url, body, Some(options)).await.unwrap(),
         Method::Head => client.head(args.url, Some(options)).await.unwrap(),
         Method::Options => client.options(args.url, Some(options)).await.unwrap(),
