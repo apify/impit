@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::{error::Error, time::Duration};
 
 use thiserror::Error;
 
@@ -100,6 +100,25 @@ impl ImpitError {
 
         if error.is_redirect() {
             return ImpitError::TooManyRedirects(context.max_redirects);
+        }
+
+        if error.is_request() {
+            if let Some(source_error) = error
+                .source()
+                .and_then(|e| e.downcast_ref::<hyper_util::client::legacy::Error>())
+            {
+                if source_error.is_connect() {
+                    return ImpitError::ConnectError;
+                }
+
+                if let Some(e) = source_error.source() {
+                    if let Some(hyper_error) = e.downcast_ref::<hyper::Error>() {
+                        if hyper_error.is_incomplete_message() {
+                            return ImpitError::RemoteProtocolError;
+                        }
+                    }
+                }
+            }
         }
 
         ImpitError::ReqwestError(format!("{error:#?}"))

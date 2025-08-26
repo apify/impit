@@ -1475,6 +1475,8 @@ dependencies = [
  "encoding",
  "hickory-client",
  "hickory-proto",
+ "hyper",
+ "hyper-util",
  "log",
  "mime",
  "num-bigint",
