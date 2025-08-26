@@ -3,6 +3,15 @@
 All notable changes to this project will be documented in this file.
 
 
+## py-0.5.4 - 2025-08-26
+
+#### Features
+
+- Improve error typing for certain HTTP errors (#250)
+  - Improves error typing (mostly for Python version) on HTTP (network / server) errors and aligns the behaviour with HTTPX.
+
+
+
 ## py-0.5.3 - 2025-08-13
 
 #### Bug Fixes
