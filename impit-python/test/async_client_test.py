@@ -1,7 +1,6 @@
 import asyncio
 import json
 import socket
-import sys
 import threading
 from http.cookiejar import CookieJar
 
