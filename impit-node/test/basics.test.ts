@@ -274,6 +274,24 @@ describe.each([
 
             expect(json.ip).toBe(remoteAddress);
         });
+
+        test.each([
+            ['ipv4', '::ffff:127.0.0.1'],
+            ['ipv6', '::1']
+        ])('interface family works', async (family, remoteAddress) => {
+            const impit = new Impit({
+                browser,
+                interface: {
+                    name: 'lo',
+                    kind: family
+                }
+            });
+
+            const response = await impit.fetch(new URL('/socket', "http://localhost:3001").href);
+            const json = await response.json();
+
+            expect(json.ip).toBe(remoteAddress);
+        });
     });
 
     describe('Request body', () => {

@@ -11,6 +11,7 @@ hickory-client = "0.25.1"
 hickory-proto = "0.25.1"
 log = "0.4.22"
 mime = "0.3.17"
+netdev = "0.37.1"
 num-bigint = "0.4.6"
 reqwest = { version = "0.12.9", features = ["json", "gzip", "brotli", "zstd", "deflate", "rustls-tls", "http3", "cookies", "stream", "socks"] }
 rustls = { version="0.23.16", features=["impit"] }
