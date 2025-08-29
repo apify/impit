@@ -1,6 +1,7 @@
 import asyncio
 import json
 import socket
+import sys
 import threading
 from http.cookiejar import CookieJar
 
@@ -14,7 +15,7 @@ from .httpbin import get_httpbin_url
 def thread_server(port_holder: list[int]) -> None:
     server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    server.bind(('::', 0))
+    server.bind(('::1', 0))
     port_holder[0] = server.getsockname()[1]
     server.listen(1)
 
