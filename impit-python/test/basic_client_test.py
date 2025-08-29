@@ -14,7 +14,8 @@ from .httpbin import get_httpbin_url
 def thread_server(port_holder: list[int]) -> None:
     server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    server.bind(('::1', 0))
+    server.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0) # allow IPv4/IPv6 in Windows
+    server.bind(('::', 0))
     port_holder[0] = server.getsockname()[1]
     server.listen(1)
 
