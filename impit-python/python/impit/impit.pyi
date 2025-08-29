@@ -126,7 +126,6 @@ class RequestNotRead(StreamError):
 class StreamClosed(StreamError):
     """Represents an error when a stream is closed."""
 
-
 class Response:
     """Response object returned by impit requests."""
 
@@ -162,6 +161,25 @@ class Response:
 
     is_stream_consumed: bool
     """Whether the response stream has been consumed or closed"""
+
+    def __init__(
+        self,
+        status_code: int,
+        *,
+        content: bytes | None = None,
+        headers: dict[str, str] | None = None,
+        default_encoding: str | None = None,
+        url: str | None = None,
+    ) -> None:
+        """Initialize a Response object.
+
+        Args:
+            status_code: HTTP status code
+            content: Response body as bytes
+            headers: Response headers as a dictionary
+            default_encoding: Default encoding for the response text. Used only if `content-type` header is not present or does not specify a charset.
+            url: Final URL of the response
+        """
 
     def read(self) -> bytes:
         """Read the response content as bytes."""

@@ -15,9 +15,10 @@ netdev = "0.37.1"
 num-bigint = "0.4.6"
 reqwest = { version = "0.12.9", features = ["json", "gzip", "brotli", "zstd", "deflate", "rustls-tls", "http3", "cookies", "stream", "socks"] }
 rustls = { version="0.23.16", features=["impit"] }
-scraper = "0.23.0"
+scraper = "0.24.0"
 thiserror = "2.0.12"
 tokio = { version="1.40.0", features = ["full"] }
 url = "2.5.2"
 webpki-roots = "0.26.6"
-
+hyper-util = "0.1.16"
+hyper = "1.7.0"

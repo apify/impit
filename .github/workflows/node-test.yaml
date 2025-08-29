@@ -90,12 +90,12 @@ jobs:
     name: stable - ${{ matrix.settings.target }} - node@22
     runs-on: ${{ matrix.settings.host }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Use Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Enable Corepack
         run: |
@@ -106,7 +106,7 @@ jobs:
         uses: actions/setup-node@v4
         if: ${{ matrix.settings.target != 'x86_64-unknown-linux-musl' }}
         with:
-          node-version: 20
+          node-version: 22
           cache: yarn
           cache-dependency-path: impit-node/yarn.lock
       - name: Install
@@ -181,7 +181,7 @@ jobs:
           - '22'
     runs-on: ${{ matrix.settings.host }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Use Node.js ${{ matrix.node }}
         uses: actions/setup-node@v4
         with:
@@ -202,7 +202,7 @@ jobs:
       - name: Install dependencies
         run: yarn --cwd impit-node install
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: bindings-${{ matrix.settings.target }}
           path: impit-node
@@ -225,7 +225,7 @@ jobs:
           - '22'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Use Node.js ${{ matrix.node }}
         uses: actions/setup-node@v4
         with:
@@ -244,7 +244,7 @@ jobs:
       - name: Install dependencies
         run: yarn --cwd impit-node install
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: bindings-x86_64-unknown-linux-gnu
           path: impit-node
@@ -266,7 +266,7 @@ jobs:
           - '22'
     runs-on: ubuntu-24.04-arm
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Use Node.js ${{ matrix.node }}
         uses: actions/setup-node@v4
         with:
@@ -286,7 +286,7 @@ jobs:
       - name: Install dependencies
         run: yarn --cwd impit-node install
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: bindings-aarch64-unknown-linux-gnu
           path: impit-node
@@ -310,7 +310,7 @@ jobs:
           - '22'
     runs-on: ubuntu-24.04-arm
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Use Node.js ${{ matrix.node }}
         uses: actions/setup-node@v4
         with:
@@ -328,7 +328,7 @@ jobs:
             cache-dependency-path: impit-node/yarn.lock
 
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: bindings-aarch64-unknown-linux-musl
           path: impit-node
@@ -351,7 +351,7 @@ jobs:
           - '22'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Use Node.js ${{ matrix.node }}
         uses: actions/setup-node@v4
         with:
@@ -369,7 +369,7 @@ jobs:
             cache-dependency-path: impit-node/yarn.lock
 
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: bindings-x86_64-unknown-linux-musl
           path: impit-node

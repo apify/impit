@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "impit"
-version = "0.4.2"
+version = "0.5.4"
 description = "A library for making HTTP requests through browser impersonation"
 readme = "README.md"
 authors = [{ name = "Jindřich Bär" }]
@@ -33,7 +33,7 @@ dependencies = []
 [project.urls]
 "Homepage" = "https://apify.github.io/impit/"
 "Apify homepage" = "https://apify.com"
-"Changelog" = "https://github.com/apify/impit/blob/master/CHANGELOG.md"
+"Changelog" = "https://github.com/apify/impit/blob/master/impit-python/CHANGELOG.md"
 "Documentation" = "https://apify.github.io/impit/"
 "Issue tracker" = "https://github.com/apify/impit/issues"
 "Repository" = "https://github.com/apify/impit"

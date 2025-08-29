@@ -1,7 +1,7 @@
 {
   "name": "impit",
   "homepage": "https://apify.github.io/impit/",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "main": "index.wrapper.js",
   "types": "index.d.ts",
   "napi": {
@@ -28,7 +28,7 @@
     "@types/node": "^22.13.1",
     "express": "^5.0.0",
     "socksv5": "^0.0.6",
-    "tough-cookie": "^5.1.2",
+    "tough-cookie": "^6.0.0",
     "vitest": "^3.0.5"
   },
   "ava": {
@@ -46,16 +46,16 @@
     "universal": "napi universal",
     "copy-version": "napi version"
   },
-  "packageManager": "yarn@4.9.2",
+  "packageManager": "yarn@4.9.4",
   "description": "Impit for JavaScript",
   "optionalDependencies": {
-    "impit-darwin-arm64": "0.5.3",
-    "impit-darwin-x64": "0.5.3",
-    "impit-linux-arm64-gnu": "0.5.3",
-    "impit-linux-arm64-musl": "0.5.3",
-    "impit-linux-x64-gnu": "0.5.3",
-    "impit-linux-x64-musl": "0.5.3",
-    "impit-win32-arm64-msvc": "0.5.3",
-    "impit-win32-x64-msvc": "0.5.3"
+    "impit-darwin-x64": "0.5.4",
+    "impit-darwin-arm64": "0.5.4",
+    "impit-win32-x64-msvc": "0.5.4",
+    "impit-win32-arm64-msvc": "0.5.4",
+    "impit-linux-x64-gnu": "0.5.4",
+    "impit-linux-x64-musl": "0.5.4",
+    "impit-linux-arm64-gnu": "0.5.4",
+    "impit-linux-arm64-musl": "0.5.4"
   }
 }

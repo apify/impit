@@ -28,7 +28,7 @@ on:
         type: string
         default: ${{ github.sha }}
 
-concurrency: 
+concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
@@ -52,8 +52,8 @@ jobs:
         #   - runner: ubuntu-22.04
         #     target: aarch64
     steps:
-      - uses: actions/checkout@v4
-        with: 
+      - uses: actions/checkout@v5
+        with:
           ref: ${{ inputs.commit_sha }}
 
       - name: Install uv
@@ -146,13 +146,18 @@ jobs:
           - runner: ubuntu-22.04
             target: aarch64
     steps:
-      - uses: actions/checkout@v4
-        with: 
+      - uses: actions/checkout@v5
+        with:
           ref: ${{ inputs.commit_sha }}
 
       - uses: actions/setup-python@v5
         with:
-          python-version: 3.x
+          python-version: |
+            3.9
+            3.10
+            3.11
+            3.12
+            3.13
 
       - name: Build wheels
         uses: PyO3/maturin-action@v1
@@ -218,8 +223,8 @@ jobs:
           - runner: windows-latest
             target: x64
     steps:
-      - uses: actions/checkout@v4
-        with: 
+      - uses: actions/checkout@v5
+        with:
           ref: ${{ inputs.commit_sha }}
 
       - name: Install uv
@@ -227,7 +232,12 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: 3.x
+          python-version: |
+            3.9
+            3.10
+            3.11
+            3.12
+            3.13
           architecture: ${{ matrix.platform.target }}
 
       - name: Build wheels
@@ -268,8 +278,8 @@ jobs:
           - runner: macos-14
             target: aarch64
     steps:
-      - uses: actions/checkout@v4
-        with: 
+      - uses: actions/checkout@v5
+        with:
           ref: ${{ inputs.commit_sha }}
 
       - name: Install uv
@@ -277,6 +287,13 @@ jobs:
 
       - name: Set up Python
         uses: actions/setup-python@v5
+        with:
+          python-version: |
+            3.9
+            3.10
+            3.11
+            3.12
+            3.13
 
       - name: Build wheels
         uses: PyO3/maturin-action@v1
