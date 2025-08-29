@@ -12,15 +12,16 @@ from .httpbin import get_httpbin_url
 
 
 def thread_server(port_holder: list[int]) -> None:
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    server.bind(('localhost', 0))
+    server.bind(('::', 0))
     port_holder[0] = server.getsockname()[1]
     server.listen(1)
 
-    conn, _ = server.accept()
+    conn, addr = server.accept()
     conn.recv(1024)
-    response = b'HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n'
+    client_ip, *_ = addr
+    response = f'HTTP/1.1 200 OK\r\nContent-Length: {len(client_ip)}\r\n\r\n{client_ip}'.encode()
     conn.send(response)
     conn.close()
     server.close()
@@ -307,6 +308,29 @@ class TestBasicRequests:
         impit = AsyncClient(browser=browser)
 
         response = await impit.get(f'http://127.0.0.1:{port_holder[0]}/', timeout=5)
+        assert response.status_code == 200
+        thread.join()
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        'addresses',
+        [
+            ['127.0.0.1', '::ffff:127.0.0.1'],
+            ['::1', '::1']
+        ]
+    )
+    async def test_local_address(self, browser: Browser, addresses: str) -> None:
+        port_holder = [0]
+        thread = threading.Thread(target=thread_server, args=(port_holder,))
+        thread.start()
+        await asyncio.sleep(0.1)
+
+        [local_address, remote_address] = addresses
+
+        impit = AsyncClient(browser=browser, local_address=local_address)
+
+        response = await impit.get(f'http://localhost:{port_holder[0]}/', timeout=5)
+        assert response.text == remote_address
         assert response.status_code == 200
         thread.join()
 
