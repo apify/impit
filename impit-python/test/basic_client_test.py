@@ -294,14 +294,8 @@ class TestBasicRequests:
         assert response.status_code == 200
         thread.join()
 
-    @pytest.mark.parametrize(
-        'addresses',
-        [
-            ['127.0.0.1', '::ffff:127.0.0.1'],
-            ['::1', '::1']
-        ]
-    )
-    def test_local_address(self, browser: Browser, addresses: str) -> None:
+    @pytest.mark.parametrize('addresses', [['127.0.0.1', '::ffff:127.0.0.1'], ['::1', '::1']])
+    def test_local_address(self, browser: Browser, addresses: tuple[str, str]) -> None:
         port_holder = [0]
         thread = threading.Thread(target=thread_server, args=(port_holder,))
         thread.start()

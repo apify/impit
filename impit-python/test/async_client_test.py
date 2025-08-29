@@ -312,14 +312,8 @@ class TestBasicRequests:
         thread.join()
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize(
-        'addresses',
-        [
-            ['127.0.0.1', '::ffff:127.0.0.1'],
-            ['::1', '::1']
-        ]
-    )
-    async def test_local_address(self, browser: Browser, addresses: str) -> None:
+    @pytest.mark.parametrize('addresses', [['127.0.0.1', '::ffff:127.0.0.1'], ['::1', '::1']])
+    async def test_local_address(self, browser: Browser, addresses: tuple[str, str]) -> None:
         port_holder = [0]
         thread = threading.Thread(target=thread_server, args=(port_holder,))
         thread.start()
