@@ -2,9 +2,9 @@ use std::time::Duration;
 
 use impit::{
   emulation::Browser as ImpitBrowser,
-  impit::{ImpitBuilder, RedirectBehavior},
+  impit::{ImpitBuilder, Interface as InnerInterface, IpKind as InnerIpKind, RedirectBehavior},
 };
-use napi::{bindgen_prelude::Object, Env};
+use napi::{bindgen_prelude::Object, Either, Env};
 use napi_derive::napi;
 
 use crate::request::NodeCookieJar;
@@ -22,6 +22,27 @@ impl From<Browser> for ImpitBrowser {
       Browser::Firefox => ImpitBrowser::Firefox,
     }
   }
+}
+
+#[napi(string_enum = "lowercase")]
+pub enum IpKind {
+  V4,
+  V6,
+}
+
+impl From<IpKind> for InnerIpKind {
+  fn from(val: IpKind) -> Self {
+    match val {
+      IpKind::V4 => InnerIpKind::V4,
+      IpKind::V6 => InnerIpKind::V6,
+    }
+  }
+}
+
+#[napi(object)]
+pub struct Interface {
+  pub name: String,
+  pub kind: Option<IpKind>,
 }
 
 #[derive(Default)]
@@ -53,6 +74,13 @@ pub struct ImpitOptions<'a> {
   ///
   /// Can be an IP address in the format "xxx.xxx.xxx.xxx" (for IPv4) or "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff" (for IPv6).
   pub local_address: Option<String>,
+  /// Network interface to bind the client to.
+  ///
+  /// Can be a name of the interface (e.g. "eth0") or a more complex structure
+  /// describing the interface.
+  ///
+  /// Note that `interface` is mutually exclusive with `localAddress`, i.e. only one of them can be set at a time.
+  pub interface: Option<Either<String, Interface>>,
 }
 
 impl ImpitOptions<'_> {
@@ -99,10 +127,34 @@ impl ImpitOptions<'_> {
       config = config.with_redirect(RedirectBehavior::FollowRedirect(max_redirects));
     }
 
-    if let Some(local_address) = self.local_address {
+    if let Some(local_address) = self.local_address.clone() {
       config = config
         .with_local_address(local_address)
         .map_err(|e| napi::Error::from_reason(e.to_string()))?;
+    }
+
+    if let Some(interface) = self.interface {
+      if self.local_address.is_some() {
+        return Err(napi::Error::from_reason(
+          "Both interface and local_address cannot be provided at the same time.".to_string(),
+        ));
+      }
+
+      match interface {
+        Either::A(name) => {
+          config = config
+            .with_interface(InnerInterface { name, kind: None })
+            .map_err(|e| napi::Error::from_reason(e.to_string()))?;
+        }
+        Either::B(interface) => {
+          config = config
+            .with_interface(InnerInterface {
+              name: interface.name,
+              kind: interface.kind.map(|f| f.into()),
+            })
+            .map_err(|e| napi::Error::from_reason(e.to_string()))?;
+        }
+      }
     }
 
     Ok(config)

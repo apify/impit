@@ -2,12 +2,17 @@ from __future__ import annotations
 from http.cookiejar import CookieJar
 from .cookies import Cookies
 
-from typing import Literal
+from typing import Literal, TypedDict
 from collections.abc import Iterator, AsyncIterator
 from contextlib import AbstractAsyncContextManager, AbstractContextManager
 
 
 Browser = Literal['chrome', 'firefox']
+
+
+class Interface(TypedDict):
+    name: str
+    kind: Literal['v4', 'v6'] | None
 
 
 class HTTPError(Exception):
@@ -200,6 +205,7 @@ class Client:
         cookies: Cookies | None = None,
         headers: dict[str, str] | None = None,
         local_address: str | None = None,
+        interface: str | Interface | None = None
     ) -> None:
         """Initialize a synchronous HTTP client.
 
@@ -218,6 +224,11 @@ class Client:
             headers: Default HTTP headers to include in requests.
             local_address: Local address to bind the client to. Useful for testing purposes or when you want to bind the client to a specific network interface.
                 Can be an IP address in the format "xxx.xxx.xxx.xxx" (for IPv4) or "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff" (for IPv6).
+            interface: Network interface to bind the client to.
+                Can be a name of the interface (e.g. "eth0") or a more complex structure
+                describing the interface.
+
+                Note that `interface` is mutually exclusive with `local_address`, i.e. only one of them can be set at a time.
         """
 
     def get(
@@ -454,6 +465,7 @@ class AsyncClient:
         cookies: Cookies | None = None,
         headers: dict[str, str] | None = None,
         local_address: str | None = None,
+        interface: str | Interface | None = None,
     ) -> None:
         """Initialize an asynchronous HTTP client.
 
@@ -472,6 +484,11 @@ class AsyncClient:
             headers: Default HTTP headers to include in requests.
             local_address: Local address to bind the client to. Useful for testing purposes or when you want to bind the client to a specific network interface.
                 Can be an IP address in the format "xxx.xxx.xxx.xxx" (for IPv4) or "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff" (for IPv6).
+            interface: Network interface to bind the client to.
+                Can be a name of the interface (e.g. "eth0") or a more complex structure
+                describing the interface.
+
+                Note that `interface` is mutually exclusive with `local_address`, i.e. only one of them can be set at a time.
         """
 
     async def get(

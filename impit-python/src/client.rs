@@ -3,7 +3,7 @@ use std::{collections::HashMap, time::Duration};
 use impit::{
     emulation::Browser,
     errors::ImpitError,
-    impit::{Impit, ImpitBuilder},
+    impit::{Impit, ImpitBuilder, Interface as InnerInterface},
     request::RequestOptions,
 };
 use pyo3::{ffi::c_str, prelude::*};
@@ -21,6 +21,12 @@ pub(crate) struct Client {
     default_encoding: Option<String>,
 }
 
+#[derive(FromPyObject)]
+pub enum Interface {
+    String(String),
+    HashMap(HashMap<String, String>),
+}
+
 #[pymethods]
 impl Client {
     pub fn __enter__(slf: Py<Self>) -> Py<Self> {
@@ -36,7 +42,7 @@ impl Client {
     }
 
     #[new]
-    #[pyo3(signature = (browser=None, http3=None, proxy=None, timeout=None, verify=None, default_encoding=None, follow_redirects=None, max_redirects=Some(20), cookie_jar=None, cookies=None, headers=None, local_address=None))]
+    #[pyo3(signature = (browser=None, http3=None, proxy=None, timeout=None, verify=None, default_encoding=None, follow_redirects=None, max_redirects=Some(20), cookie_jar=None, cookies=None, headers=None, local_address=None, interface=None))]
     pub fn new(
         py: Python<'_>,
         browser: Option<String>,
@@ -51,6 +57,7 @@ impl Client {
         cookies: Option<crate::Bound<'_, crate::PyAny>>,
         headers: Option<HashMap<String, String>>,
         local_address: Option<String>,
+        interface: Option<Interface>,
     ) -> Result<Self, ImpitPyError> {
         let builder = ImpitBuilder::default();
 
@@ -108,10 +115,51 @@ impl Client {
             (None, None) => builder,
         };
 
-        let builder = match local_address {
+        let builder = match local_address.clone() {
             Some(local_address) => builder
                 .with_local_address(local_address)
                 .map_err(ImpitPyError)?,
+            None => builder,
+        };
+
+        let builder = match interface {
+            Some(interface) => {
+                if local_address.is_some() {
+                    return Err(ImpitPyError(ImpitError::BindingPassthroughError(
+                        "Both interface and local_address cannot be provided at the same time."
+                            .to_string(),
+                    )));
+                }
+
+                match interface {
+                    Interface::String(name) => {
+                        builder.with_interface(InnerInterface { name, kind: None })
+                    }
+                    Interface::HashMap(map) => {
+                        let name = map
+                            .get("name")
+                            .ok_or_else(|| {
+                                ImpitPyError(ImpitError::BindingPassthroughError(
+                                    "Interface dict must contain 'name' key".to_string(),
+                                ))
+                            })?
+                            .to_string();
+                        let kind = match map.get("kind") {
+                            Some(kind_str) => match kind_str.to_lowercase().as_str() {
+                                "v4" => Some(impit::impit::IpKind::V4),
+                                "v6" => Some(impit::impit::IpKind::V6),
+                                _ => {
+                                    return Err(ImpitPyError(ImpitError::BindingPassthroughError(
+                                        "Interface 'kind' must be either 'v4' or 'v6'".to_string(),
+                                    )))
+                                }
+                            },
+                            None => None,
+                        };
+                        builder.with_interface(InnerInterface { name, kind })
+                    }
+                }
+            }?,
             None => builder,
         };
 

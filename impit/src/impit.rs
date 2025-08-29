@@ -1,3 +1,4 @@
+use netdev::get_interfaces;
 use tokio::sync::RwLock;
 
 use log::debug;
@@ -45,6 +46,18 @@ pub enum RedirectBehavior {
     ///
     /// The client will return the response for the first request, even with the `3xx` status code.
     ManualRedirect,
+}
+
+#[derive(Debug, Clone)]
+pub enum IpKind {
+    V4,
+    V6,
+}
+
+#[derive(Clone, Debug)]
+pub struct Interface {
+    pub name: String,
+    pub kind: Option<IpKind>,
 }
 
 /// A builder struct used to create a new [`Impit`] instance.
@@ -195,6 +208,45 @@ impl<CookieStoreImpl: CookieStore + 'static> ImpitBuilder<CookieStoreImpl> {
         })?;
 
         self.local_address = Some(ip_addr);
+        Ok(self)
+    }
+
+    /// Sets the network interface to bind the client to.
+    ///
+    /// This is useful for testing purposes or when you want to bind the client to a specific network interface.
+    /// This interface should be a valid network interface name (e.g. "eth0", "wlan0").
+    ///
+    /// Note that this is mutually exclusive with the `local_address` option.
+    pub fn with_interface(mut self, interface: Interface) -> Result<Self, ImpitError> {
+        let interfaces = get_interfaces();
+
+        let iface = interfaces.iter().find(|iface| iface.name == interface.name);
+
+        if iface.is_none() {
+            return Err(ImpitError::ReqwestError(format!(
+                "Invalid network interface: {}",
+                interface.name
+            )));
+        }
+
+        let iface = iface.unwrap();
+
+        let local_address = match interface.kind {
+            Some(IpKind::V4) => iface.ipv4_addrs().first().map(|f| f.to_string()),
+            Some(IpKind::V6) => iface.ipv6_addrs().first().map(|f| f.to_string()),
+            None => iface.ip_addrs().first().map(|f| f.to_string()),
+        }
+        .map(|f| {
+            f.parse::<IpAddr>().map_err(|_| {
+                ImpitError::ReqwestError(format!(
+                    "Invalid local address parsed from interface {0}: {1}",
+                    interface.name, f
+                ))
+            })
+        })
+        .transpose()?;
+
+        self.local_address = local_address;
         Ok(self)
     }
 
