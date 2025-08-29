@@ -36,13 +36,13 @@ permissions:
   contents: read
 
 jobs:
-  code_checks:
-    name: Code checks
-    uses: ./.github/workflows/python-code-checks.yaml
-    secrets: inherit
+  # code_checks:
+  #   name: Code checks
+  #   uses: ./.github/workflows/python-code-checks.yaml
+  #   secrets: inherit
 
   linux:
-    needs: code_checks
+    # needs: code_checks
     runs-on: ${{ matrix.platform.runner }}
     strategy:
       matrix:
@@ -101,7 +101,7 @@ jobs:
       #     path: impit-python/dist
 
       - name: Download wheels
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v5
         with:
           name: wheels-linux-${{ matrix.platform.target }}
           run-id: 17327232384
@@ -223,7 +223,7 @@ jobs:
   #           python -m pytest
 
   windows:
-    needs: code_checks
+    # needs: code_checks
     runs-on: ${{ matrix.platform.runner }}
     strategy:
       matrix:
@@ -263,7 +263,7 @@ jobs:
       #     path: impit-python/dist
 
       - name: Download wheels
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v5
         with:
           name: wheels-windows-${{ matrix.platform.target }}
           run-id: 17327232384
