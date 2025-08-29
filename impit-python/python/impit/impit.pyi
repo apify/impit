@@ -217,6 +217,7 @@ class Client:
         cookie_jar: CookieJar | None = None,
         cookies: Cookies | None = None,
         headers: dict[str, str] | None = None,
+        local_address: str | None = None,
     ) -> None:
         """Initialize a synchronous HTTP client.
 
@@ -230,7 +231,11 @@ class Client:
                 header and bytestream prescan.
             follow_redirects: Whether to follow redirects (default: False)
             max_redirects: Maximum number of redirects to follow (default: 20)
-            cookie_jar: Cookie jar to store cookies in
+            cookie_jar: Cookie jar to store cookies in.
+            cookies: httpx-compatible cookies object.
+            headers: Default HTTP headers to include in requests.
+            local_address: Local address to bind the client to. Useful for testing purposes or when you want to bind the client to a specific network interface.
+                Can be an IP address in the format "xxx.xxx.xxx.xxx" (for IPv4) or "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff" (for IPv6).
         """
 
     def get(
@@ -466,6 +471,7 @@ class AsyncClient:
         cookie_jar: CookieJar | None = None,
         cookies: Cookies | None = None,
         headers: dict[str, str] | None = None,
+        local_address: str | None = None,
     ) -> None:
         """Initialize an asynchronous HTTP client.
 
@@ -479,7 +485,11 @@ class AsyncClient:
                 header and bytestream prescan.
             follow_redirects: Whether to follow redirects (default: False)
             max_redirects: Maximum number of redirects to follow (default: 20)
-            cookie_jar: Cookie jar to store cookies in
+            cookie_jar: Cookie jar to store cookies in.
+            cookies: httpx-compatible cookies object.
+            headers: Default HTTP headers to include in requests.
+            local_address: Local address to bind the client to. Useful for testing purposes or when you want to bind the client to a specific network interface.
+                Can be an IP address in the format "xxx.xxx.xxx.xxx" (for IPv4) or "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff" (for IPv6).
         """
 
     async def get(

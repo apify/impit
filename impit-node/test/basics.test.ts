@@ -259,6 +259,23 @@ describe.each([
         });
     });
 
+    describe('Advanced options', () => {
+        test.each([
+            ['127.0.0.1', '::ffff:127.0.0.1'],
+            ['::1', '::1']
+        ])('localAddress switches %s / %s', async (localAddress, remoteAddress) => {
+            const impit = new Impit({
+                browser,
+                localAddress
+            });
+
+            const response = await impit.fetch(new URL('/socket', "http://localhost:3001").href);
+            const json = await response.json();
+
+            expect(json.ip).toBe(remoteAddress);
+        });
+    });
+
     describe('Request body', () => {
         const STRING_PAYLOAD = '{"Impit-Test":"foořžš"}';
         test.each([

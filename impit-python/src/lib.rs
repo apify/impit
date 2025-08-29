@@ -99,9 +99,9 @@ fn impit(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
                 cookie_jar: Option<pyo3::Bound<'_, pyo3::PyAny>>,
                 cookies: Option<pyo3::Bound<'_, pyo3::PyAny>>,
             ) -> Result<response::ImpitPyResponse, errors::ImpitPyError> {
-                let client = Client::new(_py, None, None, None, None, None, None, None, None, cookie_jar, cookies, None);
+                let client = Client::new(_py, None, None, None, None, None, None, None, None, cookie_jar, cookies, None, None);
 
-                client.$name(_py, url, content, data, headers, timeout, force_http3)
+                client?.$name(_py, url, content, data, headers, timeout, force_http3)
             }
 
             m.add_function(wrap_pyfunction!($name, m)?)?;

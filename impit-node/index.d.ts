@@ -53,6 +53,12 @@ export interface ImpitOptions {
 cookieJar?: { setCookie: (cookie: string, url: string, cb?: any) => Promise<void> | void, getCookieString: (url: string) => Promise<string> | string }
 /** Additional headers to include in every request made by this Impit instance. */
 headers?: Headers | Record<string, string> | [string, string][]
+/**
+ * Local address to bind the client to. Useful for testing purposes or when you want to bind the client to a specific network interface.
+ *
+ * Can be an IP address in the format "xxx.xxx.xxx.xxx" (for IPv4) or "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff" (for IPv6).
+ */
+localAddress?: string
 }
 
 export interface RequestInit {
