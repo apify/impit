@@ -14,10 +14,10 @@ export declare class ImpitResponse {
   ok: boolean
   url: string
   decodeBuffer(buffer: Buffer): string
-  arrayBuffer(this: object): Promise<ArrayBuffer>
-  bytes(this: object): Promise<Uint8Array>
-  text(this: object): Promise<string>
-  json(this: object): Promise<any>
+  arrayBuffer(): Promise<ArrayBuffer>
+  bytes(): Promise<Uint8Array>
+  text(): Promise<string>
+  json(): Promise<any>
   get body(): ReadableStream<Uint8Array>
 }
 

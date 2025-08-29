@@ -45,7 +45,7 @@ import { Impit } from 'impit';
 
 // Set up the Impit instance
 const impit = new Impit({
-    browser: "Chrome", // or "Firefox"
+    browser: "chrome", // or "firefox"
     proxyUrl: "http://localhost:8080",
     ignoreTlsErrors: true,
 });

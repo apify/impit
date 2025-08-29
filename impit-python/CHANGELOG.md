@@ -3,6 +3,53 @@
 All notable changes to this project will be documented in this file.
 
 
+## py-0.5.4 - 2025-08-26
+
+#### Features
+
+- Improve error typing for certain HTTP errors (#250)
+  - Improves error typing (mostly for Python version) on HTTP (network / server) errors and aligns the behaviour with HTTPX.
+
+
+
+## py-0.5.3 - 2025-08-13
+
+#### Bug Fixes
+
+- Allow passing request body in all HTTP methods except `TRACE` (#238)
+
+
+## py-0.5.2 - 2025-08-11
+
+#### Bug Fixes
+
+- Resolve blocking behavior in synchronous `Client` while reading response (#234)
+  - - Resolve blocking behavior for read stream `Response` for `impit.Client`
+
+
+#### Features
+
+- Add constructor for `Response` (#233)
+  - - Add constructor for `Response`. This can be useful when creating tests and mocks. - Allow to set custom attributes in `Response`  ---------
+
+
+
+## py-0.5.1 - 2025-08-05
+
+#### Bug Fixes
+
+- Resolve blocking behavior in `impit.Client` during multithreaded operations (#230)
+
+
+## py-0.5.0 - 2025-07-30
+
+#### Bug Fixes
+
+- Log correct timeout duration on `TimeoutException` (#222)
+  - Logs the default `Impit`-instance-wide timeout if the request-specific timeout is missing.
+
+
+
 ## py-0.4.1 - 2025-07-22
 
 #### Bug Fixes

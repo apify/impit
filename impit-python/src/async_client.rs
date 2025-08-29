@@ -424,14 +424,14 @@ impl AsyncClient {
 
         pyo3_async_runtimes::tokio::future_into_py::<_, ImpitPyResponse>(py, async move {
             let response = match method_str.to_lowercase().as_str() {
-                "get" => impit.get(url, Some(options)).await,
+                "get" => impit.get(url, Some(body), Some(options)).await,
                 "post" => impit.post(url, Some(body), Some(options)).await,
                 "patch" => impit.patch(url, Some(body), Some(options)).await,
                 "put" => impit.put(url, Some(body), Some(options)).await,
-                "options" => impit.options(url, Some(options)).await,
+                "options" => impit.options(url, Some(body), Some(options)).await,
                 "trace" => impit.trace(url, Some(options)).await,
-                "head" => impit.head(url, Some(options)).await,
-                "delete" => impit.delete(url, Some(options)).await,
+                "head" => impit.head(url, Some(body), Some(options)).await,
+                "delete" => impit.delete(url, Some(body), Some(options)).await,
                 _ => Err(ImpitError::InvalidMethod(method_str.to_string())),
             };
 
