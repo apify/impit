@@ -116,9 +116,8 @@ impl Client {
         };
 
         pyo3_async_runtimes::tokio::get_runtime().block_on(async {
-            let impit = builder.build();
             Ok(Self {
-                impit,
+                impit: builder.build(),
                 default_encoding,
             })
         })
