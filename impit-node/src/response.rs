@@ -119,7 +119,9 @@ impl<'env> ImpitResponse {
       )?;
     }
 
-    this.get(INNER_RESPONSE_PROPERTY_NAME).transpose()
+    this
+      .get(INNER_RESPONSE_PROPERTY_NAME)
+      .transpose()
       .ok_or_else(|| {
         napi::Error::new(
           napi::Status::GenericFailure,

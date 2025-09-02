@@ -44,7 +44,9 @@ impl CookieStore for PythonCookieJar {
                     )
                     .unwrap_or_default();
                 kwargs.set_item("comment", None::<&str>).unwrap_or_default();
-                kwargs.set_item("comment_url", None::<&str>).unwrap_or_default();
+                kwargs
+                    .set_item("comment_url", None::<&str>)
+                    .unwrap_or_default();
                 kwargs.set_item("port", None::<&str>).unwrap_or_default();
                 kwargs.set_item("port_specified", false).unwrap_or_default();
                 kwargs
@@ -185,8 +187,8 @@ impl PythonCookieJar {
     }
 
     pub fn from_httpx_cookies(py: Python<'_>, cookies: Py<PyAny>) -> PyResult<Self> {
-        cookies.getattr(py, "jar").and_then(|jar| {
-            Ok(PythonCookieJar::new(py, jar.into()))
-        })
+        cookies
+            .getattr(py, "jar")
+            .map(|jar| PythonCookieJar::new(py, jar))
     }
 }
