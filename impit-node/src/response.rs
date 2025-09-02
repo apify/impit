@@ -119,7 +119,13 @@ impl<'env> ImpitResponse {
       )?;
     }
 
-    Ok(this.get(INNER_RESPONSE_PROPERTY_NAME)?.unwrap())
+    this.get(INNER_RESPONSE_PROPERTY_NAME).transpose()
+      .ok_or_else(|| {
+        napi::Error::new(
+          napi::Status::GenericFailure,
+          "fatal: Couldn't get cached response stream".to_string(),
+        )
+      })?
   }
 
   #[napi(ts_return_type = "string")]
