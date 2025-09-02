@@ -1,5 +1,5 @@
-from typing import Literal
 from importlib import metadata
+from typing import Literal
 
 from .cookies import Cookies
 from .impit import (
