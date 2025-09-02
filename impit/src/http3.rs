@@ -8,9 +8,9 @@ use hickory_proto::runtime::TokioRuntimeProvider;
 use hickory_proto::ProtoError;
 
 use hickory_client::client::{Client, ClientHandle};
-use log::debug;
 use hickory_client::proto::runtime::iocompat::AsyncIoTokioAsStd;
 use hickory_client::proto::tcp::TcpClientStream;
+use log::debug;
 use tokio::net::TcpStream as TokioTcpStream;
 
 /// A struct encapsulating the components required to make HTTP/3 requests.
@@ -46,7 +46,7 @@ impl H3Engine {
                     bg_join_handle: Some(bg_join_handle),
                     h3_alt_svc: Arc::new(RwLock::new(HashMap::new())),
                 }
-            },
+            }
             Err(err) => {
                 debug!("Failed to create DNS client for HTTP3 resolution: {}", err);
                 H3Engine {
@@ -68,7 +68,7 @@ impl H3Engine {
 
         let domain_name = match Name::from_utf8(host) {
             Ok(name) => name,
-            Err(_) => return false
+            Err(_) => return false,
         };
 
         if let Some(client) = self.client.as_ref() {
