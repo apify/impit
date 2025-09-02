@@ -3,6 +3,21 @@
 All notable changes to this project will be documented in this file.
 
 
+## py-0.6.0 - 2025-09-02
+
+#### Bug Fixes
+
+- Fallback to HTTP/2 on HTTP3 DNS error (#255)
+  - Makes DNS client in HTTP/3 record resolution optional. If the initial connection fails with `Error`, impit will return `false` for every call to `host_supports_h3` (unless, e.g. `alt-svc` header has been registered for this domain).
+
+
+#### Features
+
+- Add `local_address` option to `Impit` constructor (#225)
+  - Adds a `local_address` option to the Impit HTTP client constructor across all language bindings (Rust, Python, and Node.js), allowing users to bind the client to a specific network interface. This feature is useful for testing purposes or when working with multiple network interfaces.
+
+
+
 ## py-0.5.4 - 2025-08-26
 
 #### Features
