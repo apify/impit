@@ -107,7 +107,7 @@ impl AsyncClient {
                 builder.with_cookie_store(PythonCookieJar::new(py, cookie_jar.into()))
             }
             (None, Some(cookies)) => {
-                builder.with_cookie_store(PythonCookieJar::from_httpx_cookies(py, cookies.into()))
+                builder.with_cookie_store(PythonCookieJar::from_httpx_cookies(py, cookies.into())?)
             }
             (None, None) => builder,
         };

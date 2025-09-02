@@ -10,7 +10,7 @@ use pyo3::{ffi::c_str, prelude::*};
 
 use crate::{
     cookies::PythonCookieJar,
-    errors::ImpitPyError,
+    errors::{CookieConflict, ImpitPyError},
     request::{form_to_bytes, RequestBody},
     response::{self, ImpitPyResponse},
 };
@@ -103,7 +103,7 @@ impl Client {
                 builder.with_cookie_store(PythonCookieJar::new(py, cookie_jar.into()))
             }
             (None, Some(cookies)) => {
-                builder.with_cookie_store(PythonCookieJar::from_httpx_cookies(py, cookies.into()))
+                builder.with_cookie_store(PythonCookieJar::from_httpx_cookies(py, cookies.into()).map_err(|e| ImpitPyError(ImpitError::CookieConflict))?)
             }
             (None, None) => builder,
         };
