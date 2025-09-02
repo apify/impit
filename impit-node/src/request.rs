@@ -58,9 +58,17 @@ fn await_promise<
     scope.spawn(move || match tokio::runtime::Runtime::new() {
       Ok(runtime) => {
         runtime.block_on(async {
-          let result = tsfn.call_async(args).await.unwrap().await;
-
-          let _ = tx.send(result);
+          match tsfn.call_async(args).await {
+            Ok(result) => {
+              let _ = tx.send(result.await);
+            }
+            Err(e) => {
+              let _ = tx.send(Err(napi::Error::new(
+                napi::Status::GenericFailure,
+                format!("[impit] failed to retrieve cookies from the external cookie store: {e}"),
+              )));
+            }
+          }
         });
       }
       Err(e) => {
@@ -158,13 +166,11 @@ impl NodeCookieJar {
 
     let mut set_cookie = set_cookie_js_method
       .build_threadsafe_function::<(std::string::String, std::string::String)>()
-      .build_callback(|ctx| Ok(ctx.value))
-      .unwrap();
+      .build_callback(|ctx| Ok(ctx.value))?;
 
     let mut get_cookies = get_cookie_js_method
       .build_threadsafe_function::<std::string::String>()
-      .build_callback(|ctx| Ok(ctx.value))
-      .unwrap();
+      .build_callback(|ctx| Ok(ctx.value))?;
 
     // Unless the `ThreadsafeFunction` is unreferenced, the Node.JS application will hang on exit
     // https://nodejs.github.io/node-addon-examples/special-topics/thread-safe-functions/#q-my-application-isnt-exiting-correctly-it-just-hangs
