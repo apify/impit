@@ -1,3 +1,4 @@
+from importlib import metadata
 from typing import Literal
 
 from .cookies import Cookies
@@ -42,6 +43,8 @@ from .impit import (
     put,
     trace,
 )
+
+__version__ = metadata.version('impit')
 
 __all__ = [
     'AsyncClient',
