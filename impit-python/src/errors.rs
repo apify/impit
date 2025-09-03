@@ -56,7 +56,9 @@ impl From<ImpitPyError> for pyo3::PyErr {
             ImpitPyError(ImpitError::WriteTimeout) => WriteTimeout::new_err(format!("{}", err.0)),
             ImpitPyError(ImpitError::PoolTimeout) => PoolTimeout::new_err(format!("{}", err.0)),
             ImpitPyError(ImpitError::NetworkError) => NetworkError::new_err(format!("{}", err.0)),
-            ImpitPyError(ImpitError::ConnectError) => ConnectError::new_err(format!("{}", err.0)),
+            ImpitPyError(ImpitError::ConnectError(_)) => {
+                ConnectError::new_err(format!("{}", err.0))
+            }
             ImpitPyError(ImpitError::ReadError) => ReadError::new_err(format!("{}", err.0)),
             ImpitPyError(ImpitError::WriteError) => WriteError::new_err(format!("{}", err.0)),
             ImpitPyError(ImpitError::CloseError) => CloseError::new_err(format!("{}", err.0)),
