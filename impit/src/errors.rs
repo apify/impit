@@ -115,8 +115,6 @@ impl ImpitError {
                     }
                 }
 
-                println!("{source_error:#?}");
-
                 if format!("{source_error:#?}").contains("Tunnel") {
                     return ImpitError::ProxyError(String::from(
                         "Connection to the proxy server failed.",
