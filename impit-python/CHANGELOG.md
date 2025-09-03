@@ -3,6 +3,15 @@
 All notable changes to this project will be documented in this file.
 
 
+## py-0.6.1 - 2025-09-03
+
+#### Features
+
+- Include error message in `ConnectError` (#258)
+  - Injects `cause` to the `ConnectError` display string. This allows for better error introspection in dependent packages.  Unblocks https://github.com/apify/crawlee-python/pull/1389/
+
+
+
 ## py-0.6.0 - 2025-09-02
 
 #### Bug Fixes
