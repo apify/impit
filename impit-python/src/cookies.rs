@@ -18,7 +18,7 @@ impl CookieStore for PythonCookieJar {
         cookie_headers: &mut dyn Iterator<Item = &reqwest::header::HeaderValue>,
         url: &Url,
     ) {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             for header_value in cookie_headers {
                 let cookie = std::str::from_utf8(header_value.as_bytes())
                     .map_err(cookie::ParseError::from)
@@ -101,7 +101,7 @@ impl CookieStore for PythonCookieJar {
     }
 
     fn cookies(&self, url: &Url) -> Option<reqwest::header::HeaderValue> {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let cookie_list = PyIterator::from_object(&self.cookie_jar.bind_borrowed(py)).unwrap();
 
             cookie_list

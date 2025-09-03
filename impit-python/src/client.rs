@@ -407,7 +407,7 @@ impl Client {
             http3_prior_knowledge: force_http3.unwrap_or(false),
         };
 
-        py.allow_threads(|| {
+        py.detach(|| {
             pyo3_async_runtimes::tokio::get_runtime().block_on(async {
                 let response = match method.to_lowercase().as_str() {
                     "get" => self.impit.get(url, Some(body), Some(options)).await,
