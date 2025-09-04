@@ -35,7 +35,7 @@ jobs:
           uses: astral-sh/setup-uv@v6
 
         - name: Use Node.js
-          uses: actions/setup-node@v4
+          uses: actions/setup-node@v5
 
         - name: Get current version
           id: get_version
