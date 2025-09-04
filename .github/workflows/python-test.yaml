@@ -150,7 +150,7 @@ jobs:
         with:
           ref: ${{ inputs.commit_sha }}
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: |
             3.9
@@ -230,7 +230,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v6
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: |
             3.9
@@ -286,7 +286,7 @@ jobs:
         uses: astral-sh/setup-uv@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: |
             3.9
