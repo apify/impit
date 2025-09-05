@@ -79,7 +79,7 @@ jobs:
           target: ${{ matrix.platform.target }}
           args: --release --out dist --find-interpreter --sdist
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
-          manylinux: auto
+          manylinux: ${{ matrix.platform.target == 'x86_64' && 'auto' || matrix.platform.target == 'aarch64' && '2_28' }}
           before-script-linux: |
             case "${{ matrix.platform.target }}" in
               "aarch64" | "armv7" | "s390x" | "ppc64le")
