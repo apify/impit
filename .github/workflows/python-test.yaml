@@ -49,8 +49,8 @@ jobs:
         platform:
           - runner: ubuntu-22.04
             target: x86_64
-        #   - runner: ubuntu-22.04
-        #     target: aarch64
+          - runner: ubuntu-22.04
+            target: aarch64
     steps:
       - uses: actions/checkout@v5
         with:
