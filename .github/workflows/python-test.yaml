@@ -70,7 +70,7 @@ jobs:
         with:
           working-directory: impit-python
           target: ${{ matrix.target }}
-          args: --release --out dist --find-interpreter --sdist
+          args: --release --out dist --find-interpreter ${{ matrix.target == 'x86_64' && '--sdist' || '' }}
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: ${{ matrix.target == 'x86_64' && 'auto' || matrix.target == 'aarch64' && '2_28' }}
           before-script-linux: |
