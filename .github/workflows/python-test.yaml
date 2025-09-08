@@ -116,7 +116,7 @@ jobs:
         run: uv python install
 
       - name: Download wheels
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: wheels-linux-${{ matrix.platform.target }}
           path: impit-python/dist
