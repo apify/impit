@@ -27,7 +27,7 @@
     "@types/express": "^5.0.0",
     "@types/node": "^22.13.1",
     "express": "^5.0.0",
-    "socksv5": "^0.0.6",
+    "socks-server-lib": "^0.0.3",
     "tough-cookie": "^6.0.0",
     "typedoc": "^0.28.13",
     "typedoc-plugin-mdn-links": "^5.0.9",
