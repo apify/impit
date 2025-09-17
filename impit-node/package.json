@@ -44,6 +44,7 @@
     "artifacts": "napi artifacts --output-dir ../artifacts --npm-dir npm",
     "build": "napi build --platform --release --no-const-enum",
     "build:debug": "napi build --platform --no-const-enum",
+    "docs": "npm run build:debug && typedoc --plugin typedoc-plugin-mdn-links ./index.d.ts --out ./docs",
     "prepublishOnly": "napi prepublish -t npm --no-gh-release",
     "test": "vitest --retry=3",
     "universal": "napi universal",
