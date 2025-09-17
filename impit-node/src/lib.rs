@@ -16,6 +16,19 @@ use self::response::ImpitResponse;
 use impit_builder::ImpitOptions;
 use request::{HttpMethod, NodeCookieJar, RequestInit};
 
+/// The main class of the `impit` package
+///
+/// This class is the primary interface for making HTTP requests.
+/// It provides methods to configure the Impit instance and to perform requests.
+///
+/// @example
+/// ```ts
+/// import { Impit } from 'impit';
+///
+/// const impit = new Impit();
+/// const response = await impit.fetch('https://example.com');
+/// console.log(await response.text());
+/// ```
 #[napi(js_name = "Impit")]
 pub struct ImpitWrapper {
   inner: Impit<NodeCookieJar>,
@@ -23,6 +36,23 @@ pub struct ImpitWrapper {
 
 #[napi]
 impl ImpitWrapper {
+  /// Creates a new `Impit` instance with the given options.
+  ///
+  /// The `options` parameter allows you to customize the behavior of the Impit instance.
+  /// If no options are provided, default settings will be used.
+  ///
+  /// @example
+  /// ```ts
+  /// import { Impit } from 'impit';
+  ///
+  /// const impit = new Impit({
+  ///    timeout: 5e3, // Set a default timeout of 5000
+  ///    headers: {
+  ///       'Authorization: 'Bearer <token>',
+  ///    },
+  ///    browser: 'chrome',
+  /// });
+  /// ```
   #[napi(constructor)]
   pub fn new(env: &Env, options: Option<ImpitOptions>) -> Result<Self, napi::Error> {
     let config: Result<ImpitBuilder<NodeCookieJar>, napi::Error> =
@@ -40,6 +70,25 @@ impl ImpitWrapper {
 
   #[napi]
   /// Fetch a URL with the given options.
+  ///
+  /// This method performs an HTTP request to the specified URL using the provided options.
+  /// It returns a promise that resolves to an {@link ImpitResponse} object containing the response data.
+  ///
+  /// This method is designed to be API-compatible with the {@link https://developer.mozilla.org/en-US/docs/Web/API/fetch | Fetch API `fetch`} global method.
+  ///
+  /// @example
+  /// ```ts
+  /// import { Impit } from 'impit';
+  ///
+  /// const impit = new Impit();
+  /// const response = await impit.fetch('https://example.com', {
+  ///     method: 'GET',
+  ///     headers: {
+  ///         'Accept': 'application/json'
+  ///     },
+  ///     timeout: 5e3,
+  /// });
+  /// ```
   pub async fn fetch(
     &self,
     url: String,

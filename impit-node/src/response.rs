@@ -26,14 +26,38 @@ impl Headers {
   }
 }
 
+/// Represents an HTTP response.
+///
+/// The `ImpitResponse` class provides access to the response status, headers, and body.
+/// It also includes methods to read the response body in various formats such as text, JSON,
+/// ArrayBuffer, and as a stream.
+///
+/// This class is designed to be API-compatible with the {@link https://developer.mozilla.org/en-US/docs/Web/API/Response | Fetch API Response} class.
+///
+/// @hideconstructor
 #[napi]
 pub struct ImpitResponse {
   inner: RefCell<Option<Response>>,
+  /// HTTP status code of the response.
+  ///
+  /// Example: `200` for a successful response.
   pub status: u16,
+  /// Status text of the response.
+  ///
+  /// A short description of the status code.
+  ///
+  /// Example: "OK" for status code 200.
   pub status_text: String,
+  /// HTTP headers of the response.
+  ///
+  /// An instance of the {@link https://developer.mozilla.org/en-US/docs/Web/API/Headers | Headers} class.
   #[napi(ts_type = "Headers")]
   pub headers: Headers,
+  /// `true` if the response status code is in the range 200-299.
   pub ok: bool,
+  /// URL of the response.
+  ///
+  /// In case of redirects, this will be the final URL after all redirects have been followed.
   pub url: String,
 }
 
@@ -130,6 +154,7 @@ impl<'env> ImpitResponse {
       })?
   }
 
+  /// @ignore
   #[napi(ts_return_type = "string")]
   pub fn decode_buffer(&self, buffer: Buffer) -> Result<String> {
     let encoding = self
@@ -147,6 +172,20 @@ impl<'env> ImpitResponse {
     Ok(string)
   }
 
+  /// Returns the response body as an `ArrayBuffer`.
+  ///
+  /// This method is asynchronous and returns a promise that resolves to an `ArrayBuffer` containing the response body data.
+  ///
+  /// @example
+  /// ```ts
+  /// const response = await impit.fetch('https://example.com');
+  /// const arrayBuffer = await response.arrayBuffer();
+  ///
+  /// console.log(arrayBuffer); // ArrayBuffer([ 0x3c, 0x68, 0x74, 0x6d, 0x6c, ... ])
+  /// ```
+  ///
+  /// Note that you cannot call this method multiple times on the same response instance,
+  /// as the response body can only be consumed once. Subsequent calls will result in an error.
   #[napi(ts_return_type = "Promise<ArrayBuffer>")]
   pub fn array_buffer(&'env self, env: &'env Env, this: This<'env>) -> Result<Object<'env>> {
     let response = self.get_inner_response(env, this)?;
@@ -157,6 +196,20 @@ impl<'env> ImpitResponse {
       .coerce_to_object()
   }
 
+  /// Returns the response body as a `Uint8Array`.
+  ///
+  /// This method is asynchronous and returns a promise that resolves to a `Uint8Array` containing the response body data.
+  ///
+  /// @example
+  /// ```ts
+  /// const response = await impit.fetch('https://example.com');
+  /// const uint8Array = await response.bytes();
+  ///
+  /// console.log(uint8Array); // Uint8Array([ 0x3c, 0x68, 0x74, 0x6d, 0x6c, ... ])
+  /// ```
+  ///
+  /// Note that you cannot call this method multiple times on the same response instance,
+  /// as the response body can only be consumed once. Subsequent calls will result in an error.
   #[napi(ts_return_type = "Promise<Uint8Array>")]
   pub fn bytes(&'env self, env: &'env Env, this: This<'env>) -> Result<Object<'env>> {
     let array_buffer_promise = self.array_buffer(env, this)?;
@@ -171,6 +224,17 @@ impl<'env> ImpitResponse {
     then.apply(Some(&array_buffer_promise), cb)
   }
 
+  /// Returns the response body as a string.
+  ///
+  /// This method is asynchronous and returns a promise that resolves to a string containing the response body data.
+  ///
+  /// @example
+  /// ```ts
+  /// const response = await impit.fetch('https://example.com');
+  /// const text = await response.text();
+  ///
+  /// console.log(text); // "<!doctype html><html>...</html>"
+  /// ```
   #[napi(ts_return_type = "Promise<string>")]
   pub fn text(&'env self, env: &'env Env, this: This<'env>) -> Result<Unknown<'env>> {
     let response = self.get_inner_response(env, this)?;
@@ -180,6 +244,17 @@ impl<'env> ImpitResponse {
       .apply(response, ())
   }
 
+  /// Parses the response body as JSON.
+  ///
+  /// This method is asynchronous and returns a promise that resolves to the parsed JSON object.
+  ///
+  /// @example
+  /// ```ts
+  /// const response = await impit.fetch('https://api.example.com/data');
+  /// const data = await response.json();
+  ///
+  /// console.log(data); // Parsed JSON object
+  /// ```
   #[napi(ts_return_type = "Promise<any>")]
   pub fn json(&'env self, env: &'env Env, this: This<'env>) -> Result<Unknown<'env>> {
     let response = self.get_inner_response(env, this)?;
@@ -189,6 +264,20 @@ impl<'env> ImpitResponse {
       .apply(response, ())
   }
 
+  /// Returns the response body as a `ReadableStream`.
+  ///
+  /// This property provides access to the response body as a stream of data, allowing you to read it in chunks.
+  ///
+  /// @example
+  /// ```ts
+  /// const response = await impit.fetch('https://example.com');
+  /// const reader = response.body.getReader();
+  ///
+  /// let result;
+  /// while (!(result = await reader.read()).done) {
+  ///    console.log(result.value); // Uint8Array chunk
+  /// }
+  /// ```
   #[napi(
     getter,
     js_name = "body",

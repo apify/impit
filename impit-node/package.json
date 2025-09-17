@@ -29,6 +29,9 @@
     "express": "^5.0.0",
     "socks-server-lib": "^0.0.3",
     "tough-cookie": "^6.0.0",
+    "typedoc": "^0.28.13",
+    "typedoc-plugin-mdn-links": "^5.0.9",
+    "typescript": "^5.9.2",
     "vitest": "^3.0.5"
   },
   "ava": {
@@ -41,6 +44,7 @@
     "artifacts": "napi artifacts --output-dir ../artifacts --npm-dir npm",
     "build": "napi build --platform --release --no-const-enum",
     "build:debug": "napi build --platform --no-const-enum",
+    "docs": "npm run build:debug && typedoc --plugin typedoc-plugin-mdn-links ./index.d.ts --out ./docs",
     "prepublishOnly": "napi prepublish -t npm --no-gh-release",
     "test": "vitest --retry=3",
     "universal": "napi universal",
