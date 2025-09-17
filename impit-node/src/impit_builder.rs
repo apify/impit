@@ -9,6 +9,9 @@ use napi_derive::napi;
 
 use crate::request::NodeCookieJar;
 
+/// Supported browsers for emulation.
+///
+/// See {@link ImpitOptions.browser} for more details and usage.
 #[napi(string_enum = "lowercase")]
 pub enum Browser {
   Chrome,
@@ -24,34 +27,72 @@ impl From<Browser> for ImpitBrowser {
   }
 }
 
+/// Options for configuring an {@link Impit} instance.
+///
+/// These options allow you to customize the behavior of the Impit instance, including browser emulation, TLS settings, proxy configuration, timeouts, and more.
+///
+/// If no options are provided, default settings will be used.
+///
+/// See {@link Impit} for usage.
 #[derive(Default)]
 #[napi(object)]
 pub struct ImpitOptions<'a> {
+  /// What browser to emulate.
+  ///
+  /// @default `undefined` (no browser emulation)
   pub browser: Option<Browser>,
+  /// Ignore TLS errors such as invalid certificates.
+  ///
+  /// @default `false`
   pub ignore_tls_errors: Option<bool>,
+  /// Whether to fallback to a vanilla user-agent if the emulated browser
+  /// is not supported by the target website.
+  ///
+  /// @default `false`
   pub vanilla_fallback: Option<bool>,
+  /// Proxy URL to use for this Impit instance.
+  ///
+  /// Supports HTTP, HTTPS, SOCKS4 and SOCKS5 proxies.
+  ///
+  /// @default `undefined` (no proxy)
   pub proxy_url: Option<String>,
   /// Default timeout for this Impit instance in milliseconds.
   pub timeout: Option<u32>,
   /// Enable HTTP/3 support.
+  ///
+  /// @default `false`
   pub http3: Option<bool>,
-  /// Follow redirects.
+  /// Whether to follow redirects or not.
+  ///
+  /// @default `true`
   pub follow_redirects: Option<bool>,
-  /// Maximum number of redirects to follow. Default is `10`.
+  /// Maximum number of redirects to follow.
   ///
   /// If this number is exceeded, the request will be rejected with an error.
+  ///
+  /// @default `10`
   pub max_redirects: Option<u32>,
-  /// Pass a ToughCookie instance to Impit.
+  /// Pass a {@link https://github.com/salesforce/tough-cookie | `ToughCookie`} instance to Impit.
+  ///
+  /// This `impit` instance will use the provided cookie jar for both storing and retrieving cookies.
+  ///
+  /// @default `undefined` (no cookie jar, i.e., cookies are not stored or sent across requests)
   #[napi(
     ts_type = "{ setCookie: (cookie: string, url: string, cb?: any) => Promise<void> | void, getCookieString: (url: string) => Promise<string> | string }"
   )]
   pub cookie_jar: Option<Object<'a>>,
   /// Additional headers to include in every request made by this Impit instance.
+  ///
+  /// Can be an object, a Map, or an array of tuples or an instance of the {@link https://developer.mozilla.org/en-US/docs/Web/API/Headers | Headers} class.
+  ///
+  /// @default `undefined` (no additional headers)
   #[napi(ts_type = "Headers | Record<string, string> | [string, string][]")]
   pub headers: Option<Vec<(String, String)>>,
   /// Local address to bind the client to. Useful for testing purposes or when you want to bind the client to a specific network interface.
   ///
-  /// Can be an IP address in the format "xxx.xxx.xxx.xxx" (for IPv4) or "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff" (for IPv6).
+  /// Can be an IP address in the format `xxx.xxx.xxx.xxx` (for IPv4) or `ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff` (for IPv6).
+  ///
+  /// @default `undefined` (the OS will choose the local address)
   pub local_address: Option<String>,
 }
 
