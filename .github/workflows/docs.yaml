@@ -32,7 +32,7 @@ jobs:
       - name: Copy redirect
         run: cp impit/docs/index.html target/doc/index.html
       - name: Upload artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v4
         with:
           path: target/doc/
 
@@ -55,7 +55,7 @@ jobs:
       - name: Build docs
         run: cd impit-node && yarn docs
       - name: Upload artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v4
         with:
           path: impit-node/docs/
   # deploy:
