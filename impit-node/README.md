@@ -1,5 +1,7 @@
 # `impit` for JavaScript
 
+> **Note**: This is the documentation of the Node.JS bindings for the [`impit`](https://github.com/apify/impit) library.
+
 `impit` is a Node.JS module that provides bindings for the [`impit`](https://github.com/apify/impit) library.
 
 It allows you to switch the TLS fingerprints and the HTTP headers of your requests, while still using the same API as the built-in (since Node.JS 18) `fetch` function.
