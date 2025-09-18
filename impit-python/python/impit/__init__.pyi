@@ -1,6 +1,6 @@
 from __future__ import annotations
 from http.cookiejar import CookieJar
-from .cookies import Cookies
+# from .cookies import Cookies
 
 from typing import Literal
 from collections.abc import Iterator, AsyncIterator
@@ -530,6 +530,15 @@ class AsyncClient:
             headers: HTTP headers
             timeout: Request timeout in seconds (overrides default timeout)
             force_http3: Force HTTP/3 protocol
+
+        .. code-block:: python
+
+            import AsyncClient from impit
+            async with AsyncClient() as client:
+                response = await client.post("https://example.com", data={"key": "value"})
+                print(response.status_code)
+                print(response.text)
+
         """
 
     async def put(

@@ -1,0 +1,5 @@
+@import './alabaster.css';
+
+dd dl.field-list {
+    grid-template-columns: none;
+}

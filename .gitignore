@@ -12,3 +12,4 @@ venv
 .coverage
 *.so
 *.py[cod]
+_build/
