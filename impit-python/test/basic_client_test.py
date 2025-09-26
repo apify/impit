@@ -71,22 +71,22 @@ class TestBasicRequests:
 
         response = impit.get(get_httpbin_url('/headers'), headers={'Impit-Test': 'foo'})
         assert response.status_code == 200
-        assert json.loads(response.text)['headers']['Impit-Test'] == 'foo'
+        assert response.json()['headers']['Impit-Test'] == 'foo'
 
     def test_client_wide_headers_work(self, browser: Browser) -> None:
         impit = Client(browser=browser, headers={'Impit-Test': 'foo'})
 
         response = impit.get(get_httpbin_url('/headers'))
         assert response.status_code == 200
-        assert json.loads(response.text)['headers']['Impit-Test'] == 'foo'
+        assert response.json()['headers']['Impit-Test'] == 'foo'
 
     def test_request_headers_over_client_headers(self, browser: Browser) -> None:
         impit = Client(browser=browser, headers={'Auth': '123', 'Exception': 'nope'})
 
         response = impit.get(get_httpbin_url('/headers'), headers={'Exception': 'yes'})
         assert response.status_code == 200
-        assert json.loads(response.text)['headers']['Auth'] == '123'
-        assert json.loads(response.text)['headers']['Exception'] == 'yes'
+        assert response.json()['headers']['Auth'] == '123'
+        assert response.json()['headers']['Exception'] == 'yes'
 
     def test_cookies_nonstandard(self, browser: Browser) -> None:
         cookies_jar = CookieJar()
@@ -161,11 +161,9 @@ class TestBasicRequests:
             cookie_jar=cookies.jar,
         )
 
-        response = json.loads(
-            impit.get(
-                get_httpbin_url('/cookies/'),
-            ).text
-        )
+        response = impit.get(
+            get_httpbin_url('/cookies/'),
+        ).json()
 
         assert response['cookies'] == {'preset-cookie': '123'}
 
@@ -173,11 +171,9 @@ class TestBasicRequests:
             get_httpbin_url('/cookies/set', query={'set-by-server': '321'}),
         )
 
-        response = json.loads(
-            impit.get(
-                get_httpbin_url('/cookies/'),
-            ).text
-        )
+        response = impit.get(
+            get_httpbin_url('/cookies/'),
+        ).json()
 
         assert response['cookies'] == {
             'preset-cookie': '123',
@@ -194,11 +190,9 @@ class TestBasicRequests:
             cookies=cookies,
         )
 
-        response = json.loads(
-            impit.get(
-                get_httpbin_url('/cookies/'),
-            ).text
-        )
+        response = impit.get(
+            get_httpbin_url('/cookies/'),
+        ).json()
 
         assert response['cookies'] == {'preset-cookie': '123'}
 
@@ -206,11 +200,9 @@ class TestBasicRequests:
             get_httpbin_url('/cookies/set', query={'set-by-server': '321'}),
         )
 
-        response = json.loads(
-            impit.get(
-                get_httpbin_url('/cookies/'),
-            ).text
-        )
+        response = impit.get(
+            get_httpbin_url('/cookies/'),
+        ).json()
 
         assert response['cookies'] == {
             'preset-cookie': '123',
@@ -226,7 +218,7 @@ class TestBasicRequests:
 
         response = impit.get(get_httpbin_url('/headers'), headers={'User-Agent': 'this is impit!'})
         assert response.status_code == 200
-        assert json.loads(response.text)['headers']['User-Agent'] == 'this is impit!'
+        assert response.json()['headers']['User-Agent'] == 'this is impit!'
 
     @pytest.mark.skip(reason='Flaky under the CI environment')
     def test_http3_works(self, browser: Browser) -> None:
@@ -330,7 +322,7 @@ class TestRequestBody:
             headers={'Content-Type': 'application/json'},
         )
         assert response.status_code == 200
-        assert json.loads(response.text)['data'] == '{"Impit-Test":"foořžš"}'
+        assert response.json()['data'] == '{"Impit-Test":"foořžš"}'
 
     def test_passing_string_body_in_data(self, browser: Browser) -> None:
         impit = Client(browser=browser)
@@ -341,7 +333,7 @@ class TestRequestBody:
             headers={'Content-Type': 'application/json'},
         )
         assert response.status_code == 200
-        assert json.loads(response.text)['data'] == '{"Impit-Test":"foořžš"}'
+        assert response.json()['data'] == '{"Impit-Test":"foořžš"}'
 
     def test_form_non_ascii(self, browser: Browser) -> None:
         impit = Client(browser=browser)
@@ -351,7 +343,7 @@ class TestRequestBody:
             data={'Impit-Test': '👾🕵🏻‍♂️🧑‍💻'},
         )
         assert response.status_code == 200
-        assert json.loads(response.text)['form']['Impit-Test'] == '👾🕵🏻‍♂️🧑‍💻'
+        assert response.json()['form']['Impit-Test'] == '👾🕵🏻‍♂️🧑‍💻'
 
     def test_passing_binary_body(self, browser: Browser) -> None:
         impit = Client(browser=browser)
@@ -383,7 +375,7 @@ class TestRequestBody:
             headers={'Content-Type': 'application/json'},
         )
         assert response.status_code == 200
-        assert json.loads(response.text)['data'] == 'Impit-Test:foořžš'
+        assert response.json()['data'] == 'Impit-Test:foořžš'
 
     @pytest.mark.parametrize(
         ('method'),
@@ -396,7 +388,7 @@ class TestRequestBody:
 
         response = m(get_httpbin_url(f'/{method.lower()}'), content=b'foo')
         assert response.status_code == 200
-        assert json.loads(response.text)['data'] == 'foo'
+        assert response.json()['data'] == 'foo'
 
     def test_content(self, browser: Browser) -> None:
         impit = Client(browser=browser)
@@ -407,6 +399,14 @@ class TestRequestBody:
         assert isinstance(response.content, bytes)
         assert isinstance(response.text, str)
         assert response.content.decode('utf-8') == response.text
+
+    def test_json(self, browser: Browser) -> None:
+        impit = Client(browser=browser)
+
+        response = impit.get(get_httpbin_url('/get'))
+
+        assert response.status_code == 200
+        assert response.json() == json.loads(response.text)
 
 
 @pytest.mark.parametrize(

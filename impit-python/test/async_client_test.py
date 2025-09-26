@@ -432,6 +432,15 @@ class TestRequestBody:
         assert isinstance(response.text, str)
         assert response.content.decode('utf-8') == response.text
 
+    @pytest.mark.asyncio
+    async def test_json(self, browser: Browser) -> None:
+        impit = AsyncClient(browser=browser)
+
+        response = await impit.get(get_httpbin_url('/get'))
+
+        assert response.status_code == 200
+        assert response.json() == json.loads(response.text)
+
 
 @pytest.mark.parametrize(
     ('browser'),
