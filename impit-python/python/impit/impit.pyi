@@ -2,7 +2,7 @@ from __future__ import annotations
 from http.cookiejar import CookieJar
 from .cookies import Cookies
 
-from typing import Literal, TypedDict
+from typing import Literal, TypedDict, Any
 from collections.abc import Iterator, AsyncIterator
 from contextlib import AbstractAsyncContextManager, AbstractContextManager
 
@@ -192,6 +192,13 @@ class Response:
 
     def aiter_bytes(self) -> AsyncIterator[bytes]:
         """Asynchronously iterate over the response content in chunks."""
+
+    def json(self) -> Any:
+        """Parse the response content as JSON.
+
+        Returns:
+            Parsed JSON data as a Python object (dict, list, str, int, float, bool, or None)
+        """
 
     def close(self) -> None:
         """Close the response and release resources."""

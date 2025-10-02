@@ -18,23 +18,23 @@ impl CookieStore for PythonCookieJar {
         cookie_headers: &mut dyn Iterator<Item = &reqwest::header::HeaderValue>,
         url: &Url,
     ) {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             for header_value in cookie_headers {
                 let cookie = std::str::from_utf8(header_value.as_bytes())
                     .map_err(cookie::ParseError::from)
                     .and_then(Cookie::parse)
-                    .unwrap();
+                    .unwrap_or(Cookie::new("<cookie-name>", "<cookie-value>"));
 
                 let kwargs = PyDict::new(py);
 
-                kwargs.set_item("name", cookie.name()).unwrap();
-                kwargs.set_item("value", cookie.value()).unwrap();
+                kwargs.set_item("name", cookie.name()).unwrap_or_default();
+                kwargs.set_item("value", cookie.value()).unwrap_or_default();
                 kwargs
                     .set_item("path", cookie.path().unwrap_or(""))
-                    .unwrap();
+                    .unwrap_or_default();
                 kwargs
                     .set_item("secure", cookie.secure().unwrap_or(false))
-                    .unwrap();
+                    .unwrap_or_default();
                 kwargs
                     .set_item(
                         "domain",
@@ -42,40 +42,42 @@ impl CookieStore for PythonCookieJar {
                             .domain()
                             .unwrap_or_else(|| url.host_str().unwrap_or_default()),
                     )
-                    .unwrap();
-                kwargs.set_item("comment", None::<&str>).unwrap();
-                kwargs.set_item("comment_url", None::<&str>).unwrap();
-                kwargs.set_item("port", None::<&str>).unwrap();
-                kwargs.set_item("port_specified", false).unwrap();
+                    .unwrap_or_default();
+                kwargs.set_item("comment", None::<&str>).unwrap_or_default();
+                kwargs
+                    .set_item("comment_url", None::<&str>)
+                    .unwrap_or_default();
+                kwargs.set_item("port", None::<&str>).unwrap_or_default();
+                kwargs.set_item("port_specified", false).unwrap_or_default();
                 kwargs
                     .set_item("path_specified", cookie.path().is_some())
-                    .unwrap();
+                    .unwrap_or_default();
                 kwargs
                     .set_item(
                         "discard",
                         cookie.max_age().is_none() && cookie.expires().is_none(),
                     )
-                    .unwrap();
+                    .unwrap_or_default();
                 kwargs
                     .set_item("domain_specified", cookie.domain().is_some())
-                    .unwrap();
+                    .unwrap_or_default();
                 kwargs
                     .set_item(
                         "domain_initial_dot",
                         cookie.domain().map(|d| d.starts_with('.')),
                     )
-                    .unwrap();
+                    .unwrap_or_default();
                 kwargs
                     .set_item(
                         "expires",
                         cookie.expires_datetime().map(|f| f.unix_timestamp()),
                     )
-                    .unwrap();
-                kwargs.set_item("version", 0).unwrap();
+                    .unwrap_or_default();
+                kwargs.set_item("version", 0).unwrap_or_default();
 
                 let rest = PyDict::new(py);
                 if let Some(http_only) = cookie.http_only() {
-                    rest.set_item("HttpOnly", http_only).unwrap();
+                    rest.set_item("HttpOnly", http_only).unwrap_or_default();
                 }
 
                 if let Some(same_site) = cookie.same_site() {
@@ -84,10 +86,10 @@ impl CookieStore for PythonCookieJar {
                         cookie::SameSite::Lax => "Lax",
                         cookie::SameSite::None => "None",
                     };
-                    rest.set_item("SameSite", same_site_str).unwrap();
+                    rest.set_item("SameSite", same_site_str).unwrap_or_default();
                 }
 
-                kwargs.set_item("rest", rest).unwrap();
+                kwargs.set_item("rest", rest).unwrap_or_default();
 
                 let py_cookie = self.cookie_constructor.call(py, (), Some(&kwargs)).unwrap();
 
@@ -101,7 +103,7 @@ impl CookieStore for PythonCookieJar {
     }
 
     fn cookies(&self, url: &Url) -> Option<reqwest::header::HeaderValue> {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let cookie_list = PyIterator::from_object(&self.cookie_jar.bind_borrowed(py)).unwrap();
 
             cookie_list
@@ -110,18 +112,15 @@ impl CookieStore for PythonCookieJar {
 
                     let domain = py_cookie
                         .getattr("domain")
-                        .unwrap()
-                        .extract::<String>()
-                        .unwrap();
+                        .and_then(|attr| attr.extract::<String>())
+                        .unwrap_or_default();
                     let path = py_cookie
                         .getattr("path")
-                        .unwrap()
-                        .extract::<String>()
-                        .unwrap();
+                        .and_then(|attr| attr.extract::<String>())
+                        .unwrap_or_default();
                     let secure = py_cookie
                         .getattr("secure")
-                        .unwrap()
-                        .extract::<bool>()
+                        .and_then(|attr| attr.extract::<bool>())
                         .unwrap_or_default();
 
                     if !domain.is_empty() && !url.host_str().unwrap_or_default().contains(&domain) {
@@ -187,7 +186,9 @@ impl PythonCookieJar {
         }
     }
 
-    pub fn from_httpx_cookies(py: Python<'_>, cookies: Py<PyAny>) -> Self {
-        PythonCookieJar::new(py, cookies.getattr(py, "jar").unwrap())
+    pub fn from_httpx_cookies(py: Python<'_>, cookies: Py<PyAny>) -> PyResult<Self> {
+        cookies
+            .getattr(py, "jar")
+            .map(|jar| PythonCookieJar::new(py, jar))
     }
 }

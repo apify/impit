@@ -28,19 +28,35 @@ pub enum HttpMethod {
   Options,
 }
 
+/// Options for configuring an individual HTTP request.
+///
+/// These options allow you to customize the behavior of a specific request, including the HTTP method, headers, body, timeout, and whether to force HTTP/3.
+///
+/// If no options are provided, default settings will be used.
+///
+/// See {@link Impit.fetch} for usage.
 #[derive(Default)]
 #[napi(object)]
 pub struct RequestInit {
+  /// HTTP method to use for the request. Default is `GET`.
+  ///
+  /// Can be one of: `GET`, `POST`, `PUT`, `DELETE`, `PATCH`, `HEAD`, `OPTIONS`.
   pub method: Option<HttpMethod>,
+  /// Additional headers to include in the request.
+  ///
+  /// Can be an object, a Map, or an array of tuples or an instance of the {@link https://developer.mozilla.org/en-US/docs/Web/API/Headers | Headers} class.
+  ///
+  /// Note that headers set here will override any default headers set in {@link ImpitOptions.headers}.
   #[napi(ts_type = "Headers | Record<string, string> | [string, string][]")]
   pub headers: Option<Vec<(String, String)>>,
   #[napi(
     ts_type = "string | ArrayBuffer | Uint8Array | DataView | Blob | File | URLSearchParams | FormData | ReadableStream"
   )]
+  /// Request body. Can be a string, Buffer, ArrayBuffer, TypedArray, DataView, Blob, File, URLSearchParams, FormData or ReadableStream.
   pub body: Option<Uint8Array>,
-  /// Request timeout in milliseconds. Overrides the Impit-wide timeout option.
+  /// Request timeout in milliseconds. Overrides the Impit-wide timeout option from {@link ImpitOptions.timeout}.
   pub timeout: Option<u32>,
-  /// Force the request to use HTTP/3. If the server doesn't expect HTTP/3, the request will fail.
+  /// Force the request to use HTTP/3. If the server doesn't expect HTTP/3 or the Impit instance doesn't have HTTP/3 enabled (via the {@link ImpitOptions.http3} option), the request will fail.
   pub force_http3: Option<bool>,
 }
 
@@ -58,9 +74,17 @@ fn await_promise<
     scope.spawn(move || match tokio::runtime::Runtime::new() {
       Ok(runtime) => {
         runtime.block_on(async {
-          let result = tsfn.call_async(args).await.unwrap().await;
-
-          let _ = tx.send(result);
+          match tsfn.call_async(args).await {
+            Ok(result) => {
+              let _ = tx.send(result.await);
+            }
+            Err(e) => {
+              let _ = tx.send(Err(napi::Error::new(
+                napi::Status::GenericFailure,
+                format!("[impit] failed to retrieve cookies from the external cookie store: {e}"),
+              )));
+            }
+          }
         });
       }
       Err(e) => {
@@ -158,13 +182,11 @@ impl NodeCookieJar {
 
     let mut set_cookie = set_cookie_js_method
       .build_threadsafe_function::<(std::string::String, std::string::String)>()
-      .build_callback(|ctx| Ok(ctx.value))
-      .unwrap();
+      .build_callback(|ctx| Ok(ctx.value))?;
 
     let mut get_cookies = get_cookie_js_method
       .build_threadsafe_function::<std::string::String>()
-      .build_callback(|ctx| Ok(ctx.value))
-      .unwrap();
+      .build_callback(|ctx| Ok(ctx.value))?;
 
     // Unless the `ThreadsafeFunction` is unreferenced, the Node.JS application will hang on exit
     // https://nodejs.github.io/node-addon-examples/special-topics/thread-safe-functions/#q-my-application-isnt-exiting-correctly-it-just-hangs

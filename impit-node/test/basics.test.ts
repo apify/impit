@@ -1,11 +1,11 @@
 import { test, describe, expect, beforeAll, afterAll } from 'vitest';
 
 import { HttpMethod, Impit, Browser } from '../index.wrapper.js';
-import { Server } from 'http';
+import type { Server } from 'net';
 import { routes, runServer } from './mock.server.js';
 
 import { CookieJar } from 'tough-cookie';
-import socks from 'socksv5';
+import { runSocksServer } from 'socks-server-lib';
 
 function getHttpBinUrl(path: string, https?: boolean): string {
     https ??= true;
@@ -28,20 +28,8 @@ async function getServer() {
     return localServer;
 }
 
-async function startSocksServer() {
-    return new Promise<Server>((resolve, reject) => {
-        const srv = (socks as any).createServer((info, accept, deny) => accept());
-        srv.listen(7625, 'localhost', () => {
-            resolve(srv);
-        });
-        srv.on('error', (err: Error) => {
-            reject(err);
-        });
-        srv.useAuth(socks.auth.None());
-    });
-}
-
 let socksServer: Server | null = null;
+let socksConnectionCount = 0;
 beforeAll(async () => {
     // Warms up the httpbin instance, so that the first tests don't timeout.
     // Has a longer timeout itself (5s vs 30s) to avoid flakiness.
@@ -49,7 +37,7 @@ beforeAll(async () => {
     // Start the local server
     await getServer();
 
-    socksServer = await startSocksServer();
+    socksServer = await runSocksServer({ host: 'localhost', port: 7625, onData: () => { socksConnectionCount++; }});
 }, 30e3);
 
 afterAll(async () => {
@@ -60,7 +48,8 @@ afterAll(async () => {
         }),
         Promise.race([
             new Promise<void>(res => {
-                socksServer?.close(() => res())
+                socksServer?.on('close', () => res());
+                socksServer?.close();
             }),
             new Promise<void>(res => {
                 setTimeout(() => {
@@ -69,6 +58,8 @@ afterAll(async () => {
             })
         ]),
     ]);
+
+    expect(socksConnectionCount).toBe(6);
 });
 
 describe.each([
@@ -139,17 +130,17 @@ describe.each([
                 ]);
         });
 
-        test('supports socks proxy', async (t) => {
+        test.each([['socks4'], ['socks5']])('supports %s proxy', async (proxyType) => {
             const impit = new Impit({
                 browser,
-                proxyUrl: 'socks5://localhost:7625',
+                proxyUrl: `${proxyType}://localhost:7625`,
             });
 
             const response = await impit.fetch(
                 getHttpBinUrl('/get'),
             );
 
-            t.expect(response.status).toBe(200);
+            expect(response.status).toBe(200);
             const json = await response.json();
             expect(json).toHaveProperty('url');
             expect(json).toHaveProperty('headers');

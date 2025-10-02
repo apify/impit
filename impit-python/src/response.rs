@@ -54,7 +54,7 @@ impl PyResponseBytesIterator {
         let py = slf.py();
 
         if let Some(stream) = &mut slf.stream {
-            let result = py.allow_threads(|| runtime.block_on(stream.next()));
+            let result = py.detach(|| runtime.block_on(stream.next()));
 
             match result {
                 Some(Ok(chunk)) => Ok(Some(chunk.to_vec())),
@@ -152,7 +152,7 @@ impl PyResponseAsyncBytesIterator {
                 Some(Ok(chunk)) => Ok(chunk.to_vec()),
                 Some(Err(e)) => {
                     if let Some(parent) = parent_response {
-                        Python::with_gil(|py| {
+                        Python::attach(|py| {
                             if let Ok(mut parent_ref) = parent.try_borrow_mut(py) {
                                 parent_ref.inner_state = InnerResponseState::StreamingClosed;
                                 parent_ref.is_closed = true;
@@ -165,7 +165,7 @@ impl PyResponseAsyncBytesIterator {
                 }
                 None => {
                     if let Some(parent) = parent_response {
-                        Python::with_gil(|py| {
+                        Python::attach(|py| {
                             if let Ok(mut parent_ref) = parent.try_borrow_mut(py) {
                                 parent_ref.inner_state = InnerResponseState::StreamingClosed;
                                 parent_ref.is_stream_consumed = true;
@@ -383,7 +383,7 @@ impl ImpitPyResponse {
     fn aread(slf: Py<Self>, py: Python<'_>) -> PyResult<Bound<'_, PyAny>> {
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let (state, response_option, content_option, is_stream_consumed) =
-                Python::with_gil(|py| {
+                Python::attach(|py| {
                     let mut slf_ref = slf.borrow_mut(py);
                     (
                         slf_ref.inner_state,
@@ -402,7 +402,7 @@ impl ImpitPyResponse {
                                 ImpitPyError(impit::errors::ImpitError::NetworkError)
                             })?;
 
-                        Python::with_gil(|py| {
+                        Python::attach(|py| {
                             let mut slf_ref = slf.borrow_mut(py);
                             slf_ref.content = Some(content.clone());
                             slf_ref.inner_state = InnerResponseState::Read;
@@ -460,6 +460,13 @@ impl ImpitPyResponse {
         Ok(decoded_text)
     }
 
+    fn json(&mut self, py: Python<'_>) -> PyResult<Py<PyAny>> {
+        let text = self.text(py)?;
+        let json_module = py.import("json")?;
+        let parsed = json_module.call_method1("loads", (text,))?;
+        Ok(parsed.into())
+    }
+
     fn read(&mut self, py: Python<'_>) -> PyResult<Vec<u8>> {
         match self.inner_state {
             InnerResponseState::Read => self
@@ -481,7 +488,7 @@ impl ImpitPyResponse {
                     .ok_or(ImpitPyError(impit::errors::ImpitError::StreamClosed))?;
 
                 let runtime = pyo3_async_runtimes::tokio::get_runtime();
-                let content = py.allow_threads(|| {
+                let content = py.detach(|| {
                     runtime.block_on(async {
                         response
                             .bytes()
@@ -504,7 +511,7 @@ impl ImpitPyResponse {
 
 impl ImpitPyResponse {
     fn close_async_impl(slf: Py<Self>) -> PyResult<()> {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let mut slf_ref = slf.borrow_mut(py);
             slf_ref.close()
         })

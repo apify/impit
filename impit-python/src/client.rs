@@ -109,9 +109,10 @@ impl Client {
             (Some(cookie_jar), None) => {
                 builder.with_cookie_store(PythonCookieJar::new(py, cookie_jar.into()))
             }
-            (None, Some(cookies)) => {
-                builder.with_cookie_store(PythonCookieJar::from_httpx_cookies(py, cookies.into()))
-            }
+            (None, Some(cookies)) => builder.with_cookie_store(
+                PythonCookieJar::from_httpx_cookies(py, cookies.into())
+                    .map_err(|_e| ImpitPyError(ImpitError::CookieConflict))?,
+            ),
             (None, None) => builder,
         };
 
@@ -456,7 +457,7 @@ impl Client {
             http3_prior_knowledge: force_http3.unwrap_or(false),
         };
 
-        py.allow_threads(|| {
+        py.detach(|| {
             pyo3_async_runtimes::tokio::get_runtime().block_on(async {
                 let response = match method.to_lowercase().as_str() {
                     "get" => self.impit.get(url, Some(body), Some(options)).await,

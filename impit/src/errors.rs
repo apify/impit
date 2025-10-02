@@ -34,8 +34,8 @@ pub enum ImpitError {
     PoolTimeout,
     #[error("Network error occurred.")]
     NetworkError,
-    #[error("Failed to connect to the server.")]
-    ConnectError,
+    #[error("Failed to connect to the server.\nReason: {0}")]
+    ConnectError(String),
     #[error("Failed to read data from the server.")]
     ReadError,
     #[error("Failed to write data to the server.")]
@@ -107,16 +107,16 @@ impl ImpitError {
                 .source()
                 .and_then(|e| e.downcast_ref::<hyper_util::client::legacy::Error>())
             {
-                if source_error.is_connect() {
-                    return ImpitError::ConnectError;
-                }
-
                 if let Some(e) = source_error.source() {
                     if let Some(hyper_error) = e.downcast_ref::<hyper::Error>() {
                         if hyper_error.is_incomplete_message() {
                             return ImpitError::RemoteProtocolError;
                         }
                     }
+                }
+
+                if source_error.is_connect() {
+                    return ImpitError::ConnectError(format!("{source_error:#?}"));
                 }
             }
         }
