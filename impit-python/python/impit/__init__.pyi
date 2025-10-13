@@ -2,7 +2,7 @@ from __future__ import annotations
 from http.cookiejar import CookieJar
 # from .cookies import Cookies
 
-from typing import Literal
+from typing import Literal, Any
 from collections.abc import Iterator, AsyncIterator
 from contextlib import AbstractAsyncContextManager, AbstractContextManager
 
@@ -320,6 +320,13 @@ class Response:
                 async with client.stream("GET", "https://example.com/largefile") as response:
                     async for chunk in response.aiter_bytes():
                         process(chunk)  # Process each chunk as it is received
+        """
+
+    def json(self) -> Any:
+        """Parse the response content as JSON.
+
+        Returns:
+            Parsed JSON data as a Python object (dict, list, str, int, float, bool, or None)
         """
 
     def close(self) -> None:

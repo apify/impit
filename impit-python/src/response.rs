@@ -460,6 +460,13 @@ impl ImpitPyResponse {
         Ok(decoded_text)
     }
 
+    fn json(&mut self, py: Python<'_>) -> PyResult<Py<PyAny>> {
+        let text = self.text(py)?;
+        let json_module = py.import("json")?;
+        let parsed = json_module.call_method1("loads", (text,))?;
+        Ok(parsed.into())
+    }
+
     fn read(&mut self, py: Python<'_>) -> PyResult<Vec<u8>> {
         match self.inner_state {
             InnerResponseState::Read => self

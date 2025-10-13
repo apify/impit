@@ -343,7 +343,7 @@ describe.each([
 
         test('streaming response body works', async (t) => {
         const response = await impit.fetch(
-            'https://apify.github.io/impit/impit/index.html',
+            'https://apify.github.io/impit/',
         );
 
         let found = false;
@@ -351,7 +351,7 @@ describe.each([
         for await (const chunk of response.body) {
             const text = new TextDecoder('utf-8', { fatal: false }).decode(chunk);
 
-            if (text.includes('impersonation')) {
+            if (text.includes('impit')) {
                 found = true;
                 break;
             }
