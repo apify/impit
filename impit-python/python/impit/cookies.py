@@ -21,7 +21,7 @@ from __future__ import annotations
 import typing
 from http.cookiejar import Cookie, CookieJar
 
-from .impit import CookieConflict
+from . import CookieConflict
 
 CookieTypes = typing.Union['Cookies', CookieJar, dict[str, str], list[tuple[str, str]]]
 
