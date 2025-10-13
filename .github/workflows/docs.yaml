@@ -38,7 +38,7 @@ jobs:
           name: rustdoc
 
   build-node:
-    name: Build typedoc
+    name: Build TypeDoc documentation (Node.JS bindings)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -75,6 +75,42 @@ jobs:
         with:
           path: impit-node/docs/
           name: typedoc
+
+  build-python:
+    name: Build Sphinx docs (Python bindings)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Use Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: 3.x
+
+      - name: Set up uv package manager
+        uses: astral-sh/setup-uv@v7
+
+      - name: Install dependencies
+        working-directory: impit-python
+        run: |
+          uv venv
+          source .venv/bin/activate
+          uv sync --no-install-package impit --active
+          # comment out cookies module import
+          sed -i 's/from .cookies/#from .cookies/' ./python/impit/__init__.pyi
+
+      - name: Build docs
+        working-directory: impit-python/docs
+        run: |
+          source ../.venv/bin/activate
+          make html
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          path: impit-python/docs/build
+          name: sphinx-doc
 
   deploy:
     name: Deploy
