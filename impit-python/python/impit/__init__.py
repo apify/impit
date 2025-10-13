@@ -1,7 +1,7 @@
 from importlib import metadata
 from typing import Literal
 
-from .impit.cookies import Cookies
+from .cookies import Cookies
 from .impit import (
     AsyncClient,
     Client,
