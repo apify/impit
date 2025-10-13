@@ -1,6 +1,6 @@
 from __future__ import annotations
 from http.cookiejar import CookieJar
-# from .cookies import Cookies
+from .cookies import Cookies
 
 from typing import Literal, Any
 from collections.abc import Iterator, AsyncIterator
@@ -325,8 +325,14 @@ class Response:
     def json(self) -> Any:
         """Parse the response content as JSON.
 
-        Returns:
-            Parsed JSON data as a Python object (dict, list, str, int, float, bool, or None)
+        .. note::
+            This method will raise a `DecodingError` if the response content is not valid JSON.
+
+        .. code-block:: python
+
+            response = await client.get("https://api.example.com/data")
+            data = response.json()
+            print(data)  # Parsed JSON data as a Python object (dict, list, etc.)
         """
 
     def close(self) -> None:
