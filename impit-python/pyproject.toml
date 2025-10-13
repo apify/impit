@@ -51,6 +51,7 @@ dev = [
     "setuptools",
     "sphinx>=7.4.7",
     "myst-parser>=3.0.1",
+    "furo",
 ]
 
 [tool.maturin]
