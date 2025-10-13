@@ -368,7 +368,70 @@ class Response:
         """
 
 class Client:
-    """Synchronous HTTP client with browser impersonation capabilities."""
+    """Synchronous HTTP client with browser impersonation capabilities.
+
+        Args:
+            browser: Browser to impersonate (`"chrome"` or `"firefox"`).
+
+                If this is `None` (default), no impersonation is performed.
+            http3:
+
+                If set to `True`, Impit will try to connect to the target servers using HTTP/3 protocol (if supported by the server).
+
+                .. note::
+                    The HTTP/3 support is experimental and may not work with all servers. The impersonation capabilities are limited when using HTTP/3.
+
+            proxy:
+
+                The proxy URL to use for all the requests made by this client.
+
+                This can be an HTTP, HTTPS, or SOCKS proxy.
+            timeout:
+                Default request timeout in seconds.
+
+                This value can be overridden for individual requests.
+            verify:
+                If set to `False`, impit will not verify SSL certificates.
+
+                This can be used to ignore TLS errors (e.g., self-signed certificates).
+
+                True by default.
+            default_encoding:
+                Default encoding for response.text field (e.g., "utf-8", "cp1252").
+
+                Overrides `content-type` headers and bytestream prescan.
+            follow_redirects:
+
+                If set to `True` the client will automatically follow HTTP redirects (3xx responses).
+
+                `False` by default.
+            max_redirects:
+
+                Maximum number of redirects to follow if the `follow_redirects` option is enabled.
+
+                Default is 20.
+            cookie_jar:
+
+                Cookie jar to store cookies in.
+
+                This is a `http.cookiejar.CookieJar` instance.
+
+                By default, :class:`Client` doesn't store cookies between requests.
+            cookies: httpx-compatible cookies object.
+
+                These are the cookies to include in all requests (to the matching servers) made by this client.
+            headers: Default HTTP headers to include in requests.
+
+                These headers will be included in all requests made by this client.
+
+                Default is an empty dictionary.
+            local_address:
+
+                Local address to bind the client to.
+
+                Useful for testing purposes or when you want to bind the client to a specific network interface.
+                Can be an IP address in the format `xxx.xxx.xxx.xxx` (for IPv4) or `ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff` (for IPv6).
+        """
 
     def __enter__(self) -> Client:
         """Enter the runtime context related to this object."""
@@ -608,6 +671,17 @@ class Client:
     ) -> AbstractContextManager[Response]:
         """Make a streaming request with the specified method.
 
+        This method returns a context manager that yields a streaming :class:`Response` object.
+
+        See the following example for usage:
+
+        .. code-block:: python
+
+            with Client() as client:
+                with client.stream("GET", "https://example.com/largefile") as response:
+                    for chunk in response.iter_bytes():
+                        process(chunk)  # Process each chunk as it is received
+
         Args:
             method: HTTP method (e.g., "get", "post")
             url: URL to request
@@ -616,24 +690,74 @@ class Client:
             headers: HTTP headers
             timeout: Request timeout in seconds (overrides default timeout)
             force_http3: Force HTTP/3 protocol
-
-        Returns:
-            Response object
         """
 
 
 class AsyncClient:
-    """
-    Asynchronous HTTP client with browser impersonation capabilities.
+    """Asynchronous HTTP client with browser impersonation capabilities.
 
-    .. code-block:: python
+        Args:
+            browser: Browser to impersonate (`"chrome"` or `"firefox"`).
 
-        import AsyncClient from impit
-        async with AsyncClient(browser="firefox") as client:
-            response = await client.get("https://crawlee.dev")
-            print(response.status_code)
-            print(response.text)
-    """
+                If this is `None` (default), no impersonation is performed.
+            http3:
+
+                If set to `True`, Impit will try to connect to the target servers using HTTP/3 protocol (if supported by the server).
+
+                .. note::
+                    The HTTP/3 support is experimental and may not work with all servers. The impersonation capabilities are limited when using HTTP/3.
+
+            proxy:
+
+                The proxy URL to use for all the requests made by this client.
+
+                This can be an HTTP, HTTPS, or SOCKS proxy.
+            timeout:
+                Default request timeout in seconds.
+
+                This value can be overridden for individual requests.
+            verify:
+                If set to `False`, impit will not verify SSL certificates.
+
+                This can be used to ignore TLS errors (e.g., self-signed certificates).
+
+                True by default.
+            default_encoding:
+                Default encoding for response.text field (e.g., "utf-8", "cp1252").
+
+                Overrides `content-type` headers and bytestream prescan.
+            follow_redirects:
+
+                If set to `True` the client will automatically follow HTTP redirects (3xx responses).
+
+                `False` by default.
+            max_redirects:
+
+                Maximum number of redirects to follow if the `follow_redirects` option is enabled.
+
+                Default is 20.
+            cookie_jar:
+
+                Cookie jar to store cookies in.
+
+                This is a `http.cookiejar.CookieJar` instance.
+
+                By default, :class:`Client` doesn't store cookies between requests.
+            cookies: httpx-compatible cookies object.
+
+                These are the cookies to include in all requests (to the matching servers) made by this client.
+            headers: Default HTTP headers to include in requests.
+
+                These headers will be included in all requests made by this client.
+
+                Default is an empty dictionary.
+            local_address:
+
+                Local address to bind the client to.
+
+                Useful for testing purposes or when you want to bind the client to a specific network interface.
+                Can be an IP address in the format `xxx.xxx.xxx.xxx` (for IPv4) or `ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff` (for IPv6).
+        """
 
     async def __aenter__(self) -> AsyncClient:
         """Enter the runtime context related to this object."""
@@ -713,14 +837,6 @@ class AsyncClient:
             headers: HTTP headers
             timeout: Request timeout in seconds (overrides default timeout)
             force_http3: Force HTTP/3 protocol
-
-        .. code-block:: python
-
-            import AsyncClient from impit
-            async with AsyncClient() as client:
-                response = await client.post("https://example.com", data={"key": "value"})
-                print(response.status_code)
-                print(response.text)
 
         """
 
@@ -879,6 +995,17 @@ class AsyncClient:
         force_http3: bool | None = None,
     ) -> AbstractAsyncContextManager[Response]:
         """Make an asynchronous streaming request with the specified method.
+
+        This method returns a AsyncContextManager that yields a streaming :class:`Response` object.
+
+        See the following example for usage:
+
+        .. code-block:: python
+
+            with Client() as client:
+                with client.stream("GET", "https://example.com/largefile") as response:
+                    for chunk in response.iter_bytes():
+                        process(chunk)  # Process each chunk as it is received
 
         Args:
             method: HTTP method (e.g., "get", "post")
