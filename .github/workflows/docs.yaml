@@ -91,12 +91,16 @@ jobs:
       - name: Set up uv package manager
         uses: astral-sh/setup-uv@v7
 
+      - name: Disable automatic `uv` builds
+        run: printf "\n[tool.uv]\npackage = false" >> pyproject.toml
+        working-directory: impit-python
+
       - name: Install dependencies
         working-directory: impit-python
         run: |
           uv venv
           source .venv/bin/activate
-          uv sync --no-install-package impit --active
+          uv sync --active
           # comment out cookies module import
           sed -i 's/from .cookies/#from .cookies/' ./python/impit/__init__.pyi
           sed -i 's/from .cookies/#from .cookies/' ./python/impit/__init__.py
