@@ -38,7 +38,7 @@ jobs:
           name: rustdoc
 
   build-node:
-    name: Build typedoc
+    name: Build TypeDoc documentation (Node.JS bindings)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -76,6 +76,50 @@ jobs:
           path: impit-node/docs/
           name: typedoc
 
+  build-python:
+    name: Build Sphinx docs (Python bindings)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Use Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: 3.x
+
+      - name: Set up uv package manager
+        uses: astral-sh/setup-uv@v7
+
+      - name: Disable automatic `uv` builds
+        run: printf "\n[tool.uv]\npackage = false" >> pyproject.toml
+        working-directory: impit-python
+
+      - name: Install dependencies
+        working-directory: impit-python
+        run: |
+          uv venv
+          source .venv/bin/activate
+          uv sync --all-groups --active
+          # comment out cookies module import
+          sed -i 's/from .cookies/#from .cookies/' ./python/impit/impit.pyi
+          sed -i 's/from .cookies/#from .cookies/' ./python/impit/__init__.py
+          sed -i 's/__version__/#__version__/' ./python/impit/__init__.py
+          # copy empty impit.py to avoid Sphinx errors
+          cp ./docs/stub.py ./python/impit/impit.py
+
+      - name: Build docs
+        working-directory: impit-python/docs
+        run: |
+          source ../.venv/bin/activate
+          uv run make html
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          path: impit-python/docs/_build/html
+          name: sphinx-doc
+
   deploy:
     name: Deploy
     if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
@@ -83,13 +127,18 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-    needs: [build-rust, build-node]
+    needs: [build-rust, build-node, build-python]
     steps:
       - name: Download typedoc artifact
         uses: actions/download-artifact@v5
         with:
           name: typedoc
-          path: docs/
+          path: docs/js/
+      - name: Download Sphinx doc artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: sphinx-doc
+          path: docs/python/
       - name: Setup pages
         uses: actions/configure-pages@v5
       - name: Upload docs to github pages

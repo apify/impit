@@ -52,8 +52,15 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v7
 
-      - name: Set up Python
-        run: uv python install
+      - uses: actions/setup-python@v6
+        with:
+          python-version: |
+            3.9
+            3.10
+            3.11
+            3.12
+            3.13
+            3.14
 
       - name: Calculate openssl-vendored
         shell: bash
@@ -113,7 +120,9 @@ jobs:
         uses: astral-sh/setup-uv@v7
 
       - name: Set up Python
-        run: uv python install
+        uses: actions/setup-python@v6
+        with:
+          python-version: 3.13
 
       - name: Download wheels
         uses: actions/download-artifact@v5
@@ -130,7 +139,7 @@ jobs:
           set -e
           uv venv
           source .venv/bin/activate
-          uv sync --no-install-package impit -v
+          uv sync --no-group docs --no-install-package impit -v
           uv pip install --no-index --find-links dist --force-reinstall impit -v
           python -m pytest
 
@@ -157,6 +166,7 @@ jobs:
             3.11
             3.12
             3.13
+            3.14
 
       - name: Build wheels
         uses: PyO3/maturin-action@v1
@@ -188,7 +198,7 @@ jobs:
             python3 -m virtualenv .venv
             source .venv/bin/activate
             pip install -U uv
-            uv sync --no-install-package impit -v
+            uv sync --no-group docs --no-install-package impit -v
             uv pip install --no-index --find-links dist --force-reinstall impit -v
             python -m pytest
 
@@ -209,7 +219,7 @@ jobs:
             python3 -m virtualenv .venv
             source .venv/bin/activate
             pip install -U uv
-            uv sync --no-install-package impit -v
+            uv sync --no-group docs --no-install-package impit -v
             uv pip install --no-index --find-links dist --force-reinstall impit -v
             python -m pytest
 
@@ -237,6 +247,7 @@ jobs:
             3.11
             3.12
             3.13
+            3.14
           architecture: ${{ matrix.platform.target }}
 
       - name: Build wheels
@@ -262,7 +273,7 @@ jobs:
         run: |
           uv venv
           source .venv/Scripts/activate
-          uv sync --no-install-package impit -v
+          uv sync --no-group docs --no-install-package impit -v
           uv pip install --no-index --find-links dist --force-reinstall impit -v
           python -m pytest
 
@@ -293,6 +304,7 @@ jobs:
             3.11
             3.12
             3.13
+            3.14
 
       - name: Build wheels
         uses: PyO3/maturin-action@v1
@@ -315,7 +327,7 @@ jobs:
         run: |
           uv venv
           source .venv/bin/activate
-          uv sync --no-install-package impit -v
+          uv sync --no-group docs --no-install-package impit -v
           uv pip install --no-index --find-links dist --force-reinstall impit -v
           python -m pytest
 

@@ -1,6 +1,8 @@
 # `impit` for JavaScript
 
-> **Note**: This is the documentation of the Node.JS bindings for the [`impit`](https://github.com/apify/impit) library.
+> This documents the `impit` Node.JS package, which provides JavaScript bindings for the `impit` library.
+>
+> See documentation for the Python version of `impit` [here](https://apify.github.io/impit/python/).
 
 `impit` is a Node.JS module that provides bindings for the [`impit`](https://github.com/apify/impit) library.
 
