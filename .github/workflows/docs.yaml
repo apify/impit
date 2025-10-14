@@ -99,6 +99,7 @@ jobs:
           uv sync --no-install-package impit --active
           # comment out cookies module import
           sed -i 's/from .cookies/#from .cookies/' ./python/impit/__init__.pyi
+          sed -i 's/from .cookies/#from .cookies/' ./python/impit/__init__.py
 
       - name: Build docs
         working-directory: impit-python/docs
@@ -109,7 +110,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          path: impit-python/docs/build
+          path: impit-python/docs/_build/html
           name: sphinx-doc
 
   deploy:
