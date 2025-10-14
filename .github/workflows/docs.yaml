@@ -99,7 +99,8 @@ jobs:
           uv sync --no-install-package impit --active
           # comment out cookies module import
           sed -i 's/from .cookies/#from .cookies/' ./python/impit/__init__.pyi
-          sed -i 's/from .cookies/#from .cookies/' ./python/impit/__init__.py
+          # create empty __init__.py to avoid Sphinx errors
+          rm -rf ./python/impit/__init__.py && touch ./python/impit/__init__.py
 
       - name: Build docs
         working-directory: impit-python/docs
