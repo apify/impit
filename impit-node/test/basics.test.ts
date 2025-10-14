@@ -343,7 +343,7 @@ describe.each([
 
         test('streaming response body works', async (t) => {
         const response = await impit.fetch(
-            'https://apify.github.io/impit/',
+            'https://apify.github.io/impit/js',
         );
 
         let found = false;
