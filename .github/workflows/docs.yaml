@@ -107,7 +107,7 @@ jobs:
         working-directory: impit-python/docs
         run: |
           source ../.venv/bin/activate
-          make html
+          uv run make html
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
