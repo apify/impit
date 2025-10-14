@@ -38,15 +38,12 @@ jobs:
 
   linux-build:
     needs: code_checks
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
-        platform:
-          - runner: ubuntu-24.04
-            target: x86_64
-          - runner: ubuntu-24.04-arm
-            target: aarch64
-    runs-on: ${{ matrix.platform.runner }}
-
+        target:
+          - x86_64
+          - aarch64
     steps:
       - uses: actions/checkout@v5
         with:
@@ -69,7 +66,7 @@ jobs:
         shell: bash
         id: is-openssl-vendored
         run: |
-          if [[ "${{ startsWith(matrix.platform.target, 'x86') }}" == "true" ]]; then
+          if [[ "${{ startsWith(matrix.target, 'x86') }}" == "true" ]]; then
             echo "enabled=" >> $GITHUB_OUTPUT
           else
             echo "enabled=--features openssl-vendored" >> $GITHUB_OUTPUT
@@ -79,12 +76,12 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           working-directory: impit-python
-          target: ${{ matrix.platform.target }}
-          args: --release --out dist --find-interpreter ${{ matrix.platform.target == 'x86_64' && '--sdist' || '' }}
+          target: ${{ matrix.target }}
+          args: --release --out dist --find-interpreter ${{ matrix.target == 'x86_64' && '--sdist' || '' }}
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
-          manylinux: ${{ matrix.platform.target == 'x86_64' && 'auto' || matrix.platform.target == 'aarch64' && '2_28' }}
+          manylinux: ${{ matrix.target == 'x86_64' && 'auto' || matrix.target == 'aarch64' && '2_28' }}
           before-script-linux: |
-            case "${{ matrix.platform.target }}" in
+            case "${{ matrix.target }}" in
               "aarch64" | "armv7" | "s390x" | "ppc64le")
                 # NOTE: pypa/manylinux docker images are Debian based
                 sudo apt-get update
@@ -123,15 +120,7 @@ jobs:
         uses: astral-sh/setup-uv@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: |
-            3.9
-            3.10
-            3.11
-            3.12
-            3.13
-            3.14
+        run: uv python install
 
       - name: Download wheels
         uses: actions/download-artifact@v5
