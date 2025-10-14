@@ -1,5 +1,9 @@
 # `impit` for Python
 
+> This documents the `impit` Python package, which provides bindings for the `impit` library.
+>
+> See documentation for the JavaScript/TypeScript version of `impit` [here](https://apify.github.io/impit/js/).
+
 `impit` is a Python package that provides bindings for the [`impit`](https://github.com/apify/impit) library.
 
 It allows you to switch the TLS fingerprints and the HTTP headers of your requests, while still using the same API as `httpx` or `requests`.
