@@ -28,12 +28,13 @@ keywords = [
     "browser",
     "impersonation",
 ]
+dependencies = []
 
 [project.urls]
-"Homepage" = "https://apify.github.io/impit/"
+"Homepage" = "https://apify.github.io/impit/python"
 "Apify homepage" = "https://apify.com"
 "Changelog" = "https://github.com/apify/impit/blob/master/impit-python/CHANGELOG.md"
-"Documentation" = "https://apify.github.io/impit/"
+"Documentation" = "https://apify.github.io/impit/python"
 "Issue tracker" = "https://github.com/apify/impit/issues"
 "Repository" = "https://github.com/apify/impit"
 

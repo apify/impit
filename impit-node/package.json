@@ -1,6 +1,6 @@
 {
   "name": "impit",
-  "homepage": "https://apify.github.io/impit/",
+  "homepage": "https://apify.github.io/impit/js",
   "version": "0.5.4",
   "main": "index.wrapper.js",
   "types": "index.d.ts",

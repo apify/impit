@@ -1,6 +1,6 @@
 from __future__ import annotations
 from http.cookiejar import CookieJar
-from .cookies import Cookies as Cookies
+from .cookies import Cookies
 
 from typing import Literal, Any
 from collections.abc import Iterator, AsyncIterator
