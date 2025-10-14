@@ -102,8 +102,9 @@ jobs:
           source .venv/bin/activate
           uv sync --active
           # comment out cookies module import
-          sed -i 's/from .cookies/#from .cookies/' ./python/impit/__init__.pyi
+          sed -i 's/from .cookies/#from .cookies/' ./python/impit/impit.pyi
           sed -i 's/from .cookies/#from .cookies/' ./python/impit/__init__.py
+          sed -i 's/__version__/#__version__/' ./python/impit/__init__.py
           # copy empty impit.py to avoid Sphinx errors
           cp ./docs/stub.py ./python/impit/impit.py
 

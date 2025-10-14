@@ -28,7 +28,6 @@ keywords = [
     "browser",
     "impersonation",
 ]
-dependencies = []
 
 [project.urls]
 "Homepage" = "https://apify.github.io/impit/"
@@ -52,6 +51,7 @@ dev = [
     "sphinx>=7.4.7",
     "myst-parser>=3.0.1",
     "furo",
+    "stubdoc",
 ]
 
 [tool.maturin]
@@ -126,3 +126,5 @@ warn_return_any = true
 warn_unreachable = true
 warn_unused_ignores = true
 
+[tool.uv.sources]
+stubdoc = { git = "https://github.com/bayashi-cl/stubdoc" }
