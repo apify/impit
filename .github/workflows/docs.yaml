@@ -48,7 +48,7 @@ jobs:
       - name: Configure cache
         uses: Swatinem/rust-cache@v2
       - name: Use Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v6
         with:
           node-version: 24
 
@@ -58,7 +58,7 @@ jobs:
           corepack prepare yarn@stable --activate
 
       - name: Activate cache for Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v6
         with:
           node-version: 24
           cache: yarn

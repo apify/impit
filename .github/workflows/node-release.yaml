@@ -42,7 +42,7 @@ jobs:
               token: ${{ secrets.APIFY_SERVICE_ACCOUNT_GITHUB_TOKEN }}
 
           - name: Setup node
-            uses: actions/setup-node@v5
+            uses: actions/setup-node@v6
             with:
               node-version: 22
 
@@ -52,7 +52,7 @@ jobs:
               corepack prepare yarn@stable --activate
 
           - name: Activate cache for Node.js
-            uses: actions/setup-node@v5
+            uses: actions/setup-node@v6
             with:
               cache: yarn
               cache-dependency-path: impit-node/yarn.lock
