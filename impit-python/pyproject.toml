@@ -49,6 +49,8 @@ dev = [
     "pytest",
     "ruff",
     "setuptools",
+]
+docs = [
     "sphinx>=7.4.7",
     "myst-parser>=3.0.1",
     "furo",
