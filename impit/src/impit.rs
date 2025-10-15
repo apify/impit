@@ -28,7 +28,7 @@ pub struct Impit<CookieStoreImpl: CookieStore + 'static> {
 
 impl<CookieStoreImpl: CookieStore + 'static> Default for Impit<CookieStoreImpl> {
     fn default() -> Self {
-        ImpitBuilder::<CookieStoreImpl>::default().build()
+        ImpitBuilder::<CookieStoreImpl>::default().build().unwrap()
     }
 }
 
@@ -210,7 +210,7 @@ impl<CookieStoreImpl: CookieStore + 'static> ImpitBuilder<CookieStoreImpl> {
     }
 
     /// Builds the [`Impit`] instance.
-    pub fn build(self) -> Impit<CookieStoreImpl> {
+    pub fn build(self) -> Result<Impit<CookieStoreImpl>, ImpitError> {
         Impit::new(self)
     }
 }
@@ -222,7 +222,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
 
     fn new_reqwest_client(
         config: &ImpitBuilder<CookieStoreImpl>,
-    ) -> Result<reqwest::Client, reqwest::Error> {
+    ) -> Result<reqwest::Client, ImpitError> {
         let mut client = reqwest::Client::builder();
         let mut tls_config_builder = tls::TlsConfig::builder();
         let mut tls_config_builder = tls_config_builder.with_browser(config.browser);
@@ -250,7 +250,10 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
         }
 
         if !config.proxy_url.is_empty() {
-            client = client.proxy(reqwest::Proxy::all(&config.proxy_url)?);
+            client = client.proxy(
+                reqwest::Proxy::all(&config.proxy_url)
+                    .map_err(|_| ImpitError::ProxyError(config.proxy_url.clone()))?,
+            );
         }
 
         if let Some(ip_addr) = config.local_address {
@@ -266,33 +269,34 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
             }
         }
 
-        client.build()
+        client
+            .build()
+            .map_err(|e| ImpitError::ReqwestError(format!("{e:#?}")))
     }
 
     /// Creates a new [`Impit`] instance based on the options stored in the [`ImpitBuilder`] instance.
-    fn new(config: ImpitBuilder<CookieStoreImpl>) -> Self {
+    fn new(config: ImpitBuilder<CookieStoreImpl>) -> Result<Self, ImpitError> {
         let mut h3_client: Option<reqwest::Client> = None;
-        let mut base_client = Self::new_reqwest_client(&config).unwrap();
+        let mut base_client = Self::new_reqwest_client(&config)?;
 
         if config.max_http_version == Version::HTTP_3 {
             h3_client = Some(base_client);
             base_client = Self::new_reqwest_client(&ImpitBuilder::<CookieStoreImpl> {
                 max_http_version: Version::HTTP_2,
                 ..config.clone()
-            })
-            .unwrap();
+            })?;
         }
 
-        Impit {
+        Ok(Impit {
             base_client,
             h3_client,
             config,
             h3_engine: Arc::new(RwLock::new(None)),
-        }
+        })
     }
 
     fn parse_url(&self, url: String) -> Result<Url, ImpitError> {
-        let url = Url::parse(&url).map_err(|_| ImpitError::UrlParsingError)?;
+        let url = Url::parse(&url).map_err(|_| ImpitError::UrlParsingError(url.clone()))?;
 
         if url.host_str().is_none() {
             return Err(ImpitError::UrlMissingHostnameError(url.to_string()));
