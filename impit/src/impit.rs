@@ -252,7 +252,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
         if !config.proxy_url.is_empty() {
             let proxy = reqwest::Proxy::all(&config.proxy_url);
 
-            if let Err(_) = proxy {
+            if proxy.is_err() {
                 return Err(ImpitError::ProxyError(config.proxy_url.clone()));
             }
 
