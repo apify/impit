@@ -81,7 +81,7 @@ impl From<ImpitPyError> for pyo3::PyErr {
                 HTTPStatusError::new_err(format!("{}", err.0))
             }
             ImpitPyError(ImpitError::InvalidURL)
-            | ImpitPyError(ImpitError::UrlParsingError)
+            | ImpitPyError(ImpitError::UrlParsingError(_))
             | ImpitPyError(ImpitError::UrlMissingHostnameError(_))
             | ImpitPyError(ImpitError::UrlProtocolError(_)) => {
                 InvalidURL::new_err(format!("{}", err.0))

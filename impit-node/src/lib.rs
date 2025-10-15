@@ -63,7 +63,12 @@ impl ImpitWrapper {
     // throughout the lifetime of the `ImpitWrapper` instance.
     napi::bindgen_prelude::block_on(async {
       Ok(Self {
-        inner: config?.build(),
+        inner: config?.build().map_err(|e| {
+          napi::Error::new(
+            napi::Status::GenericFailure,
+            format!("Failed to build Impit instance: {e}"),
+          )
+        })?,
       })
     })
   }
@@ -141,7 +146,7 @@ impl ImpitWrapper {
         let status = match err {
           ImpitError::UrlMissingHostnameError(_) => napi::Status::InvalidArg,
           ImpitError::UrlProtocolError(_) => napi::Status::InvalidArg,
-          ImpitError::UrlParsingError => napi::Status::InvalidArg,
+          ImpitError::UrlParsingError(_) => napi::Status::InvalidArg,
           ImpitError::InvalidMethod(_) => napi::Status::InvalidArg,
           ImpitError::Http3Disabled => napi::Status::GenericFailure,
           _ => napi::Status::GenericFailure,

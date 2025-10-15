@@ -124,11 +124,11 @@ impl AsyncClient {
             None => builder,
         };
 
-        let impit =
-            pyo3_async_runtimes::tokio::get_runtime().block_on(async { Arc::new(builder.build()) });
+        let impit = pyo3_async_runtimes::tokio::get_runtime()
+            .block_on(async { builder.build().map_err(ImpitPyError) })?;
 
         Ok(Self {
-            impit,
+            impit: Arc::new(impit),
             default_encoding,
         })
     }

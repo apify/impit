@@ -72,8 +72,8 @@ pub enum ImpitError {
     RequestNotRead,
     #[error("The stream has been closed.")]
     StreamClosed,
-    #[error("The URL couldn't be parsed.")]
-    UrlParsingError,
+    #[error("The URL ({0}) couldn't be parsed.")]
+    UrlParsingError(String),
     #[error("The URL ({0}) is missing the hostname.")]
     UrlMissingHostnameError(String),
     #[error("The URL uses an unsupported protocol (`{0}`). Currently, only HTTP and HTTPS are supported.")]
@@ -90,6 +90,12 @@ pub enum ImpitError {
     InvalidHeaderValue(String),
     #[error("The internal HTTP library has thrown an error:\n{0}")]
     ReqwestError(String),
+}
+
+impl From<reqwest::Error> for ImpitError {
+    fn from(err: reqwest::Error) -> Self {
+        ImpitError::ReqwestError(format!("{err:#?}"))
+    }
 }
 
 impl ImpitError {

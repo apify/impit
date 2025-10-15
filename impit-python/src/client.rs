@@ -117,11 +117,13 @@ impl Client {
         };
 
         pyo3_async_runtimes::tokio::get_runtime().block_on(async {
-            Ok(Self {
-                impit: builder.build(),
-                default_encoding,
+            builder.build().map_err(|e| ImpitPyError(e)).map(|builder| {
+                Ok(Self {
+                    impit: builder,
+                    default_encoding,
+                })
             })
-        })
+        })?
     }
 
     #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
