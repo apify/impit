@@ -250,13 +250,10 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
         }
 
         if !config.proxy_url.is_empty() {
-            let proxy = reqwest::Proxy::all(&config.proxy_url);
-
-            if proxy.is_err() {
-                return Err(ImpitError::ProxyError(config.proxy_url.clone()));
-            }
-
-            client = client.proxy(proxy.unwrap());
+            client = client.proxy(
+                reqwest::Proxy::all(&config.proxy_url)
+                    .map_err(|_| ImpitError::ProxyError(config.proxy_url.clone()))?,
+            );
         }
 
         if let Some(ip_addr) = config.local_address {
