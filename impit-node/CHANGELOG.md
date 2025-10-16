@@ -3,6 +3,33 @@
 All notable changes to this project will be documented in this file.
 
 
+## js-0.6.0 - 2025-10-16
+
+#### Bug Fixes
+
+- Fallback to HTTP/2 on HTTP3 DNS error (#255)
+  - Makes DNS client in HTTP/3 record resolution optional. If the initial connection fails with `Error`, impit will return `false` for every call to `host_supports_h3` (unless, e.g. `alt-svc` header has been registered for this domain).
+
+
+- Do not panic on constructor param errors (#285)
+  - Introduces better error handling for constructor parameter errors.
+
+
+#### Features
+
+- Improve error typing for certain HTTP errors (#250)
+  - Improves error typing (mostly for Python version) on HTTP (network / server) errors and aligns the behaviour with HTTPX.
+
+
+- Add `local_address` option to `Impit` constructor (#225)
+  - Adds a `local_address` option to the Impit HTTP client constructor across all language bindings (Rust, Python, and Node.js), allowing users to bind the client to a specific network interface. This feature is useful for testing purposes or when working with multiple network interfaces.
+
+
+- Include error message in `ConnectError` (#258)
+  - Injects `cause` to the `ConnectError` display string. This allows for better error introspection in dependent packages.  Unblocks https://github.com/apify/crawlee-python/pull/1389/
+
+
+
 ## js-0.5.4 - 2025-08-13
 
 #### Bug Fixes
