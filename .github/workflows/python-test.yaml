@@ -122,7 +122,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: 3.13
+          python-version: 3.14
 
       - name: Download wheels
         uses: actions/download-artifact@v5
@@ -330,4 +330,3 @@ jobs:
           uv sync --no-group docs --frozen --no-install-package impit -v
           uv pip install --no-index --find-links dist --force-reinstall impit -v
           python -m pytest
-
