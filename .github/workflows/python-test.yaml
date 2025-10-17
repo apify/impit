@@ -139,7 +139,7 @@ jobs:
           set -e
           uv venv
           source .venv/bin/activate
-          uv sync --no-group docs --no-install-package impit -v
+          uv sync --no-group docs --frozen --no-install-package impit -v
           uv pip install --no-index --find-links dist --force-reinstall impit -v
           python -m pytest
 
@@ -198,7 +198,7 @@ jobs:
             python3 -m virtualenv .venv
             source .venv/bin/activate
             pip install -U uv
-            uv sync --no-group docs --no-install-package impit -v
+            uv sync --no-group docs --frozen --no-install-package impit -v
             uv pip install --no-index --find-links dist --force-reinstall impit -v
             python -m pytest
 
@@ -219,7 +219,7 @@ jobs:
             python3 -m virtualenv .venv
             source .venv/bin/activate
             pip install -U uv
-            uv sync --no-group docs --no-install-package impit -v
+            uv sync --no-group docs --frozen --no-install-package impit -v
             uv pip install --no-index --find-links dist --force-reinstall impit -v
             python -m pytest
 
@@ -273,7 +273,7 @@ jobs:
         run: |
           uv venv
           source .venv/Scripts/activate
-          uv sync --no-group docs --no-install-package impit -v
+          uv sync --no-group docs --frozen --no-install-package impit -v
           uv pip install --no-index --find-links dist --force-reinstall impit -v
           python -m pytest
 
@@ -327,7 +327,7 @@ jobs:
         run: |
           uv venv
           source .venv/bin/activate
-          uv sync --no-group docs --no-install-package impit -v
+          uv sync --no-group docs --frozen --no-install-package impit -v
           uv pip install --no-index --find-links dist --force-reinstall impit -v
           python -m pytest
 

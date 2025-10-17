@@ -100,7 +100,7 @@ jobs:
         run: |
           uv venv
           source .venv/bin/activate
-          uv sync --all-groups --active
+          uv sync --all-groups --active --frozen
           # comment out cookies module import
           sed -i 's/from .cookies/#from .cookies/' ./python/impit/impit.pyi
           sed -i 's/from .cookies/#from .cookies/' ./python/impit/__init__.py
