@@ -3,6 +3,21 @@
 All notable changes to this project will be documented in this file.
 
 
+## py-0.7.3 - 2025-10-17
+
+#### Bug Fixes
+
+- Do not panic on constructor param errors (#285)
+  - Introduces better error handling for constructor parameter errors.
+
+
+#### Features
+
+- Add `json()` method for `Response` object (#277)
+  - Adds a `Response.json()` method that parses `Response.text` using the native `json` module.
+
+
+
 ## py-0.6.1 - 2025-09-03
 
 #### Features
