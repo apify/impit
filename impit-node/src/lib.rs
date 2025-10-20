@@ -29,6 +29,11 @@ use request::{HttpMethod, NodeCookieJar, RequestInit};
 /// const response = await impit.fetch('https://example.com');
 /// console.log(await response.text());
 /// ```
+///
+/// One `Impit` instance represents a single (possibly impersonated) user agent.
+///
+/// Note that all the requests made by this instance will share the same configuration,
+/// resources (e.g. cookie jar and connection pool), and other settings.
 #[napi(js_name = "Impit")]
 pub struct ImpitWrapper {
   inner: Impit<NodeCookieJar>,

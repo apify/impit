@@ -370,6 +370,11 @@ class Response:
 class Client:
     """Synchronous HTTP client with browser impersonation capabilities.
 
+    .. note::
+        You can reuse the :class:`Client` instance to make multiple requests.
+
+        All requests made by the same client will share the same configuration, resources (e.g., cookie jar and connection pool), and other settings.
+
         Args:
             browser: Browser to impersonate (`"chrome"` or `"firefox"`).
 
@@ -695,6 +700,11 @@ class Client:
 
 class AsyncClient:
     """Asynchronous HTTP client with browser impersonation capabilities.
+
+    .. note::
+        You can reuse the :class:`Client` instance to make multiple requests.
+
+        All requests made by the same client will share the same configuration, resources (e.g., cookie jar and connection pool), and other settings.
 
         Args:
             browser: Browser to impersonate (`"chrome"` or `"firefox"`).
