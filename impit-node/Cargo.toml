@@ -7,8 +7,8 @@ version = "0.0.0"
 crate-type = ["cdylib"]
 
 [dependencies]
-napi = { version = "3.0.0-beta.3", default-features = false, features = ["napi4", "napi5", "async", "web_stream", "tokio_rt"] }
-napi-derive = "3.0.0-beta.3"
+napi = { version = "3.3.0", default-features = false, features = ["napi4", "napi5", "async", "web_stream", "tokio_rt"] }
+napi-derive = "3.2.5"
 impit = { path="../impit" }
 rustls = { version="0.23.16" }
 tokio = { version="1.41.1", features = ["full"] }
