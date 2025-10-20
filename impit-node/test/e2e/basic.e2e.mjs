@@ -1,3 +1,4 @@
+import wtf from "wtfnode";
 import { Impit } from "../../index.wrapper.js";
 import assert from "node:assert";
 
@@ -13,3 +14,5 @@ assert.ok(response.headers.get("content-type")?.includes("application/json"), "R
 assert.equal(await response.json().then(data => data.headers['accept-encoding']), "gzip, deflate, br, zstd", "Accept-Encoding header should be correct");
 
 console.log(`[${import.meta.filename.split('/').pop()}] All assertions passed.`);
+
+wtf.dump();
