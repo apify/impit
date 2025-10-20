@@ -90,8 +90,8 @@ for (let i = 0; i < files.length; i++) {
         console.log(`[e2e] (${i + 1}/${files.length}) Passed ${file}`);
     } catch (err) {
         console.error(`[e2e] Failed: ${file}`);
+        console.error(err);
         if (err && typeof err.code === 'number') {
-            console.error(err);
             process.exit(err.code);
         } else {
             process.exit(1);
