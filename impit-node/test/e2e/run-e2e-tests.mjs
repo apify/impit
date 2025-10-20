@@ -9,9 +9,9 @@ const selfPath = fileURLToPath(import.meta.url);
 const selfDir = path.dirname(selfPath);
 const selfBase = path.basename(selfPath);
 
-const toAbs = (p: string) => (path.isAbsolute(p) ? p : path.resolve(process.cwd(), p));
+const toAbs = (p) => (path.isAbsolute(p) ? p : path.resolve(process.cwd(), p));
 
-function buildSpawnArgsFor(filePath: string): { cmd: string; args: string[] } {
+function buildSpawnArgsFor(filePath) {
     const nodeCmd = process.argv[0]; // path to node
     const resolvedArgv = process.argv.map(toAbs);
     const selfIdx = resolvedArgv.findIndex((a) => a === selfPath);
@@ -26,15 +26,15 @@ function buildSpawnArgsFor(filePath: string): { cmd: string; args: string[] } {
     return { cmd: nodeCmd, args: [...process.execArgv, filePath] };
 }
 
-async function runOne(filePath: string): Promise<void> {
+async function runOne(filePath) {
     const { cmd, args } = buildSpawnArgsFor(filePath);
-    await new Promise<void>((resolve, reject) => {
+    await new Promise((resolve, reject) => {
         const cp = spawn(cmd, args, { stdio: 'inherit', cwd: process.cwd(), env: process.env });
 
         let settled = false;
         const timeoutMs = 30_000;
 
-        const done = (err?: NodeJS.ErrnoException) => {
+        const done = (err) => {
             if (settled) return;
             settled = true;
             clearTimeout(timer);
@@ -51,17 +51,17 @@ async function runOne(filePath: string): Promise<void> {
             } catch {
                 // ignore
             }
-            const err: NodeJS.ErrnoException = new Error(`Subprocess timed out after ${timeoutMs} ms`);
-            err.code = 'ETIMEDOUT' as any;
+            const err = new Error(`Subprocess timed out after ${timeoutMs} ms`);
+            err.code = 'ETIMEDOUT';
             done(err);
         }, timeoutMs);
 
-        cp.on('error', (err) => done(err as NodeJS.ErrnoException));
+        cp.on('error', (err) => done(err));
         cp.on('exit', (code, signal) => {
             if (signal) {
-                done(new Error(`Subprocess terminated by signal ${signal}`) as NodeJS.ErrnoException);
+                done(new Error(`Subprocess terminated by signal ${signal}`));
             } else if (code && code !== 0) {
-                const err: NodeJS.ErrnoException = new Error(`Subprocess exited with code ${code}`);
+                const err = new Error(`Subprocess exited with code ${code}`);
                 // @ts-expect-error attach code for upper-level handling
                 err.code = code;
                 done(err);
@@ -84,10 +84,10 @@ const files = entries
 for (let i = 0; i < files.length; i++) {
     const file = files[i];
     const abs = path.join(selfDir, file);
-    console.log(`[e2e] (${i + 1}/${files.length}) ${file}`);
     try {
         await runOne(abs);
-    } catch (err: any) {
+        console.log(`[e2e] (${i + 1}/${files.length}) Passed ${file}`);
+    } catch (err) {
         console.error(`[e2e] Failed: ${file}`);
         if (err && typeof err.code === 'number') {
             process.exit(err.code);

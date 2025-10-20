@@ -46,7 +46,7 @@
     "build:debug": "napi build --platform --no-const-enum",
     "docs": "npm run build:debug && typedoc --plugin typedoc-plugin-mdn-links ./index.d.ts --out ./docs",
     "prepublishOnly": "napi prepublish -t npm --no-gh-release",
-    "test": "vitest --retry=3 && node ./test/e2e/run-e2e-tests.mts",
+    "test": "vitest --retry=3 && node ./test/e2e/run-e2e-tests.mjs",
     "universal": "napi universal",
     "copy-version": "napi version"
   },
