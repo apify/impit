@@ -90,6 +90,7 @@ for (let i = 0; i < files.length; i++) {
     } catch (err) {
         console.error(`[e2e] Failed: ${file}`);
         if (err && typeof err.code === 'number') {
+            console.error(err);
             process.exit(err.code);
         } else {
             process.exit(1);
