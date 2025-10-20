@@ -52,6 +52,7 @@ async function runOne(filePath) {
                 // ignore
             }
             const err = new Error(`Subprocess timed out after ${timeoutMs} ms`);
+            console.error(err);
             err.code = 'ETIMEDOUT';
             done(err);
         }, timeoutMs);
