@@ -12,6 +12,10 @@ This can have several reasons:
         While the main package (impit) still installs, your package manager will skip installing the prebuilt native bindings for your platform.
         If you still want to skip installing other optional dependencies, please install the native bindings for your platform as a direct dependency of your project.
 - You are using a non-standard Node.js runtime (e.g. Deno, Bun, Cloudflare workers etc.) that might not support native modules.
+${
+    process.platform === 'win32' ? `- On Windows, sometimes the Visual C++ Redistributable for Visual Studio is missing.
+        Please install it from https://learn.microsoft.com/en-US/cpp/windows/latest-supported-vc-redist?view=msvc-170` : ''
+}
 
 Run your script with IMPIT_VERBOSE=1 environment variable to get more information about the error.
 `, process.env['IMPIT_VERBOSE'] === '1' ? { cause: e } : undefined);
