@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 
 
+## py-0.8.0 - 2025-10-22
+
+#### Features
+
+- Add support for Python 3.14, drop support for Python 3.9 and PyPy (#289)
+
+
 ## py-0.7.3 - 2025-10-17
 
 #### Bug Fixes
