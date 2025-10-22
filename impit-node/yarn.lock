@@ -2608,7 +2608,6 @@ __metadata:
     typedoc-plugin-mdn-links: "npm:^5.0.9"
     typescript: "npm:^5.9.2"
     vitest: "npm:^3.0.5"
-    wtfnode: "npm:^0.10.1"
   dependenciesMeta:
     impit-darwin-arm64:
       optional: true
@@ -3982,15 +3981,6 @@ __metadata:
   version: 1.0.2
   resolution: "wrappy@npm:1.0.2"
   checksum: 10c0/56fece1a4018c6a6c8e28fbc88c87e0fbf4ea8fd64fc6c63b18f4acc4bd13e0ad2515189786dd2c30d3eec9663d70f4ecf699330002f8ccb547e4a18231fc9f0
-  languageName: node
-  linkType: hard
-
-"wtfnode@npm:^0.10.1":
-  version: 0.10.1
-  resolution: "wtfnode@npm:0.10.1"
-  bin:
-    wtfnode: proxy.js
-  checksum: 10c0/e57269d438735ce20f0c2f80e64a6ded5710db82799e25c246131cf78b4abd300c2a22137aed2de96341138b02ea192d4fca030e5ebed14d51bff760b4fbc2dc
   languageName: node
   linkType: hard
 

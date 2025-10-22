@@ -32,8 +32,7 @@
     "typedoc": "^0.28.13",
     "typedoc-plugin-mdn-links": "^5.0.9",
     "typescript": "^5.9.2",
-    "vitest": "^3.0.5",
-    "wtfnode": "^0.10.1"
+    "vitest": "^3.0.5"
   },
   "ava": {
     "timeout": "3m"
