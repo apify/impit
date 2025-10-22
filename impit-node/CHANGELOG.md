@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 
 
+## js-0.6.1 - 2025-10-22
+
+#### Bug Fixes
+
+- Downgrade `napi-rs` tooling to fix random Windows hang ups (#296)
+
+
 ## js-0.6.0 - 2025-10-16
 
 #### Bug Fixes
