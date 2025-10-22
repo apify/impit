@@ -8,14 +8,13 @@ version = "0.7.3"
 description = "A library for making HTTP requests through browser impersonation"
 readme = "README.md"
 authors = [{ name = "Jindřich Bär" }]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: Console",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -118,7 +117,7 @@ asyncio_mode = "auto"
 reruns = "3"
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.10"
 files = ["python", "test"]
 check_untyped_defs = true
 disallow_incomplete_defs = true
