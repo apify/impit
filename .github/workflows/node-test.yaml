@@ -159,7 +159,7 @@ jobs:
         if: ${{ !matrix.settings.docker }}
         shell: bash
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: bindings-${{ matrix.settings.target }}
           path: impit-node/${{ env.APP_NAME }}.*.node
@@ -202,7 +202,7 @@ jobs:
       - name: Install dependencies
         run: yarn --cwd impit-node install
       - name: Download artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: bindings-${{ matrix.settings.target }}
           path: impit-node
@@ -244,7 +244,7 @@ jobs:
       - name: Install dependencies
         run: yarn --cwd impit-node install
       - name: Download artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: bindings-x86_64-unknown-linux-gnu
           path: impit-node
@@ -286,7 +286,7 @@ jobs:
       - name: Install dependencies
         run: yarn --cwd impit-node install
       - name: Download artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: bindings-aarch64-unknown-linux-gnu
           path: impit-node
@@ -328,7 +328,7 @@ jobs:
             cache-dependency-path: impit-node/yarn.lock
 
       - name: Download artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: bindings-aarch64-unknown-linux-musl
           path: impit-node
@@ -369,7 +369,7 @@ jobs:
             cache-dependency-path: impit-node/yarn.lock
 
       - name: Download artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: bindings-x86_64-unknown-linux-musl
           path: impit-node
