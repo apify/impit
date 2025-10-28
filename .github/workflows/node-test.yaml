@@ -95,7 +95,7 @@ jobs:
       - name: Use Node.js 20
         uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version: 24
 
       - name: Enable Corepack
         run: |
@@ -106,7 +106,7 @@ jobs:
         uses: actions/setup-node@v6
         if: ${{ matrix.settings.target != 'x86_64-unknown-linux-musl' }}
         with:
-          node-version: 22
+          node-version: 24
           cache: yarn
           cache-dependency-path: impit-node/yarn.lock
       - name: Install
@@ -143,7 +143,7 @@ jobs:
         uses: actions/setup-node@v6
         if: matrix.settings.target == 'i686-pc-windows-msvc'
         with:
-          node-version: 22
+          node-version: 24
           cache: yarn
           cache-dependency-path: impit-node/yarn.lock
           architecture: x86
