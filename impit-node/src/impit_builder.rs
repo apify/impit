@@ -7,7 +7,7 @@ use impit::{
 use napi::{bindgen_prelude::Object, Env};
 use napi_derive::napi;
 
-use crate::request::NodeCookieJar;
+use crate::cookies::NodeCookieJar;
 
 /// Supported browsers for emulation.
 ///

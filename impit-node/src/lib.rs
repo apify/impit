@@ -8,13 +8,15 @@ use impit::{
 use napi::Env;
 use napi_derive::napi;
 
+mod cookies;
 mod impit_builder;
 mod request;
 mod response;
+mod utils;
 
 use self::response::ImpitResponse;
 use impit_builder::ImpitOptions;
-use request::{HttpMethod, NodeCookieJar, RequestInit};
+use request::{HttpMethod, RequestInit};
 
 /// The main class of the `impit` package
 ///
@@ -36,7 +38,7 @@ use request::{HttpMethod, NodeCookieJar, RequestInit};
 /// resources (e.g. cookie jar and connection pool), and other settings.
 #[napi(js_name = "Impit")]
 pub struct ImpitWrapper {
-  inner: Impit<NodeCookieJar>,
+  inner: Impit<cookies::NodeCookieJar>,
 }
 
 #[napi]
@@ -60,7 +62,7 @@ impl ImpitWrapper {
   /// ```
   #[napi(constructor)]
   pub fn new(env: &Env, options: Option<ImpitOptions>) -> Result<Self, napi::Error> {
-    let config: Result<ImpitBuilder<NodeCookieJar>, napi::Error> =
+    let config: Result<ImpitBuilder<cookies::NodeCookieJar>, napi::Error> =
       options.unwrap_or_default().into_builder(env);
 
     // `quinn` for h3 requires existing async runtime.
