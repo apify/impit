@@ -20,22 +20,21 @@ impl HttpHeaders {
     }
 }
 
-impl From<HttpHeaders> for Result<HeaderMap, ImpitError> {
-    fn from(val: HttpHeaders) -> Self {
-        let impersonated_headers = match val.context.browser {
+impl HttpHeaders {
+    pub fn iter(&self) -> impl Iterator<Item = (String, String)> + '_ {
+        let impersonated_headers = match self.context.browser {
             Some(Browser::Chrome) => statics::CHROME_HEADERS,
             Some(Browser::Firefox) => statics::FIREFOX_HEADERS,
             None => &[],
         }
         .to_owned();
 
-        let custom_headers = val
+        let custom_headers = self
             .context
             .custom_headers
             .iter()
             .map(|(k, v)| (k.as_str(), v.as_str()));
-
-        let pseudo_headers_order: &[&str] = match val.context.browser {
+        let pseudo_headers_order: &[&str] = match self.context.browser {
             Some(Browser::Chrome) => statics::CHROME_PSEUDOHEADERS_ORDER.as_ref(),
             Some(Browser::Firefox) => statics::FIREFOX_PSEUDOHEADERS_ORDER.as_ref(),
             None => &[],
@@ -48,31 +47,40 @@ impl From<HttpHeaders> for Result<HeaderMap, ImpitError> {
             );
         }
 
-        let mut headers = HeaderMap::new();
-
         let mut used_header_names: HashSet<String> = HashSet::new();
 
-        for (name, value) in custom_headers.chain(impersonated_headers) {
-            if used_header_names.contains(&name.to_lowercase()) {
-                continue;
-            }
+        custom_headers
+            .chain(impersonated_headers)
+            .filter_map(move |(name, value)| {
+                if used_header_names.contains(&name.to_lowercase()) {
+                    None
+                } else {
+                    used_header_names.insert(name.to_lowercase());
+                    Some((name.to_string(), value.to_string()))
+                }
+            })
+    }
+}
 
-            let header_name = HeaderName::from_str(name);
-            let header_value = HeaderValue::from_str(value);
+impl From<HttpHeaders> for Result<HeaderMap, ImpitError> {
+    fn from(val: HttpHeaders) -> Self {
+        let mut headers = HeaderMap::new();
+
+        for (name, value) in val.iter() {
+            let header_name = HeaderName::from_str(&name);
+            let header_value = HeaderValue::from_str(&value);
 
             match (header_name, header_value) {
                 (Err(_), _) => {
-                    return Err(ImpitError::InvalidHeaderName(name.to_string()));
+                    return Err(ImpitError::InvalidHeaderName(name));
                 }
                 (_, Err(_)) => {
-                    return Err(ImpitError::InvalidHeaderValue(value.to_string()));
+                    return Err(ImpitError::InvalidHeaderValue(value));
                 }
                 (Ok(header_name), Ok(header_value)) => {
                     headers.append(header_name, header_value);
                 }
             }
-
-            used_header_names.insert(name.to_lowercase());
         }
         Ok(headers)
     }
