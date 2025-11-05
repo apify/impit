@@ -2,7 +2,7 @@ use crate::{emulation::Browser, errors::ImpitError};
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 use std::{collections::HashSet, str::FromStr};
 
-mod statics;
+pub mod statics;
 
 pub struct HttpHeaders {
     context: HttpHeadersBuilder,
@@ -34,18 +34,6 @@ impl HttpHeaders {
             .custom_headers
             .iter()
             .map(|(k, v)| (k.as_str(), v.as_str()));
-        let pseudo_headers_order: &[&str] = match self.context.browser {
-            Some(Browser::Chrome) => statics::CHROME_PSEUDOHEADERS_ORDER.as_ref(),
-            Some(Browser::Firefox) => statics::FIREFOX_PSEUDOHEADERS_ORDER.as_ref(),
-            None => &[],
-        };
-
-        if !pseudo_headers_order.is_empty() {
-            std::env::set_var(
-                "IMPIT_H2_PSEUDOHEADERS_ORDER",
-                pseudo_headers_order.join(","),
-            );
-        }
 
         let mut used_header_names: HashSet<String> = HashSet::new();
 
@@ -59,6 +47,14 @@ impl HttpHeaders {
                     Some((name.to_string(), value.to_string()))
                 }
             })
+    }
+}
+
+impl From<Vec<(String, String)>> for HttpHeaders {
+    fn from(val: Vec<(String, String)>) -> Self {
+        let mut builder = HttpHeaders::get_builder();
+        builder.with_custom_headers(Some(val));
+        builder.build()
     }
 }
 

@@ -1,5 +1,7 @@
 use std::time::Duration;
 
+use url::Url;
+
 /// A struct that holds the request options.
 ///
 /// Unlike the [`ImpitBuilder`](crate::impit::ImpitBuilder) struct, these options are specific to a single request.
@@ -16,4 +18,11 @@ pub struct RequestOptions {
     ///
     /// If [`ImpitBuilder::with_http3`](crate::impit::ImpitBuilder::with_http3) wasn't called, this option will cause [`ErrorType::Http3Disabled`](crate::impit::ErrorType::Http3Disabled) errors.
     pub http3_prior_knowledge: bool,
+}
+
+pub struct ImpitRequest {
+    pub url: Url,
+    pub body: Option<Vec<u8>>,
+    pub headers: Vec<(String, String)>,
+    pub method: String,
 }
