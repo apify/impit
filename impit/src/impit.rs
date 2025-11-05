@@ -2,15 +2,15 @@ use tokio::sync::RwLock;
 
 use log::debug;
 use reqwest::{cookie::CookieStore, header::HeaderMap, Method, Response, Version};
-use std::{fmt::Debug, net::IpAddr, sync::Arc, time::Duration};
+use std::{fmt::Debug, net::IpAddr, str::FromStr, sync::Arc, time::Duration};
 use url::Url;
 
 use crate::{
     emulation::Browser,
     errors::{ErrorContext, ImpitError},
     http3::H3Engine,
-    http_headers::HttpHeaders,
-    request::RequestOptions,
+    http_headers::{statics, HttpHeaders},
+    request::{ImpitRequest, RequestOptions},
     tls,
 };
 
@@ -287,6 +287,19 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
             })?;
         }
 
+        let pseudo_headers_order: &[&str] = match config.browser {
+            Some(Browser::Chrome) => statics::CHROME_PSEUDOHEADERS_ORDER.as_ref(),
+            Some(Browser::Firefox) => statics::FIREFOX_PSEUDOHEADERS_ORDER.as_ref(),
+            None => &[],
+        };
+
+        if !pseudo_headers_order.is_empty() {
+            std::env::set_var(
+                "IMPIT_H2_PSEUDOHEADERS_ORDER",
+                pseudo_headers_order.join(","),
+            );
+        }
+
         Ok(Impit {
             base_client,
             h3_client,
@@ -337,32 +350,48 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
         }
     }
 
-    async fn make_request(
+    fn build_request(
         &self,
         method: Method,
-        url: String,
+        url: Url,
         body: Option<Vec<u8>>,
-        options: Option<RequestOptions>,
-    ) -> Result<Response, ImpitError> {
-        let options = options.unwrap_or_default();
-
-        if options.http3_prior_knowledge && self.config.max_http_version < Version::HTTP_3 {
-            return Err(ImpitError::Http3Disabled);
-        }
-
-        let parsed_url = self.parse_url(url.clone())?;
-        let host = parsed_url.host_str().unwrap_or_default().to_string();
-
-        let h3 = options.http3_prior_knowledge || self.should_use_h3(&host).await;
+        headers: Vec<(String, String)>,
+    ) -> ImpitRequest {
+        let host = url.host_str().unwrap_or_default().to_string();
 
         let headers = HttpHeaders::get_builder()
             .with_browser(&self.config.browser)
             .with_host(&host)
-            .with_https(parsed_url.scheme() == "https")
+            .with_https(url.scheme() == "https")
             .with_custom_headers(self.config.headers.to_owned())
-            .with_custom_headers(Some(options.headers))
+            .with_custom_headers(Some(headers))
             .build();
 
+        ImpitRequest {
+            url,
+            body,
+            headers: headers.iter().collect(),
+            method: method.to_string(),
+        }
+    }
+
+    async fn send(
+        &self,
+        request: ImpitRequest,
+        timeout: Option<Duration>,
+        http3_prior_knowledge: Option<bool>,
+    ) -> Result<Response, ImpitError> {
+        let http3_prior_knowledge = http3_prior_knowledge.unwrap_or(false);
+        if http3_prior_knowledge && self.config.max_http_version < Version::HTTP_3 {
+            return Err(ImpitError::Http3Disabled);
+        }
+
+        let url = request.url.to_string();
+        let host = request.url.host_str().unwrap_or_default().to_string();
+        let h3 = http3_prior_knowledge
+            || self
+                .should_use_h3(&request.url.host_str().unwrap_or_default().to_string())
+                .await;
         let client = if h3 {
             debug!("Using QUIC for request to {url}");
             self.h3_client.as_ref().unwrap_or(&self.base_client)
@@ -371,26 +400,30 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
             &self.base_client
         };
 
-        let header_map: Result<HeaderMap, ImpitError> = headers.into();
+        let header_map: Result<HeaderMap, ImpitError> = HttpHeaders::from(request.headers).into();
 
-        let mut request = client
-            .request(method.clone(), parsed_url.clone())
+        let method = Method::from_str(&request.method).map_err(|_| {
+            ImpitError::InvalidMethod(format!("Invalid HTTP method: {}", request.method))
+        })?;
+
+        let mut client_request = client
+            .request(method.clone(), request.url.clone())
             .headers(header_map?);
 
         if h3 {
-            request = request.version(Version::HTTP_3);
+            client_request = client_request.version(Version::HTTP_3);
         }
 
-        if let Some(timeout) = options.timeout {
-            request = request.timeout(timeout);
+        if let Some(timeout) = timeout {
+            client_request = client_request.timeout(timeout);
         }
 
-        request = match body {
-            Some(body) => request.body(body),
-            None => request,
+        client_request = match request.body {
+            Some(body) => client_request.body(body),
+            None => client_request,
         };
 
-        let response = request.send().await;
+        let response = client_request.send().await;
 
         let response = match response {
             Ok(resp) => resp,
@@ -403,10 +436,10 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
                 return Err(ImpitError::from(
                     err,
                     ErrorContext {
-                        timeout: options.timeout.unwrap_or(self.config.request_timeout),
+                        timeout: timeout.unwrap_or(self.config.request_timeout),
                         max_redirects,
                         method: method.to_string(),
-                        protocol: parsed_url.scheme().to_string(),
+                        protocol: request.url.scheme().to_string(),
                         url: url.clone(),
                     },
                 ));
@@ -432,6 +465,25 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
         }
 
         Ok(response)
+    }
+
+    async fn make_request(
+        &self,
+        method: Method,
+        url: String,
+        body: Option<Vec<u8>>,
+        options: Option<RequestOptions>,
+    ) -> Result<Response, ImpitError> {
+        let url = self.parse_url(url)?;
+        let request_options = options.unwrap_or_default();
+
+        let headers = request_options.headers;
+        let request = self.build_request(method, url, body, headers);
+
+        let timeout = request_options.timeout;
+        let http3_prior_knowledge = request_options.http3_prior_knowledge;
+        self.send(request, timeout, Some(http3_prior_knowledge))
+            .await
     }
 
     /// Makes a `GET` request to the specified URL.
