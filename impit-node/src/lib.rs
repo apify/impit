@@ -80,7 +80,7 @@ impl ImpitWrapper {
     })
   }
 
-  #[napi]
+  #[napi(ts_args_type = "resource: string | URL | Request, init?: RequestInit")]
   /// Fetch a URL with the given options.
   ///
   /// This method performs an HTTP request to the specified URL using the provided options.
