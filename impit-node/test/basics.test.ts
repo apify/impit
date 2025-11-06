@@ -267,6 +267,44 @@ describe.each([
         });
     });
 
+    describe('Parameter types', () => {
+        test.each([
+            ['string', getHttpBinUrl('/get')],
+            ['URL', new URL('/get', getHttpBinUrl('/', false))],
+            ['Request', new Request(getHttpBinUrl('/get'))],
+        ])('passing %s as input', async (type, resource) => {
+            const response = impit.fetch(resource as any);
+            await expect(response).resolves.toBeTruthy();
+        });
+
+        test.each([
+            ['string', getHttpBinUrl('/get')],
+            ['URL', new URL(getHttpBinUrl('/get'))],
+            ['Request', new Request(getHttpBinUrl('/get'))],
+        ])('passing %s as input with init', async (type, resource) => {
+            const response = impit.fetch(resource as any, { headers: { 'Impit-Test': 'foo' } });
+
+            const res = await response;
+            const json = await res.json();
+
+            expect(json.headers?.['Impit-Test']).toBe('foo');
+        });
+
+        test('passing Request with body and init overrides body', async () => {
+            const request = new Request(getHttpBinUrl('/post'), {
+                method: 'post',
+                body: 'this body will be overridden',
+            });
+
+            const response = await impit.fetch(request, {
+                body: 'this is the real body',
+            });
+            const json = await response.json();
+
+            expect(json.data).toBe('this is the real body');
+        });
+    });
+
     describe('Request body', () => {
         const STRING_PAYLOAD = '{"Impit-Test":"foořžš"}';
         test.each([

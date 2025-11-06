@@ -65,7 +65,7 @@ export declare class Impit {
    * });
    * ```
    */
-  fetch(url: string, requestInit?: RequestInit | undefined | null): Promise<ImpitResponse>
+  fetch(input: string | URL | Request, init?: RequestInit): Promise<ImpitResponse>
 }
 export type ImpitWrapper = Impit
 
