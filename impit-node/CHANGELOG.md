@@ -3,6 +3,21 @@
 All notable changes to this project will be documented in this file.
 
 
+## js-0.7.0 - 2025-11-07
+
+#### Features
+
+- Align `Impit.fetch` with `fetch` interface (#309)
+  - Enables passing `Request` and `URL` instances to `Impit.fetch`.   Related to #227
+
+
+#### Refactor
+
+- Introduce `ImpitRequest` struct for storing all request-related data (#307)
+  - Refactors the `impit.make_request` method by splitting it into `build_request` and `send`.  Prerequisite for the solution to #227 proposed in https://github.com/apify/impit/issues/227#issuecomment-3184109259
+
+
+
 ## js-0.6.1 - 2025-10-22
 
 #### Bug Fixes
