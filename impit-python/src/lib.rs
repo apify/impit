@@ -113,5 +113,51 @@ fn impit(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
 
     http_no_client!(get, post, put, head, patch, delete, options, trace);
 
+    #[pyfunction]
+    #[pyo3(signature = (method, url, content=None, data=None, headers=None, timeout=None, force_http3=false, cookie_jar=None, cookies=None, follow_redirects=None, max_redirects=None))]
+    fn stream<'python>(
+        _py: Python<'python>,
+        method: &str,
+        url: String,
+        content: Option<Vec<u8>>,
+        data: Option<RequestBody>,
+        headers: Option<HashMap<String, String>>,
+        timeout: Option<f64>,
+        force_http3: Option<bool>,
+        cookie_jar: Option<pyo3::Bound<'_, pyo3::PyAny>>,
+        cookies: Option<pyo3::Bound<'_, pyo3::PyAny>>,
+        follow_redirects: Option<bool>,
+        max_redirects: Option<u16>,
+    ) -> Result<Bound<'python, PyAny>, PyErr> {
+        let client = Client::new(
+            _py,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            follow_redirects,
+            max_redirects,
+            cookie_jar,
+            cookies,
+            None,
+            None,
+        );
+
+        client?.stream(
+            _py,
+            method,
+            url,
+            content,
+            data,
+            headers,
+            timeout,
+            force_http3,
+        )
+    }
+
+    m.add_function(wrap_pyfunction!(stream, m)?)?;
+
     Ok(())
 }

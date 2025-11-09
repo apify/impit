@@ -42,6 +42,7 @@ from .impit import (
     post,
     put,
     trace,
+    stream,
 )
 
 __version__ = metadata.version('impit')
@@ -88,6 +89,7 @@ __all__ = [
     'post',
     'put',
     'trace',
+    'stream',
 ]
 
 

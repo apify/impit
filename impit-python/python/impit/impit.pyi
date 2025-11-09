@@ -1028,6 +1028,30 @@ class AsyncClient:
         """
 
 
+def stream(
+    method: str,
+    url: str,
+    content: bytes | bytearray | list[int] | None = None,
+    data: dict[str, str] | None = None,
+    headers: dict[str, str] | None = None,
+    timeout: float | None = None,
+    force_http3: bool | None = None,
+) -> Response:
+    """Make a streaming request without creating a client instance.
+
+    Args:
+        method: HTTP method (e.g., "get", "post")
+        url: URL to request
+        content: Raw content to send
+        data: Form data to send in request body
+        headers: HTTP headers
+        timeout: Request timeout in seconds
+        force_http3: Force HTTP/3 protocol
+
+    Returns:
+        Response object
+    """
+
 def get(
     url: str,
     content: bytes | bytearray | list[int] | None = None,
