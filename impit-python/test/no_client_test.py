@@ -6,8 +6,8 @@ from http.cookiejar import CookieJar
 
 import pytest
 
-from impit import Browser, Client, Cookies, StreamClosed, StreamConsumed, TooManyRedirects
 import impit
+from impit import Cookies, StreamClosed, StreamConsumed, TooManyRedirects
 
 from .httpbin import get_httpbin_url
 
@@ -27,6 +27,7 @@ def thread_server(port_holder: list[int]) -> None:
     conn.send(response)
     conn.close()
     server.close()
+
 
 class TestBasicRequests:
     @pytest.mark.parametrize(
@@ -54,7 +55,11 @@ class TestBasicRequests:
 
     def test_cookies_nonstandard(self) -> None:
         cookies_jar = CookieJar()
-        impit.get(get_httpbin_url('/cookies/set', query={'set-by-server': '321'}), cookie_jar=cookies_jar, follow_redirects=True)
+        impit.get(
+            get_httpbin_url('/cookies/set', query={'set-by-server': '321'}),
+            cookie_jar=cookies_jar,
+            follow_redirects=True,
+        )
 
         for cookie in cookies_jar:
             assert cookie.has_nonstandard_attr('HttpOnly') is not None
@@ -302,6 +307,7 @@ class TestRequestBody:
 
         assert response.status_code == 200
         assert response.json() == json.loads(response.text)
+
 
 class TestStreamRequest:
     def test_read(self) -> None:
