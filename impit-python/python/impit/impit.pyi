@@ -1036,11 +1036,11 @@ def stream(
     headers: dict[str, str] | None = None,
     timeout: float | None = None,
     force_http3: bool | None = None,
-    follow_redirects=None,
-    max_redirects=None,
-    cookie_jar=None,
-    cookies=None
-) -> Response:
+    follow_redirects: bool | None = None,
+    max_redirects: int | None = None,
+    cookie_jar: CookieJar | None = None,
+    cookies: Cookies | None = None,
+) -> AbstractContextManager[Response]:
     """Make a streaming request without creating a client instance.
 
     Args:
@@ -1067,10 +1067,10 @@ def get(
     headers: dict[str, str] | None = None,
     timeout: float | None = None,
     force_http3: bool | None = None,
-    follow_redirects=None,
-    max_redirects=None,
-    cookie_jar=None,
-    cookies=None
+    follow_redirects: bool | None = None,
+    max_redirects: int | None = None,
+    cookie_jar: CookieJar | None = None,
+    cookies: Cookies | None = None,
 ) -> Response:
     """Make a GET request without creating a client instance.
 
@@ -1098,10 +1098,10 @@ def post(
     headers: dict[str, str] | None = None,
     timeout: float | None = None,
     force_http3: bool | None = None,
-    follow_redirects=None,
-    max_redirects=None,
-    cookie_jar=None,
-    cookies=None
+    follow_redirects: bool | None = None,
+    max_redirects: int | None = None,
+    cookie_jar: CookieJar | None = None,
+    cookies: Cookies | None = None,
 ) -> Response:
     """Make a POST request without creating a client instance.
 
@@ -1129,10 +1129,10 @@ def put(
     headers: dict[str, str] | None = None,
     timeout: float | None = None,
     force_http3: bool | None = None,
-    follow_redirects=None,
-    max_redirects=None,
-    cookie_jar=None,
-    cookies=None
+    follow_redirects: bool | None = None,
+    max_redirects: int | None = None,
+    cookie_jar: CookieJar | None = None,
+    cookies: Cookies | None = None,
 ) -> Response:
     """Make a PUT request without creating a client instance.
 
@@ -1160,10 +1160,10 @@ def patch(
     headers: dict[str, str] | None = None,
     timeout: float | None = None,
     force_http3: bool | None = None,
-    follow_redirects=None,
-    max_redirects=None,
-    cookie_jar=None,
-    cookies=None
+    follow_redirects: bool | None = None,
+    max_redirects: int | None = None,
+    cookie_jar: CookieJar | None = None,
+    cookies: Cookies | None = None,
 ) -> Response:
     """Make a PATCH request without creating a client instance.
 
@@ -1191,10 +1191,10 @@ def delete(
     headers: dict[str, str] | None = None,
     timeout: float | None = None,
     force_http3: bool | None = None,
-    follow_redirects=None,
-    max_redirects=None,
-    cookie_jar=None,
-    cookies=None
+    follow_redirects: bool | None = None,
+    max_redirects: int | None = None,
+    cookie_jar: CookieJar | None = None,
+    cookies: Cookies | None = None,
 ) -> Response:
     """Make a DELETE request without creating a client instance.
 
@@ -1222,10 +1222,10 @@ def head(
     headers: dict[str, str] | None = None,
     timeout: float | None = None,
     force_http3: bool | None = None,
-    follow_redirects=None,
-    max_redirects=None,
-    cookie_jar=None,
-    cookies=None
+    follow_redirects: bool | None = None,
+    max_redirects: int | None = None,
+    cookie_jar: CookieJar | None = None,
+    cookies: Cookies | None = None,
 ) -> Response:
     """Make a HEAD request without creating a client instance.
 
@@ -1253,10 +1253,10 @@ def options(
     headers: dict[str, str] | None = None,
     timeout: float | None = None,
     force_http3: bool | None = None,
-    follow_redirects=None,
-    max_redirects=None,
-    cookie_jar=None,
-    cookies=None
+    follow_redirects: bool | None = None,
+    max_redirects: int | None = None,
+    cookie_jar: CookieJar | None = None,
+    cookies: Cookies | None = None,
 ) -> Response:
     """Make an OPTIONS request without creating a client instance.
 
@@ -1281,10 +1281,10 @@ def trace(
     headers: dict[str, str] | None = None,
     timeout: float | None = None,
     force_http3: bool | None = None,
-    follow_redirects=None,
-    max_redirects=None,
-    cookie_jar=None,
-    cookies=None
+    follow_redirects: bool | None = None,
+    max_redirects: int | None = None,
+    cookie_jar: CookieJar | None = None,
+    cookies: Cookies | None = None,
 ) -> Response:
     """Make a TRACE request without creating a client instance.
 
