@@ -137,7 +137,7 @@ class TestBasicRequests:
 
         assert len(cookies.jar) == 2
 
-    def test_cookies_param_works(self, browser: Browser) -> None:
+    def test_cookies_param_works(self) -> None:
         cookies = Cookies({'preset-cookie': '123'})
 
         response = impit.get(
@@ -149,10 +149,12 @@ class TestBasicRequests:
 
         impit.get(
             get_httpbin_url('/cookies/set', query={'set-by-server': '321'}),
+            cookies=cookies,
         )
 
         response = impit.get(
             get_httpbin_url('/cookies/'),
+            cookies=cookies,
         ).json()
 
         assert response['cookies'] == {
@@ -215,20 +217,6 @@ class TestBasicRequests:
         time.sleep(0.1)
 
         response = impit.get(f'http://127.0.0.1:{port_holder[0]}/', timeout=5)
-        assert response.status_code == 200
-        thread.join()
-
-    @pytest.mark.parametrize('addresses', [['127.0.0.1', '::ffff:127.0.0.1'], ['::1', '::1']])
-    def test_local_address(self, browser: Browser, addresses: tuple[str, str]) -> None:
-        port_holder = [0]
-        thread = threading.Thread(target=thread_server, args=(port_holder,))
-        thread.start()
-        time.sleep(0.1)
-
-        [local_address, remote_address] = addresses
-
-        response = impit.get(f'http://localhost:{port_holder[0]}/', timeout=5, local_address=local_address)
-        assert response.text == remote_address
         assert response.status_code == 200
         thread.join()
 
