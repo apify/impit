@@ -1036,6 +1036,10 @@ def stream(
     headers: dict[str, str] | None = None,
     timeout: float | None = None,
     force_http3: bool | None = None,
+    follow_redirects=None,
+    max_redirects=None,
+    cookie_jar=None,
+    cookies=None
 ) -> Response:
     """Make a streaming request without creating a client instance.
 
@@ -1047,6 +1051,10 @@ def stream(
         headers: HTTP headers
         timeout: Request timeout in seconds
         force_http3: Force HTTP/3 protocol
+        follow_redirects: Whether to follow redirects (default: False)
+        max_redirects: Maximum number of redirects to follow (default: 20)
+        cookie_jar: Cookie jar to store cookies in.
+        cookies: httpx-compatible cookies object.
 
     Returns:
         Response object
@@ -1059,6 +1067,10 @@ def get(
     headers: dict[str, str] | None = None,
     timeout: float | None = None,
     force_http3: bool | None = None,
+    follow_redirects=None,
+    max_redirects=None,
+    cookie_jar=None,
+    cookies=None
 ) -> Response:
     """Make a GET request without creating a client instance.
 
@@ -1069,6 +1081,10 @@ def get(
         headers: HTTP headers
         timeout: Request timeout in seconds
         force_http3: Force HTTP/3 protocol
+        follow_redirects: Whether to follow redirects (default: False)
+        max_redirects: Maximum number of redirects to follow (default: 20)
+        cookie_jar: Cookie jar to store cookies in.
+        cookies: httpx-compatible cookies object.
 
     Returns:
         Response object
@@ -1082,6 +1098,10 @@ def post(
     headers: dict[str, str] | None = None,
     timeout: float | None = None,
     force_http3: bool | None = None,
+    follow_redirects=None,
+    max_redirects=None,
+    cookie_jar=None,
+    cookies=None
 ) -> Response:
     """Make a POST request without creating a client instance.
 
@@ -1092,6 +1112,10 @@ def post(
         headers: HTTP headers
         timeout: Request timeout in seconds
         force_http3: Force HTTP/3 protocol
+        follow_redirects: Whether to follow redirects (default: False)
+        max_redirects: Maximum number of redirects to follow (default: 20)
+        cookie_jar: Cookie jar to store cookies in.
+        cookies: httpx-compatible cookies object.
 
     Returns:
         Response object
@@ -1105,6 +1129,10 @@ def put(
     headers: dict[str, str] | None = None,
     timeout: float | None = None,
     force_http3: bool | None = None,
+    follow_redirects=None,
+    max_redirects=None,
+    cookie_jar=None,
+    cookies=None
 ) -> Response:
     """Make a PUT request without creating a client instance.
 
@@ -1115,6 +1143,10 @@ def put(
         headers: HTTP headers
         timeout: Request timeout in seconds
         force_http3: Force HTTP/3 protocol
+        follow_redirects: Whether to follow redirects (default: False)
+        max_redirects: Maximum number of redirects to follow (default: 20)
+        cookie_jar: Cookie jar to store cookies in.
+        cookies: httpx-compatible cookies object.
 
     Returns:
         Response object
@@ -1128,6 +1160,10 @@ def patch(
     headers: dict[str, str] | None = None,
     timeout: float | None = None,
     force_http3: bool | None = None,
+    follow_redirects=None,
+    max_redirects=None,
+    cookie_jar=None,
+    cookies=None
 ) -> Response:
     """Make a PATCH request without creating a client instance.
 
@@ -1138,6 +1174,10 @@ def patch(
         headers: HTTP headers
         timeout: Request timeout in seconds
         force_http3: Force HTTP/3 protocol
+        follow_redirects: Whether to follow redirects (default: False)
+        max_redirects: Maximum number of redirects to follow (default: 20)
+        cookie_jar: Cookie jar to store cookies in.
+        cookies: httpx-compatible cookies object.
 
     Returns:
         Response object
@@ -1151,6 +1191,10 @@ def delete(
     headers: dict[str, str] | None = None,
     timeout: float | None = None,
     force_http3: bool | None = None,
+    follow_redirects=None,
+    max_redirects=None,
+    cookie_jar=None,
+    cookies=None
 ) -> Response:
     """Make a DELETE request without creating a client instance.
 
@@ -1161,6 +1205,10 @@ def delete(
         headers: HTTP headers
         timeout: Request timeout in seconds
         force_http3: Force HTTP/3 protocol
+        follow_redirects: Whether to follow redirects (default: False)
+        max_redirects: Maximum number of redirects to follow (default: 20)
+        cookie_jar: Cookie jar to store cookies in.
+        cookies: httpx-compatible cookies object.
 
     Returns:
         Response object
@@ -1174,6 +1222,10 @@ def head(
     headers: dict[str, str] | None = None,
     timeout: float | None = None,
     force_http3: bool | None = None,
+    follow_redirects=None,
+    max_redirects=None,
+    cookie_jar=None,
+    cookies=None
 ) -> Response:
     """Make a HEAD request without creating a client instance.
 
@@ -1184,6 +1236,10 @@ def head(
         headers: HTTP headers
         timeout: Request timeout in seconds
         force_http3: Force HTTP/3 protocol
+        follow_redirects: Whether to follow redirects (default: False)
+        max_redirects: Maximum number of redirects to follow (default: 20)
+        cookie_jar: Cookie jar to store cookies in.
+        cookies: httpx-compatible cookies object.
 
     Returns:
         Response object
@@ -1197,6 +1253,10 @@ def options(
     headers: dict[str, str] | None = None,
     timeout: float | None = None,
     force_http3: bool | None = None,
+    follow_redirects=None,
+    max_redirects=None,
+    cookie_jar=None,
+    cookies=None
 ) -> Response:
     """Make an OPTIONS request without creating a client instance.
 
@@ -1207,6 +1267,10 @@ def options(
         headers: HTTP headers
         timeout: Request timeout in seconds (overrides default timeout)
         force_http3: Force HTTP/3 protocol
+        follow_redirects: Whether to follow redirects (default: False)
+        max_redirects: Maximum number of redirects to follow (default: 20)
+        cookie_jar: Cookie jar to store cookies in.
+        cookies: httpx-compatible cookies object.
     """
 
 
@@ -1217,6 +1281,10 @@ def trace(
     headers: dict[str, str] | None = None,
     timeout: float | None = None,
     force_http3: bool | None = None,
+    follow_redirects=None,
+    max_redirects=None,
+    cookie_jar=None,
+    cookies=None
 ) -> Response:
     """Make a TRACE request without creating a client instance.
 
@@ -1227,4 +1295,8 @@ def trace(
         headers: HTTP headers
         timeout: Request timeout in seconds (overrides default timeout)
         force_http3: Force HTTP/3 protocol
+        follow_redirects: Whether to follow redirects (default: False)
+        max_redirects: Maximum number of redirects to follow (default: 20)
+        cookie_jar: Cookie jar to store cookies in.
+        cookies: httpx-compatible cookies object.
     """
