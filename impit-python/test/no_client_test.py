@@ -129,10 +129,12 @@ class TestBasicRequests:
 
         impit.get(
             get_httpbin_url('/cookies/set', query={'set-by-server': '321'}),
+            cookie_jar=cookies.jar,
         )
 
         response = impit.get(
             get_httpbin_url('/cookies/'),
+            cookie_jar=cookies.jar,
         ).json()
 
         assert response['cookies'] == {
