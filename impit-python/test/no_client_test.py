@@ -12,6 +12,7 @@ from impit import Cookies, StreamClosed, StreamConsumed, TooManyRedirects
 from .httpbin import get_httpbin_url
 from .setup_proxy import start_proxy_server
 
+
 def thread_server(port_holder: list[int]) -> None:
     server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)

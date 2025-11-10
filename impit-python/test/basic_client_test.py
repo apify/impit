@@ -3,13 +3,13 @@ import socket
 import threading
 import time
 from http.cookiejar import CookieJar
-from .setup_proxy import start_proxy_server
 
 import pytest
 
 from impit import Browser, Client, Cookies, StreamClosed, StreamConsumed, TooManyRedirects
 
 from .httpbin import get_httpbin_url
+from .setup_proxy import start_proxy_server
 
 
 def thread_server(port_holder: list[int]) -> None:

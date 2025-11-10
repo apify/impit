@@ -1,12 +1,15 @@
-import threading
-import pproxy
 import asyncio
+import threading
+import time
+import typing
 
-def start_proxy_server(port: int = 3002):
-    def run_proxy_server(stop_event):
+import pproxy
+
+
+def start_proxy_server(port: int = 3002) -> typing.Callable[[], None]:
+    def run_proxy_server(stop_event: threading.Event) -> None:
         server = pproxy.Server(f'http://0.0.0.0:{port}')
-        args = dict(rserver=[],
-                    verbose=print)
+        args = dict(rserver=[], verbose=print)
 
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
@@ -31,11 +34,11 @@ def start_proxy_server(port: int = 3002):
     proxy_thread.start()
 
     # wait a moment for the server to start
-    import time
+
     time.sleep(1)
 
     # Return a function to stop the server
-    def stop_server():
+    def stop_server() -> None:
         stop_event.set()
         proxy_thread.join(1)
 
