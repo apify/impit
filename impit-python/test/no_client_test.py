@@ -10,7 +10,7 @@ import impit
 from impit import Cookies, StreamClosed, StreamConsumed, TooManyRedirects
 
 from .httpbin import get_httpbin_url
-
+from .setup_proxy import start_proxy_server
 
 def thread_server(port_holder: list[int]) -> None:
     server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
@@ -187,6 +187,15 @@ class TestBasicRequests:
     def test_methods_work(self, method: str) -> None:
         m = getattr(impit, method.lower())
         m(get_httpbin_url('/anything'))
+
+    def test_proxy(self) -> None:
+        stop_proxy = start_proxy_server(3002)
+
+        resp = impit.get('https://crawlee.dev/', proxy='http://127.0.0.1:3002')
+        assert resp.status_code == 200
+        assert 'Crawlee' in resp.text
+
+        stop_proxy()
 
     def test_default_no_redirect(self) -> None:
         target_url = 'https://crawlee.dev/'

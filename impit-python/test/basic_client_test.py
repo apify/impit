@@ -3,6 +3,7 @@ import socket
 import threading
 import time
 from http.cookiejar import CookieJar
+from .setup_proxy import start_proxy_server
 
 import pytest
 
@@ -239,6 +240,17 @@ class TestBasicRequests:
         m = getattr(impit, method.lower())
 
         m(get_httpbin_url('/anything'))
+
+    def test_proxy(self, browser: Browser) -> None:
+        stop_proxy = start_proxy_server(3002)
+        impit = Client(browser=browser, proxy='http://127.0.0.1:3002')
+        target_url = 'https://crawlee.dev/'
+
+        resp = impit.get(target_url)
+        assert resp.status_code == 200
+        assert 'Crawlee' in resp.text
+
+        stop_proxy()
 
     def test_default_no_redirect(self, browser: Browser) -> None:
         impit = Client(browser=browser)

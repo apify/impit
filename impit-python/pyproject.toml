@@ -50,6 +50,7 @@ dev = [
     "pytest",
     "ruff",
     "setuptools",
+    "pproxy>=2.7.9",
 ]
 docs = [
     "sphinx>=7.4.7",

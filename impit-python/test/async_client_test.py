@@ -9,6 +9,7 @@ import pytest
 from impit import AsyncClient, Browser, Cookies, StreamClosed, StreamConsumed, TooManyRedirects
 
 from .httpbin import get_httpbin_url
+from .setup_proxy import start_proxy_server
 
 
 def thread_server(port_holder: list[int]) -> None:
@@ -260,6 +261,18 @@ class TestBasicRequests:
         m = getattr(impit, method.lower())
 
         await m(get_httpbin_url('/anything'))
+
+    @pytest.mark.asyncio
+    async def test_proxy(self, browser: Browser) -> None:
+        stop_proxy = start_proxy_server(3002)
+        impit = AsyncClient(browser=browser, proxy='http://127.0.0.1:3002')
+        target_url = 'https://crawlee.dev/'
+
+        resp = await impit.get(target_url)
+        assert resp.status_code == 200
+        assert 'Crawlee' in resp.text
+
+        stop_proxy()
 
     @pytest.mark.asyncio
     async def test_default_no_redirect(self, browser: Browser) -> None:
