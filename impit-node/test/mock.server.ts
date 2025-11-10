@@ -1,5 +1,6 @@
 import express from 'express';
 import { Server } from 'http';
+import { Server as ProxyServer } from 'proxy-chain';
 
 export const routes = {
     charset: {
@@ -32,6 +33,17 @@ export async function runServer(port: number): Promise<Server> {
             } else {
                 res(server);
             }
+        });
+    });
+}
+
+export async function runProxyServer(port: number): Promise<ProxyServer> {
+    const server = new ProxyServer({port});
+    return new Promise((res, rej) => {
+        server.listen(() => {
+            res(server);
+        }).catch((err) => {
+            rej(err);
         });
     });
 }

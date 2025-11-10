@@ -2,10 +2,11 @@ import { test, describe, expect, beforeAll, afterAll } from 'vitest';
 
 import { HttpMethod, Impit, Browser } from '../index.wrapper.js';
 import type { Server } from 'net';
-import { routes, runServer } from './mock.server.js';
+import { routes, runProxyServer, runServer } from './mock.server.js';
 
 import { CookieJar } from 'tough-cookie';
 import { runSocksServer } from 'socks-server-lib';
+import { Server as ProxyServer } from 'proxy-chain';
 
 function getHttpBinUrl(path: string, https?: boolean): string {
     https ??= true;
@@ -28,6 +29,12 @@ async function getServer() {
     return localServer;
 }
 
+let proxyServer: ProxyServer | null = null;
+async function getProxyServer() {
+    proxyServer ??= await runProxyServer(3002);
+    return proxyServer;
+}
+
 let socksServer: Server | null = null;
 let socksConnectionCount = 0;
 beforeAll(async () => {
@@ -36,6 +43,8 @@ beforeAll(async () => {
     await fetch(getHttpBinUrl('/get'));
     // Start the local server
     await getServer();
+    // Start the proxy server
+    await getProxyServer()
 
     socksServer = await runSocksServer({ host: 'localhost', port: 7625, onData: () => { socksConnectionCount++; }});
 }, 30e3);
@@ -45,6 +54,10 @@ afterAll(async () => {
         new Promise<void>(async (res) => {
             const server = await getServer();
             server?.close(() => res())
+        }),
+        new Promise<void>(async (res) => {
+            const server = await getProxyServer();
+            server?.close(true, () => res())
         }),
         Promise.race([
             new Promise<void>(res => {
@@ -130,10 +143,14 @@ describe.each([
                 ]);
         });
 
-        test.each([['socks4'], ['socks5']])('supports %s proxy', async (proxyType) => {
+        test.each([
+            { scheme: 'socks4', url: 'socks4://localhost:7625' },
+            { scheme: 'socks5', url: 'socks5://localhost:7625' },
+            { scheme: 'http', url: 'http://localhost:3002' },
+        ])('supports %s proxy', async ({ scheme, url }) => {
             const impit = new Impit({
                 browser,
-                proxyUrl: `${proxyType}://localhost:7625`,
+                proxyUrl: url,
             });
 
             const response = await impit.fetch(

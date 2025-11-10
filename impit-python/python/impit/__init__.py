@@ -41,6 +41,7 @@ from .impit import (
     patch,
     post,
     put,
+    stream,
     trace,
 )
 
@@ -87,6 +88,7 @@ __all__ = [
     'patch',
     'post',
     'put',
+    'stream',
     'trace',
 ]
 

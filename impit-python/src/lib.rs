@@ -87,7 +87,7 @@ fn impit(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     ($($name:ident),*) => {
         $(
             #[pyfunction]
-            #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false, cookie_jar=None, cookies=None))]
+            #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false, cookie_jar=None, cookies=None, follow_redirects=None, max_redirects=None, proxy=None))]
             fn $name(
                 _py: Python,
                 url: String,
@@ -98,8 +98,11 @@ fn impit(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
                 force_http3: Option<bool>,
                 cookie_jar: Option<pyo3::Bound<'_, pyo3::PyAny>>,
                 cookies: Option<pyo3::Bound<'_, pyo3::PyAny>>,
+                follow_redirects: Option<bool>,
+                max_redirects: Option<u16>,
+                proxy: Option<String>,
             ) -> Result<response::ImpitPyResponse, errors::ImpitPyError> {
-                let client = Client::new(_py, None, None, None, None, None, None, None, None, cookie_jar, cookies, None, None);
+                let client = Client::new(_py, None, None, proxy, None, None, None, follow_redirects, max_redirects, cookie_jar, cookies, None, None);
 
                 client?.$name(_py, url, content, data, headers, timeout, force_http3)
             }
@@ -110,6 +113,53 @@ fn impit(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
 }
 
     http_no_client!(get, post, put, head, patch, delete, options, trace);
+
+    #[pyfunction]
+    #[pyo3(signature = (method, url, content=None, data=None, headers=None, timeout=None, force_http3=false, cookie_jar=None, cookies=None, follow_redirects=None, max_redirects=None, proxy=None))]
+    fn stream<'python>(
+        _py: Python<'python>,
+        method: &str,
+        url: String,
+        content: Option<Vec<u8>>,
+        data: Option<RequestBody>,
+        headers: Option<HashMap<String, String>>,
+        timeout: Option<f64>,
+        force_http3: Option<bool>,
+        cookie_jar: Option<pyo3::Bound<'_, pyo3::PyAny>>,
+        cookies: Option<pyo3::Bound<'_, pyo3::PyAny>>,
+        follow_redirects: Option<bool>,
+        max_redirects: Option<u16>,
+        proxy: Option<String>,
+    ) -> Result<Bound<'python, PyAny>, PyErr> {
+        let client = Client::new(
+            _py,
+            None,
+            None,
+            proxy,
+            None,
+            None,
+            None,
+            follow_redirects,
+            max_redirects,
+            cookie_jar,
+            cookies,
+            None,
+            None,
+        );
+
+        client?.stream(
+            _py,
+            method,
+            url,
+            content,
+            data,
+            headers,
+            timeout,
+            force_http3,
+        )
+    }
+
+    m.add_function(wrap_pyfunction!(stream, m)?)?;
 
     Ok(())
 }

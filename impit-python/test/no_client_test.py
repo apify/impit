@@ -6,7 +6,8 @@ from http.cookiejar import CookieJar
 
 import pytest
 
-from impit import Browser, Client, Cookies, StreamClosed, StreamConsumed, TooManyRedirects
+import impit
+from impit import Cookies, StreamClosed, StreamConsumed, TooManyRedirects
 
 from .httpbin import get_httpbin_url
 from .setup_proxy import start_proxy_server
@@ -29,80 +30,43 @@ def thread_server(port_holder: list[int]) -> None:
     server.close()
 
 
-@pytest.mark.parametrize(
-    ('browser'),
-    [
-        'chrome',
-        'firefox',
-        None,
-    ],
-)
 class TestBasicRequests:
     @pytest.mark.parametrize(
         ('protocol'),
         ['http://', 'https://'],
     )
-    def test_basic_requests(self, protocol: str, browser: Browser) -> None:
-        impit = Client(browser=browser)
-
+    def test_basic_requests(self, protocol: str) -> None:
         resp = impit.get(f'{protocol}apify.com')
         assert resp.status_code == 200 if protocol == 'https://' else resp.status_code == 301
 
-    def test_context_manager(self, browser: Browser) -> None:
-        with Client(browser=browser) as impit:
-            resp = impit.get(get_httpbin_url('/get'))
-            assert resp.status_code == 200
-
-    def test_boringssl_based_server(self, browser: Browser) -> None:
-        impit = Client(browser=browser)
-
+    def test_boringssl_based_server(self) -> None:
         response = impit.get('https://www.google.com')
         assert response.status_code == 200
         assert response.text
 
-    def test_content_encoding(self, browser: Browser) -> None:
-        impit = Client(browser=browser)
-
+    def test_content_encoding(self) -> None:
         resp = impit.get(get_httpbin_url('/encoding/utf8'))
         assert resp.status_code == 200
         assert resp.encoding == 'utf-8'
 
-    def test_headers_work(self, browser: Browser) -> None:
-        impit = Client(browser=browser)
-
+    def test_headers_work(self) -> None:
         response = impit.get(get_httpbin_url('/headers'), headers={'Impit-Test': 'foo'})
         assert response.status_code == 200
         assert response.json()['headers']['Impit-Test'] == 'foo'
 
-    def test_client_wide_headers_work(self, browser: Browser) -> None:
-        impit = Client(browser=browser, headers={'Impit-Test': 'foo'})
-
-        response = impit.get(get_httpbin_url('/headers'))
-        assert response.status_code == 200
-        assert response.json()['headers']['Impit-Test'] == 'foo'
-
-    def test_request_headers_over_client_headers(self, browser: Browser) -> None:
-        impit = Client(browser=browser, headers={'Auth': '123', 'Exception': 'nope'})
-
-        response = impit.get(get_httpbin_url('/headers'), headers={'Exception': 'yes'})
-        assert response.status_code == 200
-        assert response.json()['headers']['Auth'] == '123'
-        assert response.json()['headers']['Exception'] == 'yes'
-
-    def test_cookies_nonstandard(self, browser: Browser) -> None:
+    def test_cookies_nonstandard(self) -> None:
         cookies_jar = CookieJar()
-
-        impit = Client(browser=browser, cookie_jar=cookies_jar, follow_redirects=True)
-
-        impit.get(get_httpbin_url('/cookies/set', query={'set-by-server': '321'}))
+        impit.get(
+            get_httpbin_url('/cookies/set', query={'set-by-server': '321'}),
+            cookie_jar=cookies_jar,
+            follow_redirects=True,
+        )
 
         for cookie in cookies_jar:
             assert cookie.has_nonstandard_attr('HttpOnly') is not None
 
-    def test_complex_cookies(self, browser: Browser) -> None:
+    def test_complex_cookies(self) -> None:
         cookies_jar = CookieJar()
-
-        impit = Client(browser=browser, cookie_jar=cookies_jar, follow_redirects=True)
 
         url = get_httpbin_url(
             '/response-headers',
@@ -118,7 +82,7 @@ class TestBasicRequests:
             },
         )
 
-        impit.get(url)
+        impit.get(url, cookie_jar=cookies_jar, follow_redirects=True)
 
         assert len(cookies_jar) == 6
         for cookie in cookies_jar:
@@ -154,26 +118,24 @@ class TestBasicRequests:
                 # but it's ok - https://www.rfc-editor.org/rfc/rfc6265#section-4.1.2.3
                 assert cookie.domain == '127.0.0.1'
 
-    def test_cookie_jar_works(self, browser: Browser) -> None:
+    def test_cookie_jar_works(self) -> None:
         cookies = Cookies({'preset-cookie': '123'})
-
-        impit = Client(
-            browser=browser,
-            cookie_jar=cookies.jar,
-        )
 
         response = impit.get(
             get_httpbin_url('/cookies/'),
+            cookie_jar=cookies.jar,
         ).json()
 
         assert response['cookies'] == {'preset-cookie': '123'}
 
         impit.get(
             get_httpbin_url('/cookies/set', query={'set-by-server': '321'}),
+            cookie_jar=cookies.jar,
         )
 
         response = impit.get(
             get_httpbin_url('/cookies/'),
+            cookie_jar=cookies.jar,
         ).json()
 
         assert response['cookies'] == {
@@ -183,26 +145,24 @@ class TestBasicRequests:
 
         assert len(cookies.jar) == 2
 
-    def test_cookies_param_works(self, browser: Browser) -> None:
+    def test_cookies_param_works(self) -> None:
         cookies = Cookies({'preset-cookie': '123'})
-
-        impit = Client(
-            browser=browser,
-            cookies=cookies,
-        )
 
         response = impit.get(
             get_httpbin_url('/cookies/'),
+            cookies=cookies,
         ).json()
 
         assert response['cookies'] == {'preset-cookie': '123'}
 
         impit.get(
             get_httpbin_url('/cookies/set', query={'set-by-server': '321'}),
+            cookies=cookies,
         )
 
         response = impit.get(
             get_httpbin_url('/cookies/'),
+            cookies=cookies,
         ).json()
 
         assert response['cookies'] == {
@@ -214,17 +174,8 @@ class TestBasicRequests:
         assert cookies.get('preset-cookie') == '123'
         assert cookies.get('set-by-server') == '321'
 
-    def test_overwriting_headers_work(self, browser: Browser) -> None:
-        impit = Client(browser=browser)
-
-        response = impit.get(get_httpbin_url('/headers'), headers={'User-Agent': 'this is impit!'})
-        assert response.status_code == 200
-        assert response.json()['headers']['User-Agent'] == 'this is impit!'
-
     @pytest.mark.skip(reason='Flaky under the CI environment')
-    def test_http3_works(self, browser: Browser) -> None:
-        impit = Client(browser=browser, http3=True)
-
+    def test_http3_works(self) -> None:
         response = impit.get('https://curl.se', force_http3=True)
         assert response.status_code == 200
         assert 'curl' in response.text
@@ -234,27 +185,20 @@ class TestBasicRequests:
         ('method'),
         ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'],
     )
-    def test_methods_work(self, browser: Browser, method: str) -> None:
-        impit = Client(browser=browser)
-
+    def test_methods_work(self, method: str) -> None:
         m = getattr(impit, method.lower())
-
         m(get_httpbin_url('/anything'))
 
-    def test_proxy(self, browser: Browser) -> None:
+    def test_proxy(self) -> None:
         stop_proxy = start_proxy_server(3002)
-        impit = Client(browser=browser, proxy='http://127.0.0.1:3002')
-        target_url = 'https://crawlee.dev/'
 
-        resp = impit.get(target_url)
+        resp = impit.get('https://crawlee.dev/', proxy='http://127.0.0.1:3002')
         assert resp.status_code == 200
         assert 'Crawlee' in resp.text
 
         stop_proxy()
 
-    def test_default_no_redirect(self, browser: Browser) -> None:
-        impit = Client(browser=browser)
-
+    def test_default_no_redirect(self) -> None:
         target_url = 'https://crawlee.dev/'
         redirect_url = get_httpbin_url('/redirect-to', query={'url': target_url})
 
@@ -266,68 +210,36 @@ class TestBasicRequests:
         assert response.url == redirect_url
         assert response.headers.get('location') == target_url
 
-    def test_follow_redirects(self, browser: Browser) -> None:
-        impit = Client(browser=browser, follow_redirects=True)
-
+    def test_follow_redirects(self) -> None:
         target_url = 'https://crawlee.dev/'
         redirect_url = get_httpbin_url('/redirect-to', query={'url': target_url})
 
-        response = impit.get(redirect_url)
+        response = impit.get(redirect_url, follow_redirects=True)
 
         assert response.status_code == 200
         assert not response.is_redirect
 
         assert response.url == target_url
 
-    def test_limit_redirects(self, browser: Browser) -> None:
-        impit = Client(browser=browser, follow_redirects=True, max_redirects=1)
-
+    def test_limit_redirects(self) -> None:
         redirect_url = get_httpbin_url('/absolute-redirect/3')
 
         with pytest.raises(TooManyRedirects):
-            impit.get(redirect_url)
+            impit.get(redirect_url, follow_redirects=True, max_redirects=1)
 
-    def test_thread_server(self, browser: Browser) -> None:
+    def test_thread_server(self) -> None:
         port_holder = [0]
         thread = threading.Thread(target=thread_server, args=(port_holder,))
         thread.start()
         time.sleep(0.1)
-
-        impit = Client(browser=browser)
 
         response = impit.get(f'http://127.0.0.1:{port_holder[0]}/', timeout=5)
         assert response.status_code == 200
         thread.join()
 
-    @pytest.mark.parametrize('addresses', [['127.0.0.1', '::ffff:127.0.0.1'], ['::1', '::1']])
-    def test_local_address(self, browser: Browser, addresses: tuple[str, str]) -> None:
-        port_holder = [0]
-        thread = threading.Thread(target=thread_server, args=(port_holder,))
-        thread.start()
-        time.sleep(0.1)
 
-        [local_address, remote_address] = addresses
-
-        impit = Client(browser=browser, local_address=local_address)
-
-        response = impit.get(f'http://localhost:{port_holder[0]}/', timeout=5)
-        assert response.text == remote_address
-        assert response.status_code == 200
-        thread.join()
-
-
-@pytest.mark.parametrize(
-    ('browser'),
-    [
-        'chrome',
-        'firefox',
-        None,
-    ],
-)
 class TestRequestBody:
-    def test_passing_string_body(self, browser: Browser) -> None:
-        impit = Client(browser=browser)
-
+    def test_passing_string_body(self) -> None:
         response = impit.post(
             get_httpbin_url('/post'),
             content=bytearray('{"Impit-Test":"foořžš"}', 'utf-8'),
@@ -336,9 +248,7 @@ class TestRequestBody:
         assert response.status_code == 200
         assert response.json()['data'] == '{"Impit-Test":"foořžš"}'
 
-    def test_passing_string_body_in_data(self, browser: Browser) -> None:
-        impit = Client(browser=browser)
-
+    def test_passing_string_body_in_data(self) -> None:
         response = impit.post(
             get_httpbin_url('/post'),
             data=bytearray('{"Impit-Test":"foořžš"}', 'utf-8'),  # type: ignore[arg-type]
@@ -347,9 +257,7 @@ class TestRequestBody:
         assert response.status_code == 200
         assert response.json()['data'] == '{"Impit-Test":"foořžš"}'
 
-    def test_form_non_ascii(self, browser: Browser) -> None:
-        impit = Client(browser=browser)
-
+    def test_form_non_ascii(self) -> None:
         response = impit.post(
             get_httpbin_url('/post'),
             data={'Impit-Test': '👾🕵🏻‍♂️🧑‍💻'},
@@ -357,9 +265,7 @@ class TestRequestBody:
         assert response.status_code == 200
         assert response.json()['form']['Impit-Test'] == '👾🕵🏻‍♂️🧑‍💻'
 
-    def test_passing_binary_body(self, browser: Browser) -> None:
-        impit = Client(browser=browser)
-
+    def test_passing_binary_body(self) -> None:
         response = impit.post(
             get_httpbin_url('/post'),
             content=[
@@ -393,18 +299,14 @@ class TestRequestBody:
         ('method'),
         ['POST', 'PUT', 'PATCH'],
     )
-    def test_methods_accept_request_body(self, browser: Browser, method: str) -> None:
-        impit = Client(browser=browser)
-
+    def test_methods_accept_request_body(self, method: str) -> None:
         m = getattr(impit, method.lower())
 
         response = m(get_httpbin_url(f'/{method.lower()}'), content=b'foo')
         assert response.status_code == 200
         assert response.json()['data'] == 'foo'
 
-    def test_content(self, browser: Browser) -> None:
-        impit = Client(browser=browser)
-
+    def test_content(self) -> None:
         response = impit.get(get_httpbin_url('/'))
 
         assert response.status_code == 200
@@ -412,27 +314,15 @@ class TestRequestBody:
         assert isinstance(response.text, str)
         assert response.content.decode('utf-8') == response.text
 
-    def test_json(self, browser: Browser) -> None:
-        impit = Client(browser=browser)
-
+    def test_json(self) -> None:
         response = impit.get(get_httpbin_url('/get'))
 
         assert response.status_code == 200
         assert response.json() == json.loads(response.text)
 
 
-@pytest.mark.parametrize(
-    ('browser'),
-    [
-        'chrome',
-        'firefox',
-        None,
-    ],
-)
 class TestStreamRequest:
-    def test_read(self, browser: Browser) -> None:
-        impit = Client(browser=browser)
-
+    def test_read(self) -> None:
         with impit.stream('GET', get_httpbin_url('/')) as response:
             assert response.status_code == 200
             assert response.is_closed is False
@@ -447,9 +337,7 @@ class TestStreamRequest:
             assert response.is_closed is True
             assert response.is_stream_consumed is True  # type: ignore[unreachable] # Mypy can't detect a change of state
 
-    def test_iter_bytes(self, browser: Browser) -> None:
-        impit = Client(browser=browser)
-
+    def test_iter_bytes(self) -> None:
         with impit.stream('GET', get_httpbin_url('/')) as response:
             assert response.status_code == 200
             assert response.is_closed is False
@@ -470,9 +358,7 @@ class TestStreamRequest:
             assert response.is_closed is True
             assert response.is_stream_consumed is True  # type: ignore[unreachable] # Mypy can't detect a change of state
 
-    def test_response_with_context_manager(self, browser: Browser) -> None:
-        impit = Client(browser=browser)
-
+    def test_response_with_context_manager(self) -> None:
         with impit.stream('GET', get_httpbin_url('/')) as response:
             assert response.status_code == 200
             assert response.is_closed is False
@@ -481,9 +367,7 @@ class TestStreamRequest:
         assert response.is_closed is True
         assert response.is_stream_consumed is False  # type: ignore[unreachable] # Mypy can't detect a change of state
 
-    def test_read_after_close(self, browser: Browser) -> None:
-        impit = Client(browser=browser)
-
+    def test_read_after_close(self) -> None:
         with impit.stream('GET', get_httpbin_url('/')) as response:
             assert response.status_code == 200
 
@@ -492,9 +376,7 @@ class TestStreamRequest:
         with pytest.raises(StreamClosed):
             _ = response.read()
 
-    def test_two_read_calls(self, browser: Browser) -> None:
-        impit = Client(browser=browser)
-
+    def test_two_read_calls(self) -> None:
         with impit.stream('GET', get_httpbin_url('/')) as response:
             assert response.status_code == 200
 
@@ -505,9 +387,7 @@ class TestStreamRequest:
             # Return content from cache
             assert response.read() == response.content
 
-    def test_two_iter_bytes_calls(self, browser: Browser) -> None:
-        impit = Client(browser=browser)
-
+    def test_two_iter_bytes_calls(self) -> None:
         with impit.stream('GET', get_httpbin_url('/')) as response:
             assert response.status_code == 200
 
@@ -519,9 +399,7 @@ class TestStreamRequest:
             with pytest.raises(StreamConsumed):
                 _ = b''.join(response.iter_bytes())
 
-    def test_iter_bytes_without_consumed(self, browser: Browser) -> None:
-        impit = Client(browser=browser)
-
+    def test_iter_bytes_without_consumed(self) -> None:
         with impit.stream('GET', get_httpbin_url('/')) as response:
             assert response.status_code == 200
 

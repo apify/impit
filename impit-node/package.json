@@ -27,6 +27,7 @@
     "@types/express": "^5.0.0",
     "@types/node": "^24.0.0",
     "express": "^5.0.0",
+    "proxy-chain": "^2.5.9",
     "socks-server-lib": "^0.0.3",
     "tough-cookie": "^6.0.0",
     "typedoc": "^0.28.13",
@@ -53,13 +54,13 @@
   "packageManager": "yarn@4.10.3",
   "description": "Impit for JavaScript",
   "optionalDependencies": {
-    "impit-darwin-x64": "0.7.0",
     "impit-darwin-arm64": "0.7.0",
-    "impit-win32-x64-msvc": "0.7.0",
-    "impit-win32-arm64-msvc": "0.7.0",
+    "impit-darwin-x64": "0.7.0",
+    "impit-linux-arm64-gnu": "0.7.0",
+    "impit-linux-arm64-musl": "0.7.0",
     "impit-linux-x64-gnu": "0.7.0",
     "impit-linux-x64-musl": "0.7.0",
-    "impit-linux-arm64-gnu": "0.7.0",
-    "impit-linux-arm64-musl": "0.7.0"
+    "impit-win32-arm64-msvc": "0.7.0",
+    "impit-win32-x64-msvc": "0.7.0"
   }
 }
