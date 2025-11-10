@@ -1040,6 +1040,7 @@ def stream(
     max_redirects: int | None = None,
     cookie_jar: CookieJar | None = None,
     cookies: Cookies | None = None,
+    proxy: str | None = None,
 ) -> AbstractContextManager[Response]:
     """Make a streaming request without creating a client instance.
 
@@ -1055,6 +1056,7 @@ def stream(
         max_redirects: Maximum number of redirects to follow (default: 20)
         cookie_jar: Cookie jar to store cookies in.
         cookies: httpx-compatible cookies object.
+        proxy: Proxy URL to use to make the request.
 
     Returns:
         Response object
@@ -1071,6 +1073,7 @@ def get(
     max_redirects: int | None = None,
     cookie_jar: CookieJar | None = None,
     cookies: Cookies | None = None,
+    proxy: str | None = None,
 ) -> Response:
     """Make a GET request without creating a client instance.
 
@@ -1085,6 +1088,7 @@ def get(
         max_redirects: Maximum number of redirects to follow (default: 20)
         cookie_jar: Cookie jar to store cookies in.
         cookies: httpx-compatible cookies object.
+        proxy: Proxy URL to use to make the request.
 
     Returns:
         Response object
@@ -1102,6 +1106,7 @@ def post(
     max_redirects: int | None = None,
     cookie_jar: CookieJar | None = None,
     cookies: Cookies | None = None,
+    proxy: str | None = None,
 ) -> Response:
     """Make a POST request without creating a client instance.
 
@@ -1116,6 +1121,7 @@ def post(
         max_redirects: Maximum number of redirects to follow (default: 20)
         cookie_jar: Cookie jar to store cookies in.
         cookies: httpx-compatible cookies object.
+        proxy: Proxy URL to use to make the request.
 
     Returns:
         Response object
@@ -1133,6 +1139,7 @@ def put(
     max_redirects: int | None = None,
     cookie_jar: CookieJar | None = None,
     cookies: Cookies | None = None,
+    proxy: str | None = None,
 ) -> Response:
     """Make a PUT request without creating a client instance.
 
@@ -1147,6 +1154,7 @@ def put(
         max_redirects: Maximum number of redirects to follow (default: 20)
         cookie_jar: Cookie jar to store cookies in.
         cookies: httpx-compatible cookies object.
+        proxy: Proxy URL to use to make the request.
 
     Returns:
         Response object
@@ -1164,6 +1172,7 @@ def patch(
     max_redirects: int | None = None,
     cookie_jar: CookieJar | None = None,
     cookies: Cookies | None = None,
+    proxy: str | None = None,
 ) -> Response:
     """Make a PATCH request without creating a client instance.
 
@@ -1178,6 +1187,7 @@ def patch(
         max_redirects: Maximum number of redirects to follow (default: 20)
         cookie_jar: Cookie jar to store cookies in.
         cookies: httpx-compatible cookies object.
+        proxy: Proxy URL to use to make the request.
 
     Returns:
         Response object
@@ -1195,6 +1205,7 @@ def delete(
     max_redirects: int | None = None,
     cookie_jar: CookieJar | None = None,
     cookies: Cookies | None = None,
+    proxy: str | None = None,
 ) -> Response:
     """Make a DELETE request without creating a client instance.
 
@@ -1209,6 +1220,7 @@ def delete(
         max_redirects: Maximum number of redirects to follow (default: 20)
         cookie_jar: Cookie jar to store cookies in.
         cookies: httpx-compatible cookies object.
+        proxy: Proxy URL to use to make the request.
 
     Returns:
         Response object
@@ -1226,6 +1238,7 @@ def head(
     max_redirects: int | None = None,
     cookie_jar: CookieJar | None = None,
     cookies: Cookies | None = None,
+    proxy: str | None = None,
 ) -> Response:
     """Make a HEAD request without creating a client instance.
 
@@ -1240,6 +1253,7 @@ def head(
         max_redirects: Maximum number of redirects to follow (default: 20)
         cookie_jar: Cookie jar to store cookies in.
         cookies: httpx-compatible cookies object.
+        proxy: Proxy URL to use to make the request.
 
     Returns:
         Response object
@@ -1257,6 +1271,7 @@ def options(
     max_redirects: int | None = None,
     cookie_jar: CookieJar | None = None,
     cookies: Cookies | None = None,
+    proxy: str | None = None,
 ) -> Response:
     """Make an OPTIONS request without creating a client instance.
 
@@ -1271,6 +1286,7 @@ def options(
         max_redirects: Maximum number of redirects to follow (default: 20)
         cookie_jar: Cookie jar to store cookies in.
         cookies: httpx-compatible cookies object.
+        proxy: Proxy URL to use to make the request.
     """
 
 
@@ -1285,6 +1301,7 @@ def trace(
     max_redirects: int | None = None,
     cookie_jar: CookieJar | None = None,
     cookies: Cookies | None = None,
+    proxy: str | None = None,
 ) -> Response:
     """Make a TRACE request without creating a client instance.
 
@@ -1299,4 +1316,5 @@ def trace(
         max_redirects: Maximum number of redirects to follow (default: 20)
         cookie_jar: Cookie jar to store cookies in.
         cookies: httpx-compatible cookies object.
+        proxy: Proxy URL to use to make the request.
     """
