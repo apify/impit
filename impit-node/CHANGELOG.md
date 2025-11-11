@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 
 
+## js-0.7.1 - 2025-11-11
+
+#### Bug Fixes
+
+- Align anonymous client API with httpx (#310)
+
+
 ## js-0.7.0 - 2025-11-07
 
 #### Features
