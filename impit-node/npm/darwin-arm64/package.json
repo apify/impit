@@ -1,7 +1,7 @@
 {
   "name": "impit-darwin-arm64",
   "homepage": "https://apify.github.io/impit/js",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "os": [
     "darwin"
   ],
