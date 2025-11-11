@@ -3,6 +3,19 @@
 All notable changes to this project will be documented in this file.
 
 
+## py-0.9.0 - 2025-11-11
+
+#### Bug Fixes
+
+- Align anonymous client API with httpx (#310)
+
+#### Refactor
+
+- Introduce `ImpitRequest` struct for storing all request-related data (#307)
+  - Refactors the `impit.make_request` method by splitting it into `build_request` and `send`.  Prerequisite for the solution to #227 proposed in https://github.com/apify/impit/issues/227#issuecomment-3184109259
+
+
+
 ## py-0.8.0 - 2025-10-22
 
 #### Features
