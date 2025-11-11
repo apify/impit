@@ -7,7 +7,7 @@ env:
 permissions:
   contents: write
   id-token: write
-'on':
+on:
   workflow_dispatch:
     inputs:
       bump:
@@ -45,6 +45,7 @@ jobs:
             uses: actions/setup-node@v6
             with:
               node-version: 24
+              registry-url: 'https://registry.npmjs.org'
 
           - name: Enable Corepack
             run: |
@@ -83,12 +84,7 @@ jobs:
               yarn copy-version
 
           - name: Publish to npm
-            run: |
-              echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
-              npm publish --access public
-            env:
-              GITHUB_TOKEN: ${{ secrets.APIFY_SERVICE_ACCOUNT_GITHUB_TOKEN }}
-              NPM_TOKEN: ${{ secrets.APIFY_SERVICE_ACCOUNT_NPM_TOKEN }}
+            run: npm publish --provenance
 
           - name: Commit changes
             id: commit
@@ -98,7 +94,7 @@ jobs:
                 author_email: noreply@apify.com
                 message: "chore(js-release): Update package version [skip ci]"
                 tag: "js-${{ steps.get-new-version.outputs.TARGET_VERSION }}"
-    
+
     changelog:
       name: Generate changelog
       needs: [publish]
