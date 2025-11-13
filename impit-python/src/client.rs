@@ -425,15 +425,13 @@ impl Client {
                 };
 
                 match response {
-                    Ok(response) => {
-                        let py_response = ImpitPyResponse::from_async(
-                            response,
-                            self.default_encoding.clone(),
-                            stream.unwrap_or(false),
-                        )
-                        .await;
-                        Ok(py_response)
-                    }
+                    Ok(response) => ImpitPyResponse::from_async(
+                        response,
+                        self.default_encoding.clone(),
+                        stream.unwrap_or(false),
+                    )
+                    .await
+                    .map_err(ImpitPyError),
                     Err(err) => Err(ImpitPyError(err)),
                 }
             })

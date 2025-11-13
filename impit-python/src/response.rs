@@ -5,7 +5,7 @@ use tokio::sync::Mutex as AsyncMutex;
 use bytes::Bytes;
 use encoding::label::encoding_from_whatwg_label;
 use futures::{Stream, StreamExt};
-use impit::utils::ContentType;
+use impit::{errors::ImpitError, utils::ContentType};
 use pyo3::prelude::*;
 use reqwest::{Response, StatusCode, Version};
 use std::pin::Pin;
@@ -521,7 +521,7 @@ impl ImpitPyResponse {
         val: Response,
         preferred_encoding: Option<String>,
         stream: bool,
-    ) -> Self {
+    ) -> Result<Self, ImpitError> {
         let status_code = val.status().as_u16();
         let url = val.url().to_string();
         let reason_phrase = val
@@ -551,7 +551,11 @@ impl ImpitPyResponse {
             .and_then(|ct| ct.into());
 
         let (content, inner_state, encoding, inner, is_closed, is_stream_consumed) = if !stream {
-            let content = val.bytes().await.map(|b| b.to_vec()).unwrap_or_default();
+            let content = val
+                .bytes()
+                .await
+                .map(|b| b.to_vec())
+                .map_err(|e| ImpitError::from(e, None))?;
             let encoding = preferred_encoding
                 .and_then(|e| encoding_from_whatwg_label(&e))
                 .or(content_type_charset)
@@ -581,7 +585,7 @@ impl ImpitPyResponse {
             )
         };
 
-        ImpitPyResponse {
+        Ok(ImpitPyResponse {
             status_code,
             url,
             reason_phrase,
@@ -595,6 +599,6 @@ impl ImpitPyResponse {
             is_stream_consumed,
             inner_state,
             inner,
-        }
+        })
     }
 }
