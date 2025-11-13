@@ -435,13 +435,13 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
 
                 return Err(ImpitError::from(
                     err,
-                    ErrorContext {
-                        timeout: timeout.unwrap_or(self.config.request_timeout),
-                        max_redirects,
-                        method: method.to_string(),
-                        protocol: request.url.scheme().to_string(),
-                        url: url.clone(),
-                    },
+                    Some(ErrorContext {
+                        timeout: Some(timeout.unwrap_or(self.config.request_timeout)),
+                        max_redirects: Some(max_redirects),
+                        method: Some(method.to_string()),
+                        protocol: Some(request.url.scheme().to_string()),
+                        url: Some(url.clone()),
+                    }),
                 ));
             }
         };
