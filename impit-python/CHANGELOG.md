@@ -3,6 +3,15 @@
 All notable changes to this project will be documented in this file.
 
 
+## py-0.9.1 - 2025-11-13
+
+#### Bug Fixes
+
+- Raise Python exception on response body read error (#313)
+  - Originally, Python Impit bindings would return a response with an empty body on a body read error. This didn't make much sense and caused issues in the downstream dependencies. Now we rethrow the error so it can be properly handled.  Closes https://github.com/apify/apify-sdk-python/issues/672
+
+
+
 ## py-0.9.0 - 2025-11-11
 
 #### Bug Fixes
