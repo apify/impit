@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "impit"
-version = "0.9.1"
+version = "0.9.2"
 description = "A library for making HTTP requests through browser impersonation"
 readme = "README.md"
 authors = [{ name = "Jindřich Bär" }]
