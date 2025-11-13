@@ -3,6 +3,15 @@
 All notable changes to this project will be documented in this file.
 
 
+## py-0.9.2 - 2025-11-13
+
+#### Bug Fixes
+
+- Treat unexpected EOF error as `RemoteProtocolError` (#314)
+  - Related to https://github.com/apify/apify-sdk-python/issues/672
+
+
+
 ## py-0.9.1 - 2025-11-13
 
 #### Bug Fixes
