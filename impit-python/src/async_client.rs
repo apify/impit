@@ -437,9 +437,9 @@ impl AsyncClient {
 
             match response {
                 Ok(response) => {
-                    let py_response =
-                        ImpitPyResponse::from_async(response, default_encoding, stream_value).await;
-                    Ok(py_response)
+                    ImpitPyResponse::from_async(response, default_encoding, stream_value)
+                        .await
+                        .map_err(|e| ImpitPyError(e).into())
                 }
                 Err(err) => Err(ImpitPyError(err).into()),
             }
