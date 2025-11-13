@@ -113,10 +113,9 @@ impl ImpitError {
             return ImpitError::TooManyRedirects(context.max_redirects);
         }
 
-        if error.is_body()
-            && (format!("{:?}", error).to_lowercase()).contains("unexpectedeof") {
-                return ImpitError::RemoteProtocolError;
-            }
+        if error.is_body() && (format!("{:?}", error).to_lowercase()).contains("unexpectedeof") {
+            return ImpitError::RemoteProtocolError;
+        }
 
         if error.is_request() {
             if let Some(source_error) = error
