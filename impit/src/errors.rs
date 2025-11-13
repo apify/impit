@@ -103,7 +103,6 @@ impl ImpitError {
     pub fn from(error: reqwest::Error, context: Option<ErrorContext>) -> Self {
         let context = context.unwrap_or_default();
         if error.is_timeout() {
-            println!("{}", format!("{:?}", error).to_lowercase());
             if (format!("{:?}", error).to_lowercase()).contains("connection timed out") {
                 return ImpitError::ConnectTimeout;
             }
