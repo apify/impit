@@ -97,7 +97,7 @@ impl HttpHeadersBuilder {
         self
     }
 
-    pub fn with_browser(&mut self, browser: &Option<Browser>) -> &mut Self {
+    pub fn with_fingerprint(&mut self, browser: &Option<Browser>) -> &mut Self {
         self.browser = browser.to_owned();
         self
     }

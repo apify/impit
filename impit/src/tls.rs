@@ -1,15 +1,14 @@
-mod ffdhe;
-mod statics;
-
 use std::sync::Arc;
 
-use crate::emulation::Browser;
+use crate::fingerprint::TlsFingerprint;
 use reqwest::Version;
 use rustls::client::danger::NoVerifier;
-use rustls::client::{BrowserEmulator as RusTLSBrowser, BrowserType, EchGreaseConfig};
-use rustls::crypto::aws_lc_rs::kx_group::{SECP256R1, SECP384R1, X25519};
+use rustls::client::EchGreaseConfig;
 use rustls::crypto::CryptoProvider;
 use rustls::RootCertStore;
+use rustls::crypto::{aws_lc_rs, hpke::Hpke};
+
+pub static GREASE_HPKE_SUITE: &dyn Hpke = aws_lc_rs::hpke::DH_KEM_X25519_HKDF_SHA256_AES_128;
 
 pub struct TlsConfig {}
 
@@ -21,7 +20,7 @@ impl TlsConfig {
 
 #[derive(Debug, Clone, Copy)]
 pub struct TlsConfigBuilder {
-    browser: Option<Browser>,
+    tls_fingerprint: Option<TlsFingerprint>,
     max_http_version: Version,
     ignore_tls_errors: bool,
 }
@@ -29,7 +28,7 @@ pub struct TlsConfigBuilder {
 impl Default for TlsConfigBuilder {
     fn default() -> Self {
         TlsConfigBuilder {
-            browser: None,
+            tls_fingerprint: None,
             max_http_version: Version::HTTP_2,
             ignore_tls_errors: false,
         }
@@ -38,13 +37,13 @@ impl Default for TlsConfigBuilder {
 
 impl TlsConfigBuilder {
     fn get_ech_mode(self) -> rustls::client::EchMode {
-        let (public_key, _) = statics::GREASE_HPKE_SUITE.generate_key_pair().unwrap();
+        let (public_key, _) = GREASE_HPKE_SUITE.generate_key_pair().unwrap();
 
-        EchGreaseConfig::new(statics::GREASE_HPKE_SUITE, public_key).into()
+        EchGreaseConfig::new(GREASE_HPKE_SUITE, public_key).into()
     }
 
-    pub fn with_browser(&mut self, browser: Option<Browser>) -> &mut Self {
-        self.browser = browser;
+    pub fn with_fingerprint(&mut self, fingerprint: Option<TlsFingerprint>) -> &mut Self {
+        self.tls_fingerprint = fingerprint;
         self
     }
 
@@ -62,33 +61,11 @@ impl TlsConfigBuilder {
         let mut root_store = RootCertStore::empty();
         root_store.extend(webpki_roots::TLS_SERVER_ROOTS.iter().cloned());
 
-        let mut config = match self.browser {
-            Some(browser) => {
-                let rustls_browser = match browser {
-                    Browser::Chrome => RusTLSBrowser {
-                        browser_type: BrowserType::Chrome,
-                        version: 125,
-                    },
-                    Browser::Firefox => RusTLSBrowser {
-                        browser_type: BrowserType::Firefox,
-                        version: 125,
-                    },
-                };
-
+        let mut config = match self.tls_fingerprint {
+            Some(fingerprint) => {
                 let mut crypto_provider = CryptoProvider::builder()
-                    .with_browser_emulator(&rustls_browser)
+                    .with_tls_fingerprint(&fingerprint)
                     .build();
-
-                if browser == Browser::Firefox {
-                    crypto_provider.kx_groups = vec![
-                        X25519,
-                        SECP256R1,
-                        SECP384R1,
-                        // TODO : add SECPR521R1
-                        &ffdhe::FFDHE2048_KX_GROUP,
-                        &ffdhe::FFDHE3072_KX_GROUP,
-                    ];
-                }
 
                 let mut config: rustls::ClientConfig =
                     rustls::ClientConfig::builder_with_provider(crypto_provider.into())
@@ -96,13 +73,13 @@ impl TlsConfigBuilder {
                         .with_ech(self.get_ech_mode())
                         .unwrap()
                         .with_root_certificates(root_store)
-                        .with_browser_emulator(&rustls_browser)
+                        .with_tls_fingerprint(&fingerprint)
                         .with_no_client_auth();
 
                 if self.ignore_tls_errors {
                     config
                         .dangerous()
-                        .set_certificate_verifier(Arc::new(NoVerifier::new(Some(rustls_browser))));
+                        .set_certificate_verifier(Arc::new(NoVerifier::new(Some(fingerprint))));
                 }
 
                 config

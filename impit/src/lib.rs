@@ -7,7 +7,7 @@
 //! ```rust
 //! use impit::impit::Impit;
 //! use impit::emulation::Browser;
-//!  
+//!
 //! #[tokio::main]
 //! async fn main() {
 //!    let mut impit = Impit::builder()
@@ -61,8 +61,11 @@
 mod http_headers;
 mod response_parsing;
 mod tls;
+mod fingerprint;
+mod fingerprints;
 
 pub(crate) mod http3;
+pub(crate) mod fingerprint;
 
 /// Main module that contains the `Impit` struct and its methods.
 pub mod impit;
