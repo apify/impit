@@ -9,8 +9,8 @@ members = [
 ]
 
 [patch.crates-io]
-h2 = { git = "https://github.com/apify/h2", branch = "master" }
-rustls = { git = "https://github.com/apify/rustls", branch = "main" }
+h2 = { git = "https://github.com/apify/h2", rev = "7f393a728a8db07cabb1b78d2094772b33943b9a" }
+rustls = { git = "https://github.com/apify/rustls", rev = "f384c6c18eb2bfe850d142a4cc7dfe5dc376e7e3" }
 
 [profile.release]
 strip = true  # Automatically strip symbols from the binary.
