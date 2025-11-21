@@ -128,7 +128,7 @@ jobs:
         toolchain:
           - stable
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Cache cargo & target directories
         uses: Swatinem/rust-cache@v2
       - name: Configure Git
