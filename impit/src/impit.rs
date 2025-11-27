@@ -52,16 +52,25 @@ pub enum RedirectBehavior {
 /// The builder allows setting the browser to impersonate, ignoring TLS errors, setting a proxy, and other options.
 ///
 /// ### Example
-/// ```rust
-/// let mut impit = Impit::builder()
+/// ```rust,no_run
+/// use impit::impit::Impit;
+/// use impit::emulation::Browser;
+/// use reqwest::cookie::Jar;
+/// use std::time::Duration;
+///
+/// # #[tokio::main]
+/// # async fn main() {
+/// let impit = Impit::<Jar>::builder()
 ///   .with_browser(Browser::Firefox)
 ///   .with_ignore_tls_errors(true)
 ///   .with_proxy("http://localhost:8080".to_string())
 ///   .with_default_timeout(Duration::from_secs(10))
 ///   .with_http3()
-///   .build();
+///   .build()
+///   .unwrap();
 ///
-/// let response = impit.get("https://example.com".to_string(), None).await;
+/// let response = impit.get("https://example.com".to_string(), None, None).await;
+/// # }
 /// ```
 #[derive(Debug)]
 pub struct ImpitBuilder<CookieStoreImpl: CookieStore + 'static> {
