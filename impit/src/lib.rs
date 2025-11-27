@@ -4,18 +4,20 @@
 //!
 //! The library provides a simple API for making requests to websites, and it also allows you to customize the request headers, use proxies, custom timeouts and more.
 //!
-//! ```rust
+//! ```rust,no_run
 //! use impit::impit::Impit;
 //! use impit::emulation::Browser;
-//!  
+//! use reqwest::cookie::Jar;
+//!
 //! #[tokio::main]
 //! async fn main() {
-//!    let mut impit = Impit::builder()
+//!    let impit = Impit::<Jar>::builder()
 //!        .with_browser(Browser::Firefox)
 //!        .with_http3()
-//!        .build();
+//!        .build()
+//!        .unwrap();
 //!
-//!    let response = impit.get(String::from("https://example.com"), None).await;
+//!    let response = impit.get(String::from("https://example.com"), None, None).await;
 //!
 //!    match response {
 //!        Ok(response) => {
