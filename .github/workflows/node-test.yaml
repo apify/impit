@@ -39,8 +39,7 @@ jobs:
             target: x86_64-pc-windows-msvc
           - host: ubuntu-22.04
             target: x86_64-unknown-linux-gnu
-            docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian
-            build: yarn --cwd impit-node build --target x86_64-unknown-linux-gnu
+            build: yarn --cwd impit-node build --target x86_64-unknown-linux-gnu --use-napi-cross
           - host: ubuntu-24.04-arm
             target: aarch64-unknown-linux-musl
             docker: arm64v8/node:20-alpine
@@ -57,7 +56,7 @@ jobs:
                 yarn --cwd impit-node build
           - host: ubuntu-22.04-arm
             target: aarch64-unknown-linux-gnu
-            build: yarn --cwd impit-node build --target aarch64-unknown-linux-gnu
+            build: yarn --cwd impit-node build --target aarch64-unknown-linux-gnu --use-napi-cross
           - host: ubuntu-latest
             target: x86_64-unknown-linux-musl
             docker: node:20-alpine
