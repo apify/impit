@@ -1,7 +1,8 @@
+import http from 'http';
 import { test, describe, expect, beforeAll, afterAll } from 'vitest';
 
 import { HttpMethod, Impit, Browser } from '../index.wrapper.js';
-import type { Server } from 'net';
+import type { AddressInfo, Server } from 'net';
 import { routes, runProxyServer, runServer } from './mock.server.js';
 
 import { CookieJar } from 'tough-cookie';
@@ -162,6 +163,27 @@ describe.each([
             expect(json).toHaveProperty('url');
             expect(json).toHaveProperty('headers');
             expect(json).toHaveProperty('origin');
+        });
+
+        test('proxy with incomplete authentication works', async () => {
+            let proxyHit = false;
+            const proxy = http.createServer((req, res) => {
+                proxyHit = true;
+                res.writeHead(200);
+                res.end('OK');
+            });
+            await new Promise((r) => proxy.listen(0, '127.0.0.1', r));
+            const proxyPort = (proxy.address() as AddressInfo)?.port;
+
+            const impit = new Impit({
+                proxyUrl: `http://user:@127.0.0.1:${proxyPort}`,
+            });
+
+            const resp = await impit.fetch('http://example.com/'); // the URL doesn't matter, request should go through the proxy
+            expect(await resp.text()).toBe('OK');
+            expect(proxyHit).toBe(true);
+
+            proxy.close();
         });
 
         test('impit accepts custom cookie jars', async (t) => {
