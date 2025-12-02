@@ -3,6 +3,21 @@
 All notable changes to this project will be documented in this file.
 
 
+## js-0.7.2 - 2025-12-02
+
+#### Bug Fixes
+
+- Raise Python exception on response body read error (#313)
+  - Originally, Python Impit bindings would return a response with an empty body on a body read error. This didn't make much sense and caused issues in the downstream dependencies. Now we rethrow the error so it can be properly handled.  Closes https://github.com/apify/apify-sdk-python/issues/672
+
+
+- Treat unexpected EOF error as `RemoteProtocolError` (#314)
+  - Related to https://github.com/apify/apify-sdk-python/issues/672
+
+
+- Proxy authenticates with empty password (#327)
+
+
 ## js-0.7.1 - 2025-11-11
 
 #### Bug Fixes
