@@ -23,150 +23,150 @@ permissions:
   workflow_call:
 
 jobs:
-  build:
-    defaults:
-      run:
-        working-directory: impit-node
-    strategy:
-      fail-fast: false
-      matrix:
-        settings:
-          - host: macos-latest
-            target: x86_64-apple-darwin
-            build: yarn --cwd impit-node build --target x86_64-apple-darwin
-          - host: windows-latest
-            build: yarn --cwd impit-node build --target x86_64-pc-windows-msvc
-            target: x86_64-pc-windows-msvc
-          - host: ubuntu-22.04
-            target: x86_64-unknown-linux-gnu
-            build: yarn --cwd impit-node build --target x86_64-unknown-linux-gnu --use-napi-cross
-          - host: ubuntu-24.04-arm
-            target: aarch64-unknown-linux-musl
-            docker: arm64v8/node:20-alpine
-            build: |-
-                export PATH="/usr/local/cargo/bin/rustup:/root/.cargo/bin:$PATH" RUSTFLAGS="-C target-feature=-crt-static --cfg reqwest_unstable" CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER=gcc CC=gcc CXX="g++" GN_EXE=gn &&
-                apk add --update --no-cache bash wget cmake musl-dev clang llvm build-base python3 gcc g++ perl &&
-                sed -i -e 's/v[[:digit:]]\..*\//edge\//g' /etc/apk/repositories &&
-                apk add --update --no-cache --repository https://dl-cdn.alpinelinux.org/alpine/edge/testing rustup git gn tar ninja &&
-                apk update &&
-                apk upgrade &&
-                rustup-init -y &&
-                yarn global add pnpm lerna &&
-                corepack enable &&
-                yarn --cwd impit-node build
-          - host: ubuntu-22.04-arm
-            target: aarch64-unknown-linux-gnu
-            build: yarn --cwd impit-node build --target aarch64-unknown-linux-gnu --use-napi-cross
-          - host: ubuntu-latest
-            target: x86_64-unknown-linux-musl
-            docker: node:20-alpine
-            # Script taken from https://github.com/napi-rs/napi-rs/blob/main/alpine.Dockerfile
-            build: |
-                export PATH="/aarch64-linux-musl-cross/bin:/usr/local/cargo/bin/rustup:/root/.cargo/bin:$PATH" RUSTFLAGS="-C target-feature=-crt-static --cfg reqwest_unstable" CC="clang" CXX="clang++" GN_EXE=gn &&
-                apk add --update --no-cache bash wget cmake musl-dev clang llvm build-base python3 &&
-                sed -i -e 's/v[[:digit:]]\..*\//edge\//g' /etc/apk/repositories &&
-                apk add --update --no-cache --repository https://dl-cdn.alpinelinux.org/alpine/edge/testing rustup git gn tar ninja &&
-                apk update &&
-                apk upgrade &&
-                rustup-init -y &&
-                yarn global add pnpm lerna &&
-                rustup target add aarch64-unknown-linux-musl &&
-                wget https://github.com/napi-rs/napi-rs/releases/download/linux-musl-cross%4010/aarch64-linux-musl-cross.tgz &&
-                tar -xvf aarch64-linux-musl-cross.tgz &&
-                rm aarch64-linux-musl-cross.tgz &&
-                apk add perl &&
-                ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/14.2.0/crtbeginS.o /usr/lib/crtbeginS.o &&
-                ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/14.2.0/crtendS.o /usr/lib/crtendS.o &&
-                ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/14.2.0/libgcc.a /usr/lib/libgcc.a &&
-                corepack enable &&
-                yarn --cwd impit-node build --target x86_64-unknown-linux-musl
-          - host: macos-latest
-            target: aarch64-apple-darwin
-            build: yarn --cwd impit-node build --target aarch64-apple-darwin
-          - host: windows-latest
-            target: aarch64-pc-windows-msvc
-            build: yarn --cwd impit-node build --target aarch64-pc-windows-msvc
-    name: stable - ${{ matrix.settings.target }} - node@22
-    runs-on: ${{ matrix.settings.host }}
-    steps:
-      - uses: actions/checkout@v6
+  # build:
+  #   defaults:
+  #     run:
+  #       working-directory: impit-node
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       settings:
+  #         - host: macos-latest
+  #           target: x86_64-apple-darwin
+  #           build: yarn --cwd impit-node build --target x86_64-apple-darwin
+  #         - host: windows-latest
+  #           build: yarn --cwd impit-node build --target x86_64-pc-windows-msvc
+  #           target: x86_64-pc-windows-msvc
+  #         - host: ubuntu-22.04
+  #           target: x86_64-unknown-linux-gnu
+  #           build: yarn --cwd impit-node build --target x86_64-unknown-linux-gnu --use-napi-cross
+  #         - host: ubuntu-24.04-arm
+  #           target: aarch64-unknown-linux-musl
+  #           docker: arm64v8/node:20-alpine
+  #           build: |-
+  #               export PATH="/usr/local/cargo/bin/rustup:/root/.cargo/bin:$PATH" RUSTFLAGS="-C target-feature=-crt-static --cfg reqwest_unstable" CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER=gcc CC=gcc CXX="g++" GN_EXE=gn &&
+  #               apk add --update --no-cache bash wget cmake musl-dev clang llvm build-base python3 gcc g++ perl &&
+  #               sed -i -e 's/v[[:digit:]]\..*\//edge\//g' /etc/apk/repositories &&
+  #               apk add --update --no-cache --repository https://dl-cdn.alpinelinux.org/alpine/edge/testing rustup git gn tar ninja &&
+  #               apk update &&
+  #               apk upgrade &&
+  #               rustup-init -y &&
+  #               yarn global add pnpm lerna &&
+  #               corepack enable &&
+  #               yarn --cwd impit-node build
+  #         - host: ubuntu-22.04-arm
+  #           target: aarch64-unknown-linux-gnu
+  #           build: yarn --cwd impit-node build --target aarch64-unknown-linux-gnu --use-napi-cross
+  #         - host: ubuntu-latest
+  #           target: x86_64-unknown-linux-musl
+  #           docker: node:20-alpine
+  #           # Script taken from https://github.com/napi-rs/napi-rs/blob/main/alpine.Dockerfile
+  #           build: |
+  #               export PATH="/aarch64-linux-musl-cross/bin:/usr/local/cargo/bin/rustup:/root/.cargo/bin:$PATH" RUSTFLAGS="-C target-feature=-crt-static --cfg reqwest_unstable" CC="clang" CXX="clang++" GN_EXE=gn &&
+  #               apk add --update --no-cache bash wget cmake musl-dev clang llvm build-base python3 &&
+  #               sed -i -e 's/v[[:digit:]]\..*\//edge\//g' /etc/apk/repositories &&
+  #               apk add --update --no-cache --repository https://dl-cdn.alpinelinux.org/alpine/edge/testing rustup git gn tar ninja &&
+  #               apk update &&
+  #               apk upgrade &&
+  #               rustup-init -y &&
+  #               yarn global add pnpm lerna &&
+  #               rustup target add aarch64-unknown-linux-musl &&
+  #               wget https://github.com/napi-rs/napi-rs/releases/download/linux-musl-cross%4010/aarch64-linux-musl-cross.tgz &&
+  #               tar -xvf aarch64-linux-musl-cross.tgz &&
+  #               rm aarch64-linux-musl-cross.tgz &&
+  #               apk add perl &&
+  #               ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/14.2.0/crtbeginS.o /usr/lib/crtbeginS.o &&
+  #               ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/14.2.0/crtendS.o /usr/lib/crtendS.o &&
+  #               ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/14.2.0/libgcc.a /usr/lib/libgcc.a &&
+  #               corepack enable &&
+  #               yarn --cwd impit-node build --target x86_64-unknown-linux-musl
+  #         - host: macos-latest
+  #           target: aarch64-apple-darwin
+  #           build: yarn --cwd impit-node build --target aarch64-apple-darwin
+  #         - host: windows-latest
+  #           target: aarch64-pc-windows-msvc
+  #           build: yarn --cwd impit-node build --target aarch64-pc-windows-msvc
+  #   name: stable - ${{ matrix.settings.target }} - node@22
+  #   runs-on: ${{ matrix.settings.host }}
+  #   steps:
+  #     - uses: actions/checkout@v6
 
-      - name: Use Node.js 20
-        uses: actions/setup-node@v6
-        with:
-          node-version: 24
+  #     - name: Use Node.js 20
+  #       uses: actions/setup-node@v6
+  #       with:
+  #         node-version: 24
 
-      - name: Enable Corepack
-        run: |
-          corepack enable
-          corepack prepare yarn@stable --activate
+  #     - name: Enable Corepack
+  #       run: |
+  #         corepack enable
+  #         corepack prepare yarn@stable --activate
 
-      - name: Activate cache for Node.js 20
-        uses: actions/setup-node@v6
-        if: ${{ matrix.settings.target != 'x86_64-unknown-linux-musl' }}
-        with:
-          node-version: 24
-          cache: yarn
-          cache-dependency-path: impit-node/yarn.lock
-      - name: Install
-        uses: dtolnay/rust-toolchain@stable
-        if: ${{ !matrix.settings.docker }}
-        with:
-          toolchain: stable
-          targets: ${{ matrix.settings.target }}
-      - name: Cache cargo
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            .cargo-cache
-            target/
-          key: ${{ matrix.settings.target }}-cargo-${{ matrix.settings.host }}
-      - uses: goto-bus-stop/setup-zig@v2
-        if: ${{ matrix.settings.target == 'armv7-unknown-linux-gnueabihf' || matrix.settings.target == 'armv7-unknown-linux-musleabihf' }}
-        with:
-          version: 0.13.0
-      - name: Setup toolchain
-        run: ${{ matrix.settings.setup }}
-        if: ${{ matrix.settings.setup }}
-        shell: bash
-      - name: Setup node x86
-        if: matrix.settings.target == 'i686-pc-windows-msvc'
-        run: yarn --cwd impit-node config set supportedArchitectures.cpu "ia32"
-        shell: bash
-      - name: Install dependencies
-        run: yarn --cwd impit-node install
-      - name: Setup node x86
-        uses: actions/setup-node@v6
-        if: matrix.settings.target == 'i686-pc-windows-msvc'
-        with:
-          node-version: 24
-          cache: yarn
-          cache-dependency-path: impit-node/yarn.lock
-          architecture: x86
-      - name: Build in docker
-        uses: addnab/docker-run-action@v3
-        if: ${{ matrix.settings.docker }}
-        with:
-          image: ${{ matrix.settings.docker }}
-          options: '--user 0:0 -v ${{ github.workspace }}/.cargo-cache/git/db:/usr/local/cargo/git/db -v ${{ github.workspace }}/.cargo/registry/cache:/usr/local/cargo/registry/cache -v ${{ github.workspace }}/.cargo/registry/index:/usr/local/cargo/registry/index -v ${{ github.workspace }}:/build -w /build'
-          run: ${{ matrix.settings.build }}
-      - name: Build
-        run: ${{ matrix.settings.build }}
-        if: ${{ !matrix.settings.docker }}
-        shell: bash
-      - name: Upload artifact
-        uses: actions/upload-artifact@v5
-        with:
-          name: bindings-${{ matrix.settings.target }}
-          path: impit-node/${{ env.APP_NAME }}.*.node
-          if-no-files-found: error
+  #     - name: Activate cache for Node.js 20
+  #       uses: actions/setup-node@v6
+  #       if: ${{ matrix.settings.target != 'x86_64-unknown-linux-musl' }}
+  #       with:
+  #         node-version: 24
+  #         cache: yarn
+  #         cache-dependency-path: impit-node/yarn.lock
+  #     - name: Install
+  #       uses: dtolnay/rust-toolchain@stable
+  #       if: ${{ !matrix.settings.docker }}
+  #       with:
+  #         toolchain: stable
+  #         targets: ${{ matrix.settings.target }}
+  #     - name: Cache cargo
+  #       uses: actions/cache@v4
+  #       with:
+  #         path: |
+  #           ~/.cargo/registry/index/
+  #           ~/.cargo/registry/cache/
+  #           ~/.cargo/git/db/
+  #           .cargo-cache
+  #           target/
+  #         key: ${{ matrix.settings.target }}-cargo-${{ matrix.settings.host }}
+  #     - uses: goto-bus-stop/setup-zig@v2
+  #       if: ${{ matrix.settings.target == 'armv7-unknown-linux-gnueabihf' || matrix.settings.target == 'armv7-unknown-linux-musleabihf' }}
+  #       with:
+  #         version: 0.13.0
+  #     - name: Setup toolchain
+  #       run: ${{ matrix.settings.setup }}
+  #       if: ${{ matrix.settings.setup }}
+  #       shell: bash
+  #     - name: Setup node x86
+  #       if: matrix.settings.target == 'i686-pc-windows-msvc'
+  #       run: yarn --cwd impit-node config set supportedArchitectures.cpu "ia32"
+  #       shell: bash
+  #     - name: Install dependencies
+  #       run: yarn --cwd impit-node install
+  #     - name: Setup node x86
+  #       uses: actions/setup-node@v6
+  #       if: matrix.settings.target == 'i686-pc-windows-msvc'
+  #       with:
+  #         node-version: 24
+  #         cache: yarn
+  #         cache-dependency-path: impit-node/yarn.lock
+  #         architecture: x86
+  #     - name: Build in docker
+  #       uses: addnab/docker-run-action@v3
+  #       if: ${{ matrix.settings.docker }}
+  #       with:
+  #         image: ${{ matrix.settings.docker }}
+  #         options: '--user 0:0 -v ${{ github.workspace }}/.cargo-cache/git/db:/usr/local/cargo/git/db -v ${{ github.workspace }}/.cargo/registry/cache:/usr/local/cargo/registry/cache -v ${{ github.workspace }}/.cargo/registry/index:/usr/local/cargo/registry/index -v ${{ github.workspace }}:/build -w /build'
+  #         run: ${{ matrix.settings.build }}
+  #     - name: Build
+  #       run: ${{ matrix.settings.build }}
+  #       if: ${{ !matrix.settings.docker }}
+  #       shell: bash
+  #     - name: Upload artifact
+  #       uses: actions/upload-artifact@v5
+  #       with:
+  #         name: bindings-${{ matrix.settings.target }}
+  #         path: impit-node/${{ env.APP_NAME }}.*.node
+  #         if-no-files-found: error
   test-macOS-windows-binding:
     name: Test bindings on ${{ matrix.settings.target }} - node@${{ matrix.node }}
-    needs:
-      - build
+    # needs:
+    #   - build
     strategy:
       fail-fast: false
       matrix:
@@ -203,6 +203,8 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v6
         with:
+          run-id: 19853556854
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           name: bindings-${{ matrix.settings.target }}
           path: impit-node
       - name: List packages
@@ -214,8 +216,8 @@ jobs:
         run: yarn --cwd impit-node test
   test-linux-x64-gnu-binding:
     name: Test bindings on Linux-x64-gnu - node@${{ matrix.node }}
-    needs:
-      - build
+    # needs:
+    #   - build
     strategy:
       fail-fast: false
       matrix:
@@ -245,6 +247,8 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v6
         with:
+          run-id: 19853556854
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           name: bindings-x86_64-unknown-linux-gnu
           path: impit-node
       - name: List packages
@@ -255,8 +259,8 @@ jobs:
 
   test-linux-aarch64-gnu-binding:
     name: Test bindings on Linux-aarch64-gnu - node@${{ matrix.node }}
-    needs:
-      - build
+    # needs:
+    #   - build
     strategy:
       fail-fast: false
       matrix:
@@ -287,6 +291,8 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v6
         with:
+          run-id: 19853556854
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           name: bindings-aarch64-unknown-linux-gnu
           path: impit-node
       - name: List packages
@@ -299,8 +305,8 @@ jobs:
 
   test-linux-aarch64-musl-binding:
     name: Test bindings on Linux-aarch64-musl - node@${{ matrix.node }}
-    needs:
-      - build
+    # needs:
+    #   - build
     strategy:
       fail-fast: false
       matrix:
@@ -329,6 +335,8 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v6
         with:
+          run-id: 19853556854
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           name: bindings-aarch64-unknown-linux-musl
           path: impit-node
       - name: List packages
@@ -340,8 +348,8 @@ jobs:
 
   test-linux-x64-musl-binding:
     name: Test bindings on x86_64-unknown-linux-musl - node@${{ matrix.node }}
-    needs:
-      - build
+    # needs:
+    #   - build
     strategy:
       fail-fast: false
       matrix:
@@ -370,6 +378,8 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v6
         with:
+          run-id: 19853556854
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           name: bindings-x86_64-unknown-linux-musl
           path: impit-node
       - name: List packages
