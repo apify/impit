@@ -179,8 +179,9 @@ describe.each([
                 proxyUrl: `http://user:@127.0.0.1:${proxyPort}`,
             });
 
-            const resp = await impit.fetch(getHttpBinUrl('/get'));
+            const resp = await impit.fetch('http://example.com/'); // the URL doesn't matter, request should go through the proxy
             expect(await resp.text()).toBe('OK');
+            expect(proxyHit).toBe(true);
 
             proxy.close();
         });
