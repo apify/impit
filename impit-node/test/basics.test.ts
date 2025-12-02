@@ -165,7 +165,7 @@ describe.each([
             expect(json).toHaveProperty('origin');
         });
 
-        test.only('proxy with incomplete authentication works', async () => {
+        test('proxy with incomplete authentication works', async () => {
             let proxyHit = false;
             const proxy = http.createServer((req, res) => {
                 proxyHit = true;
@@ -184,8 +184,6 @@ describe.each([
 
             proxy.close();
         });
-
-
 
         test('impit accepts custom cookie jars', async (t) => {
             const cookieJar = new CookieJar();
