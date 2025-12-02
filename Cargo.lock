@@ -1480,7 +1480,7 @@ dependencies = [
  "log",
  "mime",
  "num-bigint",
- "reqwest 0.12.24",
+ "reqwest",
  "rustls",
  "scraper",
  "thiserror",
@@ -1511,7 +1511,7 @@ dependencies = [
  "napi-build",
  "napi-derive",
  "openssl",
- "reqwest 0.12.24 (git+https://github.com/seanmonstar/reqwest?branch=master)",
+ "reqwest",
  "rustls",
  "tokio",
  "tokio-stream",
@@ -1530,7 +1530,7 @@ dependencies = [
  "openssl",
  "pyo3",
  "pyo3-async-runtimes",
- "reqwest 0.12.24 (git+https://github.com/seanmonstar/reqwest?rev=74e6f84152a48f00106fe72e0bd2cfc1a4254c93)",
+ "reqwest",
  "rustls",
  "tokio",
  "tokio-stream",
@@ -2456,6 +2456,7 @@ checksum = "2b15c43186be67a4fd63bee50d0303afffcef381492ebe2c5d87f324e1b8815c"
 [[package]]
 name = "reqwest"
 version = "0.12.24"
+source = "git+https://github.com/seanmonstar/reqwest?rev=74e6f84152a48f00106fe72e0bd2cfc1a4254c93#74e6f84152a48f00106fe72e0bd2cfc1a4254c93"
 dependencies = [
  "async-compression",
  "base64",
@@ -2501,84 +2502,6 @@ dependencies = [
  "wasm-streams",
  "web-sys",
  "webpki-roots 1.0.2",
-]
-
-[[package]]
-name = "reqwest"
-version = "0.12.24"
-source = "git+https://github.com/seanmonstar/reqwest?branch=master#74e6f84152a48f00106fe72e0bd2cfc1a4254c93"
-dependencies = [
- "base64",
- "bytes",
- "encoding_rs",
- "futures-core",
- "h2",
- "http",
- "http-body",
- "http-body-util",
- "hyper",
- "hyper-rustls",
- "hyper-tls",
- "hyper-util",
- "js-sys",
- "log",
- "mime",
- "native-tls",
- "percent-encoding",
- "pin-project-lite",
- "rustls-pki-types",
- "serde",
- "serde_json",
- "serde_urlencoded",
- "sync_wrapper",
- "tokio",
- "tokio-native-tls",
- "tower",
- "tower-http",
- "tower-service",
- "url",
- "wasm-bindgen",
- "wasm-bindgen-futures",
- "web-sys",
-]
-
-[[package]]
-name = "reqwest"
-version = "0.12.24"
-source = "git+https://github.com/seanmonstar/reqwest?rev=74e6f84152a48f00106fe72e0bd2cfc1a4254c93#74e6f84152a48f00106fe72e0bd2cfc1a4254c93"
-dependencies = [
- "base64",
- "bytes",
- "encoding_rs",
- "futures-core",
- "h2",
- "http",
- "http-body",
- "http-body-util",
- "hyper",
- "hyper-rustls",
- "hyper-tls",
- "hyper-util",
- "js-sys",
- "log",
- "mime",
- "native-tls",
- "percent-encoding",
- "pin-project-lite",
- "rustls-pki-types",
- "serde",
- "serde_json",
- "serde_urlencoded",
- "sync_wrapper",
- "tokio",
- "tokio-native-tls",
- "tower",
- "tower-http",
- "tower-service",
- "url",
- "wasm-bindgen",
- "wasm-bindgen-futures",
- "web-sys",
 ]
 
 [[package]]
