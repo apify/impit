@@ -13,6 +13,7 @@ pub enum HttpMethod {
   Patch,
   Head,
   Options,
+  Trace,
 }
 
 /// Options for configuring an individual HTTP request.

@@ -418,7 +418,7 @@ impl Client {
                     "patch" => self.impit.patch(url, Some(body), Some(options)).await,
                     "put" => self.impit.put(url, Some(body), Some(options)).await,
                     "options" => self.impit.options(url, Some(body), Some(options)).await,
-                    "trace" => self.impit.trace(url, Some(options)).await,
+                    "trace" => self.impit.trace(url, Some(body), Some(options)).await,
                     "head" => self.impit.head(url, Some(body), Some(options)).await,
                     "delete" => self.impit.delete(url, Some(body), Some(options)).await,
                     _ => Err(ImpitError::InvalidMethod(method.to_string())),

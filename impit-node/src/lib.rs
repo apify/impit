@@ -144,6 +144,7 @@ impl ImpitWrapper {
         HttpMethod::Delete => self.inner.delete(url, body, request_options).await,
         HttpMethod::Patch => self.inner.patch(url, body, request_options).await,
         HttpMethod::Options => self.inner.options(url, body, request_options).await,
+        HttpMethod::Trace => self.inner.trace(url, body, request_options).await,
       }
     };
 
