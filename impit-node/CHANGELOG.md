@@ -3,6 +3,15 @@
 All notable changes to this project will be documented in this file.
 
 
+## js-0.7.3 - 2025-12-03
+
+#### Features
+
+- Enable `TRACE` method in the bindings (#328)
+  - Unifies all clients by enabling the `trace` method in all of them. Required for type parity (`HttpMethod`) in downstream repositories - Crawlee et al.
+
+
+
 ## js-0.7.2 - 2025-12-02
 
 #### Bug Fixes
