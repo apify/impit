@@ -65,7 +65,7 @@ export declare class Impit {
    * });
    * ```
    */
-  fetch(input: string | URL | Request, init?: RequestInit): Promise<ImpitResponse>
+  fetch(resource: string | URL | Request, init?: RequestInit): Promise<ImpitResponse>
 }
 export type ImpitWrapper = Impit
 
@@ -206,7 +206,8 @@ export type HttpMethod =  'GET'|
 'DELETE'|
 'PATCH'|
 'HEAD'|
-'OPTIONS';
+'OPTIONS'|
+'TRACE';
 
 /**
  * Options for configuring an {@link Impit} instance.

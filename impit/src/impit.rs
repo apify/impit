@@ -549,9 +549,10 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
     pub async fn trace(
         &self,
         url: String,
+        body: Option<Vec<u8>>,
         options: Option<RequestOptions>,
     ) -> Result<Response, ImpitError> {
-        self.make_request(Method::TRACE, url, None, options).await
+        self.make_request(Method::TRACE, url, body, options).await
     }
 
     /// Makes a `DELETE` request to the specified URL.

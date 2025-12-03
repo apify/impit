@@ -429,7 +429,7 @@ impl AsyncClient {
                 "patch" => impit.patch(url, Some(body), Some(options)).await,
                 "put" => impit.put(url, Some(body), Some(options)).await,
                 "options" => impit.options(url, Some(body), Some(options)).await,
-                "trace" => impit.trace(url, Some(options)).await,
+                "trace" => impit.trace(url, Some(body), Some(options)).await,
                 "head" => impit.head(url, Some(body), Some(options)).await,
                 "delete" => impit.delete(url, Some(body), Some(options)).await,
                 _ => Err(ImpitError::InvalidMethod(method_str.to_string())),

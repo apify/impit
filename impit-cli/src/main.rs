@@ -135,7 +135,7 @@ async fn main() {
         Method::Patch => client.patch(args.url, body, Some(options)).await.unwrap(),
         Method::Head => client.head(args.url, body, Some(options)).await.unwrap(),
         Method::Options => client.options(args.url, body, Some(options)).await.unwrap(),
-        Method::Trace => client.trace(args.url, Some(options)).await.unwrap(),
+        Method::Trace => client.trace(args.url, body, Some(options)).await.unwrap(),
     };
 
     print!("{}", response.text().await.unwrap());
