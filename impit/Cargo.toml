@@ -12,7 +12,7 @@ hickory-proto = "0.25.1"
 log = "0.4.22"
 mime = "0.3.17"
 num-bigint = "0.4.6"
-reqwest = { rev="74e6f84152a48f00106fe72e0bd2cfc1a4254c93", git="https://github.com/seanmonstar/reqwest", features = ["json", "gzip", "brotli", "zstd", "deflate", "rustls-tls", "http3", "cookies", "stream", "socks"] }
+reqwest = { rev="f156a9ffa728fc80e646c789168cbc677b73eed7", git="https://github.com/seanmonstar/reqwest", features = ["json", "gzip", "brotli", "zstd", "deflate", "rustls-tls", "http3", "cookies", "stream", "socks"] }
 rustls = { version="0.23.16", features=["impit"] }
 scraper = "0.24.0"
 thiserror = "2.0.12"
