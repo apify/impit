@@ -13,7 +13,7 @@ impit = { path="../impit" }
 rustls = { version="0.23.16" }
 tokio = { version="1.41.1", features = ["full"] }
 h2 = "0.4.7"
-reqwest = { rev="74e6f84152a48f00106fe72e0bd2cfc1a4254c93", git="https://github.com/seanmonstar/reqwest" }
+reqwest = "0.12.25"
 tokio-stream = "0.1.17"
 bytes = "1.9.0"
 
