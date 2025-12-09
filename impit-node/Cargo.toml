@@ -7,7 +7,7 @@ version = "0.0.0"
 crate-type = ["cdylib"]
 
 [dependencies]
-napi = { version = "=3.6.1", default-features = false, features = ["napi4", "napi5", "async", "web_stream", "tokio_rt"] }
+napi = { version = "=3.7.0", default-features = false, features = ["napi4", "napi5", "async", "web_stream", "tokio_rt"] }
 napi-derive = "=3.4.0"
 impit = { path="../impit" }
 rustls = { version="0.23.16" }
