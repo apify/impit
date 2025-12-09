@@ -3,6 +3,15 @@
 All notable changes to this project will be documented in this file.
 
 
+## js-0.7.4 - 2025-12-09
+
+#### Bug Fixes
+
+- Authenticate with HTTPS proxy and HTTP target (#333)
+  - Propagates upstream fixes from `reqwest`.
+
+
+
 ## js-0.7.3 - 2025-12-03
 
 #### Features
