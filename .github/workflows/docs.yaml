@@ -32,7 +32,7 @@ jobs:
       - name: Copy redirect
         run: cp impit/docs/index.html target/doc/index.html
       - name: Upload artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           path: target/doc/
           name: rustdoc
@@ -71,7 +71,7 @@ jobs:
         run: cd impit-node && yarn docs
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           path: impit-node/docs/
           name: typedoc
@@ -115,7 +115,7 @@ jobs:
           uv run make html
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           path: impit-python/docs/_build/html
           name: sphinx-doc
@@ -130,12 +130,12 @@ jobs:
     needs: [build-rust, build-node, build-python]
     steps:
       - name: Download typedoc artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: typedoc
           path: docs/js/
       - name: Download Sphinx doc artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: sphinx-doc
           path: docs/python/
