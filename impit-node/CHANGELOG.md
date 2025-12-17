@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 
 
+## js-0.7.5 - 2025-12-17
+
+#### Bug Fixes
+
+- Do not drop request-scoped options (`timeout` and `forceHttp3`) (#340)
+
+
 ## js-0.7.4 - 2025-12-09
 
 #### Bug Fixes
