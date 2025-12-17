@@ -74,6 +74,8 @@ async function parseFetchOptions(resource, init) {
         method: options.method,
         headers: options.headers,
         body: options.body,
+        timeout: options.timeout,
+        forceHttp3: options.forceHttp3,
     };
 }
 

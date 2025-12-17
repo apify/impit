@@ -269,7 +269,26 @@ describe.each([
             const text = await response.text();
 
             t.expect(text).toContain('curl');
-        })
+        });
+
+        test.each([
+            ['client'],
+            ['request'],
+        ])('%s timeout works', async (mode) => {
+            const impit = new Impit({
+                browser,
+                timeout: mode === 'client' ? 1 : undefined,
+            })
+
+            const responsePromise = impit.fetch(
+                getHttpBinUrl('/delay/3'),
+                {
+                    timeout: mode === 'request' ? 1 : undefined,
+                }
+            );
+
+            expect(responsePromise).rejects.toThrow(/timeout/);
+        });
     });
 
     describe('HTTP methods', () => {
