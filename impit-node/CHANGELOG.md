@@ -3,6 +3,19 @@
 All notable changes to this project will be documented in this file.
 
 
+## js-0.7.6 - 2026-01-05
+
+#### Bug Fixes
+
+- Do not panic on missing attributes for encoding-related `meta` elements (#346)
+  - Ignores encoding-related `meta` elements with missing `content` or `charset` attributes.  Related to #344
+
+
+- Throw `Error` on invalid header value (do not panic) (#347)
+  - Unparseable response header values now only return `Error` in the Node bindings instead of panicking and killing the process.  Related to #344
+
+
+
 ## js-0.7.5 - 2025-12-17
 
 #### Bug Fixes
