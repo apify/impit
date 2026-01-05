@@ -149,7 +149,7 @@ impl ImpitWrapper {
     };
 
     match response {
-      Ok(response) => Ok(ImpitResponse::from(response)),
+      Ok(response) => ImpitResponse::try_from_response(response),
       Err(err) => {
         let status = match err {
           ImpitError::UrlMissingHostnameError(_) => napi::Status::InvalidArg,

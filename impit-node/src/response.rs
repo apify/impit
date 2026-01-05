@@ -77,31 +77,37 @@ impl FromNapiValue for Headers {
 
 #[napi]
 impl<'env> ImpitResponse {
-  pub(crate) fn from(response: Response) -> Self {
+  pub(crate) fn try_from_response(response: Response) -> Result<Self> {
     let status = response.status().as_u16();
     let status_text = response
       .status()
       .canonical_reason()
       .unwrap_or("")
       .to_string();
-    let headers = Headers(
-      response
-        .headers()
-        .iter()
-        .map(|(k, v)| (k.as_str().to_string(), v.to_str().unwrap().to_string()))
-        .collect(),
-    );
+    let mut headers_vec: Vec<(String, String)> = Vec::new();
+    for (k, v) in response.headers().iter() {
+      match v.to_str() {
+        Ok(val) => headers_vec.push((k.as_str().to_string(), val.to_string())),
+        Err(e) => {
+          return Err(napi::Error::new(
+            napi::Status::GenericFailure,
+            format!("Failed to parse header value for '{}': {:?}", k.as_str(), e),
+          ));
+        }
+      }
+    }
+    let headers = Headers(headers_vec);
     let ok = response.status().is_success();
     let url = response.url().to_string();
 
-    Self {
+    Ok(Self {
       inner: RefCell::new(Some(response)),
       status,
       status_text,
       headers,
       ok,
       url,
-    }
+    })
   }
 
   fn get_inner_response(&self, env: &Env, mut this: This<Object>) -> Result<Object<'_>> {
