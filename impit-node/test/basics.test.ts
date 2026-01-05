@@ -457,7 +457,8 @@ describe.each([
         });
     });
 
-    describe('Redirects', () => {
+    // Skipping because of issues with redirected Standby requests on Apify
+    describe.skip('Redirects', () => {
         test('redirects work by default', async (t) => {
             const response = await impit.fetch(
                 getHttpBinUrl('/absolute-redirect/1'),
