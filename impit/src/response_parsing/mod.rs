@@ -45,8 +45,9 @@ fn prescan_bytestream(bytes: &[u8]) -> Option<encoding::EncodingRef> {
         .next();
 
     if let Some(meta) = meta {
-        let charset = meta.value().attr("charset").unwrap();
-        return encoding::label::encoding_from_whatwg_label(charset);
+        if let Some(charset) = meta.value().attr("charset") {
+            return encoding::label::encoding_from_whatwg_label(charset);
+        }
     }
 
     let meta = dom
@@ -54,13 +55,14 @@ fn prescan_bytestream(bytes: &[u8]) -> Option<encoding::EncodingRef> {
         .next();
 
     if let Some(meta) = meta {
-        let content = meta.value().attr("content").unwrap();
-        let content_type = ContentType::from(content);
+        if let Some(content) = meta.value().attr("content") {
+            let content_type = ContentType::from(content);
 
-        return match content_type {
-            Ok(content_type) => content_type.into(),
-            Err(_) => None,
-        };
+            return match content_type {
+                Ok(content_type) => content_type.into(),
+                Err(_) => None,
+            };
+        }
     }
 
     None
