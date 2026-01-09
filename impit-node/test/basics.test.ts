@@ -457,7 +457,7 @@ describe.each([
         });
     });
 
-    describe.only('AbortSignal', () => {
+    describe('AbortSignal', () => {
         test('aborts immediately if signal is already aborted', async () => {
             const controller = new AbortController();
             controller.abort();
