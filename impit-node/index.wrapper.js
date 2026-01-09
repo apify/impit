@@ -118,7 +118,7 @@ class Impit extends native.Impit {
         signal?.addEventListener?.(
             "abort",
             () => {
-                originalResponse.abort()
+                originalResponse.abort();
             },
         );
 

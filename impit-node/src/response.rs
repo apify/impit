@@ -359,7 +359,11 @@ impl<'env> ImpitResponse {
     response.get_named_property("body")
   }
 
-  /// JS-visible setter for the `abort` flag.
+  /// Aborts the response.
+  ///
+  /// This API is called internally and can change without notice.
+  ///
+  /// Use `fetch(url, { signal: AbortSignal })` to abort a request instead.
   #[napi]
   pub fn abort(&mut self) {
     self

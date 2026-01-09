@@ -457,6 +457,34 @@ describe.each([
         });
     });
 
+    describe.only('AbortSignal', () => {
+        test('aborts immediately if signal is already aborted', async () => {
+            const controller = new AbortController();
+            controller.abort();
+
+            const start = Date.now();
+            const responsePromise = impit.fetch(getHttpBinUrl('/delay/3'), { signal: controller.signal });
+
+            await expect(responsePromise).rejects.toThrow(/abort|aborted|canceled/i);
+            expect(Date.now() - start).toBeLessThan(200);
+        });
+
+        test('aborts an in-flight request', async () => {
+            const server = await getServer();
+            const tAbort = Date.now();
+            const result = impit.fetch(
+                `http://127.0.0.1:${(server?.address() as AddressInfo).port}/delay/3000`,
+                { signal: AbortSignal.timeout(500) }
+            ).then(x => x.text())
+
+            await expect(result).rejects.toThrow(/abort|aborted|canceled/i);
+            const tDone = Date.now();
+            const abortEffectDelay = tDone - tAbort;
+            expect(abortEffectDelay).toBeGreaterThanOrEqual(500);
+            expect(abortEffectDelay).toBeLessThan(1500);
+        });
+    });
+
     // Skipping because of issues with redirected Standby requests on Apify
     describe.skip('Redirects', () => {
         test('redirects work by default', async (t) => {
