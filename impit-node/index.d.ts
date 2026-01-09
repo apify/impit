@@ -332,4 +332,6 @@ export interface RequestInit {
   timeout?: number
   /** Force the request to use HTTP/3. If the server doesn't expect HTTP/3 or the Impit instance doesn't have HTTP/3 enabled (via the {@link ImpitOptions.http3} option), the request will fail. */
   forceHttp3?: boolean
+  /** Abort signal to cancel the request. */
+  signal?: AbortSignal
 }
