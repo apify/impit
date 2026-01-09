@@ -76,6 +76,7 @@ async function parseFetchOptions(resource, init) {
         body: options.body,
         timeout: options.timeout,
         forceHttp3: options.forceHttp3,
+        signal: options.signal,
     };
 }
 
@@ -93,9 +94,33 @@ class Impit extends native.Impit {
     }
 
     async fetch(resource, init) {
-        const { url, ...options } = await parseFetchOptions(resource, init);
+        const { url, signal, ...options } = await parseFetchOptions(resource, init);
 
-        const originalResponse = await super.fetch(url, options);
+        const waitForAbort = new Promise((_, reject) => {
+            signal?.throwIfAborted();
+            signal?.addEventListener?.(
+                "abort",
+                () => {
+                    reject(signal.reason);
+                },
+                { once: true },
+            );
+        });
+
+        const response = super.fetch(url, options);
+
+        const originalResponse = await Promise.race([
+            response,
+            waitForAbort
+        ]);
+
+        signal?.throwIfAborted();
+        signal?.addEventListener?.(
+            "abort",
+            () => {
+                originalResponse.abort();
+            },
+        );
 
         Object.defineProperty(originalResponse, 'text', {
             value: ResponsePatches.text.bind(originalResponse)

@@ -190,6 +190,14 @@ export declare class ImpitResponse {
    * ```
    */
   get body(): ReadableStream<Uint8Array>
+  /**
+   * Aborts the response.
+   *
+   * This API is called internally and can change without notice.
+   *
+   * Use `fetch(url, { signal: AbortSignal })` to abort a request instead.
+   */
+  abort(): void
 }
 
 /**

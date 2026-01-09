@@ -26,6 +26,17 @@ export async function runServer(port: number): Promise<Server> {
         res.json({ ip: clientAddress, port: clientPort });
     });
 
+    app.get('/delay/:ms', (req, res) => {
+        const delay = parseInt(req.params.ms, 10);
+
+        res.setHeader('Content-Type', 'text/plain');
+        res.write('Headers sent. Preparing body...\n');
+
+        setTimeout(() => {
+            res.end('Body sent after delay.\n');
+        }, delay);
+    });
+
     return new Promise((res,rej) => {
         const server = app.listen(port, (err) => {
             if (err) {
