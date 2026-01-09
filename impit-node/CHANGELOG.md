@@ -3,6 +3,15 @@
 All notable changes to this project will be documented in this file.
 
 
+## js-0.8.1 - 2026-01-09
+
+#### Bug Fixes
+
+- Add signal to the RequestInit type (#351)
+  - Fixes an omission from #349
+
+
+
 ## js-0.8.0 - 2026-01-09
 
 #### Bug Fixes
