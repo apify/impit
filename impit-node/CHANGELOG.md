@@ -3,6 +3,19 @@
 All notable changes to this project will be documented in this file.
 
 
+## js-0.8.0 - 2026-01-09
+
+#### Bug Fixes
+
+- Don't leak memory on failed requests (#350)
+  - Related to https://github.com/napi-rs/napi-rs/issues/3086
+
+
+#### Features
+
+- Add support for JS `AbortSignal` (#349)
+
+
 ## js-0.7.6 - 2026-01-05
 
 #### Bug Fixes
