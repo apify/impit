@@ -14,6 +14,7 @@ use std::pin::Pin;
 use std::sync::atomic::{AtomicU8, Ordering};
 use std::sync::Arc;
 use std::task::{Context, Poll};
+use tokio::time::{interval, Interval};
 use tokio_stream::StreamExt;
 
 const INNER_RESPONSE_PROPERTY_NAME: &str = "__js_response";
@@ -150,6 +151,8 @@ impl<'env> ImpitResponse {
       struct AbortableStream<S> {
         inner: Pin<Box<S>>,
         state: Arc<AtomicU8>,
+        // Lazily initialized - tokio interval requires runtime context
+        abort_check_interval: Option<Pin<Box<Interval>>>,
       }
 
       impl<S> AbortableStream<S> {
@@ -157,6 +160,7 @@ impl<'env> ImpitResponse {
           Self {
             inner: Box::pin(inner),
             state,
+            abort_check_interval: None,
           }
         }
       }
@@ -168,13 +172,47 @@ impl<'env> ImpitResponse {
         type Item = Result<Vec<u8>>;
 
         fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
+          // Check abort flag
           if self.state.load(Ordering::SeqCst) == STREAM_STATE_ABORTED {
             return Poll::Ready(Some(Err(napi::Error::new(
               napi::Status::GenericFailure,
               "The request was aborted.".to_string(),
             ))));
           }
-          self.inner.as_mut().poll_next(cx)
+
+          // Poll the inner stream for data
+          match self.inner.as_mut().poll_next(cx) {
+            Poll::Ready(item) => Poll::Ready(item),
+            Poll::Pending => {
+              // Clone state reference before taking mutable borrow of interval
+              let state = Arc::clone(&self.state);
+
+              // Lazily create interval on first pending poll (requires tokio runtime context)
+              let interval_ref = self.abort_check_interval.get_or_insert_with(|| {
+                Box::pin(interval(std::time::Duration::from_secs(1)))
+              });
+
+              // Poll interval and re-check abort if interval fired
+              loop {
+                match interval_ref.as_mut().poll_tick(cx) {
+                  Poll::Ready(_) => {
+                    // Interval fired, check abort flag
+                    if state.load(Ordering::SeqCst) == STREAM_STATE_ABORTED {
+                      return Poll::Ready(Some(Err(napi::Error::new(
+                        napi::Status::GenericFailure,
+                        "The request was aborted.".to_string(),
+                      ))));
+                    }
+                    // Continue polling interval until it returns Pending
+                  }
+                  Poll::Pending => {
+                    // Interval registered its waker, will wake us in ~1 second
+                    return Poll::Pending;
+                  }
+                }
+              }
+            }
+          }
         }
       }
 
