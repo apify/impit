@@ -3,6 +3,15 @@
 All notable changes to this project will be documented in this file.
 
 
+## js-0.8.2 - 2026-01-12
+
+#### Bug Fixes
+
+- Avoid excessive wait on a non-aborted `Response` (#355)
+  - Replaces the thread polling the `AbortSignal` for a channel.
+
+
+
 ## js-0.8.1 - 2026-01-09
 
 #### Bug Fixes
