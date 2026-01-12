@@ -483,6 +483,21 @@ describe.each([
             expect(abortEffectDelay).toBeGreaterThanOrEqual(500);
             expect(abortEffectDelay).toBeLessThan(1500);
         });
+
+        test('finishes before the abort signal fires', async () => {
+            const server = await getServer();
+            const tAbort = Date.now();
+            const result = impit.fetch(
+                `http://127.0.0.1:${(server?.address() as AddressInfo).port}/delay/10`,
+                { signal: AbortSignal.timeout(500) }
+            ).then(x => x.text())
+
+            await expect(result).resolves.toBeDefined();
+            const tDone = Date.now();
+            const abortEffectDelay = tDone - tAbort;
+            expect(abortEffectDelay).toBeGreaterThanOrEqual(10);
+            expect(abortEffectDelay).toBeLessThan(450);
+        });
     });
 
     // Skipping because of issues with redirected Standby requests on Apify

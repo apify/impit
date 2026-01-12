@@ -8,6 +8,7 @@ use impit::{
 use napi::Env;
 use napi_derive::napi;
 
+mod abortable_stream;
 mod cookies;
 mod impit_builder;
 mod request;
