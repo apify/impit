@@ -481,7 +481,7 @@ describe.each([
             const tDone = Date.now();
             const abortEffectDelay = tDone - tAbort;
             expect(abortEffectDelay).toBeGreaterThanOrEqual(500);
-            expect(abortEffectDelay).toBeLessThan(1500);
+            expect(abortEffectDelay).toBeLessThan(750);
         });
 
         test('finishes before the abort signal fires', async () => {
@@ -496,7 +496,7 @@ describe.each([
             const tDone = Date.now();
             const abortEffectDelay = tDone - tAbort;
             expect(abortEffectDelay).toBeGreaterThanOrEqual(10);
-            expect(abortEffectDelay).toBeLessThan(450);
+            expect(abortEffectDelay).toBeLessThan(400);
         });
     });
 

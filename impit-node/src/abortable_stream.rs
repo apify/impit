@@ -35,7 +35,7 @@ where
           Poll::Ready(Some(_)) => {
             return Poll::Ready(Some(Err(napi::Error::new(
               napi::Status::GenericFailure,
-              "fatal: Couldn't get cached response stream".to_string(),
+              "impit: Request was aborted through AbortSignal",
             ))));
           }
           _other => {}
