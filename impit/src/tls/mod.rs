@@ -9,7 +9,7 @@ use rustls::client::danger::NoVerifier;
 use rustls::client::{BrowserEmulator as RusTLSBrowser, BrowserType, EchGreaseConfig};
 use rustls::crypto::aws_lc_rs::kx_group::{SECP256R1, SECP384R1, X25519};
 use rustls::crypto::CryptoProvider;
-use rustls::RootCertStore;
+use rustls_platform_verifier::BuilderVerifierExt;
 
 pub struct TlsConfig {}
 
@@ -59,9 +59,6 @@ impl TlsConfigBuilder {
     }
 
     pub fn build(self) -> rustls::ClientConfig {
-        let mut root_store = RootCertStore::empty();
-        root_store.extend(webpki_roots::TLS_SERVER_ROOTS.iter().cloned());
-
         let mut config = match self.browser {
             Some(browser) => {
                 let rustls_browser = match browser {
@@ -95,7 +92,7 @@ impl TlsConfigBuilder {
                         // TODO - use the ECH extension consistently
                         .with_ech(self.get_ech_mode())
                         .unwrap()
-                        .with_root_certificates(root_store)
+                        .with_platform_verifier()
                         .with_browser_emulator(&rustls_browser)
                         .with_no_client_auth();
 
@@ -115,7 +112,7 @@ impl TlsConfigBuilder {
                         // TODO - use the ECH extension consistently
                         .with_ech(self.get_ech_mode())
                         .unwrap()
-                        .with_root_certificates(root_store)
+                        .with_platform_verifier()
                         .with_no_client_auth();
 
                 if self.ignore_tls_errors {
