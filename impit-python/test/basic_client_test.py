@@ -28,6 +28,7 @@ def thread_server(port_holder: list[int]) -> None:
     conn.close()
     server.close()
 
+
 @pytest.mark.parametrize(
     ('browser', 'ja4'),
     [
@@ -37,7 +38,7 @@ def thread_server(port_holder: list[int]) -> None:
 )
 def test_ja4_fingerprint(browser, ja4):
     impit = Client(browser=browser)
-    response = impit.get("https://headers.superuser.one/")
+    response = impit.get('https://headers.superuser.one/')
     assert response.status_code == 200
     found_ja4 = False
     for line in response.text.split('\n'):
@@ -46,6 +47,7 @@ def test_ja4_fingerprint(browser, ja4):
             found_ja4 = True
             break
     assert found_ja4, "Expected 'cf-ja4' header line not found in response"
+
 
 @pytest.mark.parametrize(
     ('browser'),

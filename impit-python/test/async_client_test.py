@@ -28,6 +28,7 @@ def thread_server(port_holder: list[int]) -> None:
     conn.close()
     server.close()
 
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     ('browser', 'ja4'),
@@ -38,7 +39,7 @@ def thread_server(port_holder: list[int]) -> None:
 )
 async def test_ja4_fingerprint(browser, ja4):
     impit = AsyncClient(browser=browser)
-    response = await impit.get("https://headers.superuser.one/")
+    response = await impit.get('https://headers.superuser.one/')
     assert response.status_code == 200
     found = False
     for line in response.text.split('\n'):
@@ -47,6 +48,7 @@ async def test_ja4_fingerprint(browser, ja4):
             assert line == f'cf-ja4 => {ja4}'
             break
     assert found, "Expected 'cf-ja4' header line not found in response"
+
 
 @pytest.mark.parametrize(
     ('browser'),
