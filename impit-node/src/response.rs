@@ -1,4 +1,5 @@
 #![allow(clippy::await_holding_refcell_ref, deprecated)]
+use crate::abortable_stream::AbortableStream;
 use impit::utils::{decode, ContentType};
 use napi::bindgen_prelude::JsObjectValue;
 use napi::{
@@ -10,11 +11,7 @@ use napi::{
 use napi_derive::napi;
 use reqwest::Response;
 use std::cell::RefCell;
-use std::pin::Pin;
-use std::sync::atomic::{AtomicU8, Ordering};
 use std::sync::Arc;
-use std::task::{Context, Poll};
-use std::time::Duration;
 use tokio_stream::StreamExt;
 
 const INNER_RESPONSE_PROPERTY_NAME: &str = "__js_response";
@@ -30,11 +27,6 @@ impl Headers {
       .map(|(_, v)| v.as_str())
   }
 }
-
-// Atomic state values for stream lifecycle
-const STREAM_STATE_ACTIVE: u8 = 0;
-const STREAM_STATE_DONE: u8 = 1;
-const STREAM_STATE_ABORTED: u8 = 2;
 
 /// Represents an HTTP response.
 ///
@@ -69,9 +61,9 @@ pub struct ImpitResponse {
   ///
   /// In case of redirects, this will be the final URL after all redirects have been followed.
   pub url: String,
-  // Internal abort flag used by streaming closures to avoid capturing `self`.
-  // This enables checking for aborts on each iteration without moving the whole response object.
-  stream_state: Arc<AtomicU8>,
+  // Shared sender used to immediately signal abort to the JS ReadableStream without polling.
+  abort_receiver: Arc<tokio::sync::Mutex<Option<tokio::sync::mpsc::Receiver<()>>>>,
+  abort_sender: Arc<tokio::sync::Mutex<Option<tokio::sync::mpsc::Sender<()>>>>,
 }
 
 impl ToNapiValue for &mut Headers {
@@ -120,7 +112,8 @@ impl<'env> ImpitResponse {
       headers,
       ok,
       url,
-      stream_state: Arc::new(AtomicU8::new(STREAM_STATE_ACTIVE)),
+      abort_receiver: Arc::new(tokio::sync::Mutex::new(None)),
+      abort_sender: Arc::new(tokio::sync::Mutex::new(None)),
     })
   }
 
@@ -150,57 +143,16 @@ impl<'env> ImpitResponse {
         ))),
       });
 
-      struct NotifyOnEnd<S> {
-        inner: Pin<Box<S>>,
-        state: Arc<AtomicU8>,
+      let (tx_abort, rx_abort) = tokio::sync::mpsc::channel::<()>(1);
+      if let Ok(mut guard) = self.abort_sender.try_lock() {
+        *guard = Some(tx_abort);
       }
-      impl<S> NotifyOnEnd<S> {
-        fn new(inner: S, state: Arc<AtomicU8>) -> Self {
-          Self {
-            inner: Box::pin(inner),
-            state,
-          }
-        }
-      }
-      impl<S> tokio_stream::Stream for NotifyOnEnd<S>
-      where
-        S: tokio_stream::Stream<Item = Result<Vec<u8>>>,
-      {
-        type Item = Result<Vec<u8>>;
-
-        fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
-          match self.inner.as_mut().poll_next(cx) {
-            Poll::Ready(None) => {
-              // Mark stream as done; the abort-monitor thread will exit and close the abort channel.
-              self.state.store(STREAM_STATE_DONE, Ordering::SeqCst);
-              Poll::Ready(None)
-            }
-            other => other,
-          }
-        }
+      if let Ok(mut guard) = self.abort_receiver.try_lock() {
+        *guard = Some(rx_abort);
       }
 
-      let stream_state = Arc::clone(&self.stream_state);
-      let monitored_stream = NotifyOnEnd::new(napi_stream, Arc::clone(&stream_state));
-      let (tx_abort, rx_abort) = tokio::sync::mpsc::channel::<Result<Vec<u8>>>(1);
-      std::thread::spawn(move || loop {
-        match stream_state.load(Ordering::SeqCst) {
-          STREAM_STATE_ABORTED => {
-            let _ = tx_abort.try_send(Err(napi::Error::new(
-              napi::Status::GenericFailure,
-              "The request was aborted.".to_string(),
-            )));
-          }
-          STREAM_STATE_DONE => break,
-          _ => {}
-        }
-        std::thread::sleep(Duration::from_secs(1));
-      });
-
-      let abort_stream = tokio_stream::wrappers::ReceiverStream::new(rx_abort);
-
-      let js_stream =
-        ReadableStream::create_with_stream_bytes(env, monitored_stream.merge(abort_stream))?;
+      let abortable_stream = AbortableStream::new(napi_stream, Arc::clone(&self.abort_receiver));
+      let js_stream = ReadableStream::create_with_stream_bytes(env, abortable_stream)?;
 
       let response_constructor = env
         .get_global()
@@ -366,8 +318,10 @@ impl<'env> ImpitResponse {
   /// Use `fetch(url, { signal: AbortSignal })` to abort a request instead.
   #[napi]
   pub fn abort(&mut self) {
-    self
-      .stream_state
-      .store(STREAM_STATE_ABORTED, Ordering::SeqCst);
+    if let Ok(mut guard) = self.abort_sender.try_lock() {
+      if let Some(ref mut tx) = *guard {
+        let _ = tx.try_send(());
+      }
+    }
   }
 }
