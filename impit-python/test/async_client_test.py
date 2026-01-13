@@ -3,6 +3,7 @@ import json
 import socket
 import threading
 from http.cookiejar import CookieJar
+from typing import Literal
 
 import pytest
 
@@ -37,7 +38,7 @@ def thread_server(port_holder: list[int]) -> None:
         ('firefox', 't13d1715h2_5b57614c22b0_5c2c66f702b0'),
     ],
 )
-async def test_ja4_fingerprint(browser, ja4):
+async def test_ja4_fingerprint(browser: Literal['chrome', 'firefox'] | None, ja4: str) -> None:
     impit = AsyncClient(browser=browser)
     response = await impit.get('https://headers.superuser.one/')
     assert response.status_code == 200
