@@ -28,6 +28,22 @@ def thread_server(port_holder: list[int]) -> None:
     conn.close()
     server.close()
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ('browser', 'ja4'),
+    [
+        ('chrome', 't13d1516h2_8daaf6152771_02713d6af862'),
+        ('firefox', 't13d1715h2_5b57614c22b0_5c2c66f702b0'),
+    ],
+)
+async def test_ja4_fingerprint(browser, ja4):
+    impit = AsyncClient(browser=browser)
+    response = await impit.get("https://headers.superuser.one/")
+    assert response.status_code == 200
+    for line in response.text.split('\n'):
+        if line.startswith('cf-ja4 => '):
+            assert line == f'cf-ja4 => {ja4}'
+            break
 
 @pytest.mark.parametrize(
     ('browser'),
