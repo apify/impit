@@ -39,10 +39,13 @@ def test_ja4_fingerprint(browser, ja4):
     impit = Client(browser=browser)
     response = impit.get("https://headers.superuser.one/")
     assert response.status_code == 200
+    found_ja4 = False
     for line in response.text.split('\n'):
         if line.startswith('cf-ja4 => '):
             assert line == f'cf-ja4 => {ja4}'
+            found_ja4 = True
             break
+    assert found_ja4, "Expected 'cf-ja4' header line not found in response"
 
 @pytest.mark.parametrize(
     ('browser'),

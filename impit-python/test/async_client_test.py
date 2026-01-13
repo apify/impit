@@ -40,10 +40,13 @@ async def test_ja4_fingerprint(browser, ja4):
     impit = AsyncClient(browser=browser)
     response = await impit.get("https://headers.superuser.one/")
     assert response.status_code == 200
+    found = False
     for line in response.text.split('\n'):
         if line.startswith('cf-ja4 => '):
+            found = True
             assert line == f'cf-ja4 => {ja4}'
             break
+    assert found, "Expected 'cf-ja4' header line not found in response"
 
 @pytest.mark.parametrize(
     ('browser'),

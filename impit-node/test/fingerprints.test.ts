@@ -12,10 +12,10 @@ describe.each([
         const response = await impit.fetch("https://headers.superuser.one/");
         const text = await response.text();
 
-        text.split('\n').forEach(line => {
-            if (line.startsWith('cf-ja4 => ')) {
-                expect(line.split('=> ')[1]).toBe(ja4);
-            }
-        });
+        const ja4Line = text.split('\n').find(line => line.startsWith('cf-ja4 => '));
+        expect(ja4Line).toBeDefined();
+        if (ja4Line) {
+            expect(ja4Line.split('=> ')[1]).toBe(ja4);
+        }
     });
 });
