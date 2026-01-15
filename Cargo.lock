@@ -1514,6 +1514,7 @@ dependencies = [
  "thiserror 2.0.16",
  "tokio",
  "url",
+ "webpki-root-certs 0.26.11",
 ]
 
 [[package]]

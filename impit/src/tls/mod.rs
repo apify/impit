@@ -9,7 +9,7 @@ use rustls::client::danger::NoVerifier;
 use rustls::client::{BrowserEmulator as RusTLSBrowser, BrowserType, EchGreaseConfig};
 use rustls::crypto::aws_lc_rs::kx_group::{SECP256R1, SECP384R1, X25519};
 use rustls::crypto::CryptoProvider;
-use rustls_platform_verifier::BuilderVerifierExt;
+use rustls_platform_verifier::Verifier;
 
 pub struct TlsConfig {}
 
@@ -87,12 +87,21 @@ impl TlsConfigBuilder {
                     ];
                 }
 
+                let crypto_provider_arc: Arc<CryptoProvider> = crypto_provider.into();
+
+                // Create verifier with embedded Mozilla CAs as fallback for minimal containers
+                let mut verifier = Verifier::new_with_extra_roots(
+                    webpki_root_certs::TLS_SERVER_ROOT_CERTS.iter().cloned(),
+                ).expect("Failed to create certificate verifier with embedded CA roots");
+                verifier.set_provider(crypto_provider_arc.clone());
+
                 let mut config: rustls::ClientConfig =
-                    rustls::ClientConfig::builder_with_provider(crypto_provider.into())
+                    rustls::ClientConfig::builder_with_provider(crypto_provider_arc)
                         // TODO - use the ECH extension consistently
                         .with_ech(self.get_ech_mode())
                         .unwrap()
-                        .with_platform_verifier()
+                        .dangerous()
+                        .with_custom_certificate_verifier(Arc::new(verifier))
                         .with_browser_emulator(&rustls_browser)
                         .with_no_client_auth();
 
@@ -105,14 +114,21 @@ impl TlsConfigBuilder {
                 config
             }
             None => {
-                let crypto_provider = CryptoProvider::builder().build();
+                let crypto_provider: Arc<CryptoProvider> = CryptoProvider::builder().build().into();
+
+                // Create verifier with embedded Mozilla CAs as fallback for minimal containers
+                let mut verifier = Verifier::new_with_extra_roots(
+                    webpki_root_certs::TLS_SERVER_ROOT_CERTS.iter().cloned(),
+                ).expect("Failed to create certificate verifier with embedded CA roots");
+                verifier.set_provider(crypto_provider.clone());
 
                 let mut config: rustls::ClientConfig =
-                    rustls::ClientConfig::builder_with_provider(crypto_provider.into())
+                    rustls::ClientConfig::builder_with_provider(crypto_provider)
                         // TODO - use the ECH extension consistently
                         .with_ech(self.get_ech_mode())
                         .unwrap()
-                        .with_platform_verifier()
+                        .dangerous()
+                        .with_custom_certificate_verifier(Arc::new(verifier))
                         .with_no_client_auth();
 
                 if self.ignore_tls_errors {
