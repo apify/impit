@@ -18,6 +18,7 @@ scraper = "0.25.0"
 thiserror = "2.0.12"
 tokio = { version="1.40.0", features = ["full"] }
 url = "2.5.2"
-webpki-roots = "0.26.6"
+rustls-platform-verifier = "0.5"
+webpki-root-certs = "0.26"
 hyper-util = "0.1.18"
 hyper = "1.7.0"
