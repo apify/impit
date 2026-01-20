@@ -12,7 +12,7 @@ impit = { path="../impit" }
 rustls = { version="0.23.16" }
 tokio = { version="1.41.1", features = ["full"] }
 h2 = "0.4.7"
-reqwest = "0.12.25"
+reqwest = "0.13.1"
 tokio-stream = "0.1.17"
 bytes = "1.9.0"
 pyo3 = { version = "0.27", features = ["extension-module", "auto-initialize"] }
