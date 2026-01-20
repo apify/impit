@@ -90,11 +90,11 @@ impl TlsConfigBuilder {
                 let crypto_provider_arc: Arc<CryptoProvider> = crypto_provider.into();
 
                 // Create verifier with embedded Mozilla CAs as fallback for minimal containers
-                let mut verifier = Verifier::new_with_extra_roots(
+                let verifier = Verifier::new_with_extra_roots(
                     webpki_root_certs::TLS_SERVER_ROOT_CERTS.iter().cloned(),
+                    crypto_provider_arc.clone(),
                 )
                 .expect("Failed to create certificate verifier with embedded CA roots");
-                verifier.set_provider(crypto_provider_arc.clone());
 
                 let mut config: rustls::ClientConfig =
                     rustls::ClientConfig::builder_with_provider(crypto_provider_arc)
@@ -118,11 +118,11 @@ impl TlsConfigBuilder {
                 let crypto_provider: Arc<CryptoProvider> = CryptoProvider::builder().build().into();
 
                 // Create verifier with embedded Mozilla CAs as fallback for minimal containers
-                let mut verifier = Verifier::new_with_extra_roots(
+                let verifier = Verifier::new_with_extra_roots(
                     webpki_root_certs::TLS_SERVER_ROOT_CERTS.iter().cloned(),
+                    crypto_provider.clone(),
                 )
                 .expect("Failed to create certificate verifier with embedded CA roots");
-                verifier.set_provider(crypto_provider.clone());
 
                 let mut config: rustls::ClientConfig =
                     rustls::ClientConfig::builder_with_provider(crypto_provider)
