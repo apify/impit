@@ -287,7 +287,7 @@ describe.each([
                 }
             );
 
-            expect(responsePromise).rejects.toThrow(/timeout/);
+            await expect(responsePromise).rejects.toThrow(/timeout/);
         });
     });
 

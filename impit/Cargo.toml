@@ -12,13 +12,13 @@ hickory-proto = "0.25.1"
 log = "0.4.22"
 mime = "0.3.17"
 num-bigint = "0.4.6"
-reqwest = { version="0.12.25", features = ["json", "gzip", "brotli", "zstd", "deflate", "rustls-tls", "http3", "cookies", "stream", "socks"] }
-rustls = { version="0.23.16", features=["impit"] }
+reqwest = { version="0.13.1", features = ["json", "gzip", "brotli", "zstd", "deflate", "http3", "cookies", "stream", "socks"] }
+rustls = { version="0.23.36", features=["impit"] }
 scraper = "0.25.0"
 thiserror = "2.0.12"
 tokio = { version="1.40.0", features = ["full"] }
 url = "2.5.2"
-rustls-platform-verifier = "0.5"
-webpki-root-certs = "0.26"
+rustls-platform-verifier = "0.6"
+webpki-root-certs = "1.0.5"
 hyper-util = "0.1.18"
 hyper = "1.7.0"
