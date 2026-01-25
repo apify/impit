@@ -75,6 +75,9 @@ pub mod request;
 /// Errors and error handling.
 pub mod errors;
 
+/// Browser fingerprint definitions and types.
+pub mod fingerprint;
+
 /// Contains browser emulation-related types and functions.
 pub mod emulation {
 
