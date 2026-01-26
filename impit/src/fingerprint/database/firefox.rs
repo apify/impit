@@ -20,23 +20,29 @@ pub mod firefox_128 {
     /// Firefox 128 TLS fingerprint
     fn tls_fingerprint() -> TlsFingerprint {
         TlsFingerprint::new(
-            // Cipher suites in Firefox 128 preference order
+            // Cipher suites in Firefox 128 preference order (17 suites)
+            // TLS 1.3 cipher suites first (including fake ones for fingerprinting), then TLS 1.2
             vec![
+                // Real TLS 1.3 cipher suites
                 CipherSuite::TLS13_AES_128_GCM_SHA256,
                 CipherSuite::TLS13_CHACHA20_POLY1305_SHA256,
                 CipherSuite::TLS13_AES_256_GCM_SHA384,
-                CipherSuite::TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-                CipherSuite::TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-                CipherSuite::TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
-                CipherSuite::TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
-                CipherSuite::TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
-                CipherSuite::TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+                // Fake cipher suites for TLS 1.3 fingerprinting (advertised but not used)
+                CipherSuite::TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
+                CipherSuite::TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
                 CipherSuite::TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
                 CipherSuite::TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
                 CipherSuite::TLS_RSA_WITH_AES_128_GCM_SHA256,
                 CipherSuite::TLS_RSA_WITH_AES_256_GCM_SHA384,
                 CipherSuite::TLS_RSA_WITH_AES_128_CBC_SHA,
                 CipherSuite::TLS_RSA_WITH_AES_256_CBC_SHA,
+                // Real TLS 1.2 cipher suites
+                CipherSuite::TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+                CipherSuite::TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+                CipherSuite::TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
+                CipherSuite::TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
+                CipherSuite::TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+                CipherSuite::TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
             ],
             // Key exchange groups (Firefox includes FFDHE groups)
             vec![
@@ -46,7 +52,8 @@ pub mod firefox_128 {
                 KeyExchangeGroup::Ffdhe2048,
                 KeyExchangeGroup::Ffdhe3072,
             ],
-            // Signature algorithms
+            // Signature algorithms - order must match FIREFOX_SIGNATURE_VERIFICATION_ALGOS mapping
+            // Note: Ed25519 is included in verification but not in the ClientHello extension
             vec![
                 SignatureAlgorithm::EcdsaSecp256r1Sha256,
                 SignatureAlgorithm::EcdsaSecp384r1Sha384,
@@ -57,22 +64,26 @@ pub mod firefox_128 {
                 SignatureAlgorithm::RsaPkcs1Sha256,
                 SignatureAlgorithm::RsaPkcs1Sha384,
                 SignatureAlgorithm::RsaPkcs1Sha512,
-                SignatureAlgorithm::Ed25519,
+                SignatureAlgorithm::EcdsaSha1Legacy,
+                SignatureAlgorithm::RsaPkcs1Sha1,
             ],
             // TLS extensions configuration
             TlsExtensions::new(
-                true,  // server_name
-                true,  // status_request
-                true,  // supported_groups
-                true,  // signature_algorithms
-                true,  // application_layer_protocol_negotiation
-                true,  // signed_certificate_timestamp
-                true,  // key_share
-                true,  // psk_key_exchange_modes
-                true,  // supported_versions
-                None,  // compress_certificate (Firefox doesn't use this)
-                false, // application_settings
+                true,        // server_name
+                true,        // status_request
+                true,        // supported_groups
+                true,        // signature_algorithms
+                true,        // application_layer_protocol_negotiation
+                false,       // signed_certificate_timestamp (Firefox doesn't use this, only Chrome)
+                true,        // key_share
+                true,        // psk_key_exchange_modes
+                true,        // supported_versions
+                None,        // compress_certificate (Firefox doesn't use this)
+                false,       // application_settings
+                true,        // delegated_credentials (Firefox uses this)
+                Some(16385), // record_size_limit (Firefox uses this)
                 // Extension order (critical for fingerprinting)
+                // Note: Firefox doesn't send SignedCertificateTimestamp
                 vec![
                     ExtensionType::ServerName,
                     ExtensionType::ExtendedMasterSecret,
@@ -81,7 +92,6 @@ pub mod firefox_128 {
                     ExtensionType::StatusRequest,
                     ExtensionType::SupportedGroups,
                     ExtensionType::ApplicationLayerProtocolNegotiation,
-                    ExtensionType::SignedCertificateTimestamp,
                     ExtensionType::KeyShare,
                     ExtensionType::PskKeyExchangeModes,
                     ExtensionType::SupportedVersions,
@@ -111,18 +121,18 @@ pub mod firefox_128 {
             ],
             // SETTINGS frame values
             Http2Settings::new(
-                Some(65536),   // header_table_size
-                Some(false),   // enable_push
-                Some(1000),    // max_concurrent_streams
-                Some(131072),  // initial_window_size
-                Some(16384),   // max_frame_size
-                Some(262144),  // max_header_list_size
-                vec![],        // custom settings
+                Some(65536),  // header_table_size
+                Some(false),  // enable_push
+                Some(1000),   // max_concurrent_streams
+                Some(131072), // initial_window_size
+                Some(16384),  // max_frame_size
+                Some(262144), // max_header_list_size
+                vec![],       // custom settings
             ),
             // Window sizes
             Http2WindowSize::new(
-                12517377,  // connection_window_size
-                131072,    // stream_window_size
+                12517377, // connection_window_size
+                131072,   // stream_window_size
             ),
             // Priority
             Some(Http2Priority::new(200, 0, false)),

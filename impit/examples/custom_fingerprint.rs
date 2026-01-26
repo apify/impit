@@ -19,7 +19,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_browser(Browser::Chrome)
         .build()?;
 
-    let response = impit1.get("https://httpbin.org/headers".to_string(), None, None).await?;
+    let response = impit1
+        .get("https://httpbin.org/headers".to_string(), None, None)
+        .await?;
     println!("Status: {}", response.status());
     println!("Response: {}\n", response.text().await?);
 
@@ -29,7 +31,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_fingerprint(database::chrome_125::fingerprint())
         .build()?;
 
-    let response = impit2.get("https://httpbin.org/headers".to_string(), None, None).await?;
+    let response = impit2
+        .get("https://httpbin.org/headers".to_string(), None, None)
+        .await?;
     println!("Status: {}", response.status());
     println!("Response: {}\n", response.text().await?);
 
@@ -43,10 +47,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             CipherSuite::TLS13_CHACHA20_POLY1305_SHA256,
         ],
         // Key exchange groups
-        vec![
-            KeyExchangeGroup::X25519,
-            KeyExchangeGroup::Secp256r1,
-        ],
+        vec![KeyExchangeGroup::X25519, KeyExchangeGroup::Secp256r1],
         // Signature algorithms
         vec![
             SignatureAlgorithm::EcdsaSecp256r1Sha256,
@@ -65,6 +66,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             true,  // supported_versions
             None,  // compress_certificate
             false, // application_settings
+            false, // delegated_credentials
+            None,  // record_size_limit
             vec![
                 ExtensionType::ServerName,
                 ExtensionType::SupportedGroups,
@@ -111,8 +114,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let custom_headers = vec![
         ("user-agent".to_string(), "CustomBrowser/1.0".to_string()),
-        ("accept".to_string(), "text/html,application/xhtml+xml".to_string()),
-        ("accept-encoding".to_string(), "gzip, deflate, br".to_string()),
+        (
+            "accept".to_string(),
+            "text/html,application/xhtml+xml".to_string(),
+        ),
+        (
+            "accept-encoding".to_string(),
+            "gzip, deflate, br".to_string(),
+        ),
         ("accept-language".to_string(), "en-US,en;q=0.9".to_string()),
     ];
 
@@ -128,7 +137,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_fingerprint(custom_fp)
         .build()?;
 
-    let response = impit3.get("https://httpbin.org/headers".to_string(), None, None).await?;
+    let response = impit3
+        .get("https://httpbin.org/headers".to_string(), None, None)
+        .await?;
     println!("Status: {}", response.status());
     println!("Response: {}\n", response.text().await?);
 
@@ -144,16 +155,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let hybrid_fp = BrowserFingerprint::new(
         "HybridBrowser",
         "1.0",
-        base_fp.tls().clone(),      // Reuse Chrome's TLS fingerprint
-        base_fp.http2().clone(),     // Reuse Chrome's HTTP/2 fingerprint
-        custom_headers,              // Custom headers
+        base_fp.tls().clone(),   // Reuse Chrome's TLS fingerprint
+        base_fp.http2().clone(), // Reuse Chrome's HTTP/2 fingerprint
+        custom_headers,          // Custom headers
     );
 
     let impit4 = Impit::<Jar>::builder()
         .with_fingerprint(hybrid_fp)
         .build()?;
 
-    let response = impit4.get("https://httpbin.org/headers".to_string(), None, None).await?;
+    let response = impit4
+        .get("https://httpbin.org/headers".to_string(), None, None)
+        .await?;
     println!("Status: {}", response.status());
     println!("Response: {}", response.text().await?);
 

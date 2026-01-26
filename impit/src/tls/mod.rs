@@ -1,4 +1,3 @@
-mod ffdhe;
 mod statics;
 
 use std::sync::Arc;
@@ -7,8 +6,7 @@ use crate::emulation::Browser;
 use crate::fingerprint::{self, TlsFingerprint};
 use reqwest::Version;
 use rustls::client::danger::NoVerifier;
-use rustls::client::{BrowserEmulator as RusTLSBrowser, BrowserType, EchGreaseConfig};
-use rustls::crypto::aws_lc_rs::kx_group::{SECP256R1, SECP384R1, X25519};
+use rustls::client::EchGreaseConfig;
 use rustls::crypto::CryptoProvider;
 use rustls_platform_verifier::Verifier;
 
@@ -45,7 +43,6 @@ fn get_ech_mode() -> rustls::client::EchMode {
 }
 
 impl TlsConfigBuilder {
-
     pub fn with_browser(&mut self, browser: Option<Browser>) -> &mut Self {
         self.browser = browser;
         self
@@ -78,98 +75,54 @@ impl TlsConfigBuilder {
         let fingerprint = if let Some(fp) = self.tls_fingerprint {
             // Use provided fingerprint directly
             Some(fp)
-        } else if let Some(browser) = browser {
-            // Fall back to looking up fingerprint from browser enum
-            Some(fingerprint::database::get_fingerprint(browser).tls().clone())
         } else {
-            None
+            browser.map(|browser| {
+                fingerprint::database::get_fingerprint(browser)
+                    .tls()
+                    .clone()
+            })
         };
 
-        let mut config = if let Some(_fp) = fingerprint {
-            // TODO: Use fingerprint data to configure rustls
-            // For now, fall back to the old browser-based approach
-            // This requires updates to the patched rustls library to expose configuration APIs
+        let mut config = if let Some(fp) = fingerprint {
+            // Convert impit fingerprint to rustls fingerprint
+            let rustls_fingerprint = fp.to_rustls_fingerprint();
 
-            // Temporary: Use old approach if browser is set
-            if let Some(browser_val) = browser {
-                let rustls_browser = match browser_val {
-                    Browser::Chrome => RusTLSBrowser {
-                        browser_type: BrowserType::Chrome,
-                        version: 125,
-                    },
-                    Browser::Firefox => RusTLSBrowser {
-                        browser_type: BrowserType::Firefox,
-                        version: 125,
-                    },
-                };
+            // Save ALPN protocols from the fingerprint before conversion
+            let alpn_protocols = fp.alpn_protocols().to_vec();
 
-                let mut crypto_provider = CryptoProvider::builder()
-                    .with_browser_emulator(&rustls_browser)
-                    .build();
+            // Build crypto provider with the fingerprint
+            let crypto_provider = CryptoProvider::builder()
+                .with_tls_fingerprint(rustls_fingerprint.clone())
+                .build();
 
-                if browser_val == Browser::Firefox {
-                    crypto_provider.kx_groups = vec![
-                        X25519,
-                        SECP256R1,
-                        SECP384R1,
-                        // TODO : add SECPR521R1
-                        &ffdhe::FFDHE2048_KX_GROUP,
-                        &ffdhe::FFDHE3072_KX_GROUP,
-                    ];
-                }
+            let crypto_provider_arc: Arc<CryptoProvider> = crypto_provider.into();
 
-                let crypto_provider_arc: Arc<CryptoProvider> = crypto_provider.into();
+            // Create verifier with embedded Mozilla CAs as fallback for minimal containers
+            let verifier = Verifier::new_with_extra_roots(
+                webpki_root_certs::TLS_SERVER_ROOT_CERTS.iter().cloned(),
+                crypto_provider_arc.clone(),
+            )
+            .expect("Failed to create certificate verifier with embedded CA roots");
 
-                // Create verifier with embedded Mozilla CAs as fallback for minimal containers
-                let verifier = Verifier::new_with_extra_roots(
-                    webpki_root_certs::TLS_SERVER_ROOT_CERTS.iter().cloned(),
-                    crypto_provider_arc.clone(),
-                )
-                .expect("Failed to create certificate verifier with embedded CA roots");
+            let mut config: rustls::ClientConfig =
+                rustls::ClientConfig::builder_with_provider(crypto_provider_arc)
+                    .with_ech(get_ech_mode())
+                    .unwrap()
+                    .dangerous()
+                    .with_custom_certificate_verifier(Arc::new(verifier))
+                    .with_tls_fingerprint(rustls_fingerprint)
+                    .with_no_client_auth();
 
-                let mut config: rustls::ClientConfig =
-                    rustls::ClientConfig::builder_with_provider(crypto_provider_arc)
-                        // TODO - use the ECH extension consistently
-                        .with_ech(get_ech_mode())
-                        .unwrap()
-                        .dangerous()
-                        .with_custom_certificate_verifier(Arc::new(verifier))
-                        .with_browser_emulator(&rustls_browser)
-                        .with_no_client_auth();
+            // Set ALPN protocols from the fingerprint
+            config.alpn_protocols = alpn_protocols;
 
-                if ignore_tls_errors {
-                    config
-                        .dangerous()
-                        .set_certificate_verifier(Arc::new(NoVerifier::new(Some(rustls_browser))));
-                }
-
+            if ignore_tls_errors {
                 config
-            } else {
-                // No browser set, use default config
-                let crypto_provider: Arc<CryptoProvider> = CryptoProvider::builder().build().into();
-
-                let verifier = Verifier::new_with_extra_roots(
-                    webpki_root_certs::TLS_SERVER_ROOT_CERTS.iter().cloned(),
-                    crypto_provider.clone(),
-                )
-                .expect("Failed to create certificate verifier with embedded CA roots");
-
-                let mut config: rustls::ClientConfig =
-                    rustls::ClientConfig::builder_with_provider(crypto_provider)
-                        .with_ech(get_ech_mode())
-                        .unwrap()
-                        .dangerous()
-                        .with_custom_certificate_verifier(Arc::new(verifier))
-                        .with_no_client_auth();
-
-                if ignore_tls_errors {
-                    config
-                        .dangerous()
-                        .set_certificate_verifier(Arc::new(NoVerifier::new(None)));
-                }
-
-                config
+                    .dangerous()
+                    .set_certificate_verifier(Arc::new(NoVerifier::with_default_schemes()));
             }
+
+            config
         } else {
             // No fingerprint or browser set, use vanilla config
             let crypto_provider: Arc<CryptoProvider> = CryptoProvider::builder().build().into();
@@ -191,7 +144,7 @@ impl TlsConfigBuilder {
             if ignore_tls_errors {
                 config
                     .dangerous()
-                    .set_certificate_verifier(Arc::new(NoVerifier::new(None)));
+                    .set_certificate_verifier(Arc::new(NoVerifier::with_default_schemes()));
             }
 
             config

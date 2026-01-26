@@ -20,8 +20,9 @@ pub mod chrome_125 {
     /// Chrome 125 TLS fingerprint
     fn tls_fingerprint() -> TlsFingerprint {
         TlsFingerprint::new(
-            // Cipher suites in Chrome 125 preference order
+            // Cipher suites in Chrome 125 preference order (matching CHROME_CIPHER_SUITES)
             vec![
+                CipherSuite::Grease,
                 CipherSuite::TLS13_AES_128_GCM_SHA256,
                 CipherSuite::TLS13_AES_256_GCM_SHA384,
                 CipherSuite::TLS13_CHACHA20_POLY1305_SHA256,
@@ -38,38 +39,40 @@ pub mod chrome_125 {
                 CipherSuite::TLS_RSA_WITH_AES_128_CBC_SHA,
                 CipherSuite::TLS_RSA_WITH_AES_256_CBC_SHA,
             ],
-            // Key exchange groups
+            // Key exchange groups (GREASE at the end for Chrome fingerprint)
             vec![
                 KeyExchangeGroup::X25519,
                 KeyExchangeGroup::Secp256r1,
                 KeyExchangeGroup::Secp384r1,
+                KeyExchangeGroup::Grease,
             ],
-            // Signature algorithms
+            // Signature algorithms - order must match DEFAULT_SIGNATURE_VERIFICATION_ALGOS
+            // Note: No SHA1 algorithms for Chrome (matches original implementation)
             vec![
                 SignatureAlgorithm::EcdsaSecp256r1Sha256,
                 SignatureAlgorithm::RsaPssRsaSha256,
-                SignatureAlgorithm::RsaPssRsaSha384,
-                SignatureAlgorithm::RsaPssRsaSha512,
                 SignatureAlgorithm::RsaPkcs1Sha256,
-                SignatureAlgorithm::RsaPkcs1Sha384,
-                SignatureAlgorithm::RsaPkcs1Sha512,
                 SignatureAlgorithm::EcdsaSecp384r1Sha384,
-                SignatureAlgorithm::EcdsaSecp521r1Sha512,
-                SignatureAlgorithm::RsaPkcs1Sha1,
+                SignatureAlgorithm::RsaPssRsaSha384,
+                SignatureAlgorithm::RsaPkcs1Sha384,
+                SignatureAlgorithm::RsaPssRsaSha512,
+                SignatureAlgorithm::RsaPkcs1Sha512,
             ],
             // TLS extensions configuration
             TlsExtensions::new(
-                true,  // server_name
-                true,  // status_request
-                true,  // supported_groups
-                true,  // signature_algorithms
-                true,  // application_layer_protocol_negotiation
-                true,  // signed_certificate_timestamp
-                true,  // key_share
-                true,  // psk_key_exchange_modes
-                true,  // supported_versions
-                Some(vec![CertificateCompressionAlgorithm::Brotli]),  // compress_certificate
-                true,  // application_settings
+                true,                                                // server_name
+                true,                                                // status_request
+                true,                                                // supported_groups
+                true,                                                // signature_algorithms
+                true, // application_layer_protocol_negotiation
+                true, // signed_certificate_timestamp
+                true, // key_share
+                true, // psk_key_exchange_modes
+                true, // supported_versions
+                Some(vec![CertificateCompressionAlgorithm::Brotli]), // compress_certificate
+                true, // application_settings
+                false, // delegated_credentials (Chrome doesn't use)
+                None, // record_size_limit (Chrome doesn't use)
                 // Extension order (critical for fingerprinting)
                 vec![
                     ExtensionType::ServerName,
@@ -121,8 +124,8 @@ pub mod chrome_125 {
             ),
             // Window sizes
             Http2WindowSize::new(
-                15728640,  // connection_window_size
-                6291456,   // stream_window_size
+                15728640, // connection_window_size
+                6291456,  // stream_window_size
             ),
             // Priority
             Some(Http2Priority::new(255, 0, false)),

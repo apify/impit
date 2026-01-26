@@ -5,8 +5,8 @@
 mod chrome;
 mod firefox;
 
-use crate::emulation::Browser;
 use super::BrowserFingerprint;
+use crate::emulation::Browser;
 
 pub use chrome::chrome_125;
 pub use firefox::firefox_128;

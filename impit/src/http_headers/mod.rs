@@ -23,21 +23,22 @@ impl HttpHeaders {
 impl HttpHeaders {
     pub fn iter(&self) -> impl Iterator<Item = (String, String)> + '_ {
         // Use fingerprint headers if available, otherwise fall back to browser enum
-        let impersonated_headers: Vec<(String, String)> = if let Some(ref fp) = self.context.fingerprint {
-            fp.headers().to_vec()
-        } else {
-            match self.context.browser {
-                Some(Browser::Chrome) => statics::CHROME_HEADERS
-                    .iter()
-                    .map(|(k, v)| (k.to_string(), v.to_string()))
-                    .collect(),
-                Some(Browser::Firefox) => statics::FIREFOX_HEADERS
-                    .iter()
-                    .map(|(k, v)| (k.to_string(), v.to_string()))
-                    .collect(),
-                None => vec![],
-            }
-        };
+        let impersonated_headers: Vec<(String, String)> =
+            if let Some(ref fp) = self.context.fingerprint {
+                fp.headers().to_vec()
+            } else {
+                match self.context.browser {
+                    Some(Browser::Chrome) => statics::CHROME_HEADERS
+                        .iter()
+                        .map(|(k, v)| (k.to_string(), v.to_string()))
+                        .collect(),
+                    Some(Browser::Firefox) => statics::FIREFOX_HEADERS
+                        .iter()
+                        .map(|(k, v)| (k.to_string(), v.to_string()))
+                        .collect(),
+                    None => vec![],
+                }
+            };
 
         let custom_headers = self
             .context
@@ -48,7 +49,7 @@ impl HttpHeaders {
         let mut used_header_names: HashSet<String> = HashSet::new();
 
         custom_headers
-            .chain(impersonated_headers.into_iter())
+            .chain(impersonated_headers)
             .filter_map(move |(name, value)| {
                 if used_header_names.contains(&name.to_lowercase()) {
                     None

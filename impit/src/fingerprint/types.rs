@@ -1,3 +1,4 @@
+#![allow(non_camel_case_types)]
 //! Type definitions for browser fingerprints
 //!
 //! This module contains enum types used to configure TLS and HTTP/2 fingerprints
@@ -19,10 +20,14 @@ pub enum CipherSuite {
     TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
     TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
     TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
+    TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
+    TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
     TLS_RSA_WITH_AES_128_GCM_SHA256,
     TLS_RSA_WITH_AES_256_GCM_SHA384,
     TLS_RSA_WITH_AES_128_CBC_SHA,
     TLS_RSA_WITH_AES_256_CBC_SHA,
+    /// GREASE cipher suite for fingerprinting
+    Grease,
 }
 
 /// Key exchange groups for TLS
@@ -37,6 +42,8 @@ pub enum KeyExchangeGroup {
     Ffdhe4096,
     Ffdhe6144,
     Ffdhe8192,
+    /// GREASE key exchange group for fingerprinting
+    Grease,
 }
 
 /// Signature algorithms for TLS
@@ -58,6 +65,8 @@ pub enum SignatureAlgorithm {
     // EdDSA algorithms
     Ed25519,
     Ed448,
+    // Legacy ECDSA with SHA-1 (for backwards compatibility)
+    EcdsaSha1Legacy,
 }
 
 /// TLS extension types
