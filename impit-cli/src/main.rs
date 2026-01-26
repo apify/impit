@@ -99,8 +99,8 @@ async fn main() {
         Browser::Impit => client,
     };
 
-    if args.proxy.is_some() {
-        client = client.with_proxy(args.proxy.unwrap())
+    if let Some(proxy) = args.proxy {
+        client = client.with_proxy(proxy)
     }
 
     if args.enable_http3 || args.http3_prior_knowledge {
