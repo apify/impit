@@ -1,7 +1,6 @@
 use std::{collections::HashMap, sync::Arc, time::Duration};
 
 use impit::{
-    emulation::Browser,
     errors::ImpitError,
     impit::{Impit, ImpitBuilder},
     request::RequestOptions,
@@ -59,8 +58,10 @@ impl AsyncClient {
 
         let builder = match browser {
             Some(browser) => match browser.to_lowercase().as_str() {
-                "chrome" => builder.with_browser(Browser::Chrome),
-                "firefox" => builder.with_browser(Browser::Firefox),
+                "chrome" => builder
+                    .with_fingerprint(impit::fingerprint::database::chrome_125::fingerprint()),
+                "firefox" => builder
+                    .with_fingerprint(impit::fingerprint::database::firefox_128::fingerprint()),
                 _ => {
                     return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(
                         "Unsupported browser",
