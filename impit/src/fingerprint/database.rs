@@ -5,18 +5,5 @@
 mod chrome;
 mod firefox;
 
-use super::BrowserFingerprint;
-use crate::emulation::Browser;
-
 pub use chrome::chrome_125;
 pub use firefox::firefox_128;
-
-/// Returns a fingerprint for the specified browser.
-///
-/// This function provides a convenient way to get a fingerprint using the Browser enum.
-pub fn get_fingerprint(browser: Browser) -> BrowserFingerprint {
-    match browser {
-        Browser::Chrome => chrome_125::fingerprint(),
-        Browser::Firefox => firefox_128::fingerprint(),
-    }
-}

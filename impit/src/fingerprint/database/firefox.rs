@@ -117,7 +117,9 @@ pub mod firefox_128 {
                 ":path".to_string(),
                 ":authority".to_string(),
                 ":scheme".to_string(),
-            ]
+                ":protocol".to_string(),
+                ":status".to_string(),
+            ],
         }
     }
 

@@ -78,21 +78,6 @@ pub mod errors;
 /// Browser fingerprint definitions and types.
 pub mod fingerprint;
 
-/// Contains browser emulation-related types and functions.
-pub mod emulation {
-
-    /// The `Browser` enum is used to specify the browser that should be impersonated.
-    ///
-    /// It can be passed as a parameter to [`ImpitBuilder::with_browser`](crate::impit::ImpitBuilder::with_browser)
-    /// to use the browser emulation with the built [`Impit`](crate::impit::Impit) instance.
-    #[derive(PartialEq, Eq, Hash, Debug, Clone, Copy, Default)]
-    pub enum Browser {
-        #[default]
-        Chrome,
-        Firefox,
-    }
-}
-
 /// Various utility functions and types.
 pub mod utils {
     pub use crate::response_parsing::decode;

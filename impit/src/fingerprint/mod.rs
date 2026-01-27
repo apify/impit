@@ -36,7 +36,7 @@ impl BrowserFingerprint {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct TlsFingerprint {
     pub cipher_suites: Vec<CipherSuite>,
     pub key_exchange_groups: Vec<KeyExchangeGroup>,
@@ -73,7 +73,7 @@ pub struct Http2Fingerprint {
 }
 
 /// TLS extensions configuration.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Hash, Eq, PartialEq)]
 pub struct TlsExtensions {
     pub server_name: bool,
     pub status_request: bool,
@@ -130,7 +130,7 @@ impl TlsExtensions {
 }
 
 /// ECH (Encrypted Client Hello) configuration.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct EchConfig {
     mode: EchMode,
     config_list: Option<Vec<u8>>,
@@ -154,7 +154,7 @@ impl EchConfig {
 }
 
 /// ECH mode configuration.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum EchMode {
     /// ECH is disabled
     Disabled,

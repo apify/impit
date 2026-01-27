@@ -1,8 +1,6 @@
-use crate::{emulation::Browser, errors::ImpitError, fingerprint::BrowserFingerprint};
+use crate::{errors::ImpitError, fingerprint::BrowserFingerprint};
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 use std::{collections::HashSet, str::FromStr};
-
-pub mod statics;
 
 pub struct HttpHeaders {
     context: HttpHeadersBuilder,
@@ -27,17 +25,7 @@ impl HttpHeaders {
             if let Some(ref fp) = self.context.fingerprint {
                 fp.headers.to_vec()
             } else {
-                match self.context.browser {
-                    Some(Browser::Chrome) => statics::CHROME_HEADERS
-                        .iter()
-                        .map(|(k, v)| (k.to_string(), v.to_string()))
-                        .collect(),
-                    Some(Browser::Firefox) => statics::FIREFOX_HEADERS
-                        .iter()
-                        .map(|(k, v)| (k.to_string(), v.to_string()))
-                        .collect(),
-                    None => vec![],
-                }
+                vec![]
             };
 
         let custom_headers = self
@@ -96,7 +84,6 @@ impl From<HttpHeaders> for Result<HeaderMap, ImpitError> {
 #[derive(Default, Clone)]
 pub struct HttpHeadersBuilder {
     host: String,
-    browser: Option<Browser>,
     fingerprint: Option<BrowserFingerprint>,
     https: bool,
     custom_headers: Vec<(String, String)>,
@@ -106,11 +93,6 @@ impl HttpHeadersBuilder {
     // TODO: Enforce `with_host` to be called before `build`
     pub fn with_host(&mut self, host: &String) -> &mut Self {
         self.host = host.to_owned();
-        self
-    }
-
-    pub fn with_browser(&mut self, browser: &Option<Browser>) -> &mut Self {
-        self.browser = browser.to_owned();
         self
     }
 

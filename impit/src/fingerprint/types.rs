@@ -5,7 +5,7 @@
 //! in a type-safe manner.
 
 /// TLS cipher suites
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum CipherSuite {
     // TLS 1.3 cipher suites
     TLS13_AES_128_GCM_SHA256,
@@ -31,7 +31,7 @@ pub enum CipherSuite {
 }
 
 /// Key exchange groups for TLS
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum KeyExchangeGroup {
     X25519,
     Secp256r1,
@@ -47,7 +47,7 @@ pub enum KeyExchangeGroup {
 }
 
 /// Signature algorithms for TLS
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum SignatureAlgorithm {
     // RSASSA-PSS algorithms
     RsaPssRsaSha256,
@@ -70,7 +70,7 @@ pub enum SignatureAlgorithm {
 }
 
 /// TLS extension types
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum ExtensionType {
     ServerName,
     MaxFragmentLength,
@@ -103,7 +103,7 @@ pub enum ExtensionType {
 }
 
 /// Certificate compression algorithms
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum CertificateCompressionAlgorithm {
     Zlib,
     Brotli,
@@ -111,7 +111,7 @@ pub enum CertificateCompressionAlgorithm {
 }
 
 /// HPKE KEM identifiers for ECH
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum HpkeKemId {
     DhKemP256HkdfSha256,
     DhKemP384HkdfSha384,

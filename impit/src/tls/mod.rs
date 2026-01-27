@@ -3,8 +3,7 @@ mod statics;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex, OnceLock};
 
-use crate::emulation::Browser;
-use crate::fingerprint::{self, TlsFingerprint};
+use crate::fingerprint::TlsFingerprint;
 use reqwest::Version;
 use rustls::client::danger::NoVerifier;
 use rustls::client::EchGreaseConfig;
@@ -15,9 +14,9 @@ static VANILLA_CRYPTO_PROVIDER: OnceLock<Arc<CryptoProvider>> = OnceLock::new();
 static VANILLA_VERIFIER: OnceLock<Arc<Verifier>> = OnceLock::new();
 
 type BrowserCacheValue = (Arc<CryptoProvider>, Arc<Verifier>);
-static BROWSER_CACHE: OnceLock<Mutex<HashMap<Browser, BrowserCacheValue>>> = OnceLock::new();
+static BROWSER_CACHE: OnceLock<Mutex<HashMap<TlsFingerprint, BrowserCacheValue>>> = OnceLock::new();
 
-fn get_browser_cache() -> &'static Mutex<HashMap<Browser, BrowserCacheValue>> {
+fn get_browser_cache() -> &'static Mutex<HashMap<TlsFingerprint, BrowserCacheValue>> {
     BROWSER_CACHE.get_or_init(|| Mutex::new(HashMap::new()))
 }
 
@@ -42,18 +41,17 @@ fn get_vanilla_verifier() -> Arc<Verifier> {
         .clone()
 }
 
-fn get_or_create_browser_provider_and_verifier(browser: Browser) -> BrowserCacheValue {
+fn get_or_create_browser_provider_and_verifier(
+    tls_fingerprint: TlsFingerprint,
+) -> BrowserCacheValue {
     {
         let cache = get_browser_cache().lock().unwrap();
-        if let Some(cached) = cache.get(&browser) {
+        if let Some(cached) = cache.get(&tls_fingerprint) {
             return cached.clone();
         }
     }
 
-    let fp = fingerprint::database::get_fingerprint(browser)
-        .tls
-        .clone();
-    let rustls_fp = fp.to_rustls_fingerprint();
+    let rustls_fp = tls_fingerprint.to_rustls_fingerprint();
 
     let provider: Arc<CryptoProvider> = CryptoProvider::builder()
         .with_tls_fingerprint(rustls_fp)
@@ -70,7 +68,7 @@ fn get_or_create_browser_provider_and_verifier(browser: Browser) -> BrowserCache
 
     {
         let mut cache = get_browser_cache().lock().unwrap();
-        cache.insert(browser, (provider.clone(), verifier.clone()));
+        cache.insert(tls_fingerprint, (provider.clone(), verifier.clone()));
     }
 
     (provider, verifier)
@@ -86,7 +84,6 @@ impl TlsConfig {
 
 #[derive(Debug, Clone)]
 pub struct TlsConfigBuilder {
-    browser: Option<Browser>,
     tls_fingerprint: Option<TlsFingerprint>,
     max_http_version: Version,
     ignore_tls_errors: bool,
@@ -95,7 +92,6 @@ pub struct TlsConfigBuilder {
 impl Default for TlsConfigBuilder {
     fn default() -> Self {
         TlsConfigBuilder {
-            browser: None,
             tls_fingerprint: None,
             max_http_version: Version::HTTP_2,
             ignore_tls_errors: false,
@@ -109,11 +105,6 @@ fn get_ech_mode() -> rustls::client::EchMode {
 }
 
 impl TlsConfigBuilder {
-    pub fn with_browser(&mut self, browser: Option<Browser>) -> &mut Self {
-        self.browser = browser;
-        self
-    }
-
     pub fn with_tls_fingerprint(&mut self, fingerprint: TlsFingerprint) -> &mut Self {
         self.tls_fingerprint = Some(fingerprint);
         self
@@ -132,13 +123,9 @@ impl TlsConfigBuilder {
     pub fn build(self) -> rustls::ClientConfig {
         let ignore_tls_errors = self.ignore_tls_errors;
         let max_http_version = self.max_http_version;
-        let browser = self.browser;
 
         let (fingerprint, cache_browser) = if let Some(fp) = self.tls_fingerprint {
             (Some(fp), None)
-        } else if let Some(b) = browser {
-            let fp = fingerprint::database::get_fingerprint(b).tls.clone();
-            (Some(fp), Some(b))
         } else {
             (None, None)
         };

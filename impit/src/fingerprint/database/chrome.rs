@@ -110,7 +110,9 @@ pub mod chrome_125 {
                 ":authority".to_string(),
                 ":scheme".to_string(),
                 ":path".to_string(),
-            ]
+                ":protocol".to_string(),
+                ":status".to_string(),
+            ],
         }
     }
 
