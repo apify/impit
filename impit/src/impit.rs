@@ -6,10 +6,10 @@ use std::{fmt::Debug, net::IpAddr, str::FromStr, sync::Arc, time::Duration};
 use url::Url;
 
 use crate::{
-    emulation::Browser,
     errors::{ErrorContext, ImpitError},
+    fingerprint::BrowserFingerprint,
     http3::H3Engine,
-    http_headers::{statics, HttpHeaders},
+    http_headers::HttpHeaders,
     request::{ImpitRequest, RequestOptions},
     tls,
 };
@@ -53,15 +53,14 @@ pub enum RedirectBehavior {
 ///
 /// ### Example
 /// ```rust,no_run
-/// use impit::impit::Impit;
-/// use impit::emulation::Browser;
+/// use impit::{impit::Impit, fingerprint::database as fingerprints};
 /// use reqwest::cookie::Jar;
 /// use std::time::Duration;
 ///
 /// # #[tokio::main]
 /// # async fn main() {
 /// let impit = Impit::<Jar>::builder()
-///   .with_browser(Browser::Firefox)
+///   .with_fingerprint(fingerprints::firefox_128::fingerprint())
 ///   .with_ignore_tls_errors(true)
 ///   .with_proxy("http://localhost:8080".to_string())
 ///   .with_default_timeout(Duration::from_secs(10))
@@ -74,7 +73,7 @@ pub enum RedirectBehavior {
 /// ```
 #[derive(Debug)]
 pub struct ImpitBuilder<CookieStoreImpl: CookieStore + 'static> {
-    browser: Option<Browser>,
+    fingerprint: Option<BrowserFingerprint>,
     ignore_tls_errors: bool,
     vanilla_fallback: bool,
     proxy_url: String,
@@ -89,7 +88,7 @@ pub struct ImpitBuilder<CookieStoreImpl: CookieStore + 'static> {
 impl<CookieStoreImpl: CookieStore + 'static> Clone for ImpitBuilder<CookieStoreImpl> {
     fn clone(&self) -> Self {
         ImpitBuilder {
-            browser: self.browser,
+            fingerprint: self.fingerprint.clone(),
             ignore_tls_errors: self.ignore_tls_errors,
             vanilla_fallback: self.vanilla_fallback,
             proxy_url: self.proxy_url.clone(),
@@ -106,7 +105,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Clone for ImpitBuilder<CookieStoreI
 impl<CookieStoreImpl: CookieStore + 'static> Default for ImpitBuilder<CookieStoreImpl> {
     fn default() -> Self {
         ImpitBuilder {
-            browser: None,
+            fingerprint: None,
             ignore_tls_errors: false,
             vanilla_fallback: true,
             proxy_url: String::new(),
@@ -121,13 +120,14 @@ impl<CookieStoreImpl: CookieStore + 'static> Default for ImpitBuilder<CookieStor
 }
 
 impl<CookieStoreImpl: CookieStore + 'static> ImpitBuilder<CookieStoreImpl> {
-    /// Sets the browser to impersonate.
+    /// Sets a complete browser fingerprint.
     ///
-    /// The [`Browser`] enum is used to set the HTTP headers, TLS behaviour and other markers to impersonate a specific browser.
+    /// This method allows you to provide a complete fingerprint that includes TLS, HTTP/2, and HTTP header configurations.
+    /// When set, this takes precedence over the `with_browser` method.
     ///
-    /// If not used, the client will use the default `reqwest` fingerprints.
-    pub fn with_browser(mut self, browser: Browser) -> Self {
-        self.browser = Some(browser);
+    /// You can use pre-defined fingerprints from [`crate::fingerprint::database`] or create custom fingerprints.
+    pub fn with_fingerprint(mut self, fingerprint: BrowserFingerprint) -> Self {
+        self.fingerprint = Some(fingerprint);
         self
     }
 
@@ -234,13 +234,17 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
     ) -> Result<reqwest::Client, ImpitError> {
         let mut client = reqwest::Client::builder();
         let mut tls_config_builder = tls::TlsConfig::builder();
-        let mut tls_config_builder = tls_config_builder.with_browser(config.browser);
 
-        if config.max_http_version == Version::HTTP_3 {
-            tls_config_builder = tls_config_builder.with_http3();
+        // Use fingerprint if provided, otherwise fall back to browser enum
+        if let Some(ref fingerprint) = config.fingerprint {
+            tls_config_builder.with_tls_fingerprint(fingerprint.tls.clone());
         }
 
-        tls_config_builder = tls_config_builder.with_ignore_tls_errors(config.ignore_tls_errors);
+        if config.max_http_version == Version::HTTP_3 {
+            tls_config_builder.with_http3();
+        }
+
+        tls_config_builder.with_ignore_tls_errors(config.ignore_tls_errors);
 
         let tls_config = tls_config_builder.build();
 
@@ -296,10 +300,11 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
             })?;
         }
 
-        let pseudo_headers_order: &[&str] = match config.browser {
-            Some(Browser::Chrome) => statics::CHROME_PSEUDOHEADERS_ORDER.as_ref(),
-            Some(Browser::Firefox) => statics::FIREFOX_PSEUDOHEADERS_ORDER.as_ref(),
-            None => &[],
+        // Set pseudo-header order from fingerprint or fall back to browser enum
+        let pseudo_headers_order: Vec<String> = if let Some(ref fingerprint) = config.fingerprint {
+            fingerprint.http2.pseudo_header_order.to_vec()
+        } else {
+            vec![]
         };
 
         if !pseudo_headers_order.is_empty() {
@@ -369,7 +374,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
         let host = url.host_str().unwrap_or_default().to_string();
 
         let headers = HttpHeaders::get_builder()
-            .with_browser(&self.config.browser)
+            .with_fingerprint(&self.config.fingerprint)
             .with_host(&host)
             .with_https(url.scheme() == "https")
             .with_custom_headers(self.config.headers.to_owned())

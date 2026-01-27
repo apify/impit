@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use impit::{
-  emulation::Browser as ImpitBrowser,
+  fingerprint::BrowserFingerprint,
   impit::{ImpitBuilder, RedirectBehavior},
 };
 use napi::{bindgen_prelude::Object, Env};
@@ -16,15 +16,6 @@ use crate::cookies::NodeCookieJar;
 pub enum Browser {
   Chrome,
   Firefox,
-}
-
-impl From<Browser> for ImpitBrowser {
-  fn from(val: Browser) -> Self {
-    match val {
-      Browser::Chrome => ImpitBrowser::Chrome,
-      Browser::Firefox => ImpitBrowser::Firefox,
-    }
-  }
 }
 
 /// Options for configuring an {@link Impit} instance.
@@ -96,11 +87,20 @@ pub struct ImpitOptions<'a> {
   pub local_address: Option<String>,
 }
 
+impl From<Browser> for BrowserFingerprint {
+  fn from(val: Browser) -> Self {
+    match val {
+      Browser::Chrome => impit::fingerprint::database::chrome_125::fingerprint(),
+      Browser::Firefox => impit::fingerprint::database::firefox_128::fingerprint(),
+    }
+  }
+}
+
 impl ImpitOptions<'_> {
   pub fn into_builder(self, env: &Env) -> Result<ImpitBuilder<NodeCookieJar>, napi::Error> {
     let mut config = ImpitBuilder::default();
     if let Some(browser) = self.browser {
-      config = config.with_browser(browser.into());
+      config = config.with_fingerprint(browser.into());
     }
     if let Some(ignore_tls_errors) = self.ignore_tls_errors {
       config = config.with_ignore_tls_errors(ignore_tls_errors);

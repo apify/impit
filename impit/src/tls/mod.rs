@@ -1,15 +1,78 @@
-mod ffdhe;
 mod statics;
 
-use std::sync::Arc;
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex, OnceLock};
 
-use crate::emulation::Browser;
+use crate::fingerprint::TlsFingerprint;
 use reqwest::Version;
 use rustls::client::danger::NoVerifier;
-use rustls::client::{BrowserEmulator as RusTLSBrowser, BrowserType, EchGreaseConfig};
-use rustls::crypto::aws_lc_rs::kx_group::{SECP256R1, SECP384R1, X25519};
+use rustls::client::EchGreaseConfig;
 use rustls::crypto::CryptoProvider;
 use rustls_platform_verifier::Verifier;
+
+static VANILLA_CRYPTO_PROVIDER: OnceLock<Arc<CryptoProvider>> = OnceLock::new();
+static VANILLA_VERIFIER: OnceLock<Arc<Verifier>> = OnceLock::new();
+
+type BrowserCacheValue = (Arc<CryptoProvider>, Arc<Verifier>);
+static BROWSER_CACHE: OnceLock<Mutex<HashMap<TlsFingerprint, BrowserCacheValue>>> = OnceLock::new();
+
+fn get_browser_cache() -> &'static Mutex<HashMap<TlsFingerprint, BrowserCacheValue>> {
+    BROWSER_CACHE.get_or_init(|| Mutex::new(HashMap::new()))
+}
+
+fn get_vanilla_provider() -> Arc<CryptoProvider> {
+    VANILLA_CRYPTO_PROVIDER
+        .get_or_init(|| CryptoProvider::builder().build().into())
+        .clone()
+}
+
+fn get_vanilla_verifier() -> Arc<Verifier> {
+    let provider = get_vanilla_provider();
+    VANILLA_VERIFIER
+        .get_or_init(|| {
+            Arc::new(
+                Verifier::new_with_extra_roots(
+                    webpki_root_certs::TLS_SERVER_ROOT_CERTS.iter().cloned(),
+                    provider,
+                )
+                .expect("Failed to create certificate verifier with embedded CA roots"),
+            )
+        })
+        .clone()
+}
+
+fn get_or_create_browser_provider_and_verifier(
+    tls_fingerprint: TlsFingerprint,
+) -> BrowserCacheValue {
+    {
+        let cache = get_browser_cache().lock().unwrap();
+        if let Some(cached) = cache.get(&tls_fingerprint) {
+            return cached.clone();
+        }
+    }
+
+    let rustls_fp = tls_fingerprint.to_rustls_fingerprint();
+
+    let provider: Arc<CryptoProvider> = CryptoProvider::builder()
+        .with_tls_fingerprint(rustls_fp)
+        .build()
+        .into();
+
+    let verifier = Arc::new(
+        Verifier::new_with_extra_roots(
+            webpki_root_certs::TLS_SERVER_ROOT_CERTS.iter().cloned(),
+            provider.clone(),
+        )
+        .expect("Failed to create certificate verifier with embedded CA roots"),
+    );
+
+    {
+        let mut cache = get_browser_cache().lock().unwrap();
+        cache.insert(tls_fingerprint, (provider.clone(), verifier.clone()));
+    }
+
+    (provider, verifier)
+}
 
 pub struct TlsConfig {}
 
@@ -19,9 +82,9 @@ impl TlsConfig {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct TlsConfigBuilder {
-    browser: Option<Browser>,
+    tls_fingerprint: Option<TlsFingerprint>,
     max_http_version: Version,
     ignore_tls_errors: bool,
 }
@@ -29,22 +92,21 @@ pub struct TlsConfigBuilder {
 impl Default for TlsConfigBuilder {
     fn default() -> Self {
         TlsConfigBuilder {
-            browser: None,
+            tls_fingerprint: None,
             max_http_version: Version::HTTP_2,
             ignore_tls_errors: false,
         }
     }
 }
 
+fn get_ech_mode() -> rustls::client::EchMode {
+    let (public_key, _) = statics::GREASE_HPKE_SUITE.generate_key_pair().unwrap();
+    EchGreaseConfig::new(statics::GREASE_HPKE_SUITE, public_key).into()
+}
+
 impl TlsConfigBuilder {
-    fn get_ech_mode(self) -> rustls::client::EchMode {
-        let (public_key, _) = statics::GREASE_HPKE_SUITE.generate_key_pair().unwrap();
-
-        EchGreaseConfig::new(statics::GREASE_HPKE_SUITE, public_key).into()
-    }
-
-    pub fn with_browser(&mut self, browser: Option<Browser>) -> &mut Self {
-        self.browser = browser;
+    pub fn with_tls_fingerprint(&mut self, fingerprint: TlsFingerprint) -> &mut Self {
+        self.tls_fingerprint = Some(fingerprint);
         self
     }
 
@@ -59,91 +121,79 @@ impl TlsConfigBuilder {
     }
 
     pub fn build(self) -> rustls::ClientConfig {
-        let mut config = match self.browser {
-            Some(browser) => {
-                let rustls_browser = match browser {
-                    Browser::Chrome => RusTLSBrowser {
-                        browser_type: BrowserType::Chrome,
-                        version: 125,
-                    },
-                    Browser::Firefox => RusTLSBrowser {
-                        browser_type: BrowserType::Firefox,
-                        version: 125,
-                    },
-                };
+        let ignore_tls_errors = self.ignore_tls_errors;
+        let max_http_version = self.max_http_version;
 
-                let mut crypto_provider = CryptoProvider::builder()
-                    .with_browser_emulator(&rustls_browser)
-                    .build();
-
-                if browser == Browser::Firefox {
-                    crypto_provider.kx_groups = vec![
-                        X25519,
-                        SECP256R1,
-                        SECP384R1,
-                        // TODO : add SECPR521R1
-                        &ffdhe::FFDHE2048_KX_GROUP,
-                        &ffdhe::FFDHE3072_KX_GROUP,
-                    ];
-                }
-
-                let crypto_provider_arc: Arc<CryptoProvider> = crypto_provider.into();
-
-                // Create verifier with embedded Mozilla CAs as fallback for minimal containers
-                let verifier = Verifier::new_with_extra_roots(
-                    webpki_root_certs::TLS_SERVER_ROOT_CERTS.iter().cloned(),
-                    crypto_provider_arc.clone(),
-                )
-                .expect("Failed to create certificate verifier with embedded CA roots");
-
-                let mut config: rustls::ClientConfig =
-                    rustls::ClientConfig::builder_with_provider(crypto_provider_arc)
-                        // TODO - use the ECH extension consistently
-                        .with_ech(self.get_ech_mode())
-                        .unwrap()
-                        .dangerous()
-                        .with_custom_certificate_verifier(Arc::new(verifier))
-                        .with_browser_emulator(&rustls_browser)
-                        .with_no_client_auth();
-
-                if self.ignore_tls_errors {
-                    config
-                        .dangerous()
-                        .set_certificate_verifier(Arc::new(NoVerifier::new(Some(rustls_browser))));
-                }
-
-                config
-            }
-            None => {
-                let crypto_provider: Arc<CryptoProvider> = CryptoProvider::builder().build().into();
-
-                // Create verifier with embedded Mozilla CAs as fallback for minimal containers
-                let verifier = Verifier::new_with_extra_roots(
-                    webpki_root_certs::TLS_SERVER_ROOT_CERTS.iter().cloned(),
-                    crypto_provider.clone(),
-                )
-                .expect("Failed to create certificate verifier with embedded CA roots");
-
-                let mut config: rustls::ClientConfig =
-                    rustls::ClientConfig::builder_with_provider(crypto_provider)
-                        // TODO - use the ECH extension consistently
-                        .with_ech(self.get_ech_mode())
-                        .unwrap()
-                        .dangerous()
-                        .with_custom_certificate_verifier(Arc::new(verifier))
-                        .with_no_client_auth();
-
-                if self.ignore_tls_errors {
-                    config
-                        .dangerous()
-                        .set_certificate_verifier(Arc::new(NoVerifier::new(None)));
-                }
-
-                config
-            }
+        let (fingerprint, cache_browser) = if let Some(fp) = self.tls_fingerprint {
+            (Some(fp), None)
+        } else {
+            (None, None)
         };
 
-        if self.max_http_version == Version::HTTP_3 {
+        let mut config = if let Some(fp) = fingerprint {
+            let rustls_fingerprint = fp.to_rustls_fingerprint();
+
+            let alpn_protocols = fp.alpn_protocols.to_vec();
+
+            let (crypto_provider_arc, verifier) = if let Some(b) = cache_browser {
+                get_or_create_browser_provider_and_verifier(b)
+            } else {
+                let provider: Arc<CryptoProvider> = CryptoProvider::builder()
+                    .with_tls_fingerprint(rustls_fingerprint.clone())
+                    .build()
+                    .into();
+
+                let verifier = Arc::new(
+                    Verifier::new_with_extra_roots(
+                        webpki_root_certs::TLS_SERVER_ROOT_CERTS.iter().cloned(),
+                        provider.clone(),
+                    )
+                    .expect("Failed to create certificate verifier with embedded CA roots"),
+                );
+
+                (provider, verifier)
+            };
+
+            let mut config: rustls::ClientConfig =
+                rustls::ClientConfig::builder_with_provider(crypto_provider_arc)
+                    .with_ech(get_ech_mode())
+                    .unwrap()
+                    .dangerous()
+                    .with_custom_certificate_verifier(verifier)
+                    .with_tls_fingerprint(rustls_fingerprint)
+                    .with_no_client_auth();
+
+            config.alpn_protocols = alpn_protocols;
+
+            if ignore_tls_errors {
+                config
+                    .dangerous()
+                    .set_certificate_verifier(Arc::new(NoVerifier::with_default_schemes()));
+            }
+
+            config
+        } else {
+            let crypto_provider = get_vanilla_provider();
+            let verifier = get_vanilla_verifier();
+
+            let mut config: rustls::ClientConfig =
+                rustls::ClientConfig::builder_with_provider(crypto_provider)
+                    .with_ech(get_ech_mode())
+                    .unwrap()
+                    .dangerous()
+                    .with_custom_certificate_verifier(verifier)
+                    .with_no_client_auth();
+
+            if ignore_tls_errors {
+                config
+                    .dangerous()
+                    .set_certificate_verifier(Arc::new(NoVerifier::with_default_schemes()));
+            }
+
+            config
+        };
+
+        if max_http_version == Version::HTTP_3 {
             config.alpn_protocols = vec![b"h3".to_vec()];
         };
 

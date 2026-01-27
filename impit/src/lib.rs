@@ -5,14 +5,13 @@
 //! The library provides a simple API for making requests to websites, and it also allows you to customize the request headers, use proxies, custom timeouts and more.
 //!
 //! ```rust,no_run
-//! use impit::impit::Impit;
-//! use impit::emulation::Browser;
+//! use impit::{impit::Impit, fingerprint::database as fingerprints};
 //! use reqwest::cookie::Jar;
 //!
 //! #[tokio::main]
 //! async fn main() {
 //!    let impit = Impit::<Jar>::builder()
-//!        .with_browser(Browser::Firefox)
+//!        .with_fingerprint(fingerprints::firefox_128::fingerprint())
 //!        .with_http3()
 //!        .build()
 //!        .unwrap();
@@ -75,20 +74,8 @@ pub mod request;
 /// Errors and error handling.
 pub mod errors;
 
-/// Contains browser emulation-related types and functions.
-pub mod emulation {
-
-    /// The `Browser` enum is used to specify the browser that should be impersonated.
-    ///
-    /// It can be passed as a parameter to [`ImpitBuilder::with_browser`](crate::impit::ImpitBuilder::with_browser)
-    /// to use the browser emulation with the built [`Impit`](crate::impit::Impit) instance.
-    #[derive(PartialEq, Debug, Clone, Copy, Default)]
-    pub enum Browser {
-        #[default]
-        Chrome,
-        Firefox,
-    }
-}
+/// Browser fingerprint definitions and types.
+pub mod fingerprint;
 
 /// Various utility functions and types.
 pub mod utils {

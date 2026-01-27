@@ -1,8 +1,6 @@
-use crate::{emulation::Browser, errors::ImpitError};
+use crate::{errors::ImpitError, fingerprint::BrowserFingerprint};
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 use std::{collections::HashSet, str::FromStr};
-
-pub mod statics;
 
 pub struct HttpHeaders {
     context: HttpHeadersBuilder,
@@ -22,18 +20,19 @@ impl HttpHeaders {
 
 impl HttpHeaders {
     pub fn iter(&self) -> impl Iterator<Item = (String, String)> + '_ {
-        let impersonated_headers = match self.context.browser {
-            Some(Browser::Chrome) => statics::CHROME_HEADERS,
-            Some(Browser::Firefox) => statics::FIREFOX_HEADERS,
-            None => &[],
-        }
-        .to_owned();
+        // Use fingerprint headers if available, otherwise fall back to browser enum
+        let impersonated_headers: Vec<(String, String)> =
+            if let Some(ref fp) = self.context.fingerprint {
+                fp.headers.to_vec()
+            } else {
+                vec![]
+            };
 
         let custom_headers = self
             .context
             .custom_headers
             .iter()
-            .map(|(k, v)| (k.as_str(), v.as_str()));
+            .map(|(k, v)| (k.clone(), v.clone()));
 
         let mut used_header_names: HashSet<String> = HashSet::new();
 
@@ -44,7 +43,7 @@ impl HttpHeaders {
                     None
                 } else {
                     used_header_names.insert(name.to_lowercase());
-                    Some((name.to_string(), value.to_string()))
+                    Some((name, value))
                 }
             })
     }
@@ -85,7 +84,7 @@ impl From<HttpHeaders> for Result<HeaderMap, ImpitError> {
 #[derive(Default, Clone)]
 pub struct HttpHeadersBuilder {
     host: String,
-    browser: Option<Browser>,
+    fingerprint: Option<BrowserFingerprint>,
     https: bool,
     custom_headers: Vec<(String, String)>,
 }
@@ -97,8 +96,8 @@ impl HttpHeadersBuilder {
         self
     }
 
-    pub fn with_browser(&mut self, browser: &Option<Browser>) -> &mut Self {
-        self.browser = browser.to_owned();
+    pub fn with_fingerprint(&mut self, fingerprint: &Option<BrowserFingerprint>) -> &mut Self {
+        self.fingerprint = fingerprint.clone();
         self
     }
 

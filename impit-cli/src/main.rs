@@ -2,7 +2,6 @@ use std::ffi::OsString;
 
 use clap::{Parser, ValueEnum};
 use impit::{
-    emulation::Browser as ImpitBrowser,
     impit::{Impit, RedirectBehavior},
     request::RequestOptions,
 };
@@ -94,8 +93,12 @@ async fn main() {
         .with_fallback_to_vanilla(args.fallback);
 
     client = match args.impersonate {
-        Browser::Chrome => client.with_browser(ImpitBrowser::Chrome),
-        Browser::Firefox => client.with_browser(ImpitBrowser::Firefox),
+        Browser::Chrome => {
+            client.with_fingerprint(impit::fingerprint::database::chrome_125::fingerprint())
+        }
+        Browser::Firefox => {
+            client.with_fingerprint(impit::fingerprint::database::firefox_128::fingerprint())
+        }
         Browser::Impit => client,
     };
 

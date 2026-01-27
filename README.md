@@ -5,28 +5,29 @@ impit is a `rust` library that allows you to impersonate a browser and make requ
 The library provides a simple API for making requests to websites, and it also allows you to customize the request headers, use proxies, custom timeouts and more.
 
 ```rust
-use impit::impit::Impit;
-use impit::emulation::Browser;
-use reqwest::cookie::Jar;
+use impit::cookie::Jar;
+use impit::{impit::Impit, fingerprint::database as fingerprints};
 
 #[tokio::main]
 async fn main() {
-   let impit = Impit::<Jar>::builder()
-       .with_browser(Browser::Firefox)
-       .with_http3()
-       .build()
-       .unwrap();
+    let impit = Impit::<Jar>::builder()
+        .with_fingerprint(fingerprints::firefox_128::fingerprint())
+        .with_http3()
+        .build()
+        .unwrap();
 
-   let response = impit.get(String::from("https://example.com"), None, None).await;
+    let response = impit
+        .get(String::from("https://example.com"), None, None)
+        .await;
 
-   match response {
-       Ok(response) => {
-           println!("{}", response.text().await.unwrap());
-       }
-       Err(e) => {
-           println!("{:#?}", e);
-       }
-   }
+    match response {
+        Ok(response) => {
+            println!("{}", response.text().await.unwrap());
+        }
+        Err(e) => {
+            println!("{:#?}", e);
+        }
+    }
 }
 ```
 
