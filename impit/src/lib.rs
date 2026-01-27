@@ -85,7 +85,7 @@ pub mod emulation {
     ///
     /// It can be passed as a parameter to [`ImpitBuilder::with_browser`](crate::impit::ImpitBuilder::with_browser)
     /// to use the browser emulation with the built [`Impit`](crate::impit::Impit) instance.
-    #[derive(PartialEq, Debug, Clone, Copy, Default)]
+    #[derive(PartialEq, Eq, Hash, Debug, Clone, Copy, Default)]
     pub enum Browser {
         #[default]
         Chrome,
