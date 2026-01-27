@@ -51,7 +51,7 @@ fn get_or_create_browser_provider_and_verifier(browser: Browser) -> BrowserCache
     }
 
     let fp = fingerprint::database::get_fingerprint(browser)
-        .tls()
+        .tls
         .clone();
     let rustls_fp = fp.to_rustls_fingerprint();
 
@@ -137,7 +137,7 @@ impl TlsConfigBuilder {
         let (fingerprint, cache_browser) = if let Some(fp) = self.tls_fingerprint {
             (Some(fp), None)
         } else if let Some(b) = browser {
-            let fp = fingerprint::database::get_fingerprint(b).tls().clone();
+            let fp = fingerprint::database::get_fingerprint(b).tls.clone();
             (Some(fp), Some(b))
         } else {
             (None, None)
@@ -146,7 +146,7 @@ impl TlsConfigBuilder {
         let mut config = if let Some(fp) = fingerprint {
             let rustls_fingerprint = fp.to_rustls_fingerprint();
 
-            let alpn_protocols = fp.alpn_protocols().to_vec();
+            let alpn_protocols = fp.alpn_protocols.to_vec();
 
             let (crypto_provider_arc, verifier) = if let Some(b) = cache_browser {
                 get_or_create_browser_provider_and_verifier(b)

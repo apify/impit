@@ -252,7 +252,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
 
         // Use fingerprint if provided, otherwise fall back to browser enum
         if let Some(ref fingerprint) = config.fingerprint {
-            tls_config_builder.with_tls_fingerprint(fingerprint.tls().clone());
+            tls_config_builder.with_tls_fingerprint(fingerprint.tls.clone());
         } else {
             tls_config_builder.with_browser(config.browser);
         }
@@ -319,7 +319,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
 
         // Set pseudo-header order from fingerprint or fall back to browser enum
         let pseudo_headers_order: Vec<String> = if let Some(ref fingerprint) = config.fingerprint {
-            fingerprint.http2().pseudo_header_order().to_vec()
+            fingerprint.http2.pseudo_header_order.to_vec()
         } else {
             match config.browser {
                 Some(Browser::Chrome) => statics::CHROME_PSEUDOHEADERS_ORDER

@@ -104,32 +104,14 @@ pub mod chrome_125 {
 
     /// Chrome 125 HTTP/2 fingerprint
     fn http2_fingerprint() -> Http2Fingerprint {
-        Http2Fingerprint::new(
-            // Pseudo-header ordering
-            vec![
+        Http2Fingerprint {
+            pseudo_header_order: vec![
                 ":method".to_string(),
                 ":authority".to_string(),
                 ":scheme".to_string(),
                 ":path".to_string(),
-            ],
-            // SETTINGS frame values
-            Http2Settings::new(
-                Some(65536),   // header_table_size
-                Some(false),   // enable_push
-                Some(1000),    // max_concurrent_streams
-                Some(6291456), // initial_window_size
-                Some(16384),   // max_frame_size
-                Some(262144),  // max_header_list_size
-                vec![],        // custom settings
-            ),
-            // Window sizes
-            Http2WindowSize::new(
-                15728640, // connection_window_size
-                6291456,  // stream_window_size
-            ),
-            // Priority
-            Some(Http2Priority::new(255, 0, false)),
-        )
+            ]
+        }
     }
 
     /// Chrome 125 HTTP headers

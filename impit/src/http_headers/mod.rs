@@ -25,7 +25,7 @@ impl HttpHeaders {
         // Use fingerprint headers if available, otherwise fall back to browser enum
         let impersonated_headers: Vec<(String, String)> =
             if let Some(ref fp) = self.context.fingerprint {
-                fp.headers().to_vec()
+                fp.headers.to_vec()
             } else {
                 match self.context.browser {
                     Some(Browser::Chrome) => statics::CHROME_HEADERS
