@@ -5,14 +5,13 @@
 //! The library provides a simple API for making requests to websites, and it also allows you to customize the request headers, use proxies, custom timeouts and more.
 //!
 //! ```rust,no_run
-//! use impit::impit::Impit;
-//! use impit::emulation::Browser;
+//! use impit::{impit::Impit, fingerprint::database as fingerprints};
 //! use reqwest::cookie::Jar;
 //!
 //! #[tokio::main]
 //! async fn main() {
 //!    let impit = Impit::<Jar>::builder()
-//!        .with_browser(Browser::Firefox)
+//!        .with_fingerprint(fingerprints::firefox_128::fingerprint())
 //!        .with_http3()
 //!        .build()
 //!        .unwrap();

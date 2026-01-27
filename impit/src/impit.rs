@@ -53,15 +53,14 @@ pub enum RedirectBehavior {
 ///
 /// ### Example
 /// ```rust,no_run
-/// use impit::impit::Impit;
-/// use impit::emulation::Browser;
+/// use impit::{impit::Impit, fingerprint::database as fingerprints};
 /// use reqwest::cookie::Jar;
 /// use std::time::Duration;
 ///
 /// # #[tokio::main]
 /// # async fn main() {
 /// let impit = Impit::<Jar>::builder()
-///   .with_browser(Browser::Firefox)
+///   .with_fingerprint(fingerprints::firefox_128::fingerprint())
 ///   .with_ignore_tls_errors(true)
 ///   .with_proxy("http://localhost:8080".to_string())
 ///   .with_default_timeout(Duration::from_secs(10))
