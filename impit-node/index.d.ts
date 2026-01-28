@@ -206,6 +206,7 @@ export declare class ImpitResponse {
  * See {@link ImpitOptions.browser} for more details and usage.
  */
 export type Browser =  'chrome'|
+'chrome100'|
 'chrome124'|
 'chrome125'|
 'chrome131'|

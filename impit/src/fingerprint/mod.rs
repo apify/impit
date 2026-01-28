@@ -94,6 +94,8 @@ pub struct TlsExtensions {
     /// Whether to enable session tickets (TLS 1.2). Defaults to true.
     /// Set to false for browsers like Safari 18.0 that don't send session_ticket extension.
     pub session_ticket: bool,
+    /// Whether to send padding extension (RFC7685).
+    pub padding: bool,
 }
 
 impl TlsExtensions {
@@ -132,6 +134,7 @@ impl TlsExtensions {
             record_size_limit,
             extension_order,
             session_ticket: true, // Default to true for backward compatibility
+            padding: false,       // Default to false for backward compatibility
         }
     }
 
@@ -145,6 +148,12 @@ impl TlsExtensions {
     /// Chrome 136+ uses the new codepoint.
     pub fn with_new_alps_codepoint(mut self, use_new: bool) -> Self {
         self.use_new_alps_codepoint = use_new;
+        self
+    }
+
+    /// Sets whether to send the padding extension (RFC7685).
+    pub fn with_padding(mut self, enabled: bool) -> Self {
+        self.padding = enabled;
         self
     }
 }
@@ -327,6 +336,7 @@ impl TlsFingerprint {
             delegated_credentials: self.extensions.delegated_credentials,
             record_size_limit: self.extensions.record_size_limit,
             renegotiation_info: true, // Common for both browsers
+            padding: self.extensions.padding,
         };
 
         let cert_compression = self.extensions.compress_certificate.clone().map(|algos| {

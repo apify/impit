@@ -15,6 +15,7 @@ use crate::cookies::NodeCookieJar;
 #[napi(string_enum = "lowercase")]
 pub enum Browser {
   Chrome,
+  Chrome100,
   Chrome124,
   Chrome125,
   Chrome131,
@@ -101,6 +102,7 @@ impl From<Browser> for BrowserFingerprint {
       Browser::Chrome | Browser::Chrome124 => {
         impit::fingerprint::database::chrome_124::fingerprint()
       }
+      Browser::Chrome100 => impit::fingerprint::database::chrome_100::fingerprint(),
       Browser::Chrome125 => impit::fingerprint::database::chrome_125::fingerprint(),
       Browser::Chrome131 => impit::fingerprint::database::chrome_131::fingerprint(),
       Browser::Chrome136 => impit::fingerprint::database::chrome_136::fingerprint(),
