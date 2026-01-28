@@ -140,7 +140,6 @@ pub mod firefox_128 {
     }
 }
 
-
 /// Firefox 133 fingerprint module
 pub mod firefox_133 {
     use super::*;
