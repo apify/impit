@@ -24,8 +24,6 @@ pub enum Browser {
   Firefox133,
   Firefox135,
   Firefox144,
-  Safari,
-  Safari180,
 }
 
 /// Options for configuring an {@link Impit} instance.
@@ -112,9 +110,6 @@ impl From<Browser> for BrowserFingerprint {
       }
       Browser::Firefox135 => impit::fingerprint::database::firefox_135::fingerprint(),
       Browser::Firefox144 => impit::fingerprint::database::firefox_144::fingerprint(),
-      Browser::Safari | Browser::Safari180 => {
-        impit::fingerprint::database::safari_18_0::fingerprint()
-      }
     }
   }
 }

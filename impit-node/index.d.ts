@@ -214,9 +214,7 @@ export type Browser =  'chrome'|
 'firefox'|
 'firefox133'|
 'firefox135'|
-'firefox144'|
-'safari'|
-'safari180';
+'firefox144';
 
 export type HttpMethod =  'GET'|
 'POST'|
