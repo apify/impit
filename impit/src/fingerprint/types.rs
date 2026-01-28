@@ -26,10 +26,6 @@ pub enum CipherSuite {
     TLS_RSA_WITH_AES_256_GCM_SHA384,
     TLS_RSA_WITH_AES_128_CBC_SHA,
     TLS_RSA_WITH_AES_256_CBC_SHA,
-    // Legacy 3DES cipher suites (Safari)
-    TLS_ECDHE_ECDSA_WITH_3DES_EDE_CBC_SHA,
-    TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA,
-    TLS_RSA_WITH_3DES_EDE_CBC_SHA,
     /// GREASE cipher suite for fingerprinting
     Grease,
 }

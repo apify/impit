@@ -252,15 +252,6 @@ impl TlsFingerprint {
                 CipherSuite::TLS_RSA_WITH_AES_256_CBC_SHA => {
                     FingerprintCipherSuite::TLS_RSA_WITH_AES_256_CBC_SHA
                 }
-                CipherSuite::TLS_ECDHE_ECDSA_WITH_3DES_EDE_CBC_SHA => {
-                    FingerprintCipherSuite::TLS_ECDHE_ECDSA_WITH_3DES_EDE_CBC_SHA
-                }
-                CipherSuite::TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA => {
-                    FingerprintCipherSuite::TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA
-                }
-                CipherSuite::TLS_RSA_WITH_3DES_EDE_CBC_SHA => {
-                    FingerprintCipherSuite::TLS_RSA_WITH_3DES_EDE_CBC_SHA
-                }
                 CipherSuite::Grease => FingerprintCipherSuite::Grease,
             })
             .collect();
