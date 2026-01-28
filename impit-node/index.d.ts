@@ -207,6 +207,11 @@ export declare class ImpitResponse {
  */
 export type Browser =  'chrome'|
 'chrome100'|
+'chrome101'|
+'chrome104'|
+'chrome107'|
+'chrome110'|
+'chrome116'|
 'chrome124'|
 'chrome125'|
 'chrome131'|

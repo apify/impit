@@ -129,29 +129,25 @@ impl TlsExtensions {
             supported_versions,
             compress_certificate,
             application_settings,
-            use_new_alps_codepoint: false, // Default to old codepoint for backward compatibility
+            use_new_alps_codepoint: false,
             delegated_credentials,
             record_size_limit,
             extension_order,
-            session_ticket: true, // Default to true for backward compatibility
-            padding: false,       // Default to false for backward compatibility
+            session_ticket: true,
+            padding: false,
         }
     }
 
-    /// Sets whether to enable session tickets.
     pub fn with_session_ticket(mut self, enabled: bool) -> Self {
         self.session_ticket = enabled;
         self
     }
 
-    /// Sets whether to use the new ALPS codepoint (17613) instead of old (17513).
-    /// Chrome 136+ uses the new codepoint.
     pub fn with_new_alps_codepoint(mut self, use_new: bool) -> Self {
         self.use_new_alps_codepoint = use_new;
         self
     }
 
-    /// Sets whether to send the padding extension (RFC7685).
     pub fn with_padding(mut self, enabled: bool) -> Self {
         self.padding = enabled;
         self

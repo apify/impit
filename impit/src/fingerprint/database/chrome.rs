@@ -693,10 +693,8 @@ pub mod chrome_100 {
     }
 
     /// Chrome 100 TLS fingerprint
-    fn tls_fingerprint() -> TlsFingerprint {
+    pub(crate) fn tls_fingerprint() -> TlsFingerprint {
         TlsFingerprint::new(
-            // Cipher suites in Chrome 100 preference order
-            // GREASE cipher at position 1 (first)
             vec![
                 CipherSuite::Grease,
                 CipherSuite::TLS13_AES_128_GCM_SHA256,
@@ -715,14 +713,12 @@ pub mod chrome_100 {
                 CipherSuite::TLS_RSA_WITH_AES_128_CBC_SHA,
                 CipherSuite::TLS_RSA_WITH_AES_256_CBC_SHA,
             ],
-            // Key exchange groups - GREASE first, matching curl_chrome100
             vec![
                 KeyExchangeGroup::Grease,
                 KeyExchangeGroup::X25519,
                 KeyExchangeGroup::Secp256r1,
                 KeyExchangeGroup::Secp384r1,
             ],
-            // Signature algorithms
             vec![
                 SignatureAlgorithm::EcdsaSecp256r1Sha256,
                 SignatureAlgorithm::RsaPssRsaSha256,
@@ -733,23 +729,20 @@ pub mod chrome_100 {
                 SignatureAlgorithm::RsaPssRsaSha512,
                 SignatureAlgorithm::RsaPkcs1Sha512,
             ],
-            // TLS extensions configuration
-            // Chrome 100 uses old ALPS codepoint
             TlsExtensions::new(
-                true,                                                // server_name
-                true,                                                // status_request
-                true,                                                // supported_groups
-                true,                                                // signature_algorithms
-                true, // application_layer_protocol_negotiation
-                true, // signed_certificate_timestamp
-                true, // key_share
-                true, // psk_key_exchange_modes
-                true, // supported_versions
-                Some(vec![CertificateCompressionAlgorithm::Brotli]), // compress_certificate
-                true, // application_settings (ALPS)
-                false, // delegated_credentials (Chrome doesn't use)
-                None, // record_size_limit (Chrome doesn't use)
-                // Extension order (critical for fingerprinting) - matches curl_chrome100
+                true,
+                true,
+                true,
+                true,
+                true,
+                true,
+                true,
+                true,
+                true,
+                Some(vec![CertificateCompressionAlgorithm::Brotli]),
+                true,
+                false,
+                None,
                 vec![
                     ExtensionType::Grease,
                     ExtensionType::ServerName,
@@ -780,7 +773,7 @@ pub mod chrome_100 {
     }
 
     /// Chrome 100 HTTP/2 fingerprint
-    fn http2_fingerprint() -> Http2Fingerprint {
+    pub(crate) fn http2_fingerprint() -> Http2Fingerprint {
         Http2Fingerprint {
             pseudo_header_order: vec![
                 ":method".to_string(),
@@ -801,6 +794,171 @@ pub mod chrome_100 {
             ("sec-ch-ua-platform".to_string(), "\"Windows\"".to_string()),
             ("upgrade-insecure-requests".to_string(), "1".to_string()),
             ("user-agent".to_string(), "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.75 Safari/537.36".to_string()),
+            ("accept".to_string(), "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9".to_string()),
+            ("sec-fetch-site".to_string(), "none".to_string()),
+            ("sec-fetch-mode".to_string(), "navigate".to_string()),
+            ("sec-fetch-user".to_string(), "?1".to_string()),
+            ("sec-fetch-dest".to_string(), "document".to_string()),
+            ("accept-encoding".to_string(), "gzip, deflate, br".to_string()),
+            ("accept-language".to_string(), "en-US,en;q=0.9".to_string()),
+        ]
+    }
+}
+
+/// Chrome 101 fingerprint module
+pub mod chrome_101 {
+    use super::*;
+
+    /// Returns the complete Chrome 101 fingerprint
+    pub fn fingerprint() -> BrowserFingerprint {
+        BrowserFingerprint::new(
+            "Chrome",
+            "101",
+            chrome_100::tls_fingerprint(),
+            chrome_100::http2_fingerprint(),
+            headers(),
+        )
+    }
+
+    fn headers() -> Vec<(String, String)> {
+        vec![
+            ("sec-ch-ua".to_string(), "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"101\", \"Google Chrome\";v=\"101\"".to_string()),
+            ("sec-ch-ua-mobile".to_string(), "?0".to_string()),
+            ("sec-ch-ua-platform".to_string(), "\"Windows\"".to_string()),
+            ("upgrade-insecure-requests".to_string(), "1".to_string()),
+            ("user-agent".to_string(), "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.67 Safari/537.36".to_string()),
+            ("accept".to_string(), "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9".to_string()),
+            ("sec-fetch-site".to_string(), "none".to_string()),
+            ("sec-fetch-mode".to_string(), "navigate".to_string()),
+            ("sec-fetch-user".to_string(), "?1".to_string()),
+            ("sec-fetch-dest".to_string(), "document".to_string()),
+            ("accept-encoding".to_string(), "gzip, deflate, br".to_string()),
+            ("accept-language".to_string(), "en-US,en;q=0.9".to_string()),
+        ]
+    }
+}
+
+/// Chrome 104 fingerprint module
+pub mod chrome_104 {
+    use super::*;
+
+    /// Returns the complete Chrome 104 fingerprint
+    pub fn fingerprint() -> BrowserFingerprint {
+        BrowserFingerprint::new(
+            "Chrome",
+            "104",
+            chrome_100::tls_fingerprint(),
+            chrome_100::http2_fingerprint(),
+            headers(),
+        )
+    }
+
+    fn headers() -> Vec<(String, String)> {
+        vec![
+            ("sec-ch-ua".to_string(), "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"104\", \"Google Chrome\";v=\"104\"".to_string()),
+            ("sec-ch-ua-mobile".to_string(), "?0".to_string()),
+            ("sec-ch-ua-platform".to_string(), "\"Windows\"".to_string()),
+            ("upgrade-insecure-requests".to_string(), "1".to_string()),
+            ("user-agent".to_string(), "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36".to_string()),
+            ("accept".to_string(), "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9".to_string()),
+            ("sec-fetch-site".to_string(), "none".to_string()),
+            ("sec-fetch-mode".to_string(), "navigate".to_string()),
+            ("sec-fetch-user".to_string(), "?1".to_string()),
+            ("sec-fetch-dest".to_string(), "document".to_string()),
+            ("accept-encoding".to_string(), "gzip, deflate, br".to_string()),
+            ("accept-language".to_string(), "en-US,en;q=0.9".to_string()),
+        ]
+    }
+}
+
+/// Chrome 107 fingerprint module
+pub mod chrome_107 {
+    use super::*;
+
+    /// Returns the complete Chrome 107 fingerprint
+    pub fn fingerprint() -> BrowserFingerprint {
+        BrowserFingerprint::new(
+            "Chrome",
+            "107",
+            chrome_100::tls_fingerprint(),
+            chrome_100::http2_fingerprint(), // TODO Chrome 107 uses different HTTP/2 settings
+            headers(),
+        )
+    }
+
+    fn headers() -> Vec<(String, String)> {
+        vec![
+            ("sec-ch-ua".to_string(), "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"107\", \"Google Chrome\";v=\"107\"".to_string()),
+            ("sec-ch-ua-mobile".to_string(), "?0".to_string()),
+            ("sec-ch-ua-platform".to_string(), "\"Windows\"".to_string()),
+            ("upgrade-insecure-requests".to_string(), "1".to_string()),
+            ("user-agent".to_string(), "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36".to_string()),
+            ("accept".to_string(), "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9".to_string()),
+            ("sec-fetch-site".to_string(), "none".to_string()),
+            ("sec-fetch-mode".to_string(), "navigate".to_string()),
+            ("sec-fetch-user".to_string(), "?1".to_string()),
+            ("sec-fetch-dest".to_string(), "document".to_string()),
+            ("accept-encoding".to_string(), "gzip, deflate, br".to_string()),
+            ("accept-language".to_string(), "en-US,en;q=0.9".to_string()),
+        ]
+    }
+}
+
+/// Chrome 110 fingerprint module
+pub mod chrome_110 {
+    use super::*;
+
+    /// Returns the complete Chrome 110 fingerprint
+    pub fn fingerprint() -> BrowserFingerprint {
+        BrowserFingerprint::new(
+            "Chrome",
+            "110",
+            chrome_100::tls_fingerprint(),
+            chrome_100::http2_fingerprint(), // TODO Chrome 110 uses different HTTP/2 settings
+            headers(),
+        )
+    }
+
+    fn headers() -> Vec<(String, String)> {
+        vec![
+            ("sec-ch-ua".to_string(), "\"Chromium\";v=\"110\", \"Not A(Brand\";v=\"24\", \"Google Chrome\";v=\"110\"".to_string()),
+            ("sec-ch-ua-mobile".to_string(), "?0".to_string()),
+            ("sec-ch-ua-platform".to_string(), "\"Windows\"".to_string()),
+            ("upgrade-insecure-requests".to_string(), "1".to_string()),
+            ("user-agent".to_string(), "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36".to_string()),
+            ("accept".to_string(), "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9".to_string()),
+            ("sec-fetch-site".to_string(), "none".to_string()),
+            ("sec-fetch-mode".to_string(), "navigate".to_string()),
+            ("sec-fetch-user".to_string(), "?1".to_string()),
+            ("sec-fetch-dest".to_string(), "document".to_string()),
+            ("accept-encoding".to_string(), "gzip, deflate, br".to_string()),
+            ("accept-language".to_string(), "en-US,en;q=0.9".to_string()),
+        ]
+    }
+}
+
+/// Chrome 116 fingerprint module
+pub mod chrome_116 {
+    use super::*;
+
+    /// Returns the complete Chrome 116 fingerprint
+    pub fn fingerprint() -> BrowserFingerprint {
+        BrowserFingerprint::new(
+            "Chrome",
+            "116",
+            chrome_100::tls_fingerprint(),
+            chrome_100::http2_fingerprint(), // TODO Chrome 116 uses different HTTP/2 settings
+            headers(),
+        )
+    }
+
+    fn headers() -> Vec<(String, String)> {
+        vec![
+            ("sec-ch-ua".to_string(), "\"Chromium\";v=\"116\", \"Not)A;Brand\";v=\"24\", \"Google Chrome\";v=\"116\"".to_string()),
+            ("sec-ch-ua-mobile".to_string(), "?0".to_string()),
+            ("sec-ch-ua-platform".to_string(), "\"Windows\"".to_string()),
+            ("upgrade-insecure-requests".to_string(), "1".to_string()),
+            ("user-agent".to_string(), "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36".to_string()),
             ("accept".to_string(), "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9".to_string()),
             ("sec-fetch-site".to_string(), "none".to_string()),
             ("sec-fetch-mode".to_string(), "navigate".to_string()),
