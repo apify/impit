@@ -60,7 +60,7 @@ pub enum RedirectBehavior {
 /// # #[tokio::main]
 /// # async fn main() {
 /// let impit = Impit::<Jar>::builder()
-///   .with_fingerprint(fingerprints::firefox_128::fingerprint())
+///   .with_fingerprint(fingerprints::firefox_144::fingerprint())
 ///   .with_ignore_tls_errors(true)
 ///   .with_proxy("http://localhost:8080".to_string())
 ///   .with_default_timeout(Duration::from_secs(10))

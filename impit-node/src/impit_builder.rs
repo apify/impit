@@ -15,7 +15,17 @@ use crate::cookies::NodeCookieJar;
 #[napi(string_enum = "lowercase")]
 pub enum Browser {
   Chrome,
+  Chrome124,
+  Chrome125,
+  Chrome131,
+  Chrome136,
+  Chrome142,
   Firefox,
+  Firefox133,
+  Firefox135,
+  Firefox144,
+  Safari,
+  Safari180,
 }
 
 /// Options for configuring an {@link Impit} instance.
@@ -90,8 +100,21 @@ pub struct ImpitOptions<'a> {
 impl From<Browser> for BrowserFingerprint {
   fn from(val: Browser) -> Self {
     match val {
-      Browser::Chrome => impit::fingerprint::database::chrome_125::fingerprint(),
-      Browser::Firefox => impit::fingerprint::database::firefox_128::fingerprint(),
+      Browser::Chrome | Browser::Chrome124 => {
+        impit::fingerprint::database::chrome_124::fingerprint()
+      }
+      Browser::Chrome125 => impit::fingerprint::database::chrome_125::fingerprint(),
+      Browser::Chrome131 => impit::fingerprint::database::chrome_131::fingerprint(),
+      Browser::Chrome136 => impit::fingerprint::database::chrome_136::fingerprint(),
+      Browser::Chrome142 => impit::fingerprint::database::chrome_142::fingerprint(),
+      Browser::Firefox | Browser::Firefox133 => {
+        impit::fingerprint::database::firefox_133::fingerprint()
+      }
+      Browser::Firefox135 => impit::fingerprint::database::firefox_135::fingerprint(),
+      Browser::Firefox144 => impit::fingerprint::database::firefox_144::fingerprint(),
+      Browser::Safari | Browser::Safari180 => {
+        impit::fingerprint::database::safari_18_0::fingerprint()
+      }
     }
   }
 }

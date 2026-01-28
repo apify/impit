@@ -58,7 +58,7 @@ impl Client {
                 "chrome" => builder
                     .with_fingerprint(impit::fingerprint::database::chrome_125::fingerprint()),
                 "firefox" => builder
-                    .with_fingerprint(impit::fingerprint::database::firefox_128::fingerprint()),
+                    .with_fingerprint(impit::fingerprint::database::firefox_144::fingerprint()),
                 _ => panic!("Unsupported browser"),
             },
             None => builder,
