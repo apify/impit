@@ -80,7 +80,9 @@ impl AsyncClient {
                     .with_fingerprint(impit::fingerprint::database::chrome_136::fingerprint()),
                 "chrome142" => builder
                     .with_fingerprint(impit::fingerprint::database::chrome_142::fingerprint()),
-                "firefox133" | "firefox" => builder
+                "firefox128" | "firefox" => builder
+                    .with_fingerprint(impit::fingerprint::database::firefox_128::fingerprint()),
+                "firefox133" => builder
                     .with_fingerprint(impit::fingerprint::database::firefox_133::fingerprint()),
                 "firefox135" => builder
                     .with_fingerprint(impit::fingerprint::database::firefox_135::fingerprint()),
