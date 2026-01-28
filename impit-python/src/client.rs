@@ -55,7 +55,7 @@ impl Client {
 
         let builder = match browser {
             Some(browser) => match browser.to_lowercase().as_str() {
-                "chrome" | "chrome124" => builder
+                "chrome" | "chrome125" => builder
                     .with_fingerprint(impit::fingerprint::database::chrome_125::fingerprint()),
                 "chrome100" => builder
                     .with_fingerprint(impit::fingerprint::database::chrome_100::fingerprint()),
@@ -69,15 +69,15 @@ impl Client {
                     .with_fingerprint(impit::fingerprint::database::chrome_110::fingerprint()),
                 "chrome116" => builder
                     .with_fingerprint(impit::fingerprint::database::chrome_116::fingerprint()),
-                "chrome125" => builder
-                    .with_fingerprint(impit::fingerprint::database::chrome_125::fingerprint()),
                 "chrome131" => builder
                     .with_fingerprint(impit::fingerprint::database::chrome_131::fingerprint()),
                 "chrome136" => builder
                     .with_fingerprint(impit::fingerprint::database::chrome_136::fingerprint()),
                 "chrome142" => builder
                     .with_fingerprint(impit::fingerprint::database::chrome_142::fingerprint()),
-                "firefox133" | "firefox" => builder
+                "firefox128" | "firefox" => builder
+                    .with_fingerprint(impit::fingerprint::database::firefox_128::fingerprint()),
+                "firefox133" => builder
                     .with_fingerprint(impit::fingerprint::database::firefox_133::fingerprint()),
                 "firefox135" => builder
                     .with_fingerprint(impit::fingerprint::database::firefox_135::fingerprint()),

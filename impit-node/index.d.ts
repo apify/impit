@@ -218,6 +218,7 @@ export type Browser =  'chrome'|
 'chrome136'|
 'chrome142'|
 'firefox'|
+'firefox128'|
 'firefox133'|
 'firefox135'|
 'firefox144';

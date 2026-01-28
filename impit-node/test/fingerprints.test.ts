@@ -4,7 +4,7 @@ import { Impit, Browser } from '../index.wrapper.js';
 
 describe.each([
     [Browser.Chrome, "t13d1516h2_8daaf6152771_02713d6af862"],
-    [Browser.Firefox, "t13d1716h2_5b57614c22b0_eeeea6562960"],
+    [Browser.Firefox, "t13d1715h2_5b57614c22b0_5c2c66f702b0"],
 ])(`Browser emulation [%s]`, (browser, ja4) => {
 
     test(`[${browser}] emulates JA4 fingerprint`, async () => {
