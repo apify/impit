@@ -7,8 +7,7 @@ from collections.abc import Iterator, AsyncIterator
 from contextlib import AbstractAsyncContextManager, AbstractContextManager
 
 
-Browser = Literal['chrome', 'firefox']
-
+Browser = Literal['chrome', 'firefox', 'chrome125', 'chrome100', 'chrome101', 'chrome104', 'chrome107', 'chrome110', 'chrome116', 'chrome131', 'chrome136', 'chrome142', 'firefox128', 'firefox133', 'firefox135', 'firefox144']
 
 class HTTPError(Exception):
     """Represents an HTTP-related error."""
