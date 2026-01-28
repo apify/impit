@@ -11,7 +11,7 @@ use impit::{impit::Impit, fingerprint::database as fingerprints};
 #[tokio::main]
 async fn main() {
     let impit = Impit::<Jar>::builder()
-        .with_fingerprint(fingerprints::firefox_128::fingerprint())
+        .with_fingerprint(fingerprints::firefox_144::fingerprint())
         .with_http3()
         .build()
         .unwrap();

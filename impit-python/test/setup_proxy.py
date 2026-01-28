@@ -9,7 +9,7 @@ import pproxy
 def start_proxy_server(port: int = 3002) -> typing.Callable[[], None]:
     def run_proxy_server(stop_event: threading.Event) -> None:
         server = pproxy.Server(f'http://0.0.0.0:{port}')
-        args = dict(rserver=[], verbose=print)
+        args = {'rserver': [], 'verbose': print}
 
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)

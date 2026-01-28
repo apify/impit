@@ -97,7 +97,7 @@ async fn main() {
             client.with_fingerprint(impit::fingerprint::database::chrome_125::fingerprint())
         }
         Browser::Firefox => {
-            client.with_fingerprint(impit::fingerprint::database::firefox_128::fingerprint())
+            client.with_fingerprint(impit::fingerprint::database::firefox_144::fingerprint())
         }
         Browser::Impit => client,
     };

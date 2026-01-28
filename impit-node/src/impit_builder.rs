@@ -15,7 +15,22 @@ use crate::cookies::NodeCookieJar;
 #[napi(string_enum = "lowercase")]
 pub enum Browser {
   Chrome,
+  Chrome100,
+  Chrome101,
+  Chrome104,
+  Chrome107,
+  Chrome110,
+  Chrome116,
+  Chrome124,
+  Chrome125,
+  Chrome131,
+  Chrome136,
+  Chrome142,
   Firefox,
+  Firefox128,
+  Firefox133,
+  Firefox135,
+  Firefox144,
 }
 
 /// Options for configuring an {@link Impit} instance.
@@ -90,8 +105,25 @@ pub struct ImpitOptions<'a> {
 impl From<Browser> for BrowserFingerprint {
   fn from(val: Browser) -> Self {
     match val {
-      Browser::Chrome => impit::fingerprint::database::chrome_125::fingerprint(),
-      Browser::Firefox => impit::fingerprint::database::firefox_128::fingerprint(),
+      Browser::Chrome | Browser::Chrome124 => {
+        impit::fingerprint::database::chrome_124::fingerprint()
+      }
+      Browser::Chrome100 => impit::fingerprint::database::chrome_100::fingerprint(),
+      Browser::Chrome101 => impit::fingerprint::database::chrome_101::fingerprint(),
+      Browser::Chrome104 => impit::fingerprint::database::chrome_104::fingerprint(),
+      Browser::Chrome107 => impit::fingerprint::database::chrome_107::fingerprint(),
+      Browser::Chrome110 => impit::fingerprint::database::chrome_110::fingerprint(),
+      Browser::Chrome116 => impit::fingerprint::database::chrome_116::fingerprint(),
+      Browser::Chrome125 => impit::fingerprint::database::chrome_125::fingerprint(),
+      Browser::Chrome131 => impit::fingerprint::database::chrome_131::fingerprint(),
+      Browser::Chrome136 => impit::fingerprint::database::chrome_136::fingerprint(),
+      Browser::Chrome142 => impit::fingerprint::database::chrome_142::fingerprint(),
+      Browser::Firefox | Browser::Firefox128 => {
+        impit::fingerprint::database::firefox_128::fingerprint()
+      }
+      Browser::Firefox133 => impit::fingerprint::database::firefox_133::fingerprint(),
+      Browser::Firefox135 => impit::fingerprint::database::firefox_135::fingerprint(),
+      Browser::Firefox144 => impit::fingerprint::database::firefox_144::fingerprint(),
     }
   }
 }
