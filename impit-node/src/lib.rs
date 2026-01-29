@@ -5,7 +5,7 @@ use impit::{
   impit::{Impit, ImpitBuilder},
   request::RequestOptions,
 };
-use napi::Env;
+use napi::{bindgen_prelude::ObjectFinalize, Env};
 use napi_derive::napi;
 
 mod abortable_stream;
@@ -37,9 +37,16 @@ use request::{HttpMethod, RequestInit};
 ///
 /// Note that all the requests made by this instance will share the same configuration,
 /// resources (e.g. cookie jar and connection pool), and other settings.
-#[napi(js_name = "Impit")]
+#[napi(js_name = "Impit", custom_finalize)]
 pub struct ImpitWrapper {
   inner: Impit<cookies::NodeCookieJar>,
+}
+
+impl ObjectFinalize for ImpitWrapper {
+  fn finalize(self, env: Env) -> napi::Result<()> {
+    env.adjust_external_memory(-500 * 1024)?;
+    Ok(())
+  }
 }
 
 #[napi]
@@ -65,6 +72,8 @@ impl ImpitWrapper {
   pub fn new(env: &Env, options: Option<ImpitOptions>) -> Result<Self, napi::Error> {
     let config: Result<ImpitBuilder<cookies::NodeCookieJar>, napi::Error> =
       options.unwrap_or_default().into_builder(env);
+
+    let _ = env.adjust_external_memory(500 * 1024);
 
     // `quinn` for h3 requires existing async runtime.
     // This runs the `config.build` function in the napi-managed tokio runtime which remains available
