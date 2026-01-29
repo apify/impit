@@ -125,7 +125,7 @@ impl TlsConfigBuilder {
         let max_http_version = self.max_http_version;
 
         let (fingerprint, cache_browser) = if let Some(fp) = self.tls_fingerprint {
-            (Some(fp), None)
+            (Some(fp.clone()), Some(fp))
         } else {
             (None, None)
         };
