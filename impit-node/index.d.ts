@@ -206,7 +206,22 @@ export declare class ImpitResponse {
  * See {@link ImpitOptions.browser} for more details and usage.
  */
 export type Browser =  'chrome'|
-'firefox';
+'chrome100'|
+'chrome101'|
+'chrome104'|
+'chrome107'|
+'chrome110'|
+'chrome116'|
+'chrome124'|
+'chrome125'|
+'chrome131'|
+'chrome136'|
+'chrome142'|
+'firefox'|
+'firefox128'|
+'firefox133'|
+'firefox135'|
+'firefox144';
 
 export type HttpMethod =  'GET'|
 'POST'|

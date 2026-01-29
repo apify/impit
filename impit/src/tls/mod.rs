@@ -6,7 +6,7 @@ use std::sync::{Arc, Mutex, OnceLock};
 use crate::fingerprint::TlsFingerprint;
 use reqwest::Version;
 use rustls::client::danger::NoVerifier;
-use rustls::client::EchGreaseConfig;
+use rustls::client::{EchGreaseConfig, Resumption, Tls12Resumption};
 use rustls::crypto::CryptoProvider;
 use rustls_platform_verifier::Verifier;
 
@@ -134,6 +134,8 @@ impl TlsConfigBuilder {
             let rustls_fingerprint = fp.to_rustls_fingerprint();
 
             let alpn_protocols = fp.alpn_protocols.to_vec();
+            let enable_session_ticket = fp.extensions.session_ticket;
+            let ech_enabled = fp.ech_config.is_some();
 
             let (crypto_provider_arc, verifier) = if let Some(b) = cache_browser {
                 get_or_create_browser_provider_and_verifier(b)
@@ -154,16 +156,33 @@ impl TlsConfigBuilder {
                 (provider, verifier)
             };
 
-            let mut config: rustls::ClientConfig =
+            // Only enable ECH if the fingerprint requests it
+            let mut config: rustls::ClientConfig = if ech_enabled {
                 rustls::ClientConfig::builder_with_provider(crypto_provider_arc)
                     .with_ech(get_ech_mode())
                     .unwrap()
                     .dangerous()
                     .with_custom_certificate_verifier(verifier)
                     .with_tls_fingerprint(rustls_fingerprint)
-                    .with_no_client_auth();
+                    .with_no_client_auth()
+            } else {
+                rustls::ClientConfig::builder_with_provider(crypto_provider_arc)
+                    .with_safe_default_protocol_versions()
+                    .unwrap()
+                    .dangerous()
+                    .with_custom_certificate_verifier(verifier)
+                    .with_tls_fingerprint(rustls_fingerprint)
+                    .with_no_client_auth()
+            };
 
             config.alpn_protocols = alpn_protocols;
+
+            // Configure session resumption based on fingerprint
+            if !enable_session_ticket {
+                // Disable session tickets but keep session ID resumption
+                config.resumption = Resumption::in_memory_sessions(256)
+                    .tls12_resumption(Tls12Resumption::SessionIdOnly);
+            }
 
             if ignore_tls_errors {
                 config

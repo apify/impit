@@ -86,9 +86,16 @@ pub struct TlsExtensions {
     pub supported_versions: bool,
     pub compress_certificate: Option<Vec<CertificateCompressionAlgorithm>>,
     pub application_settings: bool,
+    /// Use new ALPS codepoint (17613) instead of old (17513). Chrome 136+ uses new codepoint.
+    pub use_new_alps_codepoint: bool,
     pub delegated_credentials: bool,
     pub record_size_limit: Option<u16>,
     pub extension_order: Vec<ExtensionType>,
+    /// Whether to enable session tickets (TLS 1.2). Defaults to true.
+    /// Set to false for browsers like Safari 18.0 that don't send session_ticket extension.
+    pub session_ticket: bool,
+    /// Whether to send padding extension (RFC7685).
+    pub padding: bool,
 }
 
 impl TlsExtensions {
@@ -122,10 +129,28 @@ impl TlsExtensions {
             supported_versions,
             compress_certificate,
             application_settings,
+            use_new_alps_codepoint: false,
             delegated_credentials,
             record_size_limit,
             extension_order,
+            session_ticket: true,
+            padding: false,
         }
+    }
+
+    pub fn with_session_ticket(mut self, enabled: bool) -> Self {
+        self.session_ticket = enabled;
+        self
+    }
+
+    pub fn with_new_alps_codepoint(mut self, use_new: bool) -> Self {
+        self.use_new_alps_codepoint = use_new;
+        self
+    }
+
+    pub fn with_padding(mut self, enabled: bool) -> Self {
+        self.padding = enabled;
+        self
     }
 }
 
@@ -236,6 +261,7 @@ impl TlsFingerprint {
             .iter()
             .map(|kg| match kg {
                 KeyExchangeGroup::X25519 => FingerprintKeyExchangeGroup::X25519,
+                KeyExchangeGroup::X25519MLKEM768 => FingerprintKeyExchangeGroup::X25519MLKEM768,
                 KeyExchangeGroup::Secp256r1 => FingerprintKeyExchangeGroup::Secp256r1,
                 KeyExchangeGroup::Secp384r1 => FingerprintKeyExchangeGroup::Secp384r1,
                 KeyExchangeGroup::Secp521r1 => FingerprintKeyExchangeGroup::Secp521r1,
@@ -293,9 +319,11 @@ impl TlsFingerprint {
             grease: has_grease,
             signed_certificate_timestamp: self.extensions.signed_certificate_timestamp,
             application_settings: self.extensions.application_settings,
+            use_new_alps_codepoint: self.extensions.use_new_alps_codepoint,
             delegated_credentials: self.extensions.delegated_credentials,
             record_size_limit: self.extensions.record_size_limit,
             renegotiation_info: true, // Common for both browsers
+            padding: self.extensions.padding,
         };
 
         let cert_compression = self.extensions.compress_certificate.clone().map(|algos| {
