@@ -4,7 +4,7 @@ use impit::utils::{decode, ContentType};
 use napi::bindgen_prelude::JsObjectValue;
 use napi::{
   bindgen_prelude::{
-    Buffer, FromNapiValue, Function, Object, ReadableStream, Result, This, ToNapiValue,
+    BufferSlice, FromNapiValue, Function, Object, ReadableStream, Result, This, ToNapiValue,
   },
   sys, Env, JsValue, Unknown,
 };
@@ -178,14 +178,14 @@ impl<'env> ImpitResponse {
 
   /// @ignore
   #[napi(ts_return_type = "string")]
-  pub fn decode_buffer(&self, buffer: Buffer) -> Result<String> {
+  pub fn decode_buffer(&self, buffer: BufferSlice) -> Result<String> {
     let encoding = self
       .headers
       .get("content-type")
       .and_then(|content_type| ContentType::from(content_type).ok());
 
     let string = decode(
-      buffer.to_vec().as_slice(),
+      &buffer,
       match encoding {
         Some(encoding) => encoding.into(),
         None => None,
