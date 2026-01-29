@@ -3,6 +3,37 @@
 All notable changes to this project will be documented in this file.
 
 
+## js-0.9.0 - 2026-01-29
+
+#### Bug Fixes
+
+- Prevent double free on `Buffer` by passing a `BufferSlice` (#369)
+  - As a non-async function, `decode_buffer` doesn't require owning the `Buffer` and can do with only a `BufferSlice`. This takes the cleanup responsibility from `napi-rs` and should prevent the double free scenarios, as the `Buffer` is now Node runtime-managed.
+
+
+- Use the `rustls` `Verifier` / `CryptoProvider` cache with custom fingerprints (#371)
+  - Speeds up repeated client instantiation and lowers the memory footprint if the custom fingerprints are used.  Related to #370
+
+
+- Call `adjust_external_memory` on `Impit` instantiation (#372)
+  - Large wrapped objects should `adjust_external_memory` to guide the native GC scheduler ([docs](https://nodejs.org/download/release/v8.9.4/docs/api/n-api.html#n_api_napi_adjust_external_memory)).  The size of 500kB is eyeballed (experiments show values around ~120kB), so this should give us enough leeway for the future.
+
+
+#### Features
+
+- Use rustls-platform-verifier for system CA support (#357)
+  - Replaces the static `webpki-roots` dependency with `rustls-platform-verifier` to enable `impit` to rely on the operating system's trust store.  ---------
+
+
+- Custom fingerprint support (#366)
+  - Extracts all fingerprinting logic (from e.g. the `rustls` patch) to `impit`. Prepares the codebase for new, non-hardcoded browser fingerprints.  Related to #99
+
+
+- Add more Chrome and Firefox fingerprints (#367)
+  - Adds more browser fingerprints and passes these to the Node.JS and Python bindings.
+
+
+
 ## js-0.8.2 - 2026-01-12
 
 #### Bug Fixes
