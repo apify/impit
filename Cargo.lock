@@ -1535,6 +1535,7 @@ name = "impit-node"
 version = "0.0.0"
 dependencies = [
  "bytes",
+ "futures",
  "h2",
  "impit",
  "napi",

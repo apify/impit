@@ -81,16 +81,23 @@ async function parseFetchOptions(resource, init) {
 }
 
 class Impit extends native.Impit {
+    // prevent GC of the cookie jar wrapper - prevents use-after-free in native code
+    #cookieJarWrapper;
+
     constructor(options) {
         const jsCookieJar = options?.cookieJar;
+        const cookieJarWrapper = jsCookieJar ? {
+            setCookie: async (args) => jsCookieJar.setCookie?.bind?.(jsCookieJar)(...args),
+            getCookieString: async (args) => jsCookieJar.getCookieString?.bind?.(jsCookieJar)(args),
+        } : undefined;
+
         super({
             ...options,
-            cookieJar: jsCookieJar ? {
-                setCookie: async (args) => jsCookieJar.setCookie?.bind?.(jsCookieJar)(...args),
-                getCookieString: async (args) => jsCookieJar.getCookieString?.bind?.(jsCookieJar)(args),
-            } : undefined,
+            cookieJar: cookieJarWrapper,
             headers: canonicalizeHeaders(options?.headers),
         });
+
+        this.#cookieJarWrapper = cookieJarWrapper;
     }
 
     async fetch(resource, init) {
