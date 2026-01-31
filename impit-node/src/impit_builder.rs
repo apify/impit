@@ -1,13 +1,10 @@
 use std::time::Duration;
 
-use impit::{
-  fingerprint::BrowserFingerprint,
-  impit::{ImpitBuilder, RedirectBehavior},
-};
+use impit::{fingerprint::BrowserFingerprint, impit::ImpitBuilder};
 use napi::bindgen_prelude::Object;
 use napi_derive::napi;
 
-use crate::cookies::NoCookieStore;
+use crate::cookies::NodeCookieJar;
 
 /// Supported browsers for emulation.
 ///
@@ -128,21 +125,9 @@ impl From<Browser> for BrowserFingerprint {
   }
 }
 
-/// Result of building Impit configuration from options.
-pub struct ImpitBuildResult {
-  pub builder: ImpitBuilder<NoCookieStore>,
-  /// Whether JavaScript handles cookies (true when cookieJar was provided).
-  /// When true, redirects are handled in JS to allow cookie interop between hops.
-  pub js_handles_cookies: bool,
-  /// Maximum number of redirects to follow (when js_handles_cookies is true).
-  pub max_redirects: usize,
-  /// Whether to follow redirects (user preference, before JS cookie handling override).
-  pub follow_redirects: bool,
-}
-
 impl ImpitOptions<'_> {
-  pub fn into_builder(self) -> Result<ImpitBuildResult, napi::Error> {
-    let mut config: ImpitBuilder<NoCookieStore> = ImpitBuilder::default();
+  pub fn into_builder(self) -> Result<ImpitBuilder<NodeCookieJar>, napi::Error> {
+    let mut config: ImpitBuilder<NodeCookieJar> = ImpitBuilder::default();
 
     if let Some(browser) = self.browser {
       config = config.with_fingerprint(browser.into());
@@ -168,36 +153,12 @@ impl ImpitOptions<'_> {
       config = config.with_headers(headers);
     }
 
-    let js_handles_cookies = self.cookie_jar.is_some();
-    let follow_redirects: bool = self.follow_redirects.unwrap_or(true);
-    let max_redirects: usize = self.max_redirects.unwrap_or(10).try_into().unwrap();
-
-    // When JS handles cookies, we use ManualRedirect so that JS can handle
-    // cookie interop between redirect hops. Otherwise, let reqwest handle redirects.
-    if js_handles_cookies || !follow_redirects {
-      config = config.with_redirect(RedirectBehavior::ManualRedirect);
-    } else {
-      config = config.with_redirect(RedirectBehavior::FollowRedirect(max_redirects));
-    }
-
-    // When JS handles cookies, we use a no-op cookie store.
-    // Cookies are passed as headers from JS, and Set-Cookie headers are
-    // returned to JS for processing.
-    if js_handles_cookies {
-      config = config.with_cookie_store(NoCookieStore);
-    }
-
     if let Some(local_address) = self.local_address {
       config = config
         .with_local_address(local_address)
         .map_err(|e| napi::Error::from_reason(e.to_string()))?;
     }
 
-    Ok(ImpitBuildResult {
-      builder: config,
-      js_handles_cookies,
-      max_redirects,
-      follow_redirects,
-    })
+    Ok(config)
   }
 }

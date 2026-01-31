@@ -37,8 +37,6 @@ export async function runServer(port: number): Promise<Server> {
         }, delay);
     });
 
-    // Cookie routes for testing
-    // Returns cookies received in request
     app.get('/cookies', (req, res) => {
         const cookies: Record<string, string> = {};
         const cookieHeader = req.headers.cookie;
@@ -51,7 +49,6 @@ export async function runServer(port: number): Promise<Server> {
         res.json({ cookies });
     });
 
-    // Sets cookies and redirects
     app.get('/cookies/set', (req, res) => {
         for (const [name, value] of Object.entries(req.query)) {
             res.cookie(name, value as string, { path: '/' });
@@ -59,7 +56,6 @@ export async function runServer(port: number): Promise<Server> {
         res.redirect(302, '/cookies');
     });
 
-    // Sets cookies with specific redirect status
     app.get('/cookies/set/:status', (req, res) => {
         const status = parseInt(req.params.status, 10);
         for (const [name, value] of Object.entries(req.query)) {
@@ -68,7 +64,6 @@ export async function runServer(port: number): Promise<Server> {
         res.redirect(status, '/cookies');
     });
 
-    // Sets a cookie and returns without redirect
     app.get('/cookies/set-no-redirect', (req, res) => {
         for (const [name, value] of Object.entries(req.query)) {
             res.cookie(name, value as string, { path: '/' });
@@ -76,7 +71,6 @@ export async function runServer(port: number): Promise<Server> {
         res.json({ status: 'cookies set' });
     });
 
-    // Multi-hop redirect with cookies at each step
     app.get('/cookies/chain/:hops', (req, res) => {
         const hops = parseInt(req.params.hops, 10);
         const hop = parseInt(req.query.hop as string || '1', 10);
@@ -88,7 +82,6 @@ export async function runServer(port: number): Promise<Server> {
         }
     });
 
-    // Clears a specific cookie
     app.get('/cookies/delete', (req, res) => {
         for (const name of Object.keys(req.query)) {
             res.clearCookie(name);
@@ -96,7 +89,7 @@ export async function runServer(port: number): Promise<Server> {
         res.redirect(302, '/cookies');
     });
 
-    return new Promise((res,rej) => {
+    return new Promise((res, rej) => {
         const server = app.listen(port, (err) => {
             if (err) {
                 rej(err);
@@ -108,7 +101,7 @@ export async function runServer(port: number): Promise<Server> {
 }
 
 export async function runProxyServer(port: number): Promise<ProxyServer> {
-    const server = new ProxyServer({port});
+    const server = new ProxyServer({ port });
     return new Promise((res, rej) => {
         server.listen(() => {
             res(server);

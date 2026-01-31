@@ -9,10 +9,9 @@ mod cookies;
 mod impit_builder;
 mod request;
 mod response;
-mod utils;
 
 use self::response::ImpitResponse;
-use cookies::NoCookieStore;
+use cookies::NodeCookieJar;
 use impit_builder::ImpitOptions;
 use request::{HttpMethod, RequestInit};
 
@@ -36,13 +35,7 @@ use request::{HttpMethod, RequestInit};
 /// resources (e.g. cookie jar and connection pool), and other settings.
 #[napi(js_name = "Impit", custom_finalize)]
 pub struct ImpitWrapper {
-  inner: Impit<NoCookieStore>,
-  /// Whether JavaScript handles cookies (true when cookieJar was provided).
-  js_handles_cookies: bool,
-  /// Maximum number of redirects to follow.
-  max_redirects: usize,
-  /// Whether to follow redirects (user preference).
-  follow_redirects: bool,
+  inner: Impit<NodeCookieJar>,
 }
 
 impl ObjectFinalize for ImpitWrapper {
@@ -73,7 +66,7 @@ impl ImpitWrapper {
   /// ```
   #[napi(constructor)]
   pub fn new(env: &Env, options: Option<ImpitOptions>) -> Result<Self, napi::Error> {
-    let build_result = options.unwrap_or_default().into_builder()?;
+    let config = options.unwrap_or_default().into_builder()?;
 
     let _ = env.adjust_external_memory(500 * 1024);
 
@@ -82,37 +75,14 @@ impl ImpitWrapper {
     // throughout the lifetime of the `ImpitWrapper` instance.
     napi::bindgen_prelude::block_on(async {
       Ok(Self {
-        inner: build_result.builder.build().map_err(|e| {
+        inner: config.build().map_err(|e| {
           napi::Error::new(
             napi::Status::GenericFailure,
             format!("Failed to build Impit instance: {e}"),
           )
         })?,
-        js_handles_cookies: build_result.js_handles_cookies,
-        max_redirects: build_result.max_redirects,
-        follow_redirects: build_result.follow_redirects,
       })
     })
-  }
-
-  /// Returns whether JavaScript handles cookies for this instance.
-  /// When true, the JS wrapper should handle redirects manually to enable
-  /// cookie interop between redirect hops.
-  #[napi(getter)]
-  pub fn js_handles_cookies(&self) -> bool {
-    self.js_handles_cookies
-  }
-
-  /// Returns the maximum number of redirects to follow.
-  #[napi(getter)]
-  pub fn max_redirects(&self) -> u32 {
-    self.max_redirects as u32
-  }
-
-  /// Returns whether to follow redirects (user preference).
-  #[napi(getter)]
-  pub fn follow_redirects(&self) -> bool {
-    self.follow_redirects
   }
 
   #[napi(ts_args_type = "resource: string | URL | Request, init?: RequestInit")]
