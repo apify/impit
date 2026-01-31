@@ -80,28 +80,102 @@ async function parseFetchOptions(resource, init) {
     };
 }
 
+/**
+ * Check if a status code is a redirect
+ * @param {number} status
+ * @returns {boolean}
+ */
+function isRedirectStatus(status) {
+    return status === 301 || status === 302 || status === 303 || status === 307 || status === 308;
+}
+
+/**
+ * Get the redirect method based on original method and status code.
+ * 303 always converts to GET. 301/302 convert to GET for POST requests.
+ * @param {string} method
+ * @param {number} status
+ * @returns {string}
+ */
+function getRedirectMethod(method, status) {
+    if (status === 303) {
+        return 'GET';
+    }
+    if ((status === 301 || status === 302) && method.toUpperCase() === 'POST') {
+        return 'GET';
+    }
+    return method;
+}
+
+/**
+ * Resolve a redirect URL (handles relative URLs)
+ * @param {string} baseUrl
+ * @param {string} location
+ * @returns {string}
+ */
+function resolveRedirectUrl(baseUrl, location) {
+    return new URL(location, baseUrl).toString();
+}
+
 class Impit extends native.Impit {
-    // prevent GC of the cookie jar wrapper - prevents use-after-free in native code
-    #cookieJarWrapper;
+    // prevent GC of the cookie jar - prevents use-after-free scenarios
+    #cookieJar;
 
     constructor(options) {
-        const jsCookieJar = options?.cookieJar;
-        const cookieJarWrapper = jsCookieJar ? {
-            setCookie: async (args) => jsCookieJar.setCookie?.bind?.(jsCookieJar)(...args),
-            getCookieString: async (args) => jsCookieJar.getCookieString?.bind?.(jsCookieJar)(args),
-        } : undefined;
-
+        // Pass options to native. When cookieJar is provided, pass a truthy value
+        // to signal that JS handles cookies (actual cookie ops happen in JS).
         super({
             ...options,
-            cookieJar: cookieJarWrapper,
+            cookieJar: options?.cookieJar ? {} : undefined,
             headers: canonicalizeHeaders(options?.headers),
         });
 
-        this.#cookieJarWrapper = cookieJarWrapper;
+        // Store the cookie jar for JS-side handling
+        this.#cookieJar = options?.cookieJar;
+    }
+
+    /**
+     * Get cookies from the cookie jar for a URL
+     * @param {string} url
+     * @returns {Promise<string>}
+     */
+    async #getCookies(url) {
+        if (!this.#cookieJar) return '';
+
+        try {
+            const cookies = this.#cookieJar.getCookieString?.(url);
+            // Handle both sync and async getCookieString
+            return cookies instanceof Promise ? await cookies : (cookies || '');
+        } catch {
+            return '';
+        }
+    }
+
+    /**
+     * Set cookies from Set-Cookie headers
+     * @param {Headers} headers
+     * @param {string} url
+     */
+    async #setCookies(headers, url) {
+        if (!this.#cookieJar) return;
+
+        // Get all Set-Cookie headers
+        const setCookieHeaders = headers.getSetCookie?.() || [];
+
+        for (const cookie of setCookieHeaders) {
+            try {
+                const result = this.#cookieJar.setCookie?.(cookie, url);
+                // Handle both sync and async setCookie
+                if (result instanceof Promise) {
+                    await result;
+                }
+            } catch {
+                // Ignore cookie parsing errors
+            }
+        }
     }
 
     async fetch(resource, init) {
-        const { url, signal, ...options } = await parseFetchOptions(resource, init);
+        const { url: initialUrl, signal, ...options } = await parseFetchOptions(resource, init);
 
         const waitForAbort = new Promise((_, reject) => {
             signal?.throwIfAborted();
@@ -114,13 +188,105 @@ class Impit extends native.Impit {
             );
         });
 
-        const response = super.fetch(url, options);
+        // If we have a cookie jar, handle redirects manually in JS
+        // This allows us to get/set cookies between redirect hops
+        if (this.#cookieJar && this.followRedirects) {
+            return this.#fetchWithCookieHandling(initialUrl, options, signal, waitForAbort);
+        }
+
+        // No cookie jar - use simple fetch (redirects handled by reqwest if followRedirects is true)
+        const response = super.fetch(initialUrl, options);
 
         const originalResponse = await Promise.race([
             response,
             waitForAbort
         ]);
 
+        return this.#wrapResponse(originalResponse, signal);
+    }
+
+    /**
+     * Fetch with manual redirect handling for cookie interop
+     * @param {string} initialUrl
+     * @param {object} options
+     * @param {AbortSignal} signal
+     * @param {Promise} waitForAbort
+     */
+    async #fetchWithCookieHandling(initialUrl, options, signal, waitForAbort) {
+        let url = initialUrl;
+        let method = options.method || 'GET';
+        let redirectCount = 0;
+        const maxRedirects = this.maxRedirects;
+
+        while (true) {
+            signal?.throwIfAborted();
+
+            // Build headers, checking for user-provided Cookie header
+            const headers = [...(options.headers || [])];
+            const hasUserCookie = headers.some(([k]) => k.toLowerCase() === 'cookie');
+
+            // Only add cookies from jar if user didn't provide their own Cookie header
+            if (!hasUserCookie) {
+                const cookieHeader = await this.#getCookies(url);
+                if (cookieHeader) {
+                    headers.push(['Cookie', cookieHeader]);
+                }
+            }
+
+            // Make single-hop request (redirects disabled in reqwest when jsHandlesCookies is true)
+            const response = super.fetch(url, {
+                ...options,
+                method,
+                headers,
+                // Don't send body on redirect (for GET conversions)
+                body: method === 'GET' ? undefined : options.body,
+            });
+
+            const originalResponse = await Promise.race([
+                response,
+                waitForAbort
+            ]);
+
+            // Wrap headers for easier access
+            const responseHeaders = new Headers(originalResponse.headers);
+
+            // Store cookies from response
+            await this.#setCookies(responseHeaders, url);
+
+            // Check for redirect
+            if (isRedirectStatus(originalResponse.status)) {
+                const location = responseHeaders.get('location');
+
+                if (!location) {
+                    // No location header - return the response as-is
+                    return this.#wrapResponse(originalResponse, signal);
+                }
+
+                redirectCount++;
+                if (redirectCount > maxRedirects) {
+                    throw new Error(`Maximum redirect limit (${maxRedirects}) exceeded`);
+                }
+
+                // Resolve redirect URL and update method
+                url = resolveRedirectUrl(url, location);
+                method = getRedirectMethod(method, originalResponse.status);
+
+                // Continue to next iteration (follow redirect)
+                continue;
+            }
+
+            // Not a redirect - return final response
+            return this.#wrapResponse(originalResponse, signal);
+        }
+    }
+
+    /**
+     * Wrap a native response with JS enhancements
+     * @param {object} originalResponse
+     * @param {AbortSignal} signal
+     * @returns {object}
+     */
+    #wrapResponse(originalResponse, signal) {
         signal?.throwIfAborted();
         signal?.addEventListener?.(
             "abort",
@@ -146,4 +312,3 @@ module.exports.ImpitWrapper = native.ImpitWrapper
 module.exports.ImpitResponse = native.ImpitResponse
 module.exports.Browser = native.Browser
 module.exports.HttpMethod = native.HttpMethod
-

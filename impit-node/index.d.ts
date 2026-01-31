@@ -44,6 +44,16 @@ export declare class Impit {
    */
   constructor(options?: ImpitOptions | undefined | null)
   /**
+   * Returns whether JavaScript handles cookies for this instance.
+   * When true, the JS wrapper should handle redirects manually to enable
+   * cookie interop between redirect hops.
+   */
+  get jsHandlesCookies(): boolean
+  /** Returns the maximum number of redirects to follow. */
+  get maxRedirects(): number
+  /** Returns whether to follow redirects (user preference). */
+  get followRedirects(): boolean
+  /**
    * Fetch a URL with the given options.
    *
    * This method performs an HTTP request to the specified URL using the provided options.

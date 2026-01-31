@@ -37,6 +37,65 @@ export async function runServer(port: number): Promise<Server> {
         }, delay);
     });
 
+    // Cookie routes for testing
+    // Returns cookies received in request
+    app.get('/cookies', (req, res) => {
+        const cookies: Record<string, string> = {};
+        const cookieHeader = req.headers.cookie;
+        if (cookieHeader) {
+            cookieHeader.split(';').forEach(cookie => {
+                const [name, ...rest] = cookie.trim().split('=');
+                cookies[name] = rest.join('=');
+            });
+        }
+        res.json({ cookies });
+    });
+
+    // Sets cookies and redirects
+    app.get('/cookies/set', (req, res) => {
+        for (const [name, value] of Object.entries(req.query)) {
+            res.cookie(name, value as string, { path: '/' });
+        }
+        res.redirect(302, '/cookies');
+    });
+
+    // Sets cookies with specific redirect status
+    app.get('/cookies/set/:status', (req, res) => {
+        const status = parseInt(req.params.status, 10);
+        for (const [name, value] of Object.entries(req.query)) {
+            res.cookie(name, value as string, { path: '/' });
+        }
+        res.redirect(status, '/cookies');
+    });
+
+    // Sets a cookie and returns without redirect
+    app.get('/cookies/set-no-redirect', (req, res) => {
+        for (const [name, value] of Object.entries(req.query)) {
+            res.cookie(name, value as string, { path: '/' });
+        }
+        res.json({ status: 'cookies set' });
+    });
+
+    // Multi-hop redirect with cookies at each step
+    app.get('/cookies/chain/:hops', (req, res) => {
+        const hops = parseInt(req.params.hops, 10);
+        const hop = parseInt(req.query.hop as string || '1', 10);
+        res.cookie(`hop${hop}`, `value${hop}`, { path: '/' });
+        if (hop < hops) {
+            res.redirect(302, `/cookies/chain/${hops}?hop=${hop + 1}`);
+        } else {
+            res.redirect(302, '/cookies');
+        }
+    });
+
+    // Clears a specific cookie
+    app.get('/cookies/delete', (req, res) => {
+        for (const name of Object.keys(req.query)) {
+            res.clearCookie(name);
+        }
+        res.redirect(302, '/cookies');
+    });
+
     return new Promise((res,rej) => {
         const server = app.listen(port, (err) => {
             if (err) {
