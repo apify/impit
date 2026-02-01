@@ -60,11 +60,15 @@ pub struct ImpitOptions<'a> {
   ///
   /// Supports HTTP, HTTPS, SOCKS4 and SOCKS5 proxies.
   ///
+  /// **Warning:** Not supported when HTTP/3 is enabled.
+  ///
   /// @default `undefined` (no proxy)
   pub proxy_url: Option<String>,
   /// Default timeout for this Impit instance in milliseconds.
   pub timeout: Option<u32>,
   /// Enable HTTP/3 support.
+  ///
+  /// **Warning:** Proxies are not supported when HTTP/3 is enabled.
   ///
   /// @default `false`
   pub http3: Option<bool>,
