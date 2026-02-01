@@ -1,6 +1,10 @@
 use std::time::Duration;
 
-use impit::{fingerprint::BrowserFingerprint, impit::ImpitBuilder};
+use impit::{
+  fingerprint::BrowserFingerprint,
+  impit::{ImpitBuilder, RedirectBehavior},
+};
+
 use napi::bindgen_prelude::Object;
 use napi_derive::napi;
 
@@ -152,6 +156,9 @@ impl ImpitOptions<'_> {
     if let Some(headers) = self.headers {
       config = config.with_headers(headers);
     }
+
+    // Always use ManualRedirect - redirects are handled in the JS layer
+    config = config.with_redirect(RedirectBehavior::ManualRedirect);
 
     if let Some(local_address) = self.local_address {
       config = config
