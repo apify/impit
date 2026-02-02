@@ -80,40 +80,19 @@ async function parseFetchOptions(resource, init) {
     };
 }
 
-/**
- * Check if a status code is a redirect
- * @param {number} status
- * @returns {boolean}
- */
 function isRedirectStatus(status) {
-    return status === 301 || status === 302 || status === 303 || status === 307 || status === 308;
+    return [301, 302, 303, 307, 308].includes(status);
 }
 
-/**
- * Get the redirect method based on original method and status code.
- * 303 always converts to GET. 301/302 convert to GET for POST requests.
- * @param {string} method
- * @param {number} status
- * @returns {string}
- */
-function getRedirectMethod(method, status) {
-    if (status === 303) {
-        return 'GET';
+function shouldRewriteRedirectToGet(httpStatus, method) {
+    // See https://github.com/mozilla-firefox/firefox/blob/911b3eec6c5e58a9a49e23aa105e49aa76e00f9c/netwerk/protocol/http/HttpBaseChannel.cpp#L4801
+    if ([301, 302].includes(httpStatus)) {
+        return method === 'POST';
     }
-    if ((status === 301 || status === 302) && method.toUpperCase() === 'POST') {
-        return 'GET';
-    }
-    return method;
-}
 
-/**
- * Resolve a redirect URL (handles relative URLs)
- * @param {string} baseUrl
- * @param {string} location
- * @returns {string}
- */
-function resolveRedirectUrl(baseUrl, location) {
-    return new URL(location, baseUrl).toString();
+    if (httpStatus === 303) return method !== 'HEAD';
+
+    return false;
 }
 
 class Impit extends native.Impit {
@@ -299,8 +278,8 @@ class Impit extends native.Impit {
                 }
 
                 // Resolve redirect URL and update method
-                url = resolveRedirectUrl(url, location);
-                method = getRedirectMethod(method, originalResponse.status);
+                url = new URL(location, url).toString();
+                method = shouldRewriteRedirectToGet(originalResponse.status, method) ? 'GET' : method;
 
                 // Continue to next iteration (follow redirect)
                 continue;
