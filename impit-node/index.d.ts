@@ -266,6 +266,8 @@ export interface ImpitOptions {
    *
    * Supports HTTP, HTTPS, SOCKS4 and SOCKS5 proxies.
    *
+   * **Warning:** Not supported when HTTP/3 is enabled.
+   *
    * @default `undefined` (no proxy)
    */
   proxyUrl?: string
@@ -273,6 +275,8 @@ export interface ImpitOptions {
   timeout?: number
   /**
    * Enable HTTP/3 support.
+   *
+   * **Warning:** Proxies are not supported when HTTP/3 is enabled.
    *
    * @default `false`
    */

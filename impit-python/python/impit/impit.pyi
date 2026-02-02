@@ -385,11 +385,17 @@ class Client:
                 .. note::
                     The HTTP/3 support is experimental and may not work with all servers. The impersonation capabilities are limited when using HTTP/3.
 
+                .. warning::
+                    Proxies are not supported when HTTP/3 is enabled.
+
             proxy:
 
                 The proxy URL to use for all the requests made by this client.
 
                 This can be an HTTP, HTTPS, or SOCKS proxy.
+
+                .. warning::
+                    Not supported when HTTP/3 is enabled.
             timeout:
                 Default request timeout in seconds.
 
@@ -716,11 +722,17 @@ class AsyncClient:
                 .. note::
                     The HTTP/3 support is experimental and may not work with all servers. The impersonation capabilities are limited when using HTTP/3.
 
+                .. warning::
+                    Proxies are not supported when HTTP/3 is enabled.
+
             proxy:
 
                 The proxy URL to use for all the requests made by this client.
 
                 This can be an HTTP, HTTPS, or SOCKS proxy.
+
+                .. warning::
+                    Not supported when HTTP/3 is enabled.
             timeout:
                 Default request timeout in seconds.
 
