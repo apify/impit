@@ -1,10 +1,6 @@
 use std::time::Duration;
 
-use impit::{
-  errors::ImpitError,
-  impit::{Impit, ImpitBuilder},
-  request::RequestOptions,
-};
+use impit::{errors::ImpitError, impit::Impit, request::RequestOptions};
 use napi::{bindgen_prelude::ObjectFinalize, Env};
 use napi_derive::napi;
 
@@ -13,9 +9,9 @@ mod cookies;
 mod impit_builder;
 mod request;
 mod response;
-mod utils;
 
 use self::response::ImpitResponse;
+use cookies::NodeCookieJar;
 use impit_builder::ImpitOptions;
 use request::{HttpMethod, RequestInit};
 
@@ -39,7 +35,7 @@ use request::{HttpMethod, RequestInit};
 /// resources (e.g. cookie jar and connection pool), and other settings.
 #[napi(js_name = "Impit", custom_finalize)]
 pub struct ImpitWrapper {
-  inner: Impit<cookies::NodeCookieJar>,
+  inner: Impit<NodeCookieJar>,
 }
 
 impl ObjectFinalize for ImpitWrapper {
@@ -70,8 +66,7 @@ impl ImpitWrapper {
   /// ```
   #[napi(constructor)]
   pub fn new(env: &Env, options: Option<ImpitOptions>) -> Result<Self, napi::Error> {
-    let config: Result<ImpitBuilder<cookies::NodeCookieJar>, napi::Error> =
-      options.unwrap_or_default().into_builder(env);
+    let config = options.unwrap_or_default().into_builder()?;
 
     let _ = env.adjust_external_memory(500 * 1024);
 
@@ -80,7 +75,7 @@ impl ImpitWrapper {
     // throughout the lifetime of the `ImpitWrapper` instance.
     napi::bindgen_prelude::block_on(async {
       Ok(Self {
-        inner: config?.build().map_err(|e| {
+        inner: config.build().map_err(|e| {
           napi::Error::new(
             napi::Status::GenericFailure,
             format!("Failed to build Impit instance: {e}"),

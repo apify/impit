@@ -80,24 +80,77 @@ async function parseFetchOptions(resource, init) {
     };
 }
 
+function isRedirectStatus(status) {
+    return [301, 302, 303, 307, 308].includes(status);
+}
+
+function shouldRewriteRedirectToGet(httpStatus, method) {
+    // See https://github.com/mozilla-firefox/firefox/blob/911b3eec6c5e58a9a49e23aa105e49aa76e00f9c/netwerk/protocol/http/HttpBaseChannel.cpp#L4801
+    if ([301, 302].includes(httpStatus)) {
+        return method === 'POST';
+    }
+
+    if (httpStatus === 303) return method !== 'HEAD';
+
+    return false;
+}
+
 class Impit extends native.Impit {
+    #cookieJar;
+    #followRedirects;
+    #maxRedirects;
+
     constructor(options) {
-        const jsCookieJar = options?.cookieJar;
+        // Pass options to native. When cookieJar is provided, pass a truthy value
+        // to signal that JS handles cookies (actual cookie ops happen in JS).
+        // Redirects are always handled in JS layer.
         super({
             ...options,
-            cookieJar: jsCookieJar ? {
-                setCookie: async (args) => jsCookieJar.setCookie?.bind?.(jsCookieJar)(...args),
-                getCookieString: async (args) => jsCookieJar.getCookieString?.bind?.(jsCookieJar)(args),
-            } : undefined,
             headers: canonicalizeHeaders(options?.headers),
         });
+
+        this.#cookieJar = options?.cookieJar;
+        this.#followRedirects = options?.followRedirects ?? true;
+        this.#maxRedirects = options?.maxRedirects ?? 20;
+    }
+
+    /**
+     * Get cookies from the cookie jar for a URL
+     * @param {string} url
+     * @returns {Promise<string>}
+     */
+    async #getCookies(url) {
+        try {
+            return (await this.#cookieJar?.getCookieString?.(url)) ?? '';
+        } catch {
+            return '';
+        }
+    }
+
+    /**
+     * Given response headers, set cookies in the cookie jar
+     * @param {Headers} headers
+     * @param {string} url
+     */
+    async #setCookies(headers, url) {
+        if (!this.#cookieJar) return;
+
+        for (const cookie of (headers.getSetCookie?.() ?? [])) {
+            try {
+                await this.#cookieJar.setCookie?.(cookie, url);
+            } catch {
+                // Ignore cookie parsing errors
+            }
+        }
     }
 
     async fetch(resource, init) {
-        const { url, signal, ...options } = await parseFetchOptions(resource, init);
+        const { url: initialUrl, signal, ...options } = await parseFetchOptions(resource, init);
+
+        // Check immediately if already aborted (before creating any promises)
+        signal?.throwIfAborted();
 
         const waitForAbort = new Promise((_, reject) => {
-            signal?.throwIfAborted();
             signal?.addEventListener?.(
                 "abort",
                 () => {
@@ -107,13 +160,82 @@ class Impit extends native.Impit {
             );
         });
 
-        const response = super.fetch(url, options);
+        return this.#fetchWithRedirectHandling(initialUrl, options, signal, waitForAbort);
+    }
 
-        const originalResponse = await Promise.race([
-            response,
-            waitForAbort
-        ]);
+    /**
+     * Fetch with manual redirect handling
+     * @param {string} initialUrl
+     * @param {object} options
+     * @param {AbortSignal} signal
+     * @param {Promise} waitForAbort
+     */
+    async #fetchWithRedirectHandling(initialUrl, options, signal, waitForAbort) {
+        let url = initialUrl;
+        let method = options.method || 'GET';
+        let redirectCount = 0;
+        const maxRedirects = this.#maxRedirects;
 
+        while (true) {
+            signal?.throwIfAborted();
+
+            const headers = [...(options.headers || [])];
+            const hasUserCookie = headers.some(([k]) => k.toLowerCase() === 'cookie');
+
+            if (this.#cookieJar && !hasUserCookie) {
+                const cookieHeader = await this.#getCookies(url);
+                if (cookieHeader) {
+                    headers.push(['Cookie', cookieHeader]);
+                }
+            }
+
+            const response = super.fetch(url, {
+                ...options,
+                method,
+                headers,
+                body: method === 'GET' ? undefined : options.body,
+            });
+
+            const originalResponse = await Promise.race([
+                response,
+                waitForAbort
+            ]);
+
+            const responseHeaders = new Headers(originalResponse.headers);
+
+            if (this.#cookieJar) {
+                await this.#setCookies(responseHeaders, url);
+            }
+
+            if (this.#followRedirects && isRedirectStatus(originalResponse.status)) {
+                const location = responseHeaders.get('location');
+
+                if (!location) {
+                    return this.#wrapResponse(originalResponse, signal);
+                }
+
+                redirectCount++;
+                if (redirectCount > maxRedirects) {
+                    throw new Error(`Maximum redirect limit (${maxRedirects}) exceeded`);
+                }
+
+                url = new URL(location, url).toString();
+                method = shouldRewriteRedirectToGet(originalResponse.status, method) ? 'GET' : method;
+
+                continue;
+            }
+
+            return this.#wrapResponse(originalResponse, signal);
+        }
+    }
+
+    /**
+     * Wrap a native response with JS enhancements
+     * @param {object} originalResponse
+     * @param {AbortSignal} signal
+     * @returns {object}
+     */
+    #wrapResponse(originalResponse, signal) {
         signal?.throwIfAborted();
         signal?.addEventListener?.(
             "abort",
@@ -139,4 +261,3 @@ module.exports.ImpitWrapper = native.ImpitWrapper
 module.exports.ImpitResponse = native.ImpitResponse
 module.exports.Browser = native.Browser
 module.exports.HttpMethod = native.HttpMethod
-

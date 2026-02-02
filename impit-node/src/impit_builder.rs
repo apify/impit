@@ -4,7 +4,8 @@ use impit::{
   fingerprint::BrowserFingerprint,
   impit::{ImpitBuilder, RedirectBehavior},
 };
-use napi::{bindgen_prelude::Object, Env};
+
+use napi::bindgen_prelude::Object;
 use napi_derive::napi;
 
 use crate::cookies::NodeCookieJar;
@@ -133,8 +134,9 @@ impl From<Browser> for BrowserFingerprint {
 }
 
 impl ImpitOptions<'_> {
-  pub fn into_builder(self, env: &Env) -> Result<ImpitBuilder<NodeCookieJar>, napi::Error> {
-    let mut config = ImpitBuilder::default();
+  pub fn into_builder(self) -> Result<ImpitBuilder<NodeCookieJar>, napi::Error> {
+    let mut config: ImpitBuilder<NodeCookieJar> = ImpitBuilder::default();
+
     if let Some(browser) = self.browser {
       config = config.with_fingerprint(browser.into());
     }
@@ -155,26 +157,12 @@ impl ImpitOptions<'_> {
         config = config.with_http3();
       }
     }
-    if let Some(cookie_jar) = self.cookie_jar {
-      match NodeCookieJar::new(env, cookie_jar) {
-        Ok(cookie_jar) => {
-          config = config.with_cookie_store(cookie_jar);
-        }
-        Err(e) => return Err(e),
-      }
-    }
     if let Some(headers) = self.headers {
       config = config.with_headers(headers);
     }
 
-    let follow_redirects: bool = self.follow_redirects.unwrap_or(true);
-    let max_redirects: usize = self.max_redirects.unwrap_or(10).try_into().unwrap();
-
-    if !follow_redirects {
-      config = config.with_redirect(RedirectBehavior::ManualRedirect);
-    } else {
-      config = config.with_redirect(RedirectBehavior::FollowRedirect(max_redirects));
-    }
+    // Always use ManualRedirect - redirects are handled in the JS layer
+    config = config.with_redirect(RedirectBehavior::ManualRedirect);
 
     if let Some(local_address) = self.local_address {
       config = config
