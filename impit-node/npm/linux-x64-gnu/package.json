@@ -1,7 +1,7 @@
 {
   "name": "impit-linux-x64-gnu",
   "homepage": "https://apify.github.io/impit/js",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "os": [
     "linux"
   ],
