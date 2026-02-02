@@ -3,6 +3,15 @@
 All notable changes to this project will be documented in this file.
 
 
+## js-0.9.1 - 2026-02-02
+
+#### Bug Fixes
+
+- Handle redirects/cookies in the JS layer (#375)
+  - Solves high-concurrency segmentation faults, processes cookies and handles redirects fully in JS instead of Rust.
+
+
+
 ## js-0.9.0 - 2026-01-29
 
 #### Bug Fixes
