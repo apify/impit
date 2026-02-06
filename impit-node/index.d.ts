@@ -2,6 +2,76 @@
 /* eslint-disable */
 
 export type TypedArray = Int8Array | Uint8Array | Uint8ClampedArray | Int16Array | Uint16Array | Int32Array | Uint32Array | Float32Array | Float64Array | BigInt64Array | BigUint64Array
+
+/**
+ * ImpitRequest is a Request-like class that allows inspecting the final headers
+ * that will be sent by Impit, including browser fingerprint headers.
+ *
+ * This class implements the fetch Request interface.
+ *
+ * @example
+ * ```ts
+ * import { Impit } from 'impit';
+ *
+ * const impit = new Impit({ browser: 'chrome' });
+ *
+ * // Create a request using the bound constructor
+ * const request = new impit.Request('https://example.com', {
+ *   headers: { 'X-Custom': 'value' }
+ * });
+ *
+ * // Inspect the final headers (includes fingerprint headers)
+ * console.log([...request.headers.entries()]);
+ *
+ * // Send the request
+ * const response = await impit.fetch(request);
+ * ```
+ */
+export declare class ImpitRequest {
+  /**
+   * Creates a new ImpitRequest instance.
+   *
+   * @param impit - The Impit instance to use for header generation
+   * @param input - The URL, Request, or ImpitRequest to use as the base
+   * @param init - Optional request options that override the input
+   */
+  constructor(impit: Impit, input: string | URL | Request | ImpitRequest, init?: RequestInit)
+
+  /**
+   * The URL of the request.
+   */
+  readonly url: string
+
+  /**
+   * The HTTP method of the request.
+   */
+  readonly method: string
+
+  /**
+   * The request body.
+   */
+  readonly body: ReadableStream | null
+
+  /**
+   * The final merged headers that will be sent with this request.
+   * This includes browser fingerprint headers, instance headers, and request-specific headers.
+   */
+  readonly headers: Headers
+
+  /**
+   * The abort signal for the request.
+   */
+  readonly signal: AbortSignal | null
+}
+
+/**
+ * Constructor type for ImpitRequest bound to an Impit instance.
+ * This is the type of the `Request` property on an Impit instance.
+ */
+export interface ImpitRequestConstructor {
+  new (input: string | URL | Request | ImpitRequest, init?: RequestInit): ImpitRequest
+}
+
 /**
  * The main class of the `impit` package
  *
@@ -23,6 +93,30 @@ export type TypedArray = Int8Array | Uint8Array | Uint8ClampedArray | Int16Array
  * resources (e.g. cookie jar and connection pool), and other settings.
  */
 export declare class Impit {
+  /**
+   * A Request constructor bound to this Impit instance.
+   *
+   * Use this to create Request objects that can be inspected for their final headers
+   * (including browser fingerprint headers) before sending.
+   *
+   * @example
+   * ```ts
+   * const impit = new Impit({ browser: 'chrome' });
+   *
+   * // Create a request and inspect headers
+   * const request = new impit.Request('https://example.com', {
+   *   headers: { 'X-Custom': 'value' }
+   * });
+   *
+   * // Inspect the final headers (includes fingerprint headers)
+   * console.log([...request.headers.entries()]);
+   *
+   * // Optionally modify and send
+   * const response = await impit.fetch(request);
+   * ```
+   */
+  Request: ImpitRequestConstructor
+
   /**
    * Creates a new `Impit` instance with the given options.
    *
@@ -65,7 +159,7 @@ export declare class Impit {
    * });
    * ```
    */
-  fetch(resource: string | URL | Request, init?: RequestInit): Promise<ImpitResponse>
+  fetch(resource: string | URL | Request | ImpitRequest, init?: RequestInit): Promise<ImpitResponse>
 }
 export type ImpitWrapper = Impit
 

@@ -27,6 +27,149 @@ class ResponsePatches {
     }
 }
 
+/**
+ * ImpitRequest is a Request-like class that allows inspecting the final headers
+ * that will be sent by Impit, including browser fingerprint headers.
+ *
+ * This class implements the fetch Request interface.
+ */
+class ImpitRequest {
+    #impit;
+    #url;
+    #init;
+    #headers;
+    #body;
+
+    /**
+     * Creates a new ImpitRequest instance.
+     *
+     * @param {Impit} impit - The Impit instance to use for header generation
+     * @param {string | URL | Request | ImpitRequest} input - The URL or Request to use
+     * @param {RequestInit} [init] - Optional request options
+     */
+    constructor(impit, input, init) {
+        if (!(impit instanceof Impit)) {
+            throw new TypeError('First argument must be an Impit instance');
+        }
+
+        this.#impit = impit;
+
+        // Handle ImpitRequest input (clone)
+        if (input instanceof ImpitRequest) {
+            this.#url = input.url;
+            this.#init = {
+                method: input.method,
+                headers: [...input.#init?.headers || []],
+                body: input.#body,
+                timeout: input.#init?.timeout,
+                forceHttp3: input.#init?.forceHttp3,
+                signal: input.#init?.signal,
+                ...init, // init overrides cloned fields
+            };
+            this.#body = init?.body !== undefined ? init.body : input.#body;
+        }
+        // Handle native Request input
+        else if (input instanceof Request) {
+            this.#url = input.url;
+            this.#init = {
+                method: input.method,
+                headers: canonicalizeHeaders(input.headers),
+                body: input.body,
+                ...init, // init overrides Request fields
+            };
+            this.#body = init?.body !== undefined ? init.body : input.body;
+        }
+        // Handle URL or string input
+        else {
+            this.#url = input?.toString ? input.toString() : String(input);
+            this.#init = init || {};
+            this.#body = init?.body;
+        }
+
+        // Ensure headers are canonicalized
+        if (this.#init.headers) {
+            this.#init.headers = canonicalizeHeaders(this.#init.headers);
+        }
+
+        // Lazily compute headers (will be computed on first access)
+        this.#headers = null;
+    }
+
+    /**
+     * The URL of the request.
+     * @returns {string}
+     */
+    get url() {
+        return this.#url;
+    }
+
+    /**
+     * The HTTP method of the request.
+     * @returns {string}
+     */
+    get method() {
+        return this.#init?.method || 'GET';
+    }
+
+    /**
+     * The request body.
+     * @returns {ReadableStream | null}
+     */
+    get body() {
+        return this.#body ?? null;
+    }
+
+    /**
+     * The final merged headers that will be sent with this request.
+     * This includes browser fingerprint headers, instance headers, and request-specific headers.
+     *
+     * @returns {Headers}
+     */
+    get headers() {
+        if (this.#headers === null) {
+            this.#computeHeaders();
+        }
+        return this.#headers;
+    }
+
+    /**
+     * The abort signal for the request.
+     * @returns {AbortSignal | null}
+     */
+    get signal() {
+        return this.#init?.signal ?? null;
+    }
+
+    /**
+     * Computes and caches the final merged headers.
+     * @private
+     */
+    #computeHeaders() {
+        const rawHeaders = this.#impit._getRequestHeaders(this.#url, {
+            headers: this.#init?.headers || [],
+        });
+        this.#headers = new Headers(rawHeaders);
+    }
+
+    /**
+     * Returns the internal init object for use by Impit.fetch().
+     * @returns {object}
+     * @internal
+     */
+    _getInit() {
+        return this.#init;
+    }
+
+    /**
+     * Returns the body.
+     * @returns {any}
+     * @internal
+     */
+    _getBody() {
+        return this.#body;
+    }
+}
+
 function canonicalizeHeaders(headers) {
     if (headers instanceof Headers) {
         return [...headers.entries()];
@@ -42,8 +185,23 @@ async function parseFetchOptions(resource, init) {
     let url;
     let options = { ...init };
 
-    // Handle Request instance
-    if (resource instanceof Request) {
+    // Handle ImpitRequest instance
+    if (resource instanceof ImpitRequest) {
+        url = resource.url;
+        const impitInit = resource._getInit();
+        const body = resource._getBody();
+        options = {
+            method: resource.method,
+            headers: impitInit?.headers || [],
+            body: body,
+            timeout: impitInit?.timeout,
+            forceHttp3: impitInit?.forceHttp3,
+            signal: impitInit?.signal,
+            ...init, // init overrides ImpitRequest fields
+        };
+    }
+    // Handle native Request instance
+    else if (resource instanceof Request) {
         url = resource.url;
         options = {
             method: resource.method,
@@ -100,6 +258,32 @@ class Impit extends native.Impit {
     #followRedirects;
     #maxRedirects;
 
+    /**
+     * A Request constructor bound to this Impit instance.
+     *
+     * Use this to create Request objects that can be inspected for their final headers
+     * (including browser fingerprint headers) before sending.
+     *
+     * @example
+     * ```js
+     * const impit = new Impit({ browser: 'chrome' });
+     *
+     * // Create a request and inspect headers
+     * const request = new impit.Request('https://example.com', {
+     *   headers: { 'X-Custom': 'value' }
+     * });
+     *
+     * // Inspect the final headers (includes fingerprint headers)
+     * console.log([...request.headers.entries()]);
+     *
+     * // Optionally modify and send
+     * const response = await impit.fetch(request);
+     * ```
+     *
+     * @type {typeof ImpitRequest}
+     */
+    Request;
+
     constructor(options) {
         // Pass options to native. When cookieJar is provided, pass a truthy value
         // to signal that JS handles cookies (actual cookie ops happen in JS).
@@ -112,6 +296,30 @@ class Impit extends native.Impit {
         this.#cookieJar = options?.cookieJar;
         this.#followRedirects = options?.followRedirects ?? true;
         this.#maxRedirects = options?.maxRedirects ?? 20;
+
+        // Bind Request constructor to this Impit instance
+        const impitInstance = this;
+        this.Request = class extends ImpitRequest {
+            constructor(input, init) {
+                super(impitInstance, input, init);
+            }
+        };
+    }
+
+    /**
+     * Returns the final merged headers that would be sent for a request to the specified URL.
+     * Internal method used by ImpitRequest.
+     *
+     * @param {string} url - The URL to compute headers for
+     * @param {RequestInit} [init] - Optional request options
+     * @returns {Array<[string, string]>} The final merged headers as an array of tuples
+     * @internal
+     */
+    _getRequestHeaders(url, init) {
+        return super.getRequestHeaders(url, {
+            ...init,
+            headers: canonicalizeHeaders(init?.headers),
+        });
     }
 
     /**
@@ -257,6 +465,7 @@ class Impit extends native.Impit {
 }
 
 module.exports.Impit = Impit
+module.exports.ImpitRequest = ImpitRequest
 module.exports.ImpitWrapper = native.ImpitWrapper
 module.exports.ImpitResponse = native.ImpitResponse
 module.exports.Browser = native.Browser
