@@ -31,11 +31,7 @@ class ResponsePatches {
  * ImpitRequest is a Request-like class that allows inspecting the final headers
  * that will be sent by Impit, including browser fingerprint headers.
  *
- * This is useful for:
- * - Debugging and verification of the final headers
- * - Request signing (e.g., AWS S3, custom APIs that require signed headers)
- * - Advanced logging and auditing
- * - Dynamic/conditional logic based on generated headers
+ * This class implements the fetch Request interface.
  */
 class ImpitRequest {
     #impit;
@@ -43,7 +39,6 @@ class ImpitRequest {
     #init;
     #headers;
     #body;
-    #bodyType;
 
     /**
      * Creates a new ImpitRequest instance.
@@ -72,7 +67,6 @@ class ImpitRequest {
                 ...init, // init overrides cloned fields
             };
             this.#body = init?.body !== undefined ? init.body : input.#body;
-            this.#bodyType = init?.body !== undefined ? undefined : input.#bodyType;
         }
         // Handle native Request input
         else if (input instanceof Request) {
@@ -119,10 +113,10 @@ class ImpitRequest {
 
     /**
      * The request body.
-     * @returns {any}
+     * @returns {ReadableStream | null}
      */
     get body() {
-        return this.#body;
+        return this.#body ?? null;
     }
 
     /**
@@ -139,27 +133,11 @@ class ImpitRequest {
     }
 
     /**
-     * The timeout for the request in milliseconds.
-     * @returns {number | undefined}
-     */
-    get timeout() {
-        return this.#init?.timeout;
-    }
-
-    /**
-     * Whether to force HTTP/3 for this request.
-     * @returns {boolean | undefined}
-     */
-    get forceHttp3() {
-        return this.#init?.forceHttp3;
-    }
-
-    /**
      * The abort signal for the request.
-     * @returns {AbortSignal | undefined}
+     * @returns {AbortSignal | null}
      */
     get signal() {
-        return this.#init?.signal;
+        return this.#init?.signal ?? null;
     }
 
     /**
@@ -167,7 +145,7 @@ class ImpitRequest {
      * @private
      */
     #computeHeaders() {
-        const rawHeaders = this.#impit.getRequestHeaders(this.#url, {
+        const rawHeaders = this.#impit._getRequestHeaders(this.#url, {
             headers: this.#init?.headers || [],
         });
         this.#headers = new Headers(rawHeaders);
@@ -183,12 +161,12 @@ class ImpitRequest {
     }
 
     /**
-     * Returns the body along with its inferred content type.
-     * @returns {{ body: any, bodyType: string | undefined }}
+     * Returns the body.
+     * @returns {any}
      * @internal
      */
     _getBody() {
-        return { body: this.#body, bodyType: this.#bodyType };
+        return this.#body;
     }
 }
 
@@ -211,14 +189,14 @@ async function parseFetchOptions(resource, init) {
     if (resource instanceof ImpitRequest) {
         url = resource.url;
         const impitInit = resource._getInit();
-        const { body } = resource._getBody();
+        const body = resource._getBody();
         options = {
             method: resource.method,
             headers: impitInit?.headers || [],
             body: body,
-            timeout: resource.timeout,
-            forceHttp3: resource.forceHttp3,
-            signal: resource.signal,
+            timeout: impitInit?.timeout,
+            forceHttp3: impitInit?.forceHttp3,
+            signal: impitInit?.signal,
             ...init, // init overrides ImpitRequest fields
         };
     }
@@ -330,17 +308,14 @@ class Impit extends native.Impit {
 
     /**
      * Returns the final merged headers that would be sent for a request to the specified URL.
-     *
-     * This method computes the headers by merging:
-     * 1. Browser fingerprint headers (if browser emulation is enabled)
-     * 2. Instance-level headers (from `ImpitOptions.headers`)
-     * 3. Request-specific headers (from `init.headers`)
+     * Internal method used by ImpitRequest.
      *
      * @param {string} url - The URL to compute headers for
      * @param {RequestInit} [init] - Optional request options
      * @returns {Array<[string, string]>} The final merged headers as an array of tuples
+     * @internal
      */
-    getRequestHeaders(url, init) {
+    _getRequestHeaders(url, init) {
         return super.getRequestHeaders(url, {
             ...init,
             headers: canonicalizeHeaders(init?.headers),

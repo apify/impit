@@ -539,35 +539,7 @@ describe.each([
         });
     })
 
-    describe('ImpitRequest and getRequestHeaders', () => {
-        test('getRequestHeaders returns headers as array of tuples', async (t) => {
-            const headers = impit.getRequestHeaders(getHttpBinUrl('/get'), {
-                headers: { 'X-Custom': 'test-value' }
-            });
-
-            t.expect(Array.isArray(headers)).toBe(true);
-            t.expect(headers.length).toBeGreaterThan(0);
-
-            // Check that custom header is included
-            const customHeader = headers.find(([name]) => name.toLowerCase() === 'x-custom');
-            t.expect(customHeader).toBeDefined();
-            t.expect(customHeader![1]).toBe('test-value');
-        });
-
-        test('getRequestHeaders includes fingerprint headers when browser is set', async (t) => {
-            if (!browser) {
-                t.skip();
-                return;
-            }
-
-            const headers = impit.getRequestHeaders(getHttpBinUrl('/get'));
-
-            // Check that user-agent is present (from fingerprint)
-            const userAgentHeader = headers.find(([name]) => name.toLowerCase() === 'user-agent');
-            t.expect(userAgentHeader).toBeDefined();
-            t.expect(userAgentHeader![1].length).toBeGreaterThan(0);
-        });
-
+    describe('ImpitRequest', () => {
         test('ImpitRequest can be created via impit.Request constructor', async (t) => {
             const request = new impit.Request(getHttpBinUrl('/get'), {
                 headers: { 'X-Custom': 'test-value' }
@@ -632,7 +604,7 @@ describe.each([
         });
 
         test('ImpitRequest headers can be used for signing before fetch', async (t) => {
-            // This test demonstrates the request signing use case from the issue
+            // This test demonstrates the request signing use case
             const request = new impit.Request(getHttpBinUrl('/headers'), {
                 headers: { 'X-Api-Key': 'secret' }
             });
@@ -656,6 +628,21 @@ describe.each([
 
             t.expect(signedRequest.headers.get('authorization')).toBe(mockSignature);
             t.expect(signedRequest.headers.get('x-api-key')).toBe('secret');
+        });
+
+        test('ImpitRequest implements fetch Request interface properties', async (t) => {
+            const request = new impit.Request(getHttpBinUrl('/get'), {
+                method: 'POST',
+                headers: { 'X-Custom': 'value' },
+                signal: AbortSignal.timeout(5000)
+            });
+
+            // Check Request interface properties
+            t.expect(request.url).toBe(getHttpBinUrl('/get'));
+            t.expect(request.method).toBe('POST');
+            t.expect(request.headers).toBeInstanceOf(Headers);
+            t.expect(request.body).toBe(null); // No body set
+            t.expect(request.signal).toBeInstanceOf(AbortSignal);
         });
     });
 });
