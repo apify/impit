@@ -1,7 +1,7 @@
 import http from 'http';
 import { test, describe, expect, beforeAll, afterAll } from 'vitest';
 
-import { HttpMethod, Impit, Browser } from '../index.wrapper.js';
+import { HttpMethod, Impit, Browser, ImpitRequest } from '../index.wrapper.js';
 import type { AddressInfo, Server } from 'net';
 import { routes, runProxyServer, runServer } from './mock.server.js';
 
@@ -538,4 +538,124 @@ describe.each([
             await t.expect(response).rejects.toThrowError('Too many redirects occurred. Maximum allowed');
         });
     })
+
+    describe('ImpitRequest and getRequestHeaders', () => {
+        test('getRequestHeaders returns headers as array of tuples', async (t) => {
+            const headers = impit.getRequestHeaders(getHttpBinUrl('/get'), {
+                headers: { 'X-Custom': 'test-value' }
+            });
+
+            t.expect(Array.isArray(headers)).toBe(true);
+            t.expect(headers.length).toBeGreaterThan(0);
+
+            // Check that custom header is included
+            const customHeader = headers.find(([name]) => name.toLowerCase() === 'x-custom');
+            t.expect(customHeader).toBeDefined();
+            t.expect(customHeader![1]).toBe('test-value');
+        });
+
+        test('getRequestHeaders includes fingerprint headers when browser is set', async (t) => {
+            if (!browser) {
+                t.skip();
+                return;
+            }
+
+            const headers = impit.getRequestHeaders(getHttpBinUrl('/get'));
+
+            // Check that user-agent is present (from fingerprint)
+            const userAgentHeader = headers.find(([name]) => name.toLowerCase() === 'user-agent');
+            t.expect(userAgentHeader).toBeDefined();
+            t.expect(userAgentHeader![1].length).toBeGreaterThan(0);
+        });
+
+        test('ImpitRequest can be created via impit.Request constructor', async (t) => {
+            const request = new impit.Request(getHttpBinUrl('/get'), {
+                headers: { 'X-Custom': 'test-value' }
+            });
+
+            t.expect(request).toBeInstanceOf(ImpitRequest);
+            t.expect(request.url).toBe(getHttpBinUrl('/get'));
+            t.expect(request.method).toBe('GET');
+        });
+
+        test('ImpitRequest.headers returns final merged headers', async (t) => {
+            const request = new impit.Request(getHttpBinUrl('/get'), {
+                headers: { 'X-Custom': 'test-value' }
+            });
+
+            const headers = request.headers;
+            t.expect(headers).toBeInstanceOf(Headers);
+            t.expect(headers.get('x-custom')).toBe('test-value');
+
+            if (browser) {
+                // Fingerprint headers should be present
+                t.expect(headers.get('user-agent')).toBeTruthy();
+            }
+        });
+
+        test('ImpitRequest can be passed to fetch', async (t) => {
+            const request = new impit.Request(getHttpBinUrl('/headers'), {
+                headers: { 'X-Impit-Test': 'from-request' }
+            });
+
+            const response = await impit.fetch(request);
+            const json = await response.json();
+
+            t.expect(json.headers?.['X-Impit-Test']).toBe('from-request');
+        });
+
+        test('ImpitRequest can be cloned with new options', async (t) => {
+            const original = new impit.Request(getHttpBinUrl('/post'), {
+                method: 'POST',
+                headers: { 'X-Original': 'value' }
+            });
+
+            const cloned = new impit.Request(original, {
+                headers: { 'X-Cloned': 'new-value' }
+            });
+
+            t.expect(cloned.url).toBe(original.url);
+            t.expect(cloned.method).toBe('POST');
+            // The new headers should override
+            t.expect(cloned.headers.get('x-cloned')).toBe('new-value');
+        });
+
+        test('ImpitRequest can be created from native Request', async (t) => {
+            const nativeRequest = new Request(getHttpBinUrl('/get'), {
+                headers: { 'X-Native': 'value' }
+            });
+
+            const impitRequest = new impit.Request(nativeRequest);
+
+            t.expect(impitRequest.url).toBe(getHttpBinUrl('/get'));
+            t.expect(impitRequest.headers.get('x-native')).toBe('value');
+        });
+
+        test('ImpitRequest headers can be used for signing before fetch', async (t) => {
+            // This test demonstrates the request signing use case from the issue
+            const request = new impit.Request(getHttpBinUrl('/headers'), {
+                headers: { 'X-Api-Key': 'secret' }
+            });
+
+            // Get the final headers (includes fingerprint)
+            const finalHeaders = request.headers;
+
+            // Simulate creating a signature from headers
+            const headersList = [...finalHeaders.entries()]
+                .map(([k, v]) => `${k}:${v}`)
+                .join(';');
+            const mockSignature = `sig-${headersList.length}`;
+
+            // Create a new request with the signature
+            const signedRequest = new impit.Request(request, {
+                headers: {
+                    ...Object.fromEntries(finalHeaders.entries()),
+                    'Authorization': mockSignature
+                }
+            });
+
+            t.expect(signedRequest.headers.get('authorization')).toBe(mockSignature);
+            t.expect(signedRequest.headers.get('x-api-key')).toBe('secret');
+        });
+    });
 });

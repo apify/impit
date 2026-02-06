@@ -619,4 +619,56 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
     ) -> Result<Response, ImpitError> {
         self.make_request(Method::PATCH, url, body, options).await
     }
+
+    /// Returns the final merged headers that would be sent for a request to the specified URL.
+    ///
+    /// This method computes the headers by merging:
+    /// 1. Browser fingerprint headers (if browser emulation is enabled)
+    /// 2. Instance-level headers (from `ImpitOptions.headers`)
+    /// 3. Request-specific headers (from `options.headers`)
+    ///
+    /// This is useful for:
+    /// - Debugging and verification of the final headers
+    /// - Request signing (e.g., AWS S3, custom APIs that require signed headers)
+    /// - Advanced logging and auditing
+    /// - Dynamic/conditional logic based on generated headers
+    ///
+    /// ### Example
+    /// ```rust,no_run
+    /// use impit::impit::Impit;
+    /// use reqwest::cookie::Jar;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// let impit = Impit::<Jar>::builder()
+    ///   .build()
+    ///   .unwrap();
+    ///
+    /// let headers = impit.get_request_headers("https://example.com".to_string(), None).unwrap();
+    /// for (name, value) in headers {
+    ///     println!("{}: {}", name, value);
+    /// }
+    /// # }
+    /// ```
+    pub fn get_request_headers(
+        &self,
+        url: String,
+        options: Option<RequestOptions>,
+    ) -> Result<Vec<(String, String)>, ImpitError> {
+        let url = self.parse_url(url)?;
+        let request_options = options.unwrap_or_default();
+        let headers = request_options.headers;
+
+        let host = url.host_str().unwrap_or_default().to_string();
+
+        let headers = HttpHeaders::get_builder()
+            .with_fingerprint(&self.config.fingerprint)
+            .with_host(&host)
+            .with_https(url.scheme() == "https")
+            .with_custom_headers(self.config.headers.to_owned())
+            .with_custom_headers(Some(headers))
+            .build();
+
+        Ok(headers.iter().collect())
+    }
 }

@@ -171,4 +171,60 @@ impl ImpitWrapper {
       }
     }
   }
+
+  /// Returns the final merged headers that would be sent for a request to the specified URL.
+  ///
+  /// This method computes the headers by merging:
+  /// 1. Browser fingerprint headers (if browser emulation is enabled)
+  /// 2. Instance-level headers (from `ImpitOptions.headers`)
+  /// 3. Request-specific headers (from `options.headers`)
+  ///
+  /// This is useful for:
+  /// - Debugging and verification of the final headers
+  /// - Request signing (e.g., AWS S3, custom APIs that require signed headers)
+  /// - Advanced logging and auditing
+  /// - Dynamic/conditional logic based on generated headers
+  ///
+  /// @example
+  /// ```ts
+  /// import { Impit } from 'impit';
+  ///
+  /// const impit = new Impit({ browser: 'chrome' });
+  /// const headers = impit.getRequestHeaders('https://example.com', {
+  ///   headers: { 'X-Custom': 'value' }
+  /// });
+  ///
+  /// // Inspect headers, e.g., for signing
+  /// const signature = createSignature(headers);
+  /// ```
+  #[napi]
+  pub fn get_request_headers(
+    &self,
+    url: String,
+    request_init: Option<RequestInit>,
+  ) -> Result<Vec<(String, String)>, napi::Error> {
+    let request_options = Some(RequestOptions {
+      headers: request_init
+        .as_ref()
+        .and_then(|init| init.headers.as_ref())
+        .cloned()
+        .unwrap_or_default(),
+      timeout: None,
+      http3_prior_knowledge: false,
+    });
+
+    match self.inner.get_request_headers(url, request_options) {
+      Ok(headers) => Ok(headers),
+      Err(err) => {
+        let status = match err {
+          ImpitError::UrlMissingHostnameError(_) => napi::Status::InvalidArg,
+          ImpitError::UrlProtocolError(_) => napi::Status::InvalidArg,
+          ImpitError::UrlParsingError(_) => napi::Status::InvalidArg,
+          _ => napi::Status::GenericFailure,
+        };
+
+        Err(napi::Error::new(status, format!("impit error: {err}")))
+      }
+    }
+  }
 }

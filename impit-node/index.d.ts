@@ -2,6 +2,98 @@
 /* eslint-disable */
 
 export type TypedArray = Int8Array | Uint8Array | Uint8ClampedArray | Int16Array | Uint16Array | Int32Array | Uint32Array | Float32Array | Float64Array | BigInt64Array | BigUint64Array
+
+/**
+ * ImpitRequest is a Request-like class that allows inspecting the final headers
+ * that will be sent by Impit, including browser fingerprint headers.
+ *
+ * This is useful for:
+ * - Debugging and verification of the final headers
+ * - Request signing (e.g., AWS S3, custom APIs that require signed headers)
+ * - Advanced logging and auditing
+ * - Dynamic/conditional logic based on generated headers
+ *
+ * @example
+ * ```ts
+ * import { Impit } from 'impit';
+ *
+ * const impit = new Impit({ browser: 'chrome' });
+ *
+ * // Create a request using the bound constructor
+ * const request = new impit.Request('https://example.com', {
+ *   headers: { 'X-Custom': 'value' }
+ * });
+ *
+ * // Inspect the final headers (includes fingerprint headers)
+ * console.log([...request.headers.entries()]);
+ *
+ * // Use headers for signing
+ * const signature = createSignature(request.headers);
+ *
+ * // Create a new request with the signature
+ * const signedRequest = new impit.Request(request, {
+ *   headers: { ...Object.fromEntries(request.headers), 'Authorization': signature }
+ * });
+ *
+ * // Send the request
+ * const response = await impit.fetch(signedRequest);
+ * ```
+ */
+export declare class ImpitRequest {
+  /**
+   * Creates a new ImpitRequest instance.
+   *
+   * @param impit - The Impit instance to use for header generation
+   * @param input - The URL, Request, or ImpitRequest to use as the base
+   * @param init - Optional request options that override the input
+   */
+  constructor(impit: Impit, input: string | URL | Request | ImpitRequest, init?: RequestInit)
+
+  /**
+   * The URL of the request.
+   */
+  readonly url: string
+
+  /**
+   * The HTTP method of the request.
+   */
+  readonly method: string
+
+  /**
+   * The request body.
+   */
+  readonly body: RequestInit['body']
+
+  /**
+   * The final merged headers that will be sent with this request.
+   * This includes browser fingerprint headers, instance headers, and request-specific headers.
+   */
+  readonly headers: Headers
+
+  /**
+   * The timeout for the request in milliseconds.
+   */
+  readonly timeout: number | undefined
+
+  /**
+   * Whether to force HTTP/3 for this request.
+   */
+  readonly forceHttp3: boolean | undefined
+
+  /**
+   * The abort signal for the request.
+   */
+  readonly signal: AbortSignal | undefined
+}
+
+/**
+ * Constructor type for ImpitRequest bound to an Impit instance.
+ * This is the type of the `Request` property on an Impit instance.
+ */
+export interface ImpitRequestConstructor {
+  new (input: string | URL | Request | ImpitRequest, init?: RequestInit): ImpitRequest
+}
+
 /**
  * The main class of the `impit` package
  *
@@ -23,6 +115,30 @@ export type TypedArray = Int8Array | Uint8Array | Uint8ClampedArray | Int16Array
  * resources (e.g. cookie jar and connection pool), and other settings.
  */
 export declare class Impit {
+  /**
+   * A Request constructor bound to this Impit instance.
+   *
+   * Use this to create Request objects that can be inspected for their final headers
+   * (including browser fingerprint headers) before sending.
+   *
+   * @example
+   * ```ts
+   * const impit = new Impit({ browser: 'chrome' });
+   *
+   * // Create a request and inspect headers
+   * const request = new impit.Request('https://example.com', {
+   *   headers: { 'X-Custom': 'value' }
+   * });
+   *
+   * // Inspect the final headers (includes fingerprint headers)
+   * console.log([...request.headers.entries()]);
+   *
+   * // Optionally modify and send
+   * const response = await impit.fetch(request);
+   * ```
+   */
+  Request: ImpitRequestConstructor
+
   /**
    * Creates a new `Impit` instance with the given options.
    *
@@ -65,7 +181,35 @@ export declare class Impit {
    * });
    * ```
    */
-  fetch(resource: string | URL | Request, init?: RequestInit): Promise<ImpitResponse>
+  fetch(resource: string | URL | Request | ImpitRequest, init?: RequestInit): Promise<ImpitResponse>
+  /**
+   * Returns the final merged headers that would be sent for a request to the specified URL.
+   *
+   * This method computes the headers by merging:
+   * 1. Browser fingerprint headers (if browser emulation is enabled)
+   * 2. Instance-level headers (from `ImpitOptions.headers`)
+   * 3. Request-specific headers (from `options.headers`)
+   *
+   * This is useful for:
+   * - Debugging and verification of the final headers
+   * - Request signing (e.g., AWS S3, custom APIs that require signed headers)
+   * - Advanced logging and auditing
+   * - Dynamic/conditional logic based on generated headers
+   *
+   * @example
+   * ```ts
+   * import { Impit } from 'impit';
+   *
+   * const impit = new Impit({ browser: 'chrome' });
+   * const headers = impit.getRequestHeaders('https://example.com', {
+   *   headers: { 'X-Custom': 'value' }
+   * });
+   *
+   * // Inspect headers, e.g., for signing
+   * const signature = createSignature(headers);
+   * ```
+   */
+  getRequestHeaders(url: string, requestInit?: RequestInit | undefined | null): Array<[string, string]>
 }
 export type ImpitWrapper = Impit
 
