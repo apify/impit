@@ -43,7 +43,11 @@ impl HttpHeaders {
                     None
                 } else {
                     used_header_names.insert(name.to_lowercase());
-                    Some((name, value))
+                    if value.is_empty() {
+                        None
+                    } else {
+                        Some((name, value))
+                    }
                 }
             })
     }

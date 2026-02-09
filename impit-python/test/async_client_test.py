@@ -299,6 +299,14 @@ class TestBasicRequests:
         assert response.status_code == 200
         assert json.loads(response.text)['headers']['User-Agent'] == 'this is impit!'
 
+    @pytest.mark.asyncio
+    async def test_removing_impersonated_headers_with_empty_string(self, browser: Browser) -> None:
+        impit = AsyncClient(browser=browser)
+
+        response = await impit.get(get_httpbin_url('/headers'), headers={'Sec-Fetch-User': ''})
+        assert response.status_code == 200
+        assert 'Sec-Fetch-User' not in json.loads(response.text)['headers']
+
     @pytest.mark.skip(reason='Flaky under the CI environment')
     @pytest.mark.asyncio
     async def test_http3_works(self, browser: Browser) -> None:

@@ -188,7 +188,7 @@ describe.each([
 
         test('impit accepts custom cookie jars', async (t) => {
             const cookieJar = new CookieJar();
-            cookieJar.setCookieSync('preset-cookie=123; Path=/', getHttpBinUrl('/cookies/'));
+            cookieJar.setCookieSync('preset-cookie=123; Path=/', getHttpBinUrl('/cookies'));
 
             const impit = new Impit({
                 cookieJar,
@@ -196,7 +196,7 @@ describe.each([
             })
 
             const response1 = await impit.fetch(
-                getHttpBinUrl('/cookies/'),
+                getHttpBinUrl('/cookies'),
             ).then(x => x.json());
 
             t.expect(response1.cookies).toEqual({
@@ -208,7 +208,7 @@ describe.each([
             );
 
             const response2 = await impit.fetch(
-                getHttpBinUrl('/cookies/'),
+                getHttpBinUrl('/cookies'),
             ).then(x => x.json());
 
             t.expect(response2.cookies).toEqual({
@@ -277,6 +277,20 @@ describe.each([
 
             t.expect(json.headers?.['User-Agent']).toBe('this is impit!');
         })
+
+        test('removing impersonated headers with empty string works', async (t) => {
+            const response = await impit.fetch(
+                getHttpBinUrl('/headers'),
+                {
+                    headers: {
+                        'Sec-Fetch-User': '',
+                    }
+                }
+            );
+            const json = await response.json();
+
+            t.expect(json.headers?.['Sec-Fetch-User']).toBeUndefined();
+        });
 
         test('client-scoped headers work', async (t) => {
             const headers = new Headers();
