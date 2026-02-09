@@ -219,6 +219,51 @@ describe.each([
             t.expect(cookieJar.serializeSync()?.cookies).toHaveLength(2);
         })
 
+        test('client-scoped headers override impersonation headers (case-insensitive)', async (t) => {
+            if (!browser) return t.skip();
+
+            const impit = new Impit({
+                browser,
+                headers: { 'user-agent': 'custom-client-ua' },
+            });
+
+            const response = await impit.fetch(getHttpBinUrl('/headers'));
+            const json = await response.json();
+
+            t.expect(json.headers?.['User-Agent']).toBe('custom-client-ua');
+        });
+
+        test('request headers override client and impersonation headers (case-insensitive)', async (t) => {
+            if (!browser) return t.skip();
+
+            const impit = new Impit({
+                browser,
+                headers: { 'User-Agent': 'client-level-ua' },
+            });
+
+            const response = await impit.fetch(getHttpBinUrl('/headers'), {
+                headers: { 'user-agent': 'request-level-ua' },
+            });
+            const json = await response.json();
+
+            t.expect(json.headers?.['User-Agent']).toBe('request-level-ua');
+        });
+
+        test('impersonation headers are included when no overrides', async (t) => {
+            if (!browser) return t.skip();
+
+            const impit = new Impit({ browser });
+
+            const response = await impit.fetch(getHttpBinUrl('/headers'));
+            const json = await response.json();
+
+            if (browser === Browser.Chrome) {
+                t.expect(json.headers?.['User-Agent']).toContain('Chrome');
+            } else if (browser === Browser.Firefox) {
+                t.expect(json.headers?.['User-Agent']).toContain('Firefox');
+            }
+        });
+
         test('overwriting impersonated headers works', async (t) => {
             const response = await impit.fetch(
             getHttpBinUrl('/headers'),
