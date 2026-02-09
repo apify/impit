@@ -96,6 +96,8 @@ pub struct ImpitOptions<'a> {
   ///
   /// Can be an object, a Map, or an array of tuples or an instance of the {@link https://developer.mozilla.org/en-US/docs/Web/API/Headers | Headers} class.
   ///
+  /// Custom headers override impersonated headers (from browser fingerprints) with case-insensitive matching. To remove an impersonated header, pass an empty string as the value.
+  ///
   /// @default `undefined` (no additional headers)
   #[napi(ts_type = "Headers | Record<string, string> | [string, string][]")]
   pub headers: Option<Vec<(String, String)>>,

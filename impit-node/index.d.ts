@@ -308,10 +308,7 @@ cookieJar?: { setCookie: (cookie: string, url: string, cb?: any) => Promise<void
  *
  * Can be an object, a Map, or an array of tuples or an instance of the {@link https://developer.mozilla.org/en-US/docs/Web/API/Headers | Headers} class.
  *
- * These headers override any browser impersonation headers (set via the {@link ImpitOptions.browser} option)
- * and are in turn overridden by request-specific headers (set via {@link RequestInit.headers}).
- * Header matching is **case-insensitive** — for example, setting `user-agent` here will override
- * the impersonation `User-Agent` header.
+ * Custom headers override impersonated headers (from browser fingerprints) with case-insensitive matching. To remove an impersonated header, pass an empty string as the value.
  *
  * @default `undefined` (no additional headers)
  */
@@ -347,10 +344,14 @@ export interface RequestInit {
    *
    * Can be an object, a Map, or an array of tuples or an instance of the {@link https://developer.mozilla.org/en-US/docs/Web/API/Headers | Headers} class.
    *
-   * These headers have the highest priority — they override both client-level headers
-   * (set via {@link ImpitOptions.headers}) and browser impersonation headers (set via {@link ImpitOptions.browser}).
+   * Note that headers set here will override any default headers set in {@link ImpitOptions.headers}.
+   *
+   * These headers override any browser impersonation headers (set via the {@link ImpitOptions.browser} option)
+   * and are in turn overridden by request-specific headers (set via {@link RequestInit.headers}).
    * Header matching is **case-insensitive** — for example, setting `user-agent` here will override
    * the impersonation `User-Agent` header.
+   *
+   * To remove an impersonated header, pass an empty string as the value.
    */
   headers?: Headers | Record<string, string> | [string, string][]
   /** Request body. Can be a string, Buffer, ArrayBuffer, TypedArray, DataView, Blob, File, URLSearchParams, FormData or ReadableStream. */

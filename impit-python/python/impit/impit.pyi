@@ -484,7 +484,7 @@ class Client:
             cookie_jar: Cookie jar to store cookies in.
             cookies: httpx-compatible cookies object.
             headers: Default HTTP headers to include in requests. These override browser impersonation
-                headers and are overridden by per-request headers. Matching is case-insensitive.
+                headers and are overridden by per-request headers. Matching is case-insensitive. To remove an impersonated header, pass an empty string as the value.
             local_address: Local address to bind the client to. Useful for testing purposes or when you want to bind the client to a specific network interface.
                 Can be an IP address in the format "xxx.xxx.xxx.xxx" (for IPv4) or "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff" (for IPv6).
         """
@@ -504,7 +504,7 @@ class Client:
             url: URL to request
             content: Raw content to send
             data: Form data to send in request body
-            headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive)
+            headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
             timeout: Request timeout in seconds (overrides default timeout)
             force_http3: Force HTTP/3 protocol
         """
@@ -524,7 +524,7 @@ class Client:
             url: URL to request
             content: Raw content to send
             data: Form data to send in request body
-            headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive)
+            headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
             timeout: Request timeout in seconds (overrides default timeout)
             force_http3: Force HTTP/3 protocol
 
@@ -545,7 +545,7 @@ class Client:
             url: URL to request
             content: Raw content to send
             data: Form data to send in request body
-            headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive)
+            headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
             timeout: Request timeout in seconds (overrides default timeout)
             force_http3: Force HTTP/3 protocol
         """
@@ -565,7 +565,7 @@ class Client:
             url: URL to request
             content: Raw content to send
             data: Form data to send in request body
-            headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive)
+            headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
             timeout: Request timeout in seconds (overrides default timeout)
             force_http3: Force HTTP/3 protocol
         """
@@ -585,7 +585,7 @@ class Client:
             url: URL to request
             content: Raw content to send
             data: Form data to send in request body
-            headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive)
+            headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
             timeout: Request timeout in seconds (overrides default timeout)
             force_http3: Force HTTP/3 protocol
         """
@@ -605,7 +605,7 @@ class Client:
             url: URL to request
             content: Raw content to send
             data: Form data to send in request body
-            headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive)
+            headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
             timeout: Request timeout in seconds (overrides default timeout)
             force_http3: Force HTTP/3 protocol
         """
@@ -625,7 +625,7 @@ class Client:
             url: URL to request
             content: Raw content to send
             data: Form data to send in request body
-            headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive)
+            headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
             timeout: Request timeout in seconds (overrides default timeout)
             force_http3: Force HTTP/3 protocol
         """
@@ -645,7 +645,7 @@ class Client:
             url: URL to request
             content: Raw content to send
             data: Form data to send in request body
-            headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive)
+            headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
             timeout: Request timeout in seconds (overrides default timeout)
             force_http3: Force HTTP/3 protocol
         """
@@ -668,7 +668,7 @@ class Client:
             url: URL to request
             content: Raw content to send
             data: Form data to send in request body
-            headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive)
+            headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
             timeout: Request timeout in seconds (overrides default timeout)
             force_http3: Force HTTP/3 protocol
             stream: Whether to return a streaming response (default: False)
@@ -702,7 +702,7 @@ class Client:
             url: URL to request
             content: Raw content to send
             data: Form data to send in request body
-            headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive)
+            headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
             timeout: Request timeout in seconds (overrides default timeout)
             force_http3: Force HTTP/3 protocol
         """
@@ -825,7 +825,7 @@ class AsyncClient:
             cookie_jar: Cookie jar to store cookies in.
             cookies: httpx-compatible cookies object.
             headers: Default HTTP headers to include in requests. These override browser impersonation
-                headers and are overridden by per-request headers. Matching is case-insensitive.
+                headers and are overridden by per-request headers. Matching is case-insensitive. To remove an impersonated header, pass an empty string as the value.
             local_address: Local address to bind the client to. Useful for testing purposes or when you want to bind the client to a specific network interface.
                 Can be an IP address in the format "xxx.xxx.xxx.xxx" (for IPv4) or "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff" (for IPv6).
         """
@@ -845,7 +845,7 @@ class AsyncClient:
             url: URL to request
             content: Raw content to send
             data: Form data to send in request body
-            headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive)
+            headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
             timeout: Request timeout in seconds (overrides default timeout)
             force_http3: Force HTTP/3 protocol
         """
@@ -865,7 +865,7 @@ class AsyncClient:
             url: URL to request
             content: Raw content to send
             data: Form data to send in request body
-            headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive)
+            headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
             timeout: Request timeout in seconds (overrides default timeout)
             force_http3: Force HTTP/3 protocol
 
@@ -886,7 +886,7 @@ class AsyncClient:
             url: URL to request
             content: Raw content to send
             data: Form data to send in request body
-            headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive)
+            headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
             timeout: Request timeout in seconds (overrides default timeout)
             force_http3: Force HTTP/3 protocol
         """
@@ -906,7 +906,7 @@ class AsyncClient:
             url: URL to request
             content: Raw content to send
             data: Form data to send in request body
-            headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive)
+            headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
             timeout: Request timeout in seconds (overrides default timeout)
             force_http3: Force HTTP/3 protocol
         """
@@ -926,7 +926,7 @@ class AsyncClient:
             url: URL to request
             content: Raw content to send
             data: Form data to send in request body
-            headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive)
+            headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
             timeout: Request timeout in seconds (overrides default timeout)
             force_http3: Force HTTP/3 protocol
         """
@@ -946,7 +946,7 @@ class AsyncClient:
             url: URL to request
             content: Raw content to send
             data: Form data to send in request body
-            headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive)
+            headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
             timeout: Request timeout in seconds (overrides default timeout)
             force_http3: Force HTTP/3 protocol
         """
@@ -966,7 +966,7 @@ class AsyncClient:
             url: URL to request
             content: Raw content to send
             data: Form data to send in request body
-            headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive)
+            headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
             timeout: Request timeout in seconds (overrides default timeout)
             force_http3: Force HTTP/3 protocol
         """
@@ -986,7 +986,7 @@ class AsyncClient:
             url: URL to request
             content: Raw content to send
             data: Form data to send in request body
-            headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive)
+            headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
             timeout: Request timeout in seconds (overrides default timeout)
             force_http3: Force HTTP/3 protocol
         """
@@ -1009,7 +1009,7 @@ class AsyncClient:
             url: URL to request
             content: Raw content to send
             data: Form data to send in request body
-            headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive)
+            headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
             timeout: Request timeout in seconds (overrides default timeout)
             force_http3: Force HTTP/3 protocol
             stream: Whether to return a streaming response (default: False)
@@ -1043,7 +1043,7 @@ class AsyncClient:
             url: URL to request
             content: Raw content to send
             data: Form data to send in request body
-            headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive)
+            headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
             timeout: Request timeout in seconds (overrides default timeout)
             force_http3: Force HTTP/3 protocol
         """
