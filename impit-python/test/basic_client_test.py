@@ -235,6 +235,40 @@ class TestBasicRequests:
         assert cookies.get('preset-cookie') == '123'
         assert cookies.get('set-by-server') == '321'
 
+    def test_client_headers_override_impersonation_headers(self, browser: Browser) -> None:
+        if browser is None:
+            pytest.skip('No browser impersonation')
+
+        impit = Client(browser=browser, headers={'user-agent': 'custom-client-ua'})
+
+        response = impit.get(get_httpbin_url('/headers'))
+        assert response.status_code == 200
+        assert response.json()['headers']['User-Agent'] == 'custom-client-ua'
+
+    def test_request_headers_override_all_case_insensitive(self, browser: Browser) -> None:
+        if browser is None:
+            pytest.skip('No browser impersonation')
+
+        impit = Client(browser=browser, headers={'User-Agent': 'client-ua'})
+
+        response = impit.get(get_httpbin_url('/headers'), headers={'user-agent': 'request-ua'})
+        assert response.status_code == 200
+        assert response.json()['headers']['User-Agent'] == 'request-ua'
+
+    def test_impersonation_headers_present_without_overrides(self, browser: Browser) -> None:
+        if browser is None:
+            pytest.skip('No browser impersonation')
+
+        impit = Client(browser=browser)
+
+        response = impit.get(get_httpbin_url('/headers'))
+        assert response.status_code == 200
+        ua = response.json()['headers']['User-Agent']
+        if browser == 'chrome':
+            assert 'Chrome' in ua
+        elif browser == 'firefox':
+            assert 'Firefox' in ua
+
     def test_overwriting_headers_work(self, browser: Browser) -> None:
         impit = Client(browser=browser)
 

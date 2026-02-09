@@ -255,6 +255,43 @@ class TestBasicRequests:
         assert cookies.get('set-by-server') == '321'
 
     @pytest.mark.asyncio
+    async def test_client_headers_override_impersonation_headers(self, browser: Browser) -> None:
+        if browser is None:
+            pytest.skip('No browser impersonation')
+
+        impit = AsyncClient(browser=browser, headers={'user-agent': 'custom-client-ua'})
+
+        response = await impit.get(get_httpbin_url('/headers'))
+        assert response.status_code == 200
+        assert json.loads(response.text)['headers']['User-Agent'] == 'custom-client-ua'
+
+    @pytest.mark.asyncio
+    async def test_request_headers_override_all_case_insensitive(self, browser: Browser) -> None:
+        if browser is None:
+            pytest.skip('No browser impersonation')
+
+        impit = AsyncClient(browser=browser, headers={'User-Agent': 'client-ua'})
+
+        response = await impit.get(get_httpbin_url('/headers'), headers={'user-agent': 'request-ua'})
+        assert response.status_code == 200
+        assert json.loads(response.text)['headers']['User-Agent'] == 'request-ua'
+
+    @pytest.mark.asyncio
+    async def test_impersonation_headers_present_without_overrides(self, browser: Browser) -> None:
+        if browser is None:
+            pytest.skip('No browser impersonation')
+
+        impit = AsyncClient(browser=browser)
+
+        response = await impit.get(get_httpbin_url('/headers'))
+        assert response.status_code == 200
+        ua = json.loads(response.text)['headers']['User-Agent']
+        if browser == 'chrome':
+            assert 'Chrome' in ua
+        elif browser == 'firefox':
+            assert 'Firefox' in ua
+
+    @pytest.mark.asyncio
     async def test_overwriting_headers_work(self, browser: Browser) -> None:
         impit = AsyncClient(browser=browser)
 
