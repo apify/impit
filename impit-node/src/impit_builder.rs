@@ -96,7 +96,12 @@ pub struct ImpitOptions<'a> {
   ///
   /// Can be an object, a Map, or an array of tuples or an instance of the {@link https://developer.mozilla.org/en-US/docs/Web/API/Headers | Headers} class.
   ///
-  /// Custom headers override impersonated headers (from browser fingerprints) with case-insensitive matching. To remove an impersonated header, pass an empty string as the value.
+  /// These headers override any browser impersonation headers (set via the {@link ImpitOptions.browser} option)
+  /// and are in turn overridden by request-specific headers (set via {@link RequestInit.headers}).
+  /// Header matching is **case-insensitive** — for example, setting `user-agent` here will override
+  /// the impersonation `User-Agent` header.
+  ///
+  /// To remove an impersonated header, pass an empty string as the value.
   ///
   /// @default `undefined` (no additional headers)
   #[napi(ts_type = "Headers | Record<string, string> | [string, string][]")]
