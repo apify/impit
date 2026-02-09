@@ -278,6 +278,20 @@ describe.each([
             t.expect(json.headers?.['User-Agent']).toBe('this is impit!');
         })
 
+        test('removing impersonated headers with empty string works', async (t) => {
+            const response = await impit.fetch(
+                getHttpBinUrl('/headers'),
+                {
+                    headers: {
+                        'Sec-Fetch-User': '',
+                    }
+                }
+            );
+            const json = await response.json();
+
+            t.expect(json.headers?.['Sec-Fetch-User']).toBeUndefined();
+        });
+
         test('client-scoped headers work', async (t) => {
             const headers = new Headers();
             headers.set('User-Agent', 'client-scoped user agent');
