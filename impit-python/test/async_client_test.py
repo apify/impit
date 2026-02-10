@@ -188,7 +188,7 @@ class TestBasicRequests:
         response = json.loads(
             (
                 await impit.get(
-                    get_httpbin_url('/cookies/'),
+                    get_httpbin_url('/cookies'),
                 )
             ).text
         )
@@ -202,7 +202,7 @@ class TestBasicRequests:
         response = json.loads(
             (
                 await impit.get(
-                    get_httpbin_url('/cookies/'),
+                    get_httpbin_url('/cookies'),
                 )
             ).text
         )
@@ -226,7 +226,7 @@ class TestBasicRequests:
         response = json.loads(
             (
                 await impit.get(
-                    get_httpbin_url('/cookies/'),
+                    get_httpbin_url('/cookies'),
                 )
             ).text
         )
@@ -240,7 +240,7 @@ class TestBasicRequests:
         response = json.loads(
             (
                 await impit.get(
-                    get_httpbin_url('/cookies/'),
+                    get_httpbin_url('/cookies'),
                 )
             ).text
         )
