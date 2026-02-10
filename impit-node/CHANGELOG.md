@@ -3,6 +3,15 @@
 All notable changes to this project will be documented in this file.
 
 
+## js-0.9.2 - 2026-02-10
+
+#### Bug Fixes
+
+- Allow removing impersonated headers by passing empty string (#382)
+  - Users can now remove impersonated headers (like `Sec-Fetch-User`) from requests by passing an empty string as the header value. When an empty string is provided, the header is filtered out before the request is sent.  This enables users, e.g., to manually control which `Sec-Fetch-*` headers should be included in their requests, addressing use cases where the default impersonated headers don't match the actual request context.
+
+
+
 ## js-0.9.1 - 2026-02-02
 
 #### Bug Fixes
