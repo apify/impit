@@ -3,6 +3,47 @@
 All notable changes to this project will be documented in this file.
 
 
+## py-0.10.0 - 2026-02-10
+
+#### Bug Fixes
+
+- Proxy authenticates with empty password (#327)
+
+- Authenticate with HTTPS proxy and HTTP target (#333)
+  - Propagates upstream fixes from `reqwest`.
+
+
+- Do not panic on missing attributes for encoding-related `meta` elements (#346)
+  - Ignores encoding-related `meta` elements with missing `content` or `charset` attributes.  Related to #344
+
+
+- Use the `rustls` `Verifier` / `CryptoProvider` cache with custom fingerprints (#371)
+  - Speeds up repeated client instantiation and lowers the memory footprint if the custom fingerprints are used.  Related to #370
+
+
+- Allow removing impersonated headers by passing empty string (#382)
+  - Users can now remove impersonated headers (like `Sec-Fetch-User`) from requests by passing an empty string as the header value. When an empty string is provided, the header is filtered out before the request is sent.  This enables users, e.g., to manually control which `Sec-Fetch-*` headers should be included in their requests, addressing use cases where the default impersonated headers don't match the actual request context.
+
+
+#### Features
+
+- Enable `TRACE` method in the bindings (#328)
+  - Unifies all clients by enabling the `trace` method in all of them. Required for type parity (`HttpMethod`) in downstream repositories - Crawlee et al.
+
+
+- Use rustls-platform-verifier for system CA support (#357)
+  - Replaces the static `webpki-roots` dependency with `rustls-platform-verifier` to enable `impit` to rely on the operating system's trust store.  ---------
+
+
+- Custom fingerprint support (#366)
+  - Extracts all fingerprinting logic (from e.g. the `rustls` patch) to `impit`. Prepares the codebase for new, non-hardcoded browser fingerprints.  Related to #99
+
+
+- Add more Chrome and Firefox fingerprints (#367)
+  - Adds more browser fingerprints and passes these to the Node.JS and Python bindings.
+
+
+
 ## py-0.9.2 - 2025-11-13
 
 #### Bug Fixes
