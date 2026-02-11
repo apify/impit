@@ -122,7 +122,7 @@ class TestBasicRequests:
         cookies = Cookies({'preset-cookie': '123'})
 
         response = impit.get(
-            get_httpbin_url('/cookies/'),
+            get_httpbin_url('/cookies'),
             cookie_jar=cookies.jar,
         ).json()
 
@@ -134,7 +134,7 @@ class TestBasicRequests:
         )
 
         response = impit.get(
-            get_httpbin_url('/cookies/'),
+            get_httpbin_url('/cookies'),
             cookie_jar=cookies.jar,
         ).json()
 
@@ -149,7 +149,7 @@ class TestBasicRequests:
         cookies = Cookies({'preset-cookie': '123'})
 
         response = impit.get(
-            get_httpbin_url('/cookies/'),
+            get_httpbin_url('/cookies'),
             cookies=cookies,
         ).json()
 
@@ -161,7 +161,7 @@ class TestBasicRequests:
         )
 
         response = impit.get(
-            get_httpbin_url('/cookies/'),
+            get_httpbin_url('/cookies'),
             cookies=cookies,
         ).json()
 
