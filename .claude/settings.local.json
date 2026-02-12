@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm outdated:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run build:*)",
+      "Bash(npx playwright install:*)",
+      "Bash(npm run start:dev:*)",
+      "Bash(pkill:*)",
+      "Bash(apify run:*)",
+      "Bash(tee:*)",
+      "Bash(npm search:*)",
+      "Bash(curl:*)",
+      "Bash(docker build:*)"
+    ]
+  }
+}

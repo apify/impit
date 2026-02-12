@@ -1,0 +1,36 @@
+{
+    "title": "Arrow product crawler",
+    "type": "object",
+    "schemaVersion": 1,
+    "properties": {
+        "maxProducts": {
+            "title": "Max products",
+            "type": "integer",
+            "description": "",
+            "default": 1000
+        },
+        "maxConcurrency": {
+            "title": "Max concurrency",
+            "type": "integer",
+            "description": "Maximum number of concurrent requests (lower is better for avoiding blocks)",
+            "default": 3
+        },
+        "maxRequestRetries": {
+            "title": "Max request retries",
+            "type": "integer",
+            "description": "Maximum number of retries per request",
+            "default": 5
+        },
+        "proxyConfiguration": {
+            "title": "Proxy configuration",
+            "type": "object",
+            "description": "Proxy settings. Use Apify RESIDENTIAL group with US country for best results.",
+            "editor": "proxy",
+            "default": {
+                "useApifyProxy": true,
+                "apifyProxyGroups": ["RESIDENTIAL"],
+                "apifyProxyCountry": "US"
+            }
+        }
+    }
+}

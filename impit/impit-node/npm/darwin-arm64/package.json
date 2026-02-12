@@ -1,0 +1,21 @@
+{
+  "name": "impit-darwin-arm64",
+  "homepage": "https://apify.github.io/impit/js",
+  "version": "0.9.2",
+  "os": [
+    "darwin"
+  ],
+  "cpu": [
+    "arm64"
+  ],
+  "main": "impit-node.darwin-arm64.node",
+  "files": [
+    "impit-node.darwin-arm64.node"
+  ],
+  "description": "Impit for JavaScript",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">= 10"
+  },
+  "repository": "https://github.com/apify/impit"
+}

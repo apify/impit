@@ -1,0 +1,681 @@
+use tokio::sync::RwLock;
+
+use log::debug;
+use reqwest::{cookie::CookieStore, header::HeaderMap, Method, Response, Version};
+use std::{fmt::Debug, net::IpAddr, str::FromStr, sync::Arc, time::Duration};
+use url::Url;
+
+use crate::{
+    errors::{ErrorContext, ImpitError},
+    fingerprint::BrowserFingerprint,
+    http3::H3Engine,
+    http_headers::HttpHeaders,
+    request::{ImpitRequest, RequestOptions},
+    tls,
+};
+
+/// Impit is the main struct used to make (impersonated) requests.
+///
+/// It uses `reqwest::Client` to make requests and holds info about the impersonated browser.
+///
+/// To create a new [`Impit`] instance, use the [`Impit::builder()`](ImpitBuilder) method.
+pub struct Impit<CookieStoreImpl: CookieStore + 'static> {
+    pub(self) base_client: reqwest::Client,
+    pub(self) h3_client: Option<reqwest::Client>,
+    h3_engine: Arc<RwLock<Option<H3Engine>>>,
+    config: ImpitBuilder<CookieStoreImpl>,
+}
+
+impl<CookieStoreImpl: CookieStore + 'static> Default for Impit<CookieStoreImpl> {
+    fn default() -> Self {
+        ImpitBuilder::<CookieStoreImpl>::default().build().unwrap()
+    }
+}
+
+/// Customizes the behavior of the [`Impit`] struct when following redirects.
+///
+/// The `RedirectBehavior` enum is used to specify how the client should handle redirects.
+#[derive(Debug, Clone)]
+pub enum RedirectBehavior {
+    /// Follow up to `usize` redirects.
+    ///
+    /// If the number of redirects is exceeded, the client will return an error.
+    FollowRedirect(usize),
+    /// Don't follow any redirects.
+    ///
+    /// The client will return the response for the first request, even with the `3xx` status code.
+    ManualRedirect,
+}
+
+/// A builder struct used to create a new [`Impit`] instance.
+///
+/// The builder allows setting the browser to impersonate, ignoring TLS errors, setting a proxy, and other options.
+///
+/// ### Example
+/// ```rust,no_run
+/// use impit::{impit::Impit, fingerprint::database as fingerprints};
+/// use reqwest::cookie::Jar;
+/// use std::time::Duration;
+///
+/// # #[tokio::main]
+/// # async fn main() {
+/// let impit = Impit::<Jar>::builder()
+///   .with_fingerprint(fingerprints::firefox_144::fingerprint())
+///   .with_ignore_tls_errors(true)
+///   .with_proxy("http://localhost:8080".to_string())
+///   .with_default_timeout(Duration::from_secs(10))
+///   .with_http3()
+///   .build()
+///   .unwrap();
+///
+/// let response = impit.get("https://example.com".to_string(), None, None).await;
+/// # }
+/// ```
+#[derive(Debug)]
+pub struct ImpitBuilder<CookieStoreImpl: CookieStore + 'static> {
+    fingerprint: Option<BrowserFingerprint>,
+    ignore_tls_errors: bool,
+    vanilla_fallback: bool,
+    proxy_url: String,
+    request_timeout: Duration,
+    max_http_version: Version,
+    redirect: RedirectBehavior,
+    cookie_store: Option<Arc<CookieStoreImpl>>,
+    headers: Option<Vec<(String, String)>>,
+    local_address: Option<IpAddr>,
+}
+
+impl<CookieStoreImpl: CookieStore + 'static> Clone for ImpitBuilder<CookieStoreImpl> {
+    fn clone(&self) -> Self {
+        ImpitBuilder {
+            fingerprint: self.fingerprint.clone(),
+            ignore_tls_errors: self.ignore_tls_errors,
+            vanilla_fallback: self.vanilla_fallback,
+            proxy_url: self.proxy_url.clone(),
+            request_timeout: self.request_timeout,
+            max_http_version: self.max_http_version,
+            redirect: self.redirect.clone(),
+            cookie_store: self.cookie_store.clone(),
+            headers: self.headers.clone(),
+            local_address: self.local_address,
+        }
+    }
+}
+
+impl<CookieStoreImpl: CookieStore + 'static> Default for ImpitBuilder<CookieStoreImpl> {
+    fn default() -> Self {
+        ImpitBuilder {
+            fingerprint: None,
+            ignore_tls_errors: false,
+            vanilla_fallback: true,
+            proxy_url: String::new(),
+            request_timeout: Duration::from_secs(30),
+            max_http_version: Version::HTTP_2,
+            redirect: RedirectBehavior::FollowRedirect(10),
+            cookie_store: None,
+            headers: None,
+            local_address: None,
+        }
+    }
+}
+
+impl<CookieStoreImpl: CookieStore + 'static> ImpitBuilder<CookieStoreImpl> {
+    /// Sets a complete browser fingerprint.
+    ///
+    /// This method allows you to provide a complete fingerprint that includes TLS, HTTP/2, and HTTP header configurations.
+    /// When set, this takes precedence over the `with_browser` method.
+    ///
+    /// You can use pre-defined fingerprints from [`crate::fingerprint::database`] or create custom fingerprints.
+    pub fn with_fingerprint(mut self, fingerprint: BrowserFingerprint) -> Self {
+        self.fingerprint = Some(fingerprint);
+        self
+    }
+
+    /// If set to true, the client will ignore TLS-related errors.
+    pub fn with_ignore_tls_errors(mut self, ignore_tls_errors: bool) -> Self {
+        self.ignore_tls_errors = ignore_tls_errors;
+        self
+    }
+
+    /// If set to `true`, the client will retry the request without impersonation
+    /// if the impersonated browser encounters an error.
+    pub fn with_fallback_to_vanilla(mut self, vanilla_fallback: bool) -> Self {
+        self.vanilla_fallback = vanilla_fallback;
+        self
+    }
+
+    /// Sets the proxy URL to use for requests.
+    ///
+    /// Note that this proxy will be used for all the requests
+    /// made by the built [`Impit`] instance.
+    pub fn with_proxy(mut self, proxy_url: String) -> Self {
+        self.proxy_url = proxy_url;
+        self
+    }
+
+    /// Sets the default timeout for requests.
+    ///
+    /// This setting can be overridden when making the request by using the `RequestOptions` struct.
+    pub fn with_default_timeout(mut self, timeout: Duration) -> Self {
+        self.request_timeout = timeout;
+        self
+    }
+
+    /// Enables HTTP/3 usage for requests.
+    ///
+    /// `impit` currently supports HTTP/3 negotiation via the HTTPS DNS record and the `Alt-Svc` header.
+    /// To enforce HTTP/3 usage, use the `http3_prior_knowledge` option in the `RequestOptions` struct when
+    /// making the request.
+    ///
+    /// Note that this feature is experimental and may not work as expected with all servers.
+    pub fn with_http3(mut self) -> Self {
+        self.max_http_version = Version::HTTP_3;
+        self
+    }
+
+    /// Sets the desired redirect behavior.
+    ///
+    /// By default, the client will follow up to 10 redirects.
+    /// By passing the `RedirectBehavior::ManualRedirect` option, the client will not follow any redirects
+    /// (i.e. it will return the response for the first request, with the 3xx status code).
+    pub fn with_redirect(mut self, behavior: RedirectBehavior) -> Self {
+        self.redirect = behavior;
+        self
+    }
+
+    /// Sets whether to store cookies in the internal Client cookie store.
+    ///
+    /// If set to `true`, the client will store cookies in the internal cookie store.
+    /// If set to `false`, the client will not store cookies. Response headers will contain the
+    /// `Set-Cookie` header.
+    pub fn with_cookie_store(mut self, cookie_store: CookieStoreImpl) -> Self {
+        self.cookie_store = Some(Arc::new(cookie_store));
+        self
+    }
+
+    /// Sets the local address to bind the client to.
+    ///
+    /// This is useful for testing purposes or when you want to bind the client to a specific network interface.
+    /// Note that this address should be a valid IP address in the format "xxx.xxx.xxx.xxx" (for IPv4) or
+    /// "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff" (for IPv6).
+    pub fn with_local_address(mut self, local_address: String) -> Result<Self, ImpitError> {
+        let ip_addr = local_address.parse::<IpAddr>().map_err(|_| {
+            ImpitError::ReqwestError(format!("Invalid local address: {local_address}"))
+        })?;
+
+        self.local_address = Some(ip_addr);
+        Ok(self)
+    }
+
+    /// Sets additional headers to include in every request made by the built [`Impit`] instance.
+    ///
+    /// This can be used to add e.g. custom user-agent or authorization headers that should be included in every request.
+    /// These headers override the "impersonation" headers set by the `with_browser` method.
+    ///
+    /// If you want to add custom headers to a specific request, use the `RequestOptions` struct instead.
+    pub fn with_headers(mut self, headers: Vec<(String, String)>) -> Self {
+        self.headers = Some(headers);
+        self
+    }
+
+    /// Builds the [`Impit`] instance.
+    pub fn build(self) -> Result<Impit<CookieStoreImpl>, ImpitError> {
+        Impit::new(self)
+    }
+}
+
+impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
+    pub fn builder() -> ImpitBuilder<CookieStoreImpl> {
+        ImpitBuilder::default()
+    }
+
+    fn new_reqwest_client(
+        config: &ImpitBuilder<CookieStoreImpl>,
+    ) -> Result<reqwest::Client, ImpitError> {
+        let mut client = reqwest::Client::builder();
+        let mut tls_config_builder = tls::TlsConfig::builder();
+
+        // Use fingerprint if provided, otherwise fall back to browser enum
+        if let Some(ref fingerprint) = config.fingerprint {
+            tls_config_builder.with_tls_fingerprint(fingerprint.tls.clone());
+        }
+
+        if config.max_http_version == Version::HTTP_3 {
+            tls_config_builder.with_http3();
+        }
+
+        tls_config_builder.with_ignore_tls_errors(config.ignore_tls_errors);
+
+        let tls_config = tls_config_builder.build();
+
+        client = client
+            .danger_accept_invalid_certs(config.ignore_tls_errors)
+            .danger_accept_invalid_hostnames(config.ignore_tls_errors)
+            .use_preconfigured_tls(tls_config)
+            .timeout(config.request_timeout);
+
+        if let Some(cookie_provider) = &config.cookie_store {
+            client = client.cookie_provider(cookie_provider.clone());
+        }
+
+        if config.max_http_version == Version::HTTP_3 {
+            client = client.http3_prior_knowledge();
+        }
+
+        if !config.proxy_url.is_empty() {
+            client = client.proxy(
+                reqwest::Proxy::all(&config.proxy_url)
+                    .map_err(|_| ImpitError::ProxyError(config.proxy_url.clone()))?,
+            );
+        }
+
+        if let Some(ip_addr) = config.local_address {
+            client = client.local_address(ip_addr);
+        }
+
+        match config.redirect {
+            RedirectBehavior::FollowRedirect(max) => {
+                client = client.redirect(reqwest::redirect::Policy::limited(max));
+            }
+            RedirectBehavior::ManualRedirect => {
+                client = client.redirect(reqwest::redirect::Policy::none());
+            }
+        }
+
+        // Apply per-client HTTP/2 SETTINGS from the fingerprint.
+        // These use reqwest's builder API which flows through hyper → h2,
+        // so each Impit instance gets its own settings (safe for concurrent use).
+        // HEADER_TABLE_SIZE is handled globally via the h2 fork's default (65536).
+        if let Some(ref fingerprint) = config.fingerprint {
+            let h2 = &fingerprint.http2;
+
+            if let Some(initial_window_size) = h2.settings_initial_window_size {
+                client = client.http2_initial_stream_window_size(initial_window_size);
+            }
+
+            if let Some(max_frame_size) = h2.settings_max_frame_size {
+                client = client.http2_max_frame_size(max_frame_size);
+            }
+
+            if let Some(max_header_list_size) = h2.settings_max_header_list_size {
+                client = client.http2_max_header_list_size(max_header_list_size);
+            }
+
+            if let Some(connection_window_size) = h2.connection_window_size_increment {
+                client = client.http2_initial_connection_window_size(connection_window_size);
+            }
+
+            // Disable adaptive window so our explicit sizes are used as-is.
+            client = client.http2_adaptive_window(false);
+        }
+
+        client
+            .build()
+            .map_err(|e| ImpitError::ReqwestError(format!("{e:#?}")))
+    }
+
+    /// Creates a new [`Impit`] instance based on the options stored in the [`ImpitBuilder`] instance.
+    fn new(config: ImpitBuilder<CookieStoreImpl>) -> Result<Self, ImpitError> {
+        let mut h3_client: Option<reqwest::Client> = None;
+        let mut base_client = Self::new_reqwest_client(&config)?;
+
+        if config.max_http_version == Version::HTTP_3 {
+            h3_client = Some(base_client);
+            base_client = Self::new_reqwest_client(&ImpitBuilder::<CookieStoreImpl> {
+                max_http_version: Version::HTTP_2,
+                ..config.clone()
+            })?;
+        }
+
+        // Set pseudo-header order from fingerprint via env var.
+        // The h2 fork reads this env var once per connection (in Builder::new())
+        // and stores it per-connection, so subsequent env var changes don't affect
+        // existing connections. This is a known limitation: if multiple Impit
+        // instances with different browsers are created concurrently, there's a
+        // small window where the env var could contain the wrong order before
+        // the h2 connection is established. In practice this is very unlikely
+        // with Node.js's single-threaded event loop.
+        let pseudo_headers_order: Vec<String> = if let Some(ref fingerprint) = config.fingerprint {
+            fingerprint.http2.pseudo_header_order.to_vec()
+        } else {
+            vec![]
+        };
+
+        if !pseudo_headers_order.is_empty() {
+            // SAFETY: This is process-global but read once per h2 connection.
+            // In the NAPI context, JS is single-threaded, so this is set
+            // synchronously before the async request triggers h2 connection setup.
+            unsafe {
+                std::env::set_var(
+                    "IMPIT_H2_PSEUDOHEADERS_ORDER",
+                    pseudo_headers_order.join(","),
+                );
+            }
+        }
+
+        // Set MAX_CONCURRENT_STREAMS via env var for h2 fork.
+        // Chrome sends MAX_CONCURRENT_STREAMS=1000, Firefox doesn't send it.
+        // reqwest doesn't expose this setting, so we pass it via env var.
+        if let Some(ref fingerprint) = config.fingerprint {
+            if let Some(max_concurrent) = fingerprint.http2.settings_max_concurrent_streams {
+                unsafe {
+                    std::env::set_var(
+                        "IMPIT_H2_MAX_CONCURRENT_STREAMS",
+                        max_concurrent.to_string(),
+                    );
+                }
+            } else {
+                // If the fingerprint doesn't specify it (Firefox), remove the env var
+                // so h2 won't include it in SETTINGS.
+                unsafe {
+                    std::env::remove_var("IMPIT_H2_MAX_CONCURRENT_STREAMS");
+                }
+            }
+        }
+
+        Ok(Impit {
+            base_client,
+            h3_client,
+            config,
+            h3_engine: Arc::new(RwLock::new(None)),
+        })
+    }
+
+    fn parse_url(&self, url: String) -> Result<Url, ImpitError> {
+        let url = Url::parse(&url).map_err(|_| ImpitError::UrlParsingError(url.clone()))?;
+
+        if url.host_str().is_none() {
+            return Err(ImpitError::UrlMissingHostnameError(url.to_string()));
+        }
+
+        let protocol = url.scheme();
+
+        match protocol {
+            "http" => Ok(url),
+            "https" => Ok(url),
+            _ => Err(ImpitError::UrlProtocolError(protocol.to_string())),
+        }
+    }
+
+    async fn should_use_h3(&self, host: &String) -> bool {
+        if self.config.max_http_version < Version::HTTP_3 {
+            debug!("HTTP/3 is disabled, falling back to TCP-based requests.");
+            return false;
+        }
+
+        {
+            let engine_guard = self.h3_engine.read().await;
+            if let Some(engine) = engine_guard.as_ref() {
+                return engine.host_supports_h3(host).await;
+            }
+        }
+
+        {
+            let mut engine_guard = self.h3_engine.write().await;
+            if engine_guard.is_none() {
+                *engine_guard = Some(H3Engine::init().await);
+            }
+
+            match engine_guard.as_ref() {
+                None => false,
+                Some(engine) => engine.host_supports_h3(host).await,
+            }
+        }
+    }
+
+    fn build_request(
+        &self,
+        method: Method,
+        url: Url,
+        body: Option<Vec<u8>>,
+        headers: Vec<(String, String)>,
+    ) -> ImpitRequest {
+        let host = url.host_str().unwrap_or_default().to_string();
+
+        let headers = HttpHeaders::get_builder()
+            .with_fingerprint(&self.config.fingerprint)
+            .with_host(&host)
+            .with_https(url.scheme() == "https")
+            .with_custom_headers(self.config.headers.to_owned())
+            .with_custom_headers(Some(headers))
+            .build();
+
+        ImpitRequest {
+            url,
+            body,
+            headers: headers.iter().collect(),
+            method: method.to_string(),
+        }
+    }
+
+    async fn send(
+        &self,
+        request: ImpitRequest,
+        timeout: Option<Duration>,
+        http3_prior_knowledge: Option<bool>,
+    ) -> Result<Response, ImpitError> {
+        let http3_prior_knowledge = http3_prior_knowledge.unwrap_or(false);
+        if http3_prior_knowledge && self.config.max_http_version < Version::HTTP_3 {
+            return Err(ImpitError::Http3Disabled);
+        }
+
+        let url = request.url.to_string();
+        let host = request.url.host_str().unwrap_or_default().to_string();
+        let h3 = http3_prior_knowledge
+            || self
+                .should_use_h3(&request.url.host_str().unwrap_or_default().to_string())
+                .await;
+        let client = if h3 {
+            debug!("Using QUIC for request to {url}");
+            self.h3_client.as_ref().unwrap_or(&self.base_client)
+        } else {
+            debug!("{url} doesn't seem to have HTTP3 support");
+            &self.base_client
+        };
+
+        let header_map: Result<HeaderMap, ImpitError> = HttpHeaders::from(request.headers).into();
+
+        let method = Method::from_str(&request.method).map_err(|_| {
+            ImpitError::InvalidMethod(format!("Invalid HTTP method: {}", request.method))
+        })?;
+
+        let mut client_request = client
+            .request(method.clone(), request.url.clone())
+            .headers(header_map?);
+
+        if h3 {
+            client_request = client_request.version(Version::HTTP_3);
+        }
+
+        if let Some(timeout) = timeout {
+            client_request = client_request.timeout(timeout);
+        }
+
+        client_request = match request.body {
+            Some(body) => client_request.body(body),
+            None => client_request,
+        };
+
+        let response = client_request.send().await;
+
+        let response = match response {
+            Ok(resp) => resp,
+            Err(err) => {
+                let max_redirects = match self.config.redirect {
+                    RedirectBehavior::FollowRedirect(max) => max,
+                    RedirectBehavior::ManualRedirect => 0,
+                };
+
+                return Err(ImpitError::from(
+                    err,
+                    Some(ErrorContext {
+                        timeout: Some(timeout.unwrap_or(self.config.request_timeout)),
+                        max_redirects: Some(max_redirects),
+                        method: Some(method.to_string()),
+                        protocol: Some(request.url.scheme().to_string()),
+                        url: Some(url.clone()),
+                    }),
+                ));
+            }
+        };
+
+        if !h3 {
+            let engine_guard = self.h3_engine.read().await;
+            if let Some(h3_engine) = engine_guard.as_ref() {
+                h3_engine.set_h3_support(&host, false).await;
+
+                if let Some(alt_svc) = response.headers().get("Alt-Svc") {
+                    if let Ok(alt_svc_str) = alt_svc.to_str() {
+                        if alt_svc_str.contains("h3") {
+                            debug!(
+                                "{host} supports HTTP/3 (alt-svc header), adding to Alt-Svc cache"
+                            );
+                            h3_engine.set_h3_support(&host, true).await;
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(response)
+    }
+
+    async fn make_request(
+        &self,
+        method: Method,
+        url: String,
+        body: Option<Vec<u8>>,
+        options: Option<RequestOptions>,
+    ) -> Result<Response, ImpitError> {
+        let url = self.parse_url(url)?;
+        let request_options = options.unwrap_or_default();
+
+        let headers = request_options.headers;
+        let request = self.build_request(method, url, body, headers);
+
+        let timeout = request_options.timeout;
+        let http3_prior_knowledge = request_options.http3_prior_knowledge;
+        self.send(request, timeout, Some(http3_prior_knowledge))
+            .await
+    }
+
+    /// Makes a `GET` request to the specified URL.
+    ///
+    /// The `url` parameter should be a valid URL.
+    /// Additional options like `headers`, `timeout` or HTTP/3 usage can be passed via the `RequestOptions` struct.
+    ///
+    /// If the request is successful, the `reqwest::Response` struct is returned.
+    pub async fn get(
+        &self,
+        url: String,
+        body: Option<Vec<u8>>,
+        options: Option<RequestOptions>,
+    ) -> Result<Response, ImpitError> {
+        self.make_request(Method::GET, url, body, options).await
+    }
+
+    /// Makes a `HEAD` request to the specified URL.
+    ///
+    /// The `url` parameter should be a valid URL.
+    /// Additional options like `headers`, `timeout` or HTTP/3 usage can be passed via the `RequestOptions` struct.
+    ///
+    /// If the request is successful, the `reqwest::Response` struct is returned.
+    pub async fn head(
+        &self,
+        url: String,
+        body: Option<Vec<u8>>,
+        options: Option<RequestOptions>,
+    ) -> Result<Response, ImpitError> {
+        self.make_request(Method::HEAD, url, body, options).await
+    }
+
+    /// Makes an OPTIONS request to the specified URL.
+    ///
+    /// The `url` parameter should be a valid URL.
+    /// Additional options like `headers`, `timeout` or HTTP/3 usage can be passed via the `RequestOptions` struct.
+    ///
+    /// If the request is successful, the `reqwest::Response` struct is returned.
+    pub async fn options(
+        &self,
+        url: String,
+        body: Option<Vec<u8>>,
+        options: Option<RequestOptions>,
+    ) -> Result<Response, ImpitError> {
+        self.make_request(Method::OPTIONS, url, body, options).await
+    }
+
+    /// Makes a `TRACE` request to the specified URL.
+    ///
+    /// The `url` parameter should be a valid URL.
+    /// Additional options like `headers`, `timeout` or HTTP/3 usage can be passed via the `RequestOptions` struct.
+    ///
+    /// If the request is successful, the `reqwest::Response` struct is returned.
+    pub async fn trace(
+        &self,
+        url: String,
+        body: Option<Vec<u8>>,
+        options: Option<RequestOptions>,
+    ) -> Result<Response, ImpitError> {
+        self.make_request(Method::TRACE, url, body, options).await
+    }
+
+    /// Makes a `DELETE` request to the specified URL.
+    ///
+    /// The `url` parameter should be a valid URL.
+    /// Additional options like `headers`, `timeout` or HTTP/3 usage can be passed via the `RequestOptions` struct.
+    ///
+    /// If the request is successful, the `reqwest::Response` struct is returned.
+    pub async fn delete(
+        &self,
+        url: String,
+        body: Option<Vec<u8>>,
+        options: Option<RequestOptions>,
+    ) -> Result<Response, ImpitError> {
+        self.make_request(Method::DELETE, url, body, options).await
+    }
+
+    /// Makes a `POST` request to the specified URL.
+    ///
+    /// The `url` parameter should be a valid URL.
+    /// Additional options like `headers`, `timeout` or HTTP/3 usage can be passed via the `RequestOptions` struct.
+    ///
+    /// If the request is successful, the `reqwest::Response` struct is returned.
+    pub async fn post(
+        &self,
+        url: String,
+        body: Option<Vec<u8>>,
+        options: Option<RequestOptions>,
+    ) -> Result<Response, ImpitError> {
+        self.make_request(Method::POST, url, body, options).await
+    }
+
+    /// Makes a `PUT` request to the specified URL.
+    ///
+    /// The `url` parameter should be a valid URL.
+    /// Additional options like `headers`, `timeout` or HTTP/3 usage can be passed via the `RequestOptions` struct.
+    ///
+    /// If the request is successful, the `reqwest::Response` struct is returned.
+    pub async fn put(
+        &self,
+        url: String,
+        body: Option<Vec<u8>>,
+        options: Option<RequestOptions>,
+    ) -> Result<Response, ImpitError> {
+        self.make_request(Method::PUT, url, body, options).await
+    }
+
+    /// Makes a `PATCH` request to the specified URL.
+    ///
+    /// The `url` parameter should be a valid URL.
+    /// Additional options like `headers`, `timeout` or HTTP/3 usage can be passed via the `RequestOptions` struct.
+    ///
+    /// If the request is successful, the `reqwest::Response` struct is returned.
+    pub async fn patch(
+        &self,
+        url: String,
+        body: Option<Vec<u8>>,
+        options: Option<RequestOptions>,
+    ) -> Result<Response, ImpitError> {
+        self.make_request(Method::PATCH, url, body, options).await
+    }
+}

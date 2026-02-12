@@ -1,0 +1,34 @@
+[package]
+edition = "2021"
+name = "impit-node"
+version = "0.0.0"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+napi = { version = "=3.8.2", default-features = false, features = ["napi4", "napi5", "async", "web_stream", "tokio_rt"] }
+napi-derive = "=3.5.1"
+impit = { path="../impit" }
+rustls = { version="0.23.36" }
+tokio = { version="1.41.1", features = ["full"] }
+h2 = "0.4.7"
+reqwest = { version="0.13.1" }
+tokio-stream = "0.1.17"
+bytes = "1.11.1"
+
+[build-dependencies]
+napi-build = "2.1.4"
+
+[target.x86_64-unknown-linux-gnu.dependencies]
+openssl = { version = "*", features = ["vendored"] }
+
+[target.x86_64-unknown-linux-musl.dependencies]
+openssl = { version = "*", features = ["vendored"] }
+
+[target.aarch64-unknown-linux-gnu.dependencies]
+openssl = { version = "*", features = ["vendored"] }
+
+[target.aarch64-unknown-linux-musl.dependencies]
+openssl = { version = "*", features = ["vendored"] }
+
