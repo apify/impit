@@ -79,6 +79,7 @@ jobs:
           args: --release --out dist --interpreter '3.10 3.11 3.12 3.13 3.13t 3.14 3.14t' ${{ matrix.target == 'x86_64' && '--sdist' || '' }}
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: ${{ matrix.target == 'x86_64' && 'auto' || matrix.target == 'aarch64' && '2_28' }}
+          container: ${{ matrix.target == 'x86_64' && 'quay.io/pypa/manylinux2014_x86_64:2026.02.13-1' || '' }}
           before-script-linux: |
             case "${{ matrix.target }}" in
               "aarch64" | "armv7" | "s390x" | "ppc64le")
