@@ -61,37 +61,38 @@ jobs:
             3.13
             3.14
 
-      - name: Calculate openssl-vendored
-        shell: bash
-        id: is-openssl-vendored
+      - name: Build wheels (x86_64)
+        if: matrix.target == 'x86_64'
         run: |
-          if [[ "${{ startsWith(matrix.target, 'x86') }}" == "true" ]]; then
-            echo "enabled=" >> $GITHUB_OUTPUT
-          else
-            echo "enabled=--features openssl-vendored" >> $GITHUB_OUTPUT
-          fi
+          docker run --rm \
+            -v "${{ github.workspace }}:/io" \
+            -w /io/impit-python \
+            quay.io/pypa/manylinux2014_x86_64:latest \
+            bash -c '
+              set -e
+              yum update -y
+              yum install -y openssl openssl-devel perl perl-IPC-Cmd
 
-      - name: Build wheels
+              curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+              source "$HOME/.cargo/env"
+
+              cpython3.13 -m pip install maturin
+
+              cpython3.13 -m maturin build --release --out dist --interpreter 3.10 3.11 3.12 3.13 3.13t 3.14 3.14t --sdist
+            '
+
+      - name: Build wheels (aarch64)
+        if: matrix.target == 'aarch64'
         uses: PyO3/maturin-action@v1
         with:
           working-directory: impit-python
-          target: ${{ matrix.target }}
-          args: --release --out dist --interpreter '3.10 3.11 3.12 3.13 3.13t 3.14 3.14t' ${{ matrix.target == 'x86_64' && '--sdist' || '' }}
+          target: aarch64
+          args: --release --out dist --interpreter '3.10 3.11 3.12 3.13 3.13t 3.14 3.14t'
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
-          manylinux: ${{ matrix.target == 'x86_64' && 'auto' || matrix.target == 'aarch64' && '2_28' }}
+          manylinux: "2_28"
           before-script-linux: |
-            case "${{ matrix.target }}" in
-              "aarch64" | "armv7" | "s390x" | "ppc64le")
-                # NOTE: pypa/manylinux docker images are Debian based
-                sudo apt-get update
-                sudo apt-get install -y pkg-config libssl-dev perl
-                ;;
-              "x86" | "x86_64")
-                # NOTE: rust-cross/manylinux docker images are CentOS based
-                yum update -y
-                yum install -y openssl openssl-devel perl perl-IPC-Cmd
-                ;;
-            esac
+            sudo apt-get update
+            sudo apt-get install -y pkg-config libssl-dev perl
 
       - name: Upload wheels
         uses: actions/upload-artifact@v6
