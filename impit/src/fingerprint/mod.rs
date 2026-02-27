@@ -70,6 +70,9 @@ impl TlsFingerprint {
 #[derive(Clone, Debug)]
 pub struct Http2Fingerprint {
     pub pseudo_header_order: Vec<String>,
+    pub initial_stream_window_size: Option<u32>,
+    pub initial_connection_window_size: Option<u32>,
+    pub max_header_list_size: Option<u32>,
 }
 
 /// TLS extensions configuration.

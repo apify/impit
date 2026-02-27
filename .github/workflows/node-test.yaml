@@ -44,15 +44,15 @@ jobs:
             target: aarch64-unknown-linux-musl
             docker: arm64v8/node:20-alpine
             build: |-
-                export PATH="/usr/local/cargo/bin/rustup:/root/.cargo/bin:$PATH" RUSTFLAGS="-C target-feature=-crt-static --cfg reqwest_unstable" CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER=gcc CC=gcc CXX="g++" GN_EXE=gn &&
-                apk add --update --no-cache bash wget cmake musl-dev clang llvm build-base python3 gcc g++ perl &&
-                sed -i -e 's/v[[:digit:]]\..*\//edge\//g' /etc/apk/repositories &&
-                apk add --update --no-cache --repository https://dl-cdn.alpinelinux.org/alpine/edge/testing rustup git gn tar ninja &&
-                apk update &&
-                apk upgrade &&
-                rustup-init -y &&
-                yarn global add pnpm lerna &&
-                corepack enable &&
+                export PATH="/usr/local/cargo/bin/rustup:/root/.cargo/bin:$PATH" RUSTFLAGS="-C target-feature=-crt-static --cfg reqwest_unstable" CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER=gcc CC=gcc CXX="g++" GN_EXE=gn
+                apk add --update --no-cache bash wget cmake musl-dev clang llvm build-base python3 gcc g++ perl
+                sed -i -e 's/v[[:digit:]]\..*\//edge\//g' /etc/apk/repositories
+                apk add --update --no-cache --repository https://dl-cdn.alpinelinux.org/alpine/edge/testing rustup git gn tar ninja
+                apk update
+                apk upgrade
+                rustup-init -y
+                yarn global add pnpm lerna
+                corepack enable
                 yarn --cwd impit-node build
           - host: ubuntu-22.04-arm
             target: aarch64-unknown-linux-gnu
@@ -62,23 +62,23 @@ jobs:
             docker: node:20-alpine
             # Script taken from https://github.com/napi-rs/napi-rs/blob/main/alpine.Dockerfile
             build: |
-                export PATH="/aarch64-linux-musl-cross/bin:/usr/local/cargo/bin/rustup:/root/.cargo/bin:$PATH" RUSTFLAGS="-C target-feature=-crt-static --cfg reqwest_unstable" CC="clang" CXX="clang++" GN_EXE=gn &&
-                apk add --update --no-cache bash wget cmake musl-dev clang llvm build-base python3 &&
-                sed -i -e 's/v[[:digit:]]\..*\//edge\//g' /etc/apk/repositories &&
-                apk add --update --no-cache --repository https://dl-cdn.alpinelinux.org/alpine/edge/testing rustup git gn tar ninja &&
-                apk update &&
-                apk upgrade &&
-                rustup-init -y &&
-                yarn global add pnpm lerna &&
-                rustup target add aarch64-unknown-linux-musl &&
-                wget https://github.com/napi-rs/napi-rs/releases/download/linux-musl-cross%4010/aarch64-linux-musl-cross.tgz &&
-                tar -xvf aarch64-linux-musl-cross.tgz &&
-                rm aarch64-linux-musl-cross.tgz &&
-                apk add perl &&
-                ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/14.2.0/crtbeginS.o /usr/lib/crtbeginS.o &&
-                ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/14.2.0/crtendS.o /usr/lib/crtendS.o &&
-                ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/14.2.0/libgcc.a /usr/lib/libgcc.a &&
-                corepack enable &&
+                export PATH="/aarch64-linux-musl-cross/bin:/usr/local/cargo/bin/rustup:/root/.cargo/bin:$PATH" RUSTFLAGS="-C target-feature=-crt-static --cfg reqwest_unstable" CC="clang" CXX="clang++" GN_EXE=gn
+                apk add --update --no-cache bash wget cmake musl-dev clang llvm build-base python3
+                sed -i -e 's/v[[:digit:]]\..*\//edge\//g' /etc/apk/repositories
+                apk add --update --no-cache --repository https://dl-cdn.alpinelinux.org/alpine/edge/testing rustup git gn tar ninja
+                apk update
+                apk upgrade
+                rustup-init -y
+                yarn global add pnpm lerna
+                rustup target add aarch64-unknown-linux-musl
+                wget https://github.com/napi-rs/napi-rs/releases/download/linux-musl-cross%4010/aarch64-linux-musl-cross.tgz
+                tar -xvf aarch64-linux-musl-cross.tgz
+                rm aarch64-linux-musl-cross.tgz
+                apk add perl
+                ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/14.2.0/crtbeginS.o /usr/lib/crtbeginS.o
+                ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/14.2.0/crtendS.o /usr/lib/crtendS.o
+                ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/14.2.0/libgcc.a /usr/lib/libgcc.a
+                corepack enable
                 yarn --cwd impit-node build --target x86_64-unknown-linux-musl
           - host: macos-latest
             target: aarch64-apple-darwin
@@ -147,7 +147,7 @@ jobs:
           cache-dependency-path: impit-node/yarn.lock
           architecture: x86
       - name: Build in docker
-        uses: addnab/docker-run-action@v3
+        uses: maus007/docker-run-action-fork@207a4e2a8ebf7e4b985656ba990b1e53715dce2a
         if: ${{ matrix.settings.docker }}
         with:
           image: ${{ matrix.settings.docker }}

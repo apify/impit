@@ -238,6 +238,18 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
         // Use fingerprint if provided, otherwise fall back to browser enum
         if let Some(ref fingerprint) = config.fingerprint {
             tls_config_builder.with_tls_fingerprint(fingerprint.tls.clone());
+
+            if let Some(window_size) = fingerprint.http2.initial_stream_window_size {
+                client = client.http2_initial_stream_window_size(window_size);
+            }
+
+            if let Some(window_size) = fingerprint.http2.initial_connection_window_size {
+                client = client.http2_initial_connection_window_size(window_size);
+            }
+
+            if let Some(max_size) = fingerprint.http2.max_header_list_size {
+                client = client.http2_max_header_list_size(max_size);
+            }
         }
 
         if config.max_http_version == Version::HTTP_3 {

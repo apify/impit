@@ -117,6 +117,9 @@ pub mod chrome_142 {
                 ":protocol".to_string(),
                 ":status".to_string(),
             ],
+            initial_stream_window_size: Some(6_291_456),
+            initial_connection_window_size: Some(15_663_105),
+            max_header_list_size: Some(262_144),
         }
     }
 
@@ -255,6 +258,9 @@ pub mod chrome_136 {
                 ":protocol".to_string(),
                 ":status".to_string(),
             ],
+            initial_stream_window_size: Some(6_291_456),
+            initial_connection_window_size: Some(15_663_105),
+            max_header_list_size: Some(262_144),
         }
     }
 
@@ -387,6 +393,9 @@ pub mod chrome_133 {
                 ":protocol".to_string(),
                 ":status".to_string(),
             ],
+            initial_stream_window_size: Some(6_291_456),
+            initial_connection_window_size: Some(15_663_105),
+            max_header_list_size: Some(262_144),
         }
     }
 
@@ -519,6 +528,9 @@ pub mod chrome_124 {
                 ":protocol".to_string(),
                 ":status".to_string(),
             ],
+            initial_stream_window_size: Some(6_291_456),
+            initial_connection_window_size: Some(15_663_105),
+            max_header_list_size: Some(262_144),
         }
     }
 
@@ -654,6 +666,9 @@ pub mod chrome_131 {
                 ":protocol".to_string(),
                 ":status".to_string(),
             ],
+            initial_stream_window_size: Some(6_291_456),
+            initial_connection_window_size: Some(15_663_105),
+            max_header_list_size: Some(262_144),
         }
     }
 
@@ -783,6 +798,9 @@ pub mod chrome_100 {
                 ":protocol".to_string(),
                 ":status".to_string(),
             ],
+            initial_stream_window_size: Some(6_291_456),
+            initial_connection_window_size: Some(15_663_105),
+            max_header_list_size: Some(262_144),
         }
     }
 
@@ -1081,6 +1099,9 @@ pub mod chrome_125 {
                 ":protocol".to_string(),
                 ":status".to_string(),
             ],
+            initial_stream_window_size: Some(6_291_456),
+            initial_connection_window_size: Some(15_663_105),
+            max_header_list_size: Some(262_144),
         }
     }
 
