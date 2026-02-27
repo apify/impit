@@ -122,7 +122,7 @@ pub mod firefox_128 {
             ],
             initial_stream_window_size: Some(131_072),
             initial_connection_window_size: Some(12_517_377),
-            max_header_list_size: Some(65_536),
+            max_header_list_size: None,
         }
     }
 
@@ -263,7 +263,7 @@ pub mod firefox_133 {
             ],
             initial_stream_window_size: Some(131_072),
             initial_connection_window_size: Some(12_517_377),
-            max_header_list_size: Some(65_536),
+            max_header_list_size: None,
         }
     }
 
@@ -409,7 +409,7 @@ pub mod firefox_135 {
             ],
             initial_stream_window_size: Some(131_072),
             initial_connection_window_size: Some(12_517_377),
-            max_header_list_size: Some(65_536),
+            max_header_list_size: None,
         }
     }
 
