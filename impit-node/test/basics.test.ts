@@ -165,6 +165,20 @@ describe.each([
             expect(json).toHaveProperty('origin');
         });
 
+        test('receives content-length header', async () => {
+            const impit = new Impit({
+                browser,
+            });
+
+            const response = await impit.fetch(
+                'https://crawlee.dev'
+            );
+
+            expect(response.status).toBe(200);
+            expect(response.headers.get('content-length')).toBeTruthy();
+            expect(response.headers.get('content-encoding')).toBeTruthy();
+        });
+
         test('proxy with incomplete authentication works', async () => {
             let proxyHit = false;
             const proxy = http.createServer((req, res) => {
