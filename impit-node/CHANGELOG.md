@@ -3,6 +3,21 @@
 All notable changes to this project will be documented in this file.
 
 
+## js-0.10.0 - 2026-03-02
+
+#### Bug Fixes
+
+- Clean up AbortSignal listeners after fetch() completes (#394)
+  - Drops `AbortSignal` listeners in Node.JS bindings to prevent memory leaks on `AbortSignal` reuse.  ---------
+
+
+#### Features
+
+- Add HTTP/2 SETTINGS fingerprinting (#386)
+  - Adds custom HTTP2 profiles to the emulated browser fingerprints.  ---------
+
+
+
 ## js-0.9.2 - 2026-02-10
 
 #### Bug Fixes
