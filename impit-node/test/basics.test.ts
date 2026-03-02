@@ -575,6 +575,24 @@ describe.each([
             const { getEventListeners } = await import('node:events');
             expect(getEventListeners(signal, 'abort').length).toBe(0);
         });
+
+        test('cleans up listeners when body read throws', async () => {
+            const server = await getServer();
+            const controller = new AbortController();
+            const signal = controller.signal;
+            const { getEventListeners } = await import('node:events');
+
+            const response = await impit.fetch(
+                `http://127.0.0.1:${(server?.address() as AddressInfo).port}/delay/3000`,
+                { signal }
+            );
+            // Access body to initialize the abort channel, then abort before reading.
+            void response.body;
+            controller.abort();
+            await expect(response.text()).rejects.toThrow(/abort|aborted|canceled/i);
+
+            expect(getEventListeners(signal, 'abort').length).toBe(0);
+        });
     });
 
     // Skipping because of issues with redirected Standby requests on Apify
