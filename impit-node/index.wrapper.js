@@ -150,17 +150,17 @@ class Impit extends native.Impit {
         // Check immediately if already aborted (before creating any promises)
         signal?.throwIfAborted();
 
+        let abortHandler;
         const waitForAbort = new Promise((_, reject) => {
-            signal?.addEventListener?.(
-                "abort",
-                () => {
-                    reject(signal.reason);
-                },
-                { once: true },
-            );
+            abortHandler = () => reject(signal.reason);
+            signal?.addEventListener?.("abort", abortHandler, { once: true });
         });
 
-        return this.#fetchWithRedirectHandling(initialUrl, options, signal, waitForAbort);
+        try {
+            return await this.#fetchWithRedirectHandling(initialUrl, options, signal, waitForAbort);
+        } finally {
+            signal?.removeEventListener?.("abort", abortHandler);
+        }
     }
 
     /**
@@ -237,15 +237,40 @@ class Impit extends native.Impit {
      */
     #wrapResponse(originalResponse, signal) {
         signal?.throwIfAborted();
-        signal?.addEventListener?.(
-            "abort",
-            () => {
-                originalResponse.abort();
-            },
-        );
+
+        let abortHandler;
+        const cleanup = () => {
+            signal?.removeEventListener?.("abort", abortHandler);
+        };
+
+        if (signal) {
+            abortHandler = () => originalResponse.abort();
+            signal.addEventListener("abort", abortHandler);
+        }
 
         Object.defineProperty(originalResponse, 'text', {
             value: ResponsePatches.text.bind(originalResponse)
+        });
+
+        const nativeBytes = originalResponse.bytes.bind(originalResponse);
+        Object.defineProperty(originalResponse, 'bytes', {
+            value: async function() {
+                try { return await nativeBytes(); } finally { cleanup(); }
+            }
+        });
+
+        const nativeArrayBuffer = originalResponse.arrayBuffer.bind(originalResponse);
+        Object.defineProperty(originalResponse, 'arrayBuffer', {
+            value: async function() {
+                try { return await nativeArrayBuffer(); } finally { cleanup(); }
+            }
+        });
+
+        const nativeJson = originalResponse.json.bind(originalResponse);
+        Object.defineProperty(originalResponse, 'json', {
+            value: async function() {
+                try { return await nativeJson(); } finally { cleanup(); }
+            }
         });
 
         Object.defineProperty(originalResponse, 'headers', {
