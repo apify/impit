@@ -86,6 +86,9 @@ jobs:
           - name: Publish to npm
             run: npm publish --provenance
 
+          - name: Update lockfile
+            run: yarn install --no-immutable
+
           - name: Commit changes
             id: commit
             uses: EndBug/add-and-commit@v9
