@@ -480,11 +480,25 @@ describe.each([
             t.expect(text).toContain('Herman Melville');
         });
 
-        test('.text() method works with decoding', async (t) => {
+        test('.text() decodes using Content-Type header charset param', async (t) => {
             const response = await impit.fetch(new URL(routes.charset.path, "http://127.0.0.1:3001").href);
             const text: string = await response.text();
 
             t.expect(text).toContain(routes.charset.bodyString);
+        });
+
+        test('.text() decodes using <meta charset> prescan', async (t) => {
+            const response = await impit.fetch(new URL(routes.charsetMetaCharset.path, "http://127.0.0.1:3001").href);
+            const text: string = await response.text();
+
+            t.expect(text).toContain(routes.charsetMetaCharset.bodyString);
+        });
+
+        test('.text() decodes using <meta http-equiv> prescan', async (t) => {
+            const response = await impit.fetch(new URL(routes.charsetMetaHttpEquiv.path, "http://127.0.0.1:3001").href);
+            const text: string = await response.text();
+
+            t.expect(text).toContain(routes.charsetMetaHttpEquiv.bodyString);
         });
 
         test('.json() method works', async (t) => {

@@ -25,7 +25,7 @@ fn bom_sniffing(bytes: &[u8]) -> Option<encoding::EncodingRef> {
     None
 }
 
-/// A lazy implementation of the BOM sniffing algorithm, using `scraper` to parse the HTML and extract the encoding.
+/// A lazy implementation of the prescan algorithm, using `lol_html` to parse the HTML and extract the encoding.
 ///
 /// See more details at https://html.spec.whatwg.org/#prescan-a-byte-stream-to-determine-its-encoding
 fn prescan_bytestream(bytes: &[u8]) -> Option<encoding::EncodingRef> {
@@ -38,34 +38,50 @@ fn prescan_bytestream(bytes: &[u8]) -> Option<encoding::EncodingRef> {
     let ascii_body = encoding::all::ASCII
         .decode(&bytes[0..limit], encoding::DecoderTrap::Replace)
         .unwrap();
-    let dom = scraper::Html::parse_document(&ascii_body);
 
-    let meta = dom
-        .select(&scraper::Selector::parse("meta[charset]").unwrap())
-        .next();
+    let found = std::rc::Rc::new(std::cell::RefCell::new(None::<encoding::EncodingRef>));
+    let found_charset = std::rc::Rc::clone(&found);
+    let found_http_equiv = std::rc::Rc::clone(&found);
 
-    if let Some(meta) = meta {
-        if let Some(charset) = meta.value().attr("charset") {
-            return encoding::label::encoding_from_whatwg_label(charset);
-        }
-    }
+    let mut rewriter = lol_html::HtmlRewriter::new(
+        lol_html::Settings {
+            element_content_handlers: vec![
+                lol_html::element!("meta[charset]", move |el| {
+                    if found_charset.borrow().is_none() {
+                        if let Some(charset) = el.get_attribute("charset") {
+                            *found_charset.borrow_mut() =
+                                encoding::label::encoding_from_whatwg_label(&charset);
+                        }
+                    }
+                    Ok(())
+                }),
+                lol_html::element!("meta[http-equiv]", move |el| {
+                    if found_http_equiv.borrow().is_none() {
+                        let is_content_type = el
+                            .get_attribute("http-equiv")
+                            .map(|v| v.eq_ignore_ascii_case("content-type"))
+                            .unwrap_or(false);
+                        if is_content_type {
+                            if let Some(content) = el.get_attribute("content") {
+                                if let Ok(ct) = ContentType::from(&content) {
+                                    *found_http_equiv.borrow_mut() = ct.into();
+                                }
+                            }
+                        }
+                    }
+                    Ok(())
+                }),
+            ],
+            ..lol_html::Settings::default()
+        },
+        |_: &[u8]| {},
+    );
 
-    let meta = dom
-        .select(&scraper::Selector::parse("meta[http-equiv=content-type]").unwrap())
-        .next();
+    rewriter.write(ascii_body.as_bytes()).ok()?;
+    rewriter.end().ok()?;
 
-    if let Some(meta) = meta {
-        if let Some(content) = meta.value().attr("content") {
-            let content_type = ContentType::from(content);
-
-            return match content_type {
-                Ok(content_type) => content_type.into(),
-                Err(_) => None,
-            };
-        }
-    }
-
-    None
+    let result = *found.borrow();
+    result
 }
 
 /// Converts a vector of bytes to a [`String`] using the provided encoding.
