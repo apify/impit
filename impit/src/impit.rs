@@ -508,6 +508,8 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
 
         let timeout = match request_options.timeout {
             None => None,
+            // reqwest has no per-request "no timeout" API; overriding with Duration::MAX is the
+            // conventional way to disable a timeout without rebuilding the client.
             Some(None) => Some(Duration::MAX),
             Some(Some(d)) => Some(d),
         };
