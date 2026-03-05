@@ -314,7 +314,7 @@ name = "exceptiongroup"
 version = "1.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "typing-extensions", marker = "python_full_version < '3.13'" },
+    { name = "typing-extensions", marker = "python_full_version < '3.11'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/50/79/66800aadf48771f6b62f7eb014e352e5d06856655206165d775e675a02c9/exceptiongroup-1.3.1.tar.gz", hash = "sha256:8b412432c6055b0b7d14c310000ae93352ed6754f70fa8f7c34141f91c4e3219", size = 30371, upload-time = "2025-11-21T23:01:54.787Z" }
 wheels = [
@@ -378,7 +378,6 @@ dev = [
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "pytest-cov" },
-    { name = "pytest-only" },
     { name = "pytest-rerunfailures" },
     { name = "pytest-xdist" },
     { name = "ruff" },
@@ -403,7 +402,6 @@ dev = [
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "pytest-cov" },
-    { name = "pytest-only" },
     { name = "pytest-rerunfailures" },
     { name = "pytest-xdist" },
     { name = "ruff" },
@@ -845,18 +843,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/5e/f7/c933acc76f5208b3b00089573cf6a2bc26dc80a8aece8f52bb7d6b1855ca/pytest_cov-7.0.0.tar.gz", hash = "sha256:33c97eda2e049a0c5298e91f519302a1334c26ac65c1a483d6206fd458361af1", size = 54328, upload-time = "2025-09-09T10:57:02.113Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ee/49/1377b49de7d0c1ce41292161ea0f721913fa8722c19fb9c1e3aa0367eecb/pytest_cov-7.0.0-py3-none-any.whl", hash = "sha256:3b8e9558b16cc1479da72058bdecf8073661c7f57f7d3c5f22a1c23507f2d861", size = 22424, upload-time = "2025-09-09T10:57:00.695Z" },
-]
-
-[[package]]
-name = "pytest-only"
-version = "2.1.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "pytest", marker = "python_full_version < '4'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/35/5c/8772432474700a9f784776dd22ae471c33f077a06cd56884cd1a176c4d18/pytest_only-2.1.1.tar.gz", hash = "sha256:d417e8d9f962fc772b7e130ab2319fe056f9191ff555fc178f4b66d6a18e248c", size = 4924, upload-time = "2024-03-09T18:01:18.621Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/d3/06/f65a216f192eeeead9ea8ccae8d3fe27df79fa93cf7e28900a0c96d1ca22/pytest_only-2.1.1-py3-none-any.whl", hash = "sha256:1bb74ae95ac44366da85ccf7da0815f11ae0bb0d07754d0def7f14584ead5988", size = 6494, upload-time = "2024-03-09T18:01:16.96Z" },
 ]
 
 [[package]]

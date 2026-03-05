@@ -46,7 +46,6 @@ dev = [
     "pytest-asyncio",
     "pytest-rerunfailures",
     "pytest-cov",
-    "pytest-only",
     "pytest-xdist",
     "pytest",
     "ruff",
