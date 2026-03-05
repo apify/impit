@@ -61,41 +61,17 @@ jobs:
             3.13
             3.14
 
-      - name: Build wheels (x86_64)
-        if: matrix.target == 'x86_64'
-        run: |
-          docker run --rm \
-            -v "${{ github.workspace }}:/io" \
-            -w /io/impit-python \
-            quay.io/pypa/manylinux2014_x86_64:latest \
-            bash -c '
-              set -e
-              yum update -y
-              yum install -y openssl openssl-devel perl perl-IPC-Cmd
-
-              curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-              source "$HOME/.cargo/env"
-
-              cpython3.13 -m pip install maturin
-
-              cpython3.13 -m maturin build --release --out dist --interpreter 3.10 3.11 3.12 3.13 3.13t 3.14 3.14t --sdist
-            '
-
-      - name: Build wheels (aarch64)
-        if: matrix.target == 'aarch64'
+      - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
           working-directory: impit-python
-          target: aarch64
-          args: --release --out dist --interpreter '3.10 3.11 3.12 3.13 3.13t 3.14 3.14t'
+          target: ${{ matrix.target }}
+          args: --release --out dist --interpreter '3.10 3.11 3.12 3.13 3.13t 3.14 3.14t' ${{ matrix.target == 'x86_64' && '--sdist' || '' }}
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
-          manylinux: "2_28"
-          before-script-linux: |
-            sudo apt-get update
-            sudo apt-get install -y pkg-config libssl-dev perl
+          manylinux: ${{ matrix.target == 'x86_64' && 'auto' || matrix.target == 'aarch64' && '2_28' }}
 
       - name: Upload wheels
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v6
         with:
           name: wheels-linux-${{ matrix.target }}
           path: impit-python/dist
@@ -125,7 +101,7 @@ jobs:
           python-version: 3.14
 
       - name: Download wheels
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v7
         with:
           name: wheels-linux-${{ matrix.platform.target }}
           path: impit-python/dist
@@ -175,19 +151,16 @@ jobs:
           args: --release --out dist --interpreter '3.10 3.11 3.12 3.13 3.13t 3.14 3.14t'
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: musllinux_1_2
-          before-script-linux: |
-            sudo apt-get update
-            sudo apt-get install -y pkg-config libssl-dev perl
 
       - name: Upload wheels
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v6
         with:
           name: wheels-musllinux-${{ matrix.platform.target }}
           path: impit-python/dist
 
       - name: pytest
         if: ${{ startsWith(matrix.platform.target, 'x86_64') }}
-        uses: maus007/docker-run-action-fork@207a4e2a8ebf7e4b985656ba990b1e53715dce2a
+        uses: addnab/docker-run-action@v3
         with:
           image: alpine:latest
           options: -v ${{ github.workspace }}:/io -w /io/impit-python -e APIFY_HTTPBIN_TOKEN=${{ secrets.APIFY_HTTPBIN_TOKEN }}
@@ -257,7 +230,7 @@ jobs:
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
 
       - name: Upload wheels
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v6
         with:
           name: wheels-windows-${{ matrix.platform.target }}
           path: impit-python/dist
@@ -312,7 +285,7 @@ jobs:
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
 
       - name: Upload wheels
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v6
         with:
           name: wheels-macos-${{ matrix.platform.target }}
           path: impit-python/dist
