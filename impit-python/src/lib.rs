@@ -9,7 +9,7 @@ mod response;
 
 use async_client::AsyncClient;
 use client::Client;
-use request::RequestBody;
+use request::{RequestBody, USE_CLIENT_DEFAULT_SENTINEL};
 use std::collections::HashMap;
 
 #[pymodule]
@@ -87,14 +87,14 @@ fn impit(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     ($($name:ident),*) => {
         $(
             #[pyfunction]
-            #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false, cookie_jar=None, cookies=None, follow_redirects=None, max_redirects=None, proxy=None))]
+            #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=crate::request::default_timeout(), force_http3=false, cookie_jar=None, cookies=None, follow_redirects=None, max_redirects=None, proxy=None))]
             fn $name(
                 _py: Python,
                 url: String,
                 content: Option<Vec<u8>>,
                 data: Option<RequestBody>,
                 headers: Option<HashMap<String, String>>,
-                timeout: Option<f64>,
+                timeout: Py<PyAny>,
                 force_http3: Option<bool>,
                 cookie_jar: Option<pyo3::Bound<'_, pyo3::PyAny>>,
                 cookies: Option<pyo3::Bound<'_, pyo3::PyAny>>,
@@ -115,7 +115,7 @@ fn impit(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     http_no_client!(get, post, put, head, patch, delete, options, trace);
 
     #[pyfunction]
-    #[pyo3(signature = (method, url, content=None, data=None, headers=None, timeout=None, force_http3=false, cookie_jar=None, cookies=None, follow_redirects=None, max_redirects=None, proxy=None))]
+    #[pyo3(signature = (method, url, content=None, data=None, headers=None, timeout=crate::request::default_timeout(), force_http3=false, cookie_jar=None, cookies=None, follow_redirects=None, max_redirects=None, proxy=None))]
     fn stream<'python>(
         _py: Python<'python>,
         method: &str,
@@ -123,7 +123,7 @@ fn impit(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
         content: Option<Vec<u8>>,
         data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
-        timeout: Option<f64>,
+        timeout: Py<PyAny>,
         force_http3: Option<bool>,
         cookie_jar: Option<pyo3::Bound<'_, pyo3::PyAny>>,
         cookies: Option<pyo3::Bound<'_, pyo3::PyAny>>,
@@ -160,6 +160,8 @@ fn impit(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     }
 
     m.add_function(wrap_pyfunction!(stream, m)?)?;
+
+    m.add("USE_CLIENT_DEFAULT", USE_CLIENT_DEFAULT_SENTINEL)?;
 
     Ok(())
 }

@@ -10,7 +10,7 @@ use pyo3::{ffi::c_str, prelude::*};
 use crate::{
     cookies::PythonCookieJar,
     errors::ImpitPyError,
-    request::{form_to_bytes, RequestBody},
+    request::{form_to_bytes, timeout_from_pyobj, RequestBody},
     response::{self, ImpitPyResponse},
 };
 
@@ -151,7 +151,7 @@ impl Client {
         })
     }
 
-    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=crate::request::default_timeout(), force_http3=false))]
     pub fn get(
         &self,
         py: Python<'_>,
@@ -159,7 +159,7 @@ impl Client {
         content: Option<Vec<u8>>,
         data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
-        timeout: Option<f64>,
+        timeout: Py<PyAny>,
         force_http3: Option<bool>,
     ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request(
@@ -175,7 +175,7 @@ impl Client {
         )
     }
 
-    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=crate::request::default_timeout(), force_http3=false))]
     pub fn head(
         &self,
         py: Python<'_>,
@@ -183,7 +183,7 @@ impl Client {
         content: Option<Vec<u8>>,
         data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
-        timeout: Option<f64>,
+        timeout: Py<PyAny>,
         force_http3: Option<bool>,
     ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request(
@@ -199,7 +199,7 @@ impl Client {
         )
     }
 
-    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=crate::request::default_timeout(), force_http3=false))]
     pub fn post(
         &self,
         py: Python<'_>,
@@ -207,7 +207,7 @@ impl Client {
         content: Option<Vec<u8>>,
         data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
-        timeout: Option<f64>,
+        timeout: Py<PyAny>,
         force_http3: Option<bool>,
     ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request(
@@ -223,7 +223,7 @@ impl Client {
         )
     }
 
-    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=crate::request::default_timeout(), force_http3=false))]
     pub fn patch(
         &self,
         py: Python<'_>,
@@ -231,7 +231,7 @@ impl Client {
         content: Option<Vec<u8>>,
         data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
-        timeout: Option<f64>,
+        timeout: Py<PyAny>,
         force_http3: Option<bool>,
     ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request(
@@ -247,7 +247,7 @@ impl Client {
         )
     }
 
-    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=crate::request::default_timeout(), force_http3=false))]
     pub fn put(
         &self,
         py: Python<'_>,
@@ -255,7 +255,7 @@ impl Client {
         content: Option<Vec<u8>>,
         data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
-        timeout: Option<f64>,
+        timeout: Py<PyAny>,
         force_http3: Option<bool>,
     ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request(
@@ -271,7 +271,7 @@ impl Client {
         )
     }
 
-    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=crate::request::default_timeout(), force_http3=false))]
     pub fn delete(
         &self,
         py: Python<'_>,
@@ -279,7 +279,7 @@ impl Client {
         content: Option<Vec<u8>>,
         data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
-        timeout: Option<f64>,
+        timeout: Py<PyAny>,
         force_http3: Option<bool>,
     ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request(
@@ -295,7 +295,7 @@ impl Client {
         )
     }
 
-    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=crate::request::default_timeout(), force_http3=false))]
     pub fn options(
         &self,
         py: Python<'_>,
@@ -303,7 +303,7 @@ impl Client {
         content: Option<Vec<u8>>,
         data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
-        timeout: Option<f64>,
+        timeout: Py<PyAny>,
         force_http3: Option<bool>,
     ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request(
@@ -319,7 +319,7 @@ impl Client {
         )
     }
 
-    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=crate::request::default_timeout(), force_http3=false))]
     pub fn trace(
         &self,
         py: Python<'_>,
@@ -327,7 +327,7 @@ impl Client {
         content: Option<Vec<u8>>,
         data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
-        timeout: Option<f64>,
+        timeout: Py<PyAny>,
         force_http3: Option<bool>,
     ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request(
@@ -343,7 +343,7 @@ impl Client {
         )
     }
 
-    #[pyo3(signature = (method, url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
+    #[pyo3(signature = (method, url, content=None, data=None, headers=None, timeout=crate::request::default_timeout(), force_http3=false))]
     pub fn stream<'python>(
         &self,
         py: Python<'python>,
@@ -352,7 +352,7 @@ impl Client {
         content: Option<Vec<u8>>,
         data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
-        timeout: Option<f64>,
+        timeout: Py<PyAny>,
         force_http3: Option<bool>,
     ) -> Result<Bound<'python, PyAny>, PyErr> {
         let response = self.request(
@@ -389,7 +389,7 @@ impl Client {
         Ok(wrapped_response.into_bound(py))
     }
 
-    #[pyo3(signature = (method, url, content=None, data=None, headers=None, timeout=None, force_http3=false, stream=false))]
+    #[pyo3(signature = (method, url, content=None, data=None, headers=None, timeout=crate::request::default_timeout(), force_http3=false, stream=false))]
     pub fn request(
         &self,
         py: Python<'_>,
@@ -398,7 +398,7 @@ impl Client {
         content: Option<Vec<u8>>,
         mut data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
-        timeout: Option<f64>,
+        timeout: Py<PyAny>,
         force_http3: Option<bool>,
         stream: Option<bool>,
     ) -> Result<ImpitPyResponse, ImpitPyError> {
@@ -425,13 +425,17 @@ impl Client {
             None => Ok(Vec::new()),
         }?;
 
+        let timeout = timeout_from_pyobj(timeout.bind(py)).map_err(|e| {
+            ImpitPyError(ImpitError::BindingPassthroughError(e.to_string()))
+        })?;
+
         let options = RequestOptions {
             headers: headers
                 .unwrap_or_default()
                 .iter()
                 .map(|(k, v)| (k.clone(), v.clone()))
                 .collect(),
-            timeout: timeout.map(Duration::from_secs_f64),
+            timeout,
             http3_prior_knowledge: force_http3.unwrap_or(false),
         };
 
