@@ -95,7 +95,7 @@ jobs:
             sudo apt-get install -y pkg-config libssl-dev perl
 
       - name: Upload wheels
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: wheels-linux-${{ matrix.target }}
           path: impit-python/dist
@@ -125,7 +125,7 @@ jobs:
           python-version: 3.14
 
       - name: Download wheels
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: wheels-linux-${{ matrix.platform.target }}
           path: impit-python/dist
@@ -180,7 +180,7 @@ jobs:
             sudo apt-get install -y pkg-config libssl-dev perl
 
       - name: Upload wheels
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: wheels-musllinux-${{ matrix.platform.target }}
           path: impit-python/dist
@@ -257,7 +257,7 @@ jobs:
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
 
       - name: Upload wheels
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: wheels-windows-${{ matrix.platform.target }}
           path: impit-python/dist
@@ -312,7 +312,7 @@ jobs:
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
 
       - name: Upload wheels
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: wheels-macos-${{ matrix.platform.target }}
           path: impit-python/dist
