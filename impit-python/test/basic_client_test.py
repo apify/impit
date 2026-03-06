@@ -7,7 +7,17 @@ from typing import Literal
 
 import pytest
 
-from impit import Browser, Client, Cookies, StreamClosed, StreamConsumed, TooManyRedirects
+from impit import (
+    USE_CLIENT_DEFAULT,
+    Browser,
+    Client,
+    ConnectTimeout,
+    Cookies,
+    ReadTimeout,
+    StreamClosed,
+    StreamConsumed,
+    TooManyRedirects,
+)
 
 from .httpbin import get_httpbin_url
 from .setup_proxy import start_proxy_server
@@ -601,7 +611,6 @@ class TestStreamRequest:
             _ = response.content
 
 
-
 def make_slow_server(port_holder: list[int], delay: float = 2.0) -> None:
     """Start a server in a daemon thread that waits `delay` seconds before responding."""
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -626,7 +635,6 @@ def make_slow_server(port_holder: list[int], delay: float = 2.0) -> None:
 class TestTimeoutBehaviour:
     def test_timeout_none_disables_timeout(self) -> None:
         """timeout=None should disable the timeout entirely, not use the client default."""
-        from impit import ConnectTimeout, ReadTimeout
 
         port_holder = [0]
         # Start a slow server (responds after 1.5s)
@@ -650,7 +658,6 @@ class TestTimeoutBehaviour:
 
     def test_use_client_default_uses_client_timeout(self) -> None:
         """USE_CLIENT_DEFAULT should use the client-level timeout."""
-        from impit import USE_CLIENT_DEFAULT, ConnectTimeout, ReadTimeout
 
         port_holder = [0]
         make_slow_server(port_holder, delay=1.5)

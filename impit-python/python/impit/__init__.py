@@ -3,6 +3,7 @@ from typing import Literal
 
 from .cookies import Cookies
 from .impit import (
+    USE_CLIENT_DEFAULT,
     AsyncClient,
     Client,
     CloseError,
@@ -32,7 +33,6 @@ from .impit import (
     TooManyRedirects,
     TransportError,
     UnsupportedProtocol,
-    USE_CLIENT_DEFAULT,
     WriteError,
     WriteTimeout,
     delete,
@@ -49,6 +49,7 @@ from .impit import (
 __version__ = metadata.version('impit')
 
 __all__ = [
+    'USE_CLIENT_DEFAULT',
     'AsyncClient',
     'Browser',
     'Client',
@@ -80,7 +81,6 @@ __all__ = [
     'TooManyRedirects',
     'TransportError',
     'UnsupportedProtocol',
-    'USE_CLIENT_DEFAULT',
     'WriteError',
     'WriteTimeout',
     'delete',
