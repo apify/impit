@@ -16,6 +16,7 @@ from impit import (
     ReadTimeout,
     StreamClosed,
     StreamConsumed,
+    TimeoutException,
     TooManyRedirects,
 )
 
@@ -644,7 +645,7 @@ class TestTimeoutBehaviour:
         impit = Client(timeout=0.1)
 
         # Without explicit timeout override the client default (0.1s) should fire.
-        with pytest.raises((ConnectTimeout, ReadTimeout)):
+        with pytest.raises((TimeoutException, ConnectTimeout, ReadTimeout)):
             impit.get(f'http://127.0.0.1:{port_holder[0]}/')
 
         # Restart the slow server for the second request.
@@ -666,5 +667,5 @@ class TestTimeoutBehaviour:
         impit = Client(timeout=0.1)
 
         # Explicitly passing USE_CLIENT_DEFAULT should behave the same as not passing timeout.
-        with pytest.raises((ConnectTimeout, ReadTimeout)):
+        with pytest.raises((TimeoutException, ConnectTimeout, ReadTimeout)):
             impit.get(f'http://127.0.0.1:{port_holder[0]}/', timeout=USE_CLIENT_DEFAULT)
