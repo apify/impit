@@ -3,6 +3,25 @@
 All notable changes to this project will be documented in this file.
 
 
+## py-0.12.0 - 2026-03-06
+
+#### Features
+
+- Add HTTP/2 SETTINGS fingerprinting (#386)
+  - Adds custom HTTP2 profiles to the emulated browser fingerprints.  ---------
+
+
+- Support `timeout=None` to disable timeout (#402)
+  - Updates the timeout handling in Python. The default behaviour stays the same, but passing timeout=None now disables the timeout (either client-wide or for the current request). This aligns impit with how httpx handles timeouts.  ---------
+
+
+#### Refactor
+
+- Replace scraper with lol_html for HTML charset prescanning (#398)
+  - Replaces `scraper` dependency with a more lightweight HTML parser from `lol_html`. Adds regression tests to ensure the behaviour stays the same.  ---------
+
+
+
 ## py-0.10.0 - 2026-02-10
 
 #### Bug Fixes
