@@ -103,7 +103,7 @@ fn impit(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
                 max_redirects: Option<u16>,
                 proxy: Option<String>,
             ) -> Result<response::ImpitPyResponse, errors::ImpitPyError> {
-                let client = Client::new(_py, None, None, proxy, None, None, None, follow_redirects, max_redirects, cookie_jar, cookies, None, None);
+                let client = Client::new(_py, None, None, proxy, Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), None, None, follow_redirects, max_redirects, cookie_jar, cookies, None, None);
 
                 client?.$name(_py, url, content, data, headers, timeout, force_http3)
             }
@@ -137,7 +137,7 @@ fn impit(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
             None,
             None,
             proxy,
-            None,
+            Some(Right(USE_CLIENT_DEFAULT_SENTINEL)),
             None,
             None,
             follow_redirects,

@@ -36,13 +36,13 @@ impl Client {
     }
 
     #[new]
-    #[pyo3(signature = (browser=None, http3=None, proxy=None, timeout=None, verify=None, default_encoding=None, follow_redirects=None, max_redirects=Some(20), cookie_jar=None, cookies=None, headers=None, local_address=None))]
+    #[pyo3(signature = (browser=None, http3=None, proxy=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), verify=None, default_encoding=None, follow_redirects=None, max_redirects=Some(20), cookie_jar=None, cookies=None, headers=None, local_address=None))]
     pub fn new(
         py: Python<'_>,
         browser: Option<String>,
         http3: Option<bool>,
         proxy: Option<String>,
-        timeout: Option<f64>,
+        timeout: Option<Either<f64, &str>>,
         verify: Option<bool>,
         default_encoding: Option<String>,
         follow_redirects: Option<bool>,
@@ -99,8 +99,11 @@ impl Client {
             None => builder,
         };
 
-        let builder = match timeout {
-            Some(secs) => builder.with_default_timeout(Duration::from_secs_f64(secs)),
+        let builder = match parse_timeout(timeout)
+            .map_err(|e| ImpitPyError(ImpitError::BindingPassthroughError(e.to_string())))?
+        {
+            Some(Some(d)) => builder.with_default_timeout(d),
+            Some(None) => builder.with_default_timeout(Duration::MAX),
             None => builder,
         };
 

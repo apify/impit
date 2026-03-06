@@ -669,3 +669,25 @@ class TestTimeoutBehaviour:
         # Explicitly passing USE_CLIENT_DEFAULT should behave the same as not passing timeout.
         with pytest.raises((TimeoutException, ConnectTimeout, ReadTimeout)):
             impit.get(f'http://127.0.0.1:{port_holder[0]}/', timeout=USE_CLIENT_DEFAULT)
+
+    def test_client_timeout_none_disables_default_timeout(self) -> None:
+        """Client(timeout=None) should disable the timeout for all requests by default."""
+
+        port_holder = [0]
+        make_slow_server(port_holder, delay=1.5)
+        time.sleep(0.05)
+
+        impit = Client(timeout=None)
+        response = impit.get(f'http://127.0.0.1:{port_holder[0]}/')
+        assert response.status_code == 200
+
+    def test_client_timeout_none_overridden_by_per_request(self) -> None:
+        """A per-request timeout should override Client(timeout=None)."""
+
+        port_holder = [0]
+        make_slow_server(port_holder, delay=1.5)
+        time.sleep(0.05)
+
+        impit = Client(timeout=None)
+        with pytest.raises((TimeoutException, ConnectTimeout, ReadTimeout)):
+            impit.get(f'http://127.0.0.1:{port_holder[0]}/', timeout=0.1)

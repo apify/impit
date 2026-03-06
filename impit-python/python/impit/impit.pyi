@@ -404,7 +404,7 @@ class Client:
                 .. warning::
                     Not supported when HTTP/3 is enabled.
             timeout:
-                Default request timeout in seconds.
+                Default request timeout in seconds. Pass ``None`` to disable the timeout entirely.
 
                 This value can be overridden for individual requests.
             verify:
@@ -466,7 +466,7 @@ class Client:
         browser: Browser | None = None,
         http3: bool | None = None,
         proxy: str | None = None,
-        timeout: float | None = None,
+        timeout: float | None = ...,
         verify: bool | None = None,
         default_encoding: str | None = None,
         follow_redirects: bool | None = None,
@@ -482,7 +482,7 @@ class Client:
             browser: Browser to impersonate ("chrome" or "firefox")
             http3: Enable HTTP/3 support
             proxy: Proxy URL to use
-            timeout: Default request timeout in seconds
+            timeout: Default request timeout in seconds. Pass ``None`` to disable the timeout entirely.
             verify: Verify SSL certificates (set to False to ignore TLS errors)
             default_encoding: Default encoding for response.text field (e.g., "utf-8", "cp1252"). Overrides `content-type`
                 header and bytestream prescan.
@@ -746,7 +746,7 @@ class AsyncClient:
                 .. warning::
                     Not supported when HTTP/3 is enabled.
             timeout:
-                Default request timeout in seconds.
+                Default request timeout in seconds. Pass ``None`` to disable the timeout entirely.
 
                 This value can be overridden for individual requests.
             verify:
@@ -807,7 +807,7 @@ class AsyncClient:
         browser: Browser | None = None,
         http3: bool | None = None,
         proxy: str | None = None,
-        timeout: float | None = None,
+        timeout: float | None = ...,
         verify: bool | None = None,
         default_encoding: str | None = None,
         follow_redirects: bool | None = None,
@@ -823,7 +823,7 @@ class AsyncClient:
             browser: Browser to impersonate ("chrome" or "firefox")
             http3: Enable HTTP/3 support
             proxy: Proxy URL to use
-            timeout: Default request timeout in seconds
+            timeout: Default request timeout in seconds. Pass ``None`` to disable the timeout entirely.
             verify: Verify SSL certificates (set to False to ignore TLS errors)
             default_encoding: Default encoding for response.text field (e.g., "utf-8", "cp1252"). Overrides `content-type`
                 header and bytestream prescan.
