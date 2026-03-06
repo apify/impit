@@ -7,7 +7,18 @@ from typing import Literal
 
 import pytest
 
-from impit import Browser, Client, Cookies, StreamClosed, StreamConsumed, TooManyRedirects
+from impit import (
+    USE_CLIENT_DEFAULT,
+    Browser,
+    Client,
+    ConnectTimeout,
+    Cookies,
+    ReadTimeout,
+    StreamClosed,
+    StreamConsumed,
+    TimeoutException,
+    TooManyRedirects,
+)
 
 from .httpbin import get_httpbin_url
 from .setup_proxy import start_proxy_server
@@ -599,3 +610,84 @@ class TestStreamRequest:
 
         with pytest.raises(StreamClosed):
             _ = response.content
+
+
+def make_slow_server(port_holder: list[int], delay: float = 2.0) -> None:
+    """Start a server in a daemon thread that waits `delay` seconds before responding."""
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    server.bind(('127.0.0.1', 0))
+    port_holder[0] = server.getsockname()[1]
+    server.listen(1)
+
+    def _serve() -> None:
+        try:
+            conn, _ = server.accept()
+            conn.recv(1024)
+            time.sleep(delay)
+            conn.send(b'HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nOK')
+            conn.close()
+        finally:
+            server.close()
+
+    threading.Thread(target=_serve, daemon=True).start()
+
+
+class TestTimeoutBehaviour:
+    def test_timeout_none_disables_timeout(self) -> None:
+        """timeout=None should disable the timeout entirely, not use the client default."""
+
+        port_holder = [0]
+        # Start a slow server (responds after 1.5s)
+        make_slow_server(port_holder, delay=1.5)
+        time.sleep(0.05)
+
+        impit = Client(timeout=0.1)
+
+        # Without explicit timeout override the client default (0.1s) should fire.
+        with pytest.raises((TimeoutException, ConnectTimeout, ReadTimeout)):
+            impit.get(f'http://127.0.0.1:{port_holder[0]}/')
+
+        # Restart the slow server for the second request.
+        port_holder2 = [0]
+        make_slow_server(port_holder2, delay=1.5)
+        time.sleep(0.05)
+
+        # With timeout=None the timeout is disabled → request succeeds despite slow server.
+        response = impit.get(f'http://127.0.0.1:{port_holder2[0]}/', timeout=None)
+        assert response.status_code == 200
+
+    def test_use_client_default_uses_client_timeout(self) -> None:
+        """USE_CLIENT_DEFAULT should use the client-level timeout."""
+
+        port_holder = [0]
+        make_slow_server(port_holder, delay=1.5)
+        time.sleep(0.05)
+
+        impit = Client(timeout=0.1)
+
+        # Explicitly passing USE_CLIENT_DEFAULT should behave the same as not passing timeout.
+        with pytest.raises((TimeoutException, ConnectTimeout, ReadTimeout)):
+            impit.get(f'http://127.0.0.1:{port_holder[0]}/', timeout=USE_CLIENT_DEFAULT)
+
+    def test_client_timeout_none_disables_default_timeout(self) -> None:
+        """Client(timeout=None) should disable the timeout for all requests by default."""
+
+        port_holder = [0]
+        make_slow_server(port_holder, delay=1.5)
+        time.sleep(0.05)
+
+        impit = Client(timeout=None)
+        response = impit.get(f'http://127.0.0.1:{port_holder[0]}/')
+        assert response.status_code == 200
+
+    def test_client_timeout_none_overridden_by_per_request(self) -> None:
+        """A per-request timeout should override Client(timeout=None)."""
+
+        port_holder = [0]
+        make_slow_server(port_holder, delay=1.5)
+        time.sleep(0.05)
+
+        impit = Client(timeout=None)
+        with pytest.raises((TimeoutException, ConnectTimeout, ReadTimeout)):
+            impit.get(f'http://127.0.0.1:{port_holder[0]}/', timeout=0.1)

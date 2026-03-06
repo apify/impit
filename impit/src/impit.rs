@@ -506,7 +506,13 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
         let headers = request_options.headers;
         let request = self.build_request(method, url, body, headers);
 
-        let timeout = request_options.timeout;
+        let timeout = match request_options.timeout {
+            None => None,
+            // reqwest has no per-request "no timeout" API; overriding with Duration::MAX is the
+            // conventional way to disable a timeout without rebuilding the client.
+            Some(None) => Some(Duration::MAX),
+            Some(Some(d)) => Some(d),
+        };
         let http3_prior_knowledge = request_options.http3_prior_knowledge;
         self.send(request, timeout, Some(http3_prior_knowledge))
             .await

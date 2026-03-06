@@ -1,5 +1,6 @@
 use std::{collections::HashMap, sync::Arc, time::Duration};
 
+use either::{Either, Right};
 use impit::{
     errors::ImpitError,
     impit::{Impit, ImpitBuilder},
@@ -8,8 +9,10 @@ use impit::{
 use pyo3::{exceptions::PyTypeError, ffi::c_str, prelude::*};
 
 use crate::{
-    cookies::PythonCookieJar, errors::ImpitPyError, request::form_to_bytes,
-    response::ImpitPyResponse, RequestBody,
+    cookies::PythonCookieJar,
+    errors::ImpitPyError,
+    request::{form_to_bytes, parse_timeout, RequestBody, USE_CLIENT_DEFAULT_SENTINEL},
+    response::ImpitPyResponse,
 };
 
 #[pyclass]
@@ -38,13 +41,13 @@ impl AsyncClient {
     }
 
     #[new]
-    #[pyo3(signature = (browser=None, http3=None, proxy=None, timeout=None, verify=None, default_encoding=None, follow_redirects=None, max_redirects=Some(20), cookie_jar=None, cookies=None, headers=None, local_address=None))]
+    #[pyo3(signature = (browser=None, http3=None, proxy=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), verify=None, default_encoding=None, follow_redirects=None, max_redirects=Some(20), cookie_jar=None, cookies=None, headers=None, local_address=None))]
     pub fn new(
         py: Python<'_>,
         browser: Option<String>,
         http3: Option<bool>,
         proxy: Option<String>,
-        timeout: Option<f64>,
+        timeout: Option<Either<f64, &str>>,
         verify: Option<bool>,
         default_encoding: Option<String>,
         follow_redirects: Option<bool>,
@@ -107,8 +110,9 @@ impl AsyncClient {
             None => builder,
         };
 
-        let builder = match timeout {
-            Some(secs) => builder.with_default_timeout(Duration::from_secs_f64(secs)),
+        let builder = match parse_timeout(timeout)? {
+            Some(Some(d)) => builder.with_default_timeout(d),
+            Some(None) => builder.with_default_timeout(Duration::MAX),
             None => builder,
         };
 
@@ -160,7 +164,7 @@ impl AsyncClient {
         })
     }
 
-    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false))]
     pub fn get<'python>(
         &self,
         py: Python<'python>,
@@ -168,7 +172,7 @@ impl AsyncClient {
         content: Option<Vec<u8>>,
         data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
-        timeout: Option<f64>,
+        timeout: Option<Either<f64, &str>>,
         force_http3: Option<bool>,
     ) -> Result<pyo3::Bound<'python, PyAny>, PyErr> {
         self.request(
@@ -184,7 +188,7 @@ impl AsyncClient {
         )
     }
 
-    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false))]
     pub fn head<'python>(
         &self,
         py: Python<'python>,
@@ -192,7 +196,7 @@ impl AsyncClient {
         content: Option<Vec<u8>>,
         data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
-        timeout: Option<f64>,
+        timeout: Option<Either<f64, &str>>,
         force_http3: Option<bool>,
     ) -> Result<pyo3::Bound<'python, PyAny>, PyErr> {
         self.request(
@@ -208,7 +212,7 @@ impl AsyncClient {
         )
     }
 
-    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false))]
     pub fn post<'python>(
         &self,
         py: Python<'python>,
@@ -216,7 +220,7 @@ impl AsyncClient {
         content: Option<Vec<u8>>,
         data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
-        timeout: Option<f64>,
+        timeout: Option<Either<f64, &str>>,
         force_http3: Option<bool>,
     ) -> Result<pyo3::Bound<'python, PyAny>, PyErr> {
         self.request(
@@ -232,7 +236,7 @@ impl AsyncClient {
         )
     }
 
-    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false))]
     pub fn patch<'python>(
         &self,
         py: Python<'python>,
@@ -240,7 +244,7 @@ impl AsyncClient {
         content: Option<Vec<u8>>,
         data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
-        timeout: Option<f64>,
+        timeout: Option<Either<f64, &str>>,
         force_http3: Option<bool>,
     ) -> Result<pyo3::Bound<'python, PyAny>, PyErr> {
         self.request(
@@ -256,7 +260,7 @@ impl AsyncClient {
         )
     }
 
-    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false))]
     pub fn put<'python>(
         &self,
         py: Python<'python>,
@@ -264,7 +268,7 @@ impl AsyncClient {
         content: Option<Vec<u8>>,
         data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
-        timeout: Option<f64>,
+        timeout: Option<Either<f64, &str>>,
         force_http3: Option<bool>,
     ) -> Result<pyo3::Bound<'python, PyAny>, PyErr> {
         self.request(
@@ -280,7 +284,7 @@ impl AsyncClient {
         )
     }
 
-    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false))]
     pub fn delete<'python>(
         &self,
         py: Python<'python>,
@@ -288,7 +292,7 @@ impl AsyncClient {
         content: Option<Vec<u8>>,
         data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
-        timeout: Option<f64>,
+        timeout: Option<Either<f64, &str>>,
         force_http3: Option<bool>,
     ) -> Result<pyo3::Bound<'python, PyAny>, PyErr> {
         self.request(
@@ -304,7 +308,7 @@ impl AsyncClient {
         )
     }
 
-    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false))]
     pub fn options<'python>(
         &self,
         py: Python<'python>,
@@ -312,7 +316,7 @@ impl AsyncClient {
         content: Option<Vec<u8>>,
         data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
-        timeout: Option<f64>,
+        timeout: Option<Either<f64, &str>>,
         force_http3: Option<bool>,
     ) -> Result<pyo3::Bound<'python, PyAny>, PyErr> {
         self.request(
@@ -328,7 +332,7 @@ impl AsyncClient {
         )
     }
 
-    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false))]
     pub fn trace<'python>(
         &self,
         py: Python<'python>,
@@ -336,7 +340,7 @@ impl AsyncClient {
         content: Option<Vec<u8>>,
         data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
-        timeout: Option<f64>,
+        timeout: Option<Either<f64, &str>>,
         force_http3: Option<bool>,
     ) -> Result<pyo3::Bound<'python, PyAny>, PyErr> {
         self.request(
@@ -352,7 +356,7 @@ impl AsyncClient {
         )
     }
 
-    #[pyo3(signature = (method, url, content=None, data=None, headers=None, timeout=None, force_http3=false))]
+    #[pyo3(signature = (method, url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false))]
     pub fn stream<'python>(
         &self,
         py: Python<'python>,
@@ -361,7 +365,7 @@ impl AsyncClient {
         content: Option<Vec<u8>>,
         data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
-        timeout: Option<f64>,
+        timeout: Option<Either<f64, &str>>,
         force_http3: Option<bool>,
     ) -> Result<pyo3::Bound<'python, PyAny>, PyErr> {
         let response = self.request(
@@ -398,7 +402,7 @@ impl AsyncClient {
         Ok(wrapped_response.into_bound(py))
     }
 
-    #[pyo3(signature = (method, url, content=None, data=None, headers=None, timeout=None, force_http3=false, stream=false))]
+    #[pyo3(signature = (method, url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false, stream=false))]
     pub fn request<'python>(
         &self,
         py: Python<'python>,
@@ -407,7 +411,7 @@ impl AsyncClient {
         content: Option<Vec<u8>>,
         mut data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
-        timeout: Option<f64>,
+        timeout: Option<Either<f64, &str>>,
         force_http3: Option<bool>,
         stream: Option<bool>,
     ) -> Result<pyo3::Bound<'python, PyAny>, PyErr> {
@@ -434,13 +438,15 @@ impl AsyncClient {
             None => Ok(Vec::new()),
         }?;
 
+        let timeout = parse_timeout(timeout)?;
+
         let options = RequestOptions {
             headers: headers
                 .unwrap_or_default()
                 .iter()
                 .map(|(k, v)| (k.clone(), v.clone()))
                 .collect(),
-            timeout: timeout.map(Duration::from_secs_f64),
+            timeout,
             http3_prior_knowledge: force_http3.unwrap_or(false),
         };
 

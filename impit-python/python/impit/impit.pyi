@@ -9,6 +9,13 @@ from contextlib import AbstractAsyncContextManager, AbstractContextManager
 
 Browser = Literal['chrome', 'firefox', 'chrome125', 'chrome100', 'chrome101', 'chrome104', 'chrome107', 'chrome110', 'chrome116', 'chrome131', 'chrome136', 'chrome142', 'firefox128', 'firefox133', 'firefox135', 'firefox144']
 
+USE_CLIENT_DEFAULT: str
+"""Sentinel that, when passed as a per-request ``timeout``, causes the client-level default timeout to be used.
+
+This is the default value for the ``timeout`` parameter in per-request methods.
+Pass ``None`` instead to disable the timeout entirely.
+"""
+
 class HTTPError(Exception):
     """Represents an HTTP-related error."""
 
@@ -397,7 +404,7 @@ class Client:
                 .. warning::
                     Not supported when HTTP/3 is enabled.
             timeout:
-                Default request timeout in seconds.
+                Default request timeout in seconds. Pass ``None`` to disable the timeout entirely.
 
                 This value can be overridden for individual requests.
             verify:
@@ -459,7 +466,7 @@ class Client:
         browser: Browser | None = None,
         http3: bool | None = None,
         proxy: str | None = None,
-        timeout: float | None = None,
+        timeout: float | None = ...,
         verify: bool | None = None,
         default_encoding: str | None = None,
         follow_redirects: bool | None = None,
@@ -475,7 +482,7 @@ class Client:
             browser: Browser to impersonate ("chrome" or "firefox")
             http3: Enable HTTP/3 support
             proxy: Proxy URL to use
-            timeout: Default request timeout in seconds
+            timeout: Default request timeout in seconds. Pass ``None`` to disable the timeout entirely.
             verify: Verify SSL certificates (set to False to ignore TLS errors)
             default_encoding: Default encoding for response.text field (e.g., "utf-8", "cp1252"). Overrides `content-type`
                 header and bytestream prescan.
@@ -495,7 +502,7 @@ class Client:
         content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
-        timeout: float | None = None,
+        timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
     ) -> Response:
         """Make a GET request.
@@ -505,7 +512,7 @@ class Client:
             content: Raw content to send
             data: Form data to send in request body
             headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
-            timeout: Request timeout in seconds (overrides default timeout)
+            timeout: Per-request timeout in seconds. Pass ``None`` to disable the timeout entirely. Defaults to ``USE_CLIENT_DEFAULT`` (inherits the client-level timeout).
             force_http3: Force HTTP/3 protocol
         """
 
@@ -515,7 +522,7 @@ class Client:
         content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
-        timeout: float | None = None,
+        timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
     ) -> Response:
         """Make a POST request.
@@ -525,7 +532,7 @@ class Client:
             content: Raw content to send
             data: Form data to send in request body
             headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
-            timeout: Request timeout in seconds (overrides default timeout)
+            timeout: Per-request timeout in seconds. Pass ``None`` to disable the timeout entirely. Defaults to ``USE_CLIENT_DEFAULT`` (inherits the client-level timeout).
             force_http3: Force HTTP/3 protocol
 
         """
@@ -536,7 +543,7 @@ class Client:
         content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
-        timeout: float | None = None,
+        timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
     ) -> Response:
         """Make a PUT request.
@@ -546,7 +553,7 @@ class Client:
             content: Raw content to send
             data: Form data to send in request body
             headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
-            timeout: Request timeout in seconds (overrides default timeout)
+            timeout: Per-request timeout in seconds. Pass ``None`` to disable the timeout entirely. Defaults to ``USE_CLIENT_DEFAULT`` (inherits the client-level timeout).
             force_http3: Force HTTP/3 protocol
         """
 
@@ -556,7 +563,7 @@ class Client:
         content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
-        timeout: float | None = None,
+        timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
     ) -> Response:
         """Make a PATCH request.
@@ -566,7 +573,7 @@ class Client:
             content: Raw content to send
             data: Form data to send in request body
             headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
-            timeout: Request timeout in seconds (overrides default timeout)
+            timeout: Per-request timeout in seconds. Pass ``None`` to disable the timeout entirely. Defaults to ``USE_CLIENT_DEFAULT`` (inherits the client-level timeout).
             force_http3: Force HTTP/3 protocol
         """
 
@@ -576,7 +583,7 @@ class Client:
         content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
-        timeout: float | None = None,
+        timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
     ) -> Response:
         """Make a DELETE request.
@@ -586,7 +593,7 @@ class Client:
             content: Raw content to send
             data: Form data to send in request body
             headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
-            timeout: Request timeout in seconds (overrides default timeout)
+            timeout: Per-request timeout in seconds. Pass ``None`` to disable the timeout entirely. Defaults to ``USE_CLIENT_DEFAULT`` (inherits the client-level timeout).
             force_http3: Force HTTP/3 protocol
         """
 
@@ -596,7 +603,7 @@ class Client:
         content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
-        timeout: float | None = None,
+        timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
     ) -> Response:
         """Make a HEAD request.
@@ -606,7 +613,7 @@ class Client:
             content: Raw content to send
             data: Form data to send in request body
             headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
-            timeout: Request timeout in seconds (overrides default timeout)
+            timeout: Per-request timeout in seconds. Pass ``None`` to disable the timeout entirely. Defaults to ``USE_CLIENT_DEFAULT`` (inherits the client-level timeout).
             force_http3: Force HTTP/3 protocol
         """
 
@@ -616,7 +623,7 @@ class Client:
         content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
-        timeout: float | None = None,
+        timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
     ) -> Response:
         """Make an OPTIONS request.
@@ -626,7 +633,7 @@ class Client:
             content: Raw content to send
             data: Form data to send in request body
             headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
-            timeout: Request timeout in seconds (overrides default timeout)
+            timeout: Per-request timeout in seconds. Pass ``None`` to disable the timeout entirely. Defaults to ``USE_CLIENT_DEFAULT`` (inherits the client-level timeout).
             force_http3: Force HTTP/3 protocol
         """
 
@@ -636,7 +643,7 @@ class Client:
         content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
-        timeout: float | None = None,
+        timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
     ) -> Response:
         """Make a TRACE request.
@@ -646,7 +653,7 @@ class Client:
             content: Raw content to send
             data: Form data to send in request body
             headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
-            timeout: Request timeout in seconds (overrides default timeout)
+            timeout: Per-request timeout in seconds. Pass ``None`` to disable the timeout entirely. Defaults to ``USE_CLIENT_DEFAULT`` (inherits the client-level timeout).
             force_http3: Force HTTP/3 protocol
         """
 
@@ -657,7 +664,7 @@ class Client:
         content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
-        timeout: float | None = None,
+        timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
         stream: bool = False,
     ) -> Response:
@@ -669,7 +676,7 @@ class Client:
             content: Raw content to send
             data: Form data to send in request body
             headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
-            timeout: Request timeout in seconds (overrides default timeout)
+            timeout: Per-request timeout in seconds. Pass ``None`` to disable the timeout entirely. Defaults to ``USE_CLIENT_DEFAULT`` (inherits the client-level timeout).
             force_http3: Force HTTP/3 protocol
             stream: Whether to return a streaming response (default: False)
         """
@@ -681,7 +688,7 @@ class Client:
         content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
-        timeout: float | None = None,
+        timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
     ) -> AbstractContextManager[Response]:
         """Make a streaming request with the specified method.
@@ -703,7 +710,7 @@ class Client:
             content: Raw content to send
             data: Form data to send in request body
             headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
-            timeout: Request timeout in seconds (overrides default timeout)
+            timeout: Per-request timeout in seconds. Pass ``None`` to disable the timeout entirely. Defaults to ``USE_CLIENT_DEFAULT`` (inherits the client-level timeout).
             force_http3: Force HTTP/3 protocol
         """
 
@@ -739,7 +746,7 @@ class AsyncClient:
                 .. warning::
                     Not supported when HTTP/3 is enabled.
             timeout:
-                Default request timeout in seconds.
+                Default request timeout in seconds. Pass ``None`` to disable the timeout entirely.
 
                 This value can be overridden for individual requests.
             verify:
@@ -800,7 +807,7 @@ class AsyncClient:
         browser: Browser | None = None,
         http3: bool | None = None,
         proxy: str | None = None,
-        timeout: float | None = None,
+        timeout: float | None = ...,
         verify: bool | None = None,
         default_encoding: str | None = None,
         follow_redirects: bool | None = None,
@@ -816,7 +823,7 @@ class AsyncClient:
             browser: Browser to impersonate ("chrome" or "firefox")
             http3: Enable HTTP/3 support
             proxy: Proxy URL to use
-            timeout: Default request timeout in seconds
+            timeout: Default request timeout in seconds. Pass ``None`` to disable the timeout entirely.
             verify: Verify SSL certificates (set to False to ignore TLS errors)
             default_encoding: Default encoding for response.text field (e.g., "utf-8", "cp1252"). Overrides `content-type`
                 header and bytestream prescan.
@@ -836,7 +843,7 @@ class AsyncClient:
         content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
-        timeout: float | None = None,
+        timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
     ) -> Response:
         """Make an asynchronous GET request.
@@ -846,7 +853,7 @@ class AsyncClient:
             content: Raw content to send
             data: Form data to send in request body
             headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
-            timeout: Request timeout in seconds (overrides default timeout)
+            timeout: Per-request timeout in seconds. Pass ``None`` to disable the timeout entirely. Defaults to ``USE_CLIENT_DEFAULT`` (inherits the client-level timeout).
             force_http3: Force HTTP/3 protocol
         """
 
@@ -856,7 +863,7 @@ class AsyncClient:
         content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
-        timeout: float | None = None,
+        timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
     ) -> Response:
         """Make an asynchronous POST request.
@@ -866,7 +873,7 @@ class AsyncClient:
             content: Raw content to send
             data: Form data to send in request body
             headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
-            timeout: Request timeout in seconds (overrides default timeout)
+            timeout: Per-request timeout in seconds. Pass ``None`` to disable the timeout entirely. Defaults to ``USE_CLIENT_DEFAULT`` (inherits the client-level timeout).
             force_http3: Force HTTP/3 protocol
 
         """
@@ -877,7 +884,7 @@ class AsyncClient:
         content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
-        timeout: float | None = None,
+        timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
     ) -> Response:
         """Make an asynchronous PUT request.
@@ -887,7 +894,7 @@ class AsyncClient:
             content: Raw content to send
             data: Form data to send in request body
             headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
-            timeout: Request timeout in seconds (overrides default timeout)
+            timeout: Per-request timeout in seconds. Pass ``None`` to disable the timeout entirely. Defaults to ``USE_CLIENT_DEFAULT`` (inherits the client-level timeout).
             force_http3: Force HTTP/3 protocol
         """
 
@@ -897,7 +904,7 @@ class AsyncClient:
         content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
-        timeout: float | None = None,
+        timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
     ) -> Response:
         """Make an asynchronous PATCH request.
@@ -907,7 +914,7 @@ class AsyncClient:
             content: Raw content to send
             data: Form data to send in request body
             headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
-            timeout: Request timeout in seconds (overrides default timeout)
+            timeout: Per-request timeout in seconds. Pass ``None`` to disable the timeout entirely. Defaults to ``USE_CLIENT_DEFAULT`` (inherits the client-level timeout).
             force_http3: Force HTTP/3 protocol
         """
 
@@ -917,7 +924,7 @@ class AsyncClient:
         content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
-        timeout: float | None = None,
+        timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
     ) -> Response:
         """Make an asynchronous DELETE request.
@@ -927,7 +934,7 @@ class AsyncClient:
             content: Raw content to send
             data: Form data to send in request body
             headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
-            timeout: Request timeout in seconds (overrides default timeout)
+            timeout: Per-request timeout in seconds. Pass ``None`` to disable the timeout entirely. Defaults to ``USE_CLIENT_DEFAULT`` (inherits the client-level timeout).
             force_http3: Force HTTP/3 protocol
         """
 
@@ -937,7 +944,7 @@ class AsyncClient:
         content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
-        timeout: float | None = None,
+        timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
     ) -> Response:
         """Make an asynchronous HEAD request.
@@ -947,7 +954,7 @@ class AsyncClient:
             content: Raw content to send
             data: Form data to send in request body
             headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
-            timeout: Request timeout in seconds (overrides default timeout)
+            timeout: Per-request timeout in seconds. Pass ``None`` to disable the timeout entirely. Defaults to ``USE_CLIENT_DEFAULT`` (inherits the client-level timeout).
             force_http3: Force HTTP/3 protocol
         """
 
@@ -957,7 +964,7 @@ class AsyncClient:
         content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
-        timeout: float | None = None,
+        timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
     ) -> Response:
         """Make an asynchronous OPTIONS request.
@@ -967,7 +974,7 @@ class AsyncClient:
             content: Raw content to send
             data: Form data to send in request body
             headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
-            timeout: Request timeout in seconds (overrides default timeout)
+            timeout: Per-request timeout in seconds. Pass ``None`` to disable the timeout entirely. Defaults to ``USE_CLIENT_DEFAULT`` (inherits the client-level timeout).
             force_http3: Force HTTP/3 protocol
         """
 
@@ -977,7 +984,7 @@ class AsyncClient:
         content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
-        timeout: float | None = None,
+        timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
     ) -> Response:
         """Make an asynchronous TRACE request.
@@ -987,7 +994,7 @@ class AsyncClient:
             content: Raw content to send
             data: Form data to send in request body
             headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
-            timeout: Request timeout in seconds (overrides default timeout)
+            timeout: Per-request timeout in seconds. Pass ``None`` to disable the timeout entirely. Defaults to ``USE_CLIENT_DEFAULT`` (inherits the client-level timeout).
             force_http3: Force HTTP/3 protocol
         """
 
@@ -998,7 +1005,7 @@ class AsyncClient:
         content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
-        timeout: float | None = None,
+        timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
         stream: bool = False,
     ) -> Response:
@@ -1010,7 +1017,7 @@ class AsyncClient:
             content: Raw content to send
             data: Form data to send in request body
             headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
-            timeout: Request timeout in seconds (overrides default timeout)
+            timeout: Per-request timeout in seconds. Pass ``None`` to disable the timeout entirely. Defaults to ``USE_CLIENT_DEFAULT`` (inherits the client-level timeout).
             force_http3: Force HTTP/3 protocol
             stream: Whether to return a streaming response (default: False)
         """
@@ -1022,7 +1029,7 @@ class AsyncClient:
         content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
-        timeout: float | None = None,
+        timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
     ) -> AbstractAsyncContextManager[Response]:
         """Make an asynchronous streaming request with the specified method.
@@ -1044,7 +1051,7 @@ class AsyncClient:
             content: Raw content to send
             data: Form data to send in request body
             headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
-            timeout: Request timeout in seconds (overrides default timeout)
+            timeout: Per-request timeout in seconds. Pass ``None`` to disable the timeout entirely. Defaults to ``USE_CLIENT_DEFAULT`` (inherits the client-level timeout).
             force_http3: Force HTTP/3 protocol
         """
 
@@ -1055,7 +1062,7 @@ def stream(
     content: bytes | bytearray | list[int] | None = None,
     data: dict[str, str] | None = None,
     headers: dict[str, str] | None = None,
-    timeout: float | None = None,
+    timeout: float | str | None = USE_CLIENT_DEFAULT,
     force_http3: bool | None = None,
     follow_redirects: bool | None = None,
     max_redirects: int | None = None,
@@ -1088,7 +1095,7 @@ def get(
     content: bytes | bytearray | list[int] | None = None,
     data: dict[str, str] | None = None,
     headers: dict[str, str] | None = None,
-    timeout: float | None = None,
+    timeout: float | str | None = USE_CLIENT_DEFAULT,
     force_http3: bool | None = None,
     follow_redirects: bool | None = None,
     max_redirects: int | None = None,
@@ -1121,7 +1128,7 @@ def post(
     content: bytes | bytearray | list[int] | None = None,
     data: dict[str, str] | None = None,
     headers: dict[str, str] | None = None,
-    timeout: float | None = None,
+    timeout: float | str | None = USE_CLIENT_DEFAULT,
     force_http3: bool | None = None,
     follow_redirects: bool | None = None,
     max_redirects: int | None = None,
@@ -1154,7 +1161,7 @@ def put(
     content: bytes | bytearray | list[int] | None = None,
     data: dict[str, str] | None = None,
     headers: dict[str, str] | None = None,
-    timeout: float | None = None,
+    timeout: float | str | None = USE_CLIENT_DEFAULT,
     force_http3: bool | None = None,
     follow_redirects: bool | None = None,
     max_redirects: int | None = None,
@@ -1187,7 +1194,7 @@ def patch(
     content: bytes | bytearray | list[int] | None = None,
     data: dict[str, str] | None = None,
     headers: dict[str, str] | None = None,
-    timeout: float | None = None,
+    timeout: float | str | None = USE_CLIENT_DEFAULT,
     force_http3: bool | None = None,
     follow_redirects: bool | None = None,
     max_redirects: int | None = None,
@@ -1220,7 +1227,7 @@ def delete(
     content: bytes | bytearray | list[int] | None = None,
     data: dict[str, str] | None = None,
     headers: dict[str, str] | None = None,
-    timeout: float | None = None,
+    timeout: float | str | None = USE_CLIENT_DEFAULT,
     force_http3: bool | None = None,
     follow_redirects: bool | None = None,
     max_redirects: int | None = None,
@@ -1253,7 +1260,7 @@ def head(
     content: bytes | bytearray | list[int] | None = None,
     data: dict[str, str] | None = None,
     headers: dict[str, str] | None = None,
-    timeout: float | None = None,
+    timeout: float | str | None = USE_CLIENT_DEFAULT,
     force_http3: bool | None = None,
     follow_redirects: bool | None = None,
     max_redirects: int | None = None,
@@ -1286,7 +1293,7 @@ def options(
     content: bytes | bytearray | list[int] | None = None,
     data: dict[str, str] | None = None,
     headers: dict[str, str] | None = None,
-    timeout: float | None = None,
+    timeout: float | str | None = USE_CLIENT_DEFAULT,
     force_http3: bool | None = None,
     follow_redirects: bool | None = None,
     max_redirects: int | None = None,
@@ -1316,7 +1323,7 @@ def trace(
     content: bytes | bytearray | list[int] | None = None,
     data: dict[str, str] | None = None,
     headers: dict[str, str] | None = None,
-    timeout: float | None = None,
+    timeout: float | str | None = USE_CLIENT_DEFAULT,
     force_http3: bool | None = None,
     follow_redirects: bool | None = None,
     max_redirects: int | None = None,

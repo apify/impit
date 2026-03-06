@@ -3,6 +3,7 @@ from typing import Literal
 
 from .cookies import Cookies
 from .impit import (
+    USE_CLIENT_DEFAULT,
     AsyncClient,
     Client,
     CloseError,
@@ -48,6 +49,7 @@ from .impit import (
 __version__ = metadata.version('impit')
 
 __all__ = [
+    'USE_CLIENT_DEFAULT',
     'AsyncClient',
     'Browser',
     'Client',

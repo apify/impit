@@ -120,7 +120,7 @@ impl ImpitWrapper {
       timeout: request_init
         .as_ref()
         .and_then(|init| init.timeout)
-        .map(|timeout| Duration::from_millis(timeout.into())),
+        .map(|timeout| Some(Duration::from_millis(timeout.into()))),
       http3_prior_knowledge: request_init
         .as_ref()
         .and_then(|init| init.force_http3)
