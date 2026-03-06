@@ -502,7 +502,7 @@ class Client:
         content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
-        timeout: float | None = USE_CLIENT_DEFAULT,
+        timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
     ) -> Response:
         """Make a GET request.
@@ -522,7 +522,7 @@ class Client:
         content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
-        timeout: float | None = USE_CLIENT_DEFAULT,
+        timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
     ) -> Response:
         """Make a POST request.
@@ -543,7 +543,7 @@ class Client:
         content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
-        timeout: float | None = USE_CLIENT_DEFAULT,
+        timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
     ) -> Response:
         """Make a PUT request.
@@ -563,7 +563,7 @@ class Client:
         content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
-        timeout: float | None = USE_CLIENT_DEFAULT,
+        timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
     ) -> Response:
         """Make a PATCH request.
@@ -583,7 +583,7 @@ class Client:
         content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
-        timeout: float | None = USE_CLIENT_DEFAULT,
+        timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
     ) -> Response:
         """Make a DELETE request.
@@ -603,7 +603,7 @@ class Client:
         content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
-        timeout: float | None = USE_CLIENT_DEFAULT,
+        timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
     ) -> Response:
         """Make a HEAD request.
@@ -623,7 +623,7 @@ class Client:
         content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
-        timeout: float | None = USE_CLIENT_DEFAULT,
+        timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
     ) -> Response:
         """Make an OPTIONS request.
@@ -643,7 +643,7 @@ class Client:
         content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
-        timeout: float | None = USE_CLIENT_DEFAULT,
+        timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
     ) -> Response:
         """Make a TRACE request.
@@ -664,7 +664,7 @@ class Client:
         content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
-        timeout: float | None = USE_CLIENT_DEFAULT,
+        timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
         stream: bool = False,
     ) -> Response:
@@ -688,7 +688,7 @@ class Client:
         content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
-        timeout: float | None = USE_CLIENT_DEFAULT,
+        timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
     ) -> AbstractContextManager[Response]:
         """Make a streaming request with the specified method.
@@ -843,7 +843,7 @@ class AsyncClient:
         content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
-        timeout: float | None = USE_CLIENT_DEFAULT,
+        timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
     ) -> Response:
         """Make an asynchronous GET request.
@@ -863,7 +863,7 @@ class AsyncClient:
         content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
-        timeout: float | None = USE_CLIENT_DEFAULT,
+        timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
     ) -> Response:
         """Make an asynchronous POST request.
@@ -884,7 +884,7 @@ class AsyncClient:
         content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
-        timeout: float | None = USE_CLIENT_DEFAULT,
+        timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
     ) -> Response:
         """Make an asynchronous PUT request.
@@ -904,7 +904,7 @@ class AsyncClient:
         content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
-        timeout: float | None = USE_CLIENT_DEFAULT,
+        timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
     ) -> Response:
         """Make an asynchronous PATCH request.
@@ -924,7 +924,7 @@ class AsyncClient:
         content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
-        timeout: float | None = USE_CLIENT_DEFAULT,
+        timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
     ) -> Response:
         """Make an asynchronous DELETE request.
@@ -944,7 +944,7 @@ class AsyncClient:
         content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
-        timeout: float | None = USE_CLIENT_DEFAULT,
+        timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
     ) -> Response:
         """Make an asynchronous HEAD request.
@@ -964,7 +964,7 @@ class AsyncClient:
         content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
-        timeout: float | None = USE_CLIENT_DEFAULT,
+        timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
     ) -> Response:
         """Make an asynchronous OPTIONS request.
@@ -984,7 +984,7 @@ class AsyncClient:
         content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
-        timeout: float | None = USE_CLIENT_DEFAULT,
+        timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
     ) -> Response:
         """Make an asynchronous TRACE request.
@@ -1005,7 +1005,7 @@ class AsyncClient:
         content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
-        timeout: float | None = USE_CLIENT_DEFAULT,
+        timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
         stream: bool = False,
     ) -> Response:
@@ -1029,7 +1029,7 @@ class AsyncClient:
         content: bytes | bytearray | list[int] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
-        timeout: float | None = USE_CLIENT_DEFAULT,
+        timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
     ) -> AbstractAsyncContextManager[Response]:
         """Make an asynchronous streaming request with the specified method.
@@ -1062,7 +1062,7 @@ def stream(
     content: bytes | bytearray | list[int] | None = None,
     data: dict[str, str] | None = None,
     headers: dict[str, str] | None = None,
-    timeout: float | None = USE_CLIENT_DEFAULT,
+    timeout: float | str | None = USE_CLIENT_DEFAULT,
     force_http3: bool | None = None,
     follow_redirects: bool | None = None,
     max_redirects: int | None = None,
@@ -1095,7 +1095,7 @@ def get(
     content: bytes | bytearray | list[int] | None = None,
     data: dict[str, str] | None = None,
     headers: dict[str, str] | None = None,
-    timeout: float | None = USE_CLIENT_DEFAULT,
+    timeout: float | str | None = USE_CLIENT_DEFAULT,
     force_http3: bool | None = None,
     follow_redirects: bool | None = None,
     max_redirects: int | None = None,
@@ -1128,7 +1128,7 @@ def post(
     content: bytes | bytearray | list[int] | None = None,
     data: dict[str, str] | None = None,
     headers: dict[str, str] | None = None,
-    timeout: float | None = USE_CLIENT_DEFAULT,
+    timeout: float | str | None = USE_CLIENT_DEFAULT,
     force_http3: bool | None = None,
     follow_redirects: bool | None = None,
     max_redirects: int | None = None,
@@ -1161,7 +1161,7 @@ def put(
     content: bytes | bytearray | list[int] | None = None,
     data: dict[str, str] | None = None,
     headers: dict[str, str] | None = None,
-    timeout: float | None = USE_CLIENT_DEFAULT,
+    timeout: float | str | None = USE_CLIENT_DEFAULT,
     force_http3: bool | None = None,
     follow_redirects: bool | None = None,
     max_redirects: int | None = None,
@@ -1194,7 +1194,7 @@ def patch(
     content: bytes | bytearray | list[int] | None = None,
     data: dict[str, str] | None = None,
     headers: dict[str, str] | None = None,
-    timeout: float | None = USE_CLIENT_DEFAULT,
+    timeout: float | str | None = USE_CLIENT_DEFAULT,
     force_http3: bool | None = None,
     follow_redirects: bool | None = None,
     max_redirects: int | None = None,
@@ -1227,7 +1227,7 @@ def delete(
     content: bytes | bytearray | list[int] | None = None,
     data: dict[str, str] | None = None,
     headers: dict[str, str] | None = None,
-    timeout: float | None = USE_CLIENT_DEFAULT,
+    timeout: float | str | None = USE_CLIENT_DEFAULT,
     force_http3: bool | None = None,
     follow_redirects: bool | None = None,
     max_redirects: int | None = None,
@@ -1260,7 +1260,7 @@ def head(
     content: bytes | bytearray | list[int] | None = None,
     data: dict[str, str] | None = None,
     headers: dict[str, str] | None = None,
-    timeout: float | None = USE_CLIENT_DEFAULT,
+    timeout: float | str | None = USE_CLIENT_DEFAULT,
     force_http3: bool | None = None,
     follow_redirects: bool | None = None,
     max_redirects: int | None = None,
@@ -1293,7 +1293,7 @@ def options(
     content: bytes | bytearray | list[int] | None = None,
     data: dict[str, str] | None = None,
     headers: dict[str, str] | None = None,
-    timeout: float | None = USE_CLIENT_DEFAULT,
+    timeout: float | str | None = USE_CLIENT_DEFAULT,
     force_http3: bool | None = None,
     follow_redirects: bool | None = None,
     max_redirects: int | None = None,
@@ -1323,7 +1323,7 @@ def trace(
     content: bytes | bytearray | list[int] | None = None,
     data: dict[str, str] | None = None,
     headers: dict[str, str] | None = None,
-    timeout: float | None = USE_CLIENT_DEFAULT,
+    timeout: float | str | None = USE_CLIENT_DEFAULT,
     force_http3: bool | None = None,
     follow_redirects: bool | None = None,
     max_redirects: int | None = None,
