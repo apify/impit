@@ -32,8 +32,6 @@ async fn main() {
 
 ### Other projects
 
-If you are looking for a command-line tool that allows you to make requests to websites, check out the [`impit-cli`](https://github.com/apify/impit/tree/master/impit-cli) project.
-
 If you'd prefer to use `impit` from a Node.js application, check out the [`impit-node`](https://github.com/apify/impit/tree/master/impit-node) folder, or download the package from npm:
 ```bash
 npm install impit

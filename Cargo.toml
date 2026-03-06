@@ -3,7 +3,6 @@ resolver = "2"
 
 members = [
     "impit",
-    "impit-cli",
     "impit-node",
     "impit-python",
 ]
