@@ -1,3 +1,4 @@
+use either::{Either, Right};
 use pyo3::prelude::*;
 
 mod async_client;
@@ -87,14 +88,14 @@ fn impit(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     ($($name:ident),*) => {
         $(
             #[pyfunction]
-            #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=crate::request::default_timeout(), force_http3=false, cookie_jar=None, cookies=None, follow_redirects=None, max_redirects=None, proxy=None))]
+            #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false, cookie_jar=None, cookies=None, follow_redirects=None, max_redirects=None, proxy=None))]
             fn $name(
                 _py: Python,
                 url: String,
                 content: Option<Vec<u8>>,
                 data: Option<RequestBody>,
                 headers: Option<HashMap<String, String>>,
-                timeout: Py<PyAny>,
+                timeout: Option<Either<f64, &str>>,
                 force_http3: Option<bool>,
                 cookie_jar: Option<pyo3::Bound<'_, pyo3::PyAny>>,
                 cookies: Option<pyo3::Bound<'_, pyo3::PyAny>>,
@@ -115,7 +116,7 @@ fn impit(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     http_no_client!(get, post, put, head, patch, delete, options, trace);
 
     #[pyfunction]
-    #[pyo3(signature = (method, url, content=None, data=None, headers=None, timeout=crate::request::default_timeout(), force_http3=false, cookie_jar=None, cookies=None, follow_redirects=None, max_redirects=None, proxy=None))]
+    #[pyo3(signature = (method, url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false, cookie_jar=None, cookies=None, follow_redirects=None, max_redirects=None, proxy=None))]
     fn stream<'python>(
         _py: Python<'python>,
         method: &str,
@@ -123,7 +124,7 @@ fn impit(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
         content: Option<Vec<u8>>,
         data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
-        timeout: Py<PyAny>,
+        timeout: Option<Either<f64, &str>>,
         force_http3: Option<bool>,
         cookie_jar: Option<pyo3::Bound<'_, pyo3::PyAny>>,
         cookies: Option<pyo3::Bound<'_, pyo3::PyAny>>,
