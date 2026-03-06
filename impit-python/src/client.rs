@@ -11,7 +11,7 @@ use pyo3::{ffi::c_str, prelude::*};
 use crate::{
     cookies::PythonCookieJar,
     errors::ImpitPyError,
-    request::{RequestBody, USE_CLIENT_DEFAULT_SENTINEL, form_to_bytes, parse_timeout},
+    request::{form_to_bytes, parse_timeout, RequestBody, USE_CLIENT_DEFAULT_SENTINEL},
     response::{self, ImpitPyResponse},
 };
 
@@ -426,9 +426,8 @@ impl Client {
             None => Ok(Vec::new()),
         }?;
 
-        let timeout = parse_timeout(timeout).map_err(|e| {
-            ImpitPyError(ImpitError::BindingPassthroughError(e.to_string()))
-        })?;
+        let timeout = parse_timeout(timeout)
+            .map_err(|e| ImpitPyError(ImpitError::BindingPassthroughError(e.to_string())))?;
 
         let options = RequestOptions {
             headers: headers

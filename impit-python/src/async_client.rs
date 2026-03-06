@@ -11,7 +11,7 @@ use pyo3::{exceptions::PyTypeError, ffi::c_str, prelude::*};
 use crate::{
     cookies::PythonCookieJar,
     errors::ImpitPyError,
-    request::{RequestBody, USE_CLIENT_DEFAULT_SENTINEL, form_to_bytes, parse_timeout},
+    request::{form_to_bytes, parse_timeout, RequestBody, USE_CLIENT_DEFAULT_SENTINEL},
     response::ImpitPyResponse,
 };
 

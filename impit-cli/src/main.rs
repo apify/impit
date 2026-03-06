@@ -122,7 +122,9 @@ async fn main() {
 
     let client = client.build().unwrap();
 
-    let timeout = args.max_time.map(std::time::Duration::from_secs);
+    let timeout = args
+        .max_time
+        .map(|x| Some(std::time::Duration::from_secs(x)));
 
     let options = RequestOptions {
         headers: headers::process_headers(args.headers),
