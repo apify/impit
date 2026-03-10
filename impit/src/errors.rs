@@ -51,6 +51,10 @@ pub enum ImpitError {
     RemoteProtocolError,
     #[error("The proxy URL `{0}` is invalid or unreachable.")]
     ProxyError(String),
+    #[error("Proxy rejected the CONNECT tunnel.")]
+    ProxyTunnelError,
+    #[error("Proxy authentication required.")]
+    ProxyAuthRequired,
     #[error("The protocol is unsupported.")]
     UnsupportedProtocol,
     #[error("The response body couldn't be decoded.")]
@@ -131,6 +135,15 @@ impl ImpitError {
                 }
 
                 if source_error.is_connect() {
+                    if let Some(inner) = source_error.source() {
+                        let inner_dbg = format!("{inner:?}");
+                        if inner_dbg.contains("ProxyAuthRequired") {
+                            return ImpitError::ProxyAuthRequired;
+                        }
+                        if inner_dbg.contains("TunnelUnsuccessful") {
+                            return ImpitError::ProxyTunnelError;
+                        }
+                    }
                     return ImpitError::ConnectError(format!("{source_error:#?}"));
                 }
             }

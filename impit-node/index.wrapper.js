@@ -1,4 +1,6 @@
 const { castToTypedArray } = require('./request.js');
+const errors = require('./errors.js');
+const { rethrowNativeError } = errors;
 let native = null;
 try {
     native = require('./index.js');
@@ -158,6 +160,8 @@ class Impit extends native.Impit {
 
         try {
             return await this.#fetchWithRedirectHandling(initialUrl, options, signal, waitForAbort);
+        } catch (err) {
+            rethrowNativeError(err);
         } finally {
             signal?.removeEventListener?.("abort", abortHandler);
         }
@@ -286,3 +290,37 @@ module.exports.ImpitWrapper = native.ImpitWrapper
 module.exports.ImpitResponse = native.ImpitResponse
 module.exports.Browser = native.Browser
 module.exports.HttpMethod = native.HttpMethod
+module.exports.ImpitError = errors.ImpitError
+module.exports.HTTPError = errors.HTTPError
+module.exports.RequestError = errors.RequestError
+module.exports.TransportError = errors.TransportError
+module.exports.TimeoutError = errors.TimeoutError
+module.exports.ConnectTimeout = errors.ConnectTimeout
+module.exports.ReadTimeout = errors.ReadTimeout
+module.exports.WriteTimeout = errors.WriteTimeout
+module.exports.PoolTimeout = errors.PoolTimeout
+module.exports.NetworkError = errors.NetworkError
+module.exports.ConnectError = errors.ConnectError
+module.exports.ReadError = errors.ReadError
+module.exports.WriteError = errors.WriteError
+module.exports.CloseError = errors.CloseError
+module.exports.ProtocolError = errors.ProtocolError
+module.exports.LocalProtocolError = errors.LocalProtocolError
+module.exports.RemoteProtocolError = errors.RemoteProtocolError
+module.exports.ProxyError = errors.ProxyError
+module.exports.ProxyTunnelError = errors.ProxyTunnelError
+module.exports.ProxyAuthRequired = errors.ProxyAuthRequired
+module.exports.UnsupportedProtocol = errors.UnsupportedProtocol
+module.exports.DecodingError = errors.DecodingError
+module.exports.TooManyRedirects = errors.TooManyRedirects
+module.exports.HTTPStatusError = errors.HTTPStatusError
+module.exports.InvalidURL = errors.InvalidURL
+module.exports.CookieConflict = errors.CookieConflict
+module.exports.StreamError = errors.StreamError
+module.exports.StreamConsumed = errors.StreamConsumed
+module.exports.ResponseNotRead = errors.ResponseNotRead
+module.exports.RequestNotRead = errors.RequestNotRead
+module.exports.StreamClosed = errors.StreamClosed
+
+Object.assign(module.exports, errors)
+delete module.exports.rethrowNativeError

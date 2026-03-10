@@ -161,11 +161,49 @@ impl ImpitWrapper {
           ImpitError::UrlProtocolError(_) => napi::Status::InvalidArg,
           ImpitError::UrlParsingError(_) => napi::Status::InvalidArg,
           ImpitError::InvalidMethod(_) => napi::Status::InvalidArg,
-          ImpitError::Http3Disabled => napi::Status::GenericFailure,
           _ => napi::Status::GenericFailure,
         };
 
-        let reason = format!("impit error: {err}");
+        let error_code = match &err {
+          ImpitError::HTTPError => "HTTPError",
+          ImpitError::RequestError => "RequestError",
+          ImpitError::TransportError => "TransportError",
+          ImpitError::TimeoutException(_) => "TimeoutException",
+          ImpitError::ConnectTimeout => "ConnectTimeout",
+          ImpitError::ReadTimeout => "ReadTimeout",
+          ImpitError::WriteTimeout => "WriteTimeout",
+          ImpitError::PoolTimeout => "PoolTimeout",
+          ImpitError::NetworkError => "NetworkError",
+          ImpitError::ConnectError(_) => "ConnectError",
+          ImpitError::ReadError => "ReadError",
+          ImpitError::WriteError => "WriteError",
+          ImpitError::CloseError => "CloseError",
+          ImpitError::ProtocolError => "ProtocolError",
+          ImpitError::LocalProtocolError => "LocalProtocolError",
+          ImpitError::RemoteProtocolError => "RemoteProtocolError",
+          ImpitError::ProxyError(_) => "ProxyError",
+          ImpitError::ProxyTunnelError => "ProxyTunnelError",
+          ImpitError::ProxyAuthRequired => "ProxyAuthRequired",
+          ImpitError::UnsupportedProtocol => "UnsupportedProtocol",
+          ImpitError::DecodingError => "DecodingError",
+          ImpitError::TooManyRedirects(_) => "TooManyRedirects",
+          ImpitError::HTTPStatusError(_) => "HTTPStatusError",
+          ImpitError::InvalidURL
+          | ImpitError::UrlParsingError(_)
+          | ImpitError::UrlMissingHostnameError(_)
+          | ImpitError::UrlProtocolError(_) => "InvalidURL",
+          ImpitError::CookieConflict => "CookieConflict",
+          ImpitError::StreamError => "StreamError",
+          ImpitError::StreamConsumed => "StreamConsumed",
+          ImpitError::ResponseNotRead => "ResponseNotRead",
+          ImpitError::RequestNotRead => "RequestNotRead",
+          ImpitError::StreamClosed => "StreamClosed",
+          ImpitError::InvalidHeaderName(_)
+          | ImpitError::InvalidHeaderValue(_) => "LocalProtocolError",
+          _ => "HTTPError",
+        };
+
+        let reason = format!("{error_code}: {err}");
 
         Err(napi::Error::new(status, reason))
       }
