@@ -182,7 +182,7 @@ impl ImpitWrapper {
           ImpitError::LocalProtocolError => "LocalProtocolError",
           ImpitError::RemoteProtocolError => "RemoteProtocolError",
           ImpitError::ProxyError(_) => "ProxyError",
-          ImpitError::ProxyTunnelError => "ProxyTunnelError",
+          ImpitError::ProxyTunnelError(_) => "ProxyTunnelError",
           ImpitError::ProxyAuthRequired => "ProxyAuthRequired",
           ImpitError::UnsupportedProtocol => "UnsupportedProtocol",
           ImpitError::DecodingError => "DecodingError",

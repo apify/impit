@@ -70,7 +70,7 @@ impl From<ImpitPyError> for pyo3::PyErr {
                 RemoteProtocolError::new_err(format!("{}", err.0))
             }
             ImpitPyError(ImpitError::ProxyError(_)) => ProxyError::new_err(format!("{}", err.0)),
-            ImpitPyError(ImpitError::ProxyTunnelError) => {
+            ImpitPyError(ImpitError::ProxyTunnelError(_)) => {
                 ProxyError::new_err(format!("{}", err.0))
             }
             ImpitPyError(ImpitError::ProxyAuthRequired) => {

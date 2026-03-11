@@ -16,7 +16,13 @@ class ProtocolError extends TransportError {}
 class LocalProtocolError extends ProtocolError {}
 class RemoteProtocolError extends ProtocolError {}
 class ProxyError extends TransportError {}
-class ProxyTunnelError extends ProxyError {}
+class ProxyTunnelError extends ProxyError {
+    constructor(msg) {
+        super(msg);
+        const match = msg.match(/with status code (\d+)/);
+        this.status = match ? Number(match[1]) : undefined;
+    }
+}
 class ProxyAuthRequired extends ProxyError {}
 class UnsupportedProtocol extends TransportError {}
 class DecodingError extends RequestError {}

@@ -1110,8 +1110,7 @@ dependencies = [
 [[package]]
 name = "hyper-util"
 version = "0.1.20"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "96547c2556ec9d12fb1578c4eaf448b04993e7fb79cbaad930a656880a6bdfa0"
+source = "git+https://github.com/apify/hyper-util#9b7795dfd7158fc55e7c84b65bf1dae1d2dea67d"
 dependencies = [
  "base64",
  "bytes",
@@ -2567,7 +2566,7 @@ dependencies = [
 [[package]]
 name = "tower-http"
 version = "0.6.8"
-source = "git+https://github.com/apify/tower-http?branch=main#3bf3bce2b5dd9e6c38c969c2e97281e568e612a4"
+source = "git+https://github.com/apify/tower-http#f9efc0d9193e774d33aedc1022b922efefc22052"
 dependencies = [
  "async-compression",
  "bitflags",
