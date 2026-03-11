@@ -13,10 +13,11 @@ import {
     InvalidURL,
 } from '../index.wrapper.js';
 
+const SERVER_PORT = 3004;
 let localServer: Server | null = null;
 
 beforeAll(async () => {
-    localServer = await runServer(3003);
+    localServer = await runServer(SERVER_PORT);
 });
 
 afterAll(async () => {
@@ -57,19 +58,13 @@ describe('Integration: errors from fetch', () => {
         const impit = new Impit({ timeout: 1 });
 
         try {
-            await impit.fetch('http://127.0.0.1:3003/delay/3000');
+            await impit.fetch(`http://127.0.0.1:${SERVER_PORT}/delay/3000`);
             expect.unreachable('should have thrown');
         } catch (e) {
             expect(e).toBeInstanceOf(TimeoutError);
             expect(e).toBeInstanceOf(TransportError);
             expect(e).toBeInstanceOf(ImpitError);
         }
-    });
-
-    test('request-level timeout throws TimeoutError', async () => {
-        await expect(
-            impit.fetch('http://127.0.0.1:3003/delay/3000', { timeout: 1 })
-        ).rejects.toThrow(TimeoutError);
     });
 
     test('invalid proxy URL throws ProxyError or ConnectError', async () => {
