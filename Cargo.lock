@@ -1110,7 +1110,7 @@ dependencies = [
 [[package]]
 name = "hyper-util"
 version = "0.1.20"
-source = "git+https://github.com/apify/hyper-util#9b7795dfd7158fc55e7c84b65bf1dae1d2dea67d"
+source = "git+https://github.com/apify/hyper-util?rev=9b7795dfd7158fc55e7c84b65bf1dae1d2dea67d#9b7795dfd7158fc55e7c84b65bf1dae1d2dea67d"
 dependencies = [
  "base64",
  "bytes",
@@ -2566,7 +2566,7 @@ dependencies = [
 [[package]]
 name = "tower-http"
 version = "0.6.8"
-source = "git+https://github.com/apify/tower-http#f9efc0d9193e774d33aedc1022b922efefc22052"
+source = "git+https://github.com/apify/tower-http?rev=f9efc0d9193e774d33aedc1022b922efefc22052#f9efc0d9193e774d33aedc1022b922efefc22052"
 dependencies = [
  "async-compression",
  "bitflags",

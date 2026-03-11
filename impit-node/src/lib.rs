@@ -198,8 +198,9 @@ impl ImpitWrapper {
           ImpitError::ResponseNotRead => "ResponseNotRead",
           ImpitError::RequestNotRead => "RequestNotRead",
           ImpitError::StreamClosed => "StreamClosed",
-          ImpitError::InvalidHeaderName(_)
-          | ImpitError::InvalidHeaderValue(_) => "LocalProtocolError",
+          ImpitError::InvalidHeaderName(_) | ImpitError::InvalidHeaderValue(_) => {
+            "LocalProtocolError"
+          }
           _ => "HTTPError",
         };
 
