@@ -1535,27 +1535,27 @@ __metadata:
   linkType: hard
 
 "@types/node@npm:*":
-  version: 25.3.3
-  resolution: "@types/node@npm:25.3.3"
+  version: 25.4.0
+  resolution: "@types/node@npm:25.4.0"
   dependencies:
     undici-types: "npm:~7.18.0"
-  checksum: 10c0/63e1d3816a9f4a706ab5d588d18cb98aa824b97748ff585537d327528e9438f58f69f45c7762e7cd3a1ab32c1619f551aabe8075d13172f9273cf10f6d83ab91
+  checksum: 10c0/da81e8b0a3a57964b1b5f85d134bfefc1b923fd67ed41756842348a049d7915b72e8773f5598d6929b9cb8119c2427993c55d364fd93bd572a3450e58b98a60e
   languageName: node
   linkType: hard
 
 "@types/node@npm:^24.0.0":
-  version: 24.11.0
-  resolution: "@types/node@npm:24.11.0"
+  version: 24.12.0
+  resolution: "@types/node@npm:24.12.0"
   dependencies:
     undici-types: "npm:~7.16.0"
-  checksum: 10c0/4fb7390259e3b158d25dbecf52de8ce70fa18a4ed0949c9444bb6384517c361fa19781e6821ca8c18dc5f6af43eab72e9e159e07000e6b1286d082e8585d8c41
+  checksum: 10c0/8b31c0af5b5474f13048a4e77c57f22cd4f8fe6e58c4b6fde9456b0c13f46a5bfaf5744ff88fd089581de9f0d6e99c584e022681de7acb26a58d258c654c4843
   languageName: node
   linkType: hard
 
 "@types/qs@npm:*":
-  version: 6.14.0
-  resolution: "@types/qs@npm:6.14.0"
-  checksum: 10c0/5b3036df6e507483869cdb3858201b2e0b64b4793dc4974f188caa5b5732f2333ab9db45c08157975054d3b070788b35088b4bc60257ae263885016ee2131310
+  version: 6.15.0
+  resolution: "@types/qs@npm:6.15.0"
+  checksum: 10c0/1b104cac50e655fc41d7fc1de2c2aba2908c4cf833a555b6808fb4c96752662b439238f2392a15d2590a7a6ca75dbd40e42d9378ac2be0d548ee484954363688
   languageName: node
   linkType: hard
 
@@ -3293,15 +3293,15 @@ __metadata:
   linkType: hard
 
 "tar@npm:^7.5.4":
-  version: 7.5.10
-  resolution: "tar@npm:7.5.10"
+  version: 7.5.11
+  resolution: "tar@npm:7.5.11"
   dependencies:
     "@isaacs/fs-minipass": "npm:^4.0.0"
     chownr: "npm:^3.0.0"
     minipass: "npm:^7.1.2"
     minizlib: "npm:^3.1.0"
     yallist: "npm:^5.0.0"
-  checksum: 10c0/ed905e4b33886377df6e9206e5d1bd34458c21666e27943f946799416f86348c938590d573d6a69312cb29c583b122647a64ec92782f2b7e24e68d985dd72531
+  checksum: 10c0/b6bb420550ef50ef23356018155e956cd83282c97b6128d8d5cfe5740c57582d806a244b2ef0bf686a74ce526babe8b8b9061527623e935e850008d86d838929
   languageName: node
   linkType: hard
 
@@ -3336,21 +3336,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tldts-core@npm:^7.0.24":
-  version: 7.0.24
-  resolution: "tldts-core@npm:7.0.24"
-  checksum: 10c0/9b123c137a47cafdba710b17542ea3682b1e354623b8bf26cf2e2f47b103dab73f91d162a27cc036d8fe9a3a91a4b5b420b609e8c019a9e9ebb4fad4da528fd6
+"tldts-core@npm:^7.0.25":
+  version: 7.0.25
+  resolution: "tldts-core@npm:7.0.25"
+  checksum: 10c0/fd07a555a27a6f11ed87365845d80bf7755d490cd52adf6cd474cbb9148fdaa97c79f58a8ebbc19ccfec0578e76ced5f5ae3b88e85338529291918f5fe815914
   languageName: node
   linkType: hard
 
 "tldts@npm:^7.0.5":
-  version: 7.0.24
-  resolution: "tldts@npm:7.0.24"
+  version: 7.0.25
+  resolution: "tldts@npm:7.0.25"
   dependencies:
-    tldts-core: "npm:^7.0.24"
+    tldts-core: "npm:^7.0.25"
   bin:
     tldts: bin/cli.js
-  checksum: 10c0/320e871695d82969024d108ee1254495e7f15c4398d0a6eede10899c581e5189f0590195bdaadbdb131af86c2a7630f664fdc3e381e671ba6acaf77a04d86dfe
+  checksum: 10c0/8affd92849a4b0e290c5b211dce58ddee79d5e6d7079fc592afb97d95decd90028194b844c0b3cfb9254de02fb73e01f89500f3e47073dd96a3266223ca221b9
   languageName: node
   linkType: hard
 
