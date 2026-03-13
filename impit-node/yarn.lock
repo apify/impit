@@ -2409,9 +2409,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"impit-darwin-arm64@npm:0.10.1":
-  version: 0.10.1
-  resolution: "impit-darwin-arm64@npm:0.10.1"
+"impit-darwin-arm64@npm:0.11.0":
+  version: 0.11.0
+  resolution: "impit-darwin-arm64@npm:0.11.0"
   conditions: os=darwin & cpu=arm64
   languageName: node
   linkType: hard
@@ -2473,7 +2473,7 @@ __metadata:
     "@types/express": "npm:^5.0.0"
     "@types/node": "npm:^24.0.0"
     express: "npm:^5.0.0"
-    impit-darwin-arm64: "npm:0.10.1"
+    impit-darwin-arm64: "npm:0.11.0"
     impit-darwin-x64: "npm:0.10.1"
     impit-linux-arm64-gnu: "npm:0.10.1"
     impit-linux-arm64-musl: "npm:0.10.1"
