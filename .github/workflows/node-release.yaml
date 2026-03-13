@@ -87,7 +87,12 @@ jobs:
             run: npm publish --provenance
 
           - name: Update lockfile
-            run: yarn install --no-immutable
+            run: |
+              for i in $(seq 1 5); do
+                yarn install --no-immutable && exit 0
+                [ $i -lt 5 ] && echo "Attempt $i failed, waiting 30s before retry..." && sleep 30
+              done
+              exit 1
 
           - name: Commit changes
             id: commit
