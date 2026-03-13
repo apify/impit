@@ -56,7 +56,7 @@
   "description": "Impit for JavaScript",
   "optionalDependencies": {
     "impit-darwin-arm64": "0.10.1",
-    "impit-darwin-x64": "0.10.1",
+    "impit-darwin-x64": "0.11.0",
     "impit-linux-arm64-gnu": "0.10.1",
     "impit-linux-arm64-musl": "0.10.1",
     "impit-linux-x64-gnu": "0.10.1",
