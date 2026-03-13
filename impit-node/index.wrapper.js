@@ -1,4 +1,6 @@
 const { castToTypedArray } = require('./request.js');
+const errors = require('./errors.js');
+const { rethrowNativeError } = errors;
 let native = null;
 try {
     native = require('./index.js');
@@ -158,6 +160,8 @@ class Impit extends native.Impit {
 
         try {
             return await this.#fetchWithRedirectHandling(initialUrl, options, signal, waitForAbort);
+        } catch (err) {
+            rethrowNativeError(err);
         } finally {
             signal?.removeEventListener?.("abort", abortHandler);
         }
@@ -286,3 +290,5 @@ module.exports.ImpitWrapper = native.ImpitWrapper
 module.exports.ImpitResponse = native.ImpitResponse
 module.exports.Browser = native.Browser
 module.exports.HttpMethod = native.HttpMethod
+Object.assign(module.exports, errors)
+delete module.exports.rethrowNativeError

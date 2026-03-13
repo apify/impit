@@ -1,5 +1,6 @@
 use std::{error::Error, time::Duration};
 
+use hyper_util::client::legacy::connect::proxy::TunnelError;
 use thiserror::Error;
 
 #[derive(Default)]
@@ -51,6 +52,10 @@ pub enum ImpitError {
     RemoteProtocolError,
     #[error("The proxy URL `{0}` is invalid or unreachable.")]
     ProxyError(String),
+    #[error("Proxy rejected the CONNECT tunnel{}.", .0.map_or(String::new(), |s| format!(" with status code {s}")))]
+    ProxyTunnelError(Option<u16>),
+    #[error("Proxy authentication required.")]
+    ProxyAuthRequired,
     #[error("The protocol is unsupported.")]
     UnsupportedProtocol,
     #[error("The response body couldn't be decoded.")]
@@ -131,6 +136,17 @@ impl ImpitError {
                 }
 
                 if source_error.is_connect() {
+                    if let Some(inner) = source_error.source() {
+                        if let Some(tunnel_error) = inner.downcast_ref::<TunnelError>() {
+                            return match tunnel_error {
+                                TunnelError::ProxyAuthRequired => ImpitError::ProxyAuthRequired,
+                                TunnelError::TunnelUnsuccessful(status) => {
+                                    ImpitError::ProxyTunnelError(*status)
+                                }
+                                _ => ImpitError::ConnectError(format!("{source_error:#?}")),
+                            };
+                        }
+                    }
                     return ImpitError::ConnectError(format!("{source_error:#?}"));
                 }
             }
