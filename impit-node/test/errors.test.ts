@@ -1,5 +1,6 @@
 import { test, describe, expect, beforeAll, afterAll } from 'vitest';
 import type { Server } from 'net';
+import { createServer } from 'net';
 import { runServer } from './mock.server.js';
 import {
     Impit,
@@ -10,19 +11,33 @@ import {
     NetworkError,
     ConnectError,
     ProxyError,
+    ProxyTunnelError,
     InvalidURL,
 } from '../index.wrapper.js';
 
 const SERVER_PORT = 3004;
+const REJECT_PROXY_PORT = 3005;
 let localServer: Server | null = null;
+let rejectProxyServer: Server | null = null;
 
 beforeAll(async () => {
     localServer = await runServer(SERVER_PORT);
+    rejectProxyServer = await new Promise<Server>((resolve) => {
+        const server = createServer((socket) => {
+            socket.once('data', () => {
+                socket.end('HTTP/1.1 403 Forbidden\r\n\r\n');
+            });
+        });
+        server.listen(REJECT_PROXY_PORT, () => resolve(server));
+    });
 });
 
 afterAll(async () => {
     await new Promise<void>((res) => {
         localServer?.close(() => res());
+    });
+    await new Promise<void>((res) => {
+        rejectProxyServer?.close(() => res());
     });
 });
 
@@ -79,6 +94,19 @@ describe('Integration: errors from fetch', () => {
             expect(
                 e instanceof ProxyError || e instanceof ConnectError
             ).toBe(true);
+        }
+    });
+
+    test('ProxyTunnelError contains status code', async () => {
+        const impit = new Impit({ proxyUrl: `http://localhost:${REJECT_PROXY_PORT}` });
+
+        try {
+            await impit.fetch('https://example.com');
+            expect.unreachable('should have thrown');
+        } catch (e) {
+            expect(e).toBeInstanceOf(ProxyTunnelError);
+            expect(e).toBeInstanceOf(ProxyError);
+            expect((e as ProxyTunnelError).status).toBe(403);
         }
     });
 
