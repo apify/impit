@@ -84,6 +84,12 @@ impl Client {
                     .with_fingerprint(impit::fingerprint::database::firefox_135::fingerprint()),
                 "firefox144" => builder
                     .with_fingerprint(impit::fingerprint::database::firefox_144::fingerprint()),
+                "okhttp3" => builder
+                    .with_fingerprint(impit::fingerprint::database::okhttp3::fingerprint()),
+                "okhttp" | "okhttp4" => builder
+                    .with_fingerprint(impit::fingerprint::database::okhttp4::fingerprint()),
+                "okhttp5" => builder
+                    .with_fingerprint(impit::fingerprint::database::okhttp5::fingerprint()),
                 _ => panic!("Unsupported browser"),
             },
             None => builder,
