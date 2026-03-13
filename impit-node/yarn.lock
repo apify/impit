@@ -2430,9 +2430,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"impit-linux-arm64-musl@npm:0.10.1":
-  version: 0.10.1
-  resolution: "impit-linux-arm64-musl@npm:0.10.1"
+"impit-linux-arm64-musl@npm:0.11.0":
+  version: 0.11.0
+  resolution: "impit-linux-arm64-musl@npm:0.11.0"
   conditions: os=linux & cpu=arm64 & libc=musl
   languageName: node
   linkType: hard
@@ -2476,7 +2476,7 @@ __metadata:
     impit-darwin-arm64: "npm:0.10.1"
     impit-darwin-x64: "npm:0.10.1"
     impit-linux-arm64-gnu: "npm:0.10.1"
-    impit-linux-arm64-musl: "npm:0.10.1"
+    impit-linux-arm64-musl: "npm:0.11.0"
     impit-linux-x64-gnu: "npm:0.10.1"
     impit-linux-x64-musl: "npm:0.10.1"
     impit-win32-arm64-msvc: "npm:0.10.1"
