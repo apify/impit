@@ -141,9 +141,7 @@ impl From<Browser> for BrowserFingerprint {
       Browser::Firefox135 => impit::fingerprint::database::firefox_135::fingerprint(),
       Browser::Firefox144 => impit::fingerprint::database::firefox_144::fingerprint(),
       Browser::OkHttp3 => impit::fingerprint::database::okhttp3::fingerprint(),
-      Browser::OkHttp | Browser::OkHttp4 => {
-        impit::fingerprint::database::okhttp4::fingerprint()
-      }
+      Browser::OkHttp | Browser::OkHttp4 => impit::fingerprint::database::okhttp4::fingerprint(),
       Browser::OkHttp5 => impit::fingerprint::database::okhttp5::fingerprint(),
     }
   }

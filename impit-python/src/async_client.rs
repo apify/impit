@@ -59,52 +59,53 @@ impl AsyncClient {
     ) -> PyResult<Self> {
         let builder = ImpitBuilder::default();
 
-        let builder = match browser {
-            Some(browser) => match browser.to_lowercase().as_str() {
-                "chrome" | "chrome124" => builder
-                    .with_fingerprint(impit::fingerprint::database::chrome_125::fingerprint()),
-                "chrome100" => builder
-                    .with_fingerprint(impit::fingerprint::database::chrome_100::fingerprint()),
-                "chrome101" => builder
-                    .with_fingerprint(impit::fingerprint::database::chrome_101::fingerprint()),
-                "chrome104" => builder
-                    .with_fingerprint(impit::fingerprint::database::chrome_104::fingerprint()),
-                "chrome107" => builder
-                    .with_fingerprint(impit::fingerprint::database::chrome_107::fingerprint()),
-                "chrome110" => builder
-                    .with_fingerprint(impit::fingerprint::database::chrome_110::fingerprint()),
-                "chrome116" => builder
-                    .with_fingerprint(impit::fingerprint::database::chrome_116::fingerprint()),
-                "chrome125" => builder
-                    .with_fingerprint(impit::fingerprint::database::chrome_125::fingerprint()),
-                "chrome131" => builder
-                    .with_fingerprint(impit::fingerprint::database::chrome_131::fingerprint()),
-                "chrome136" => builder
-                    .with_fingerprint(impit::fingerprint::database::chrome_136::fingerprint()),
-                "chrome142" => builder
-                    .with_fingerprint(impit::fingerprint::database::chrome_142::fingerprint()),
-                "firefox128" | "firefox" => builder
-                    .with_fingerprint(impit::fingerprint::database::firefox_128::fingerprint()),
-                "firefox133" => builder
-                    .with_fingerprint(impit::fingerprint::database::firefox_133::fingerprint()),
-                "firefox135" => builder
-                    .with_fingerprint(impit::fingerprint::database::firefox_135::fingerprint()),
-                "firefox144" => builder
-                    .with_fingerprint(impit::fingerprint::database::firefox_144::fingerprint()),
-                "okhttp3" => builder
-                    .with_fingerprint(impit::fingerprint::database::okhttp3::fingerprint()),
-                "okhttp" | "okhttp4" => builder
-                    .with_fingerprint(impit::fingerprint::database::okhttp4::fingerprint()),
-                "okhttp5" => builder
-                    .with_fingerprint(impit::fingerprint::database::okhttp5::fingerprint()),
-                _ => {
-                    return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(
-                        "Unsupported browser",
-                    ))
-                }
-            },
-            None => builder,
-        };
+        let builder =
+            match browser {
+                Some(browser) => match browser.to_lowercase().as_str() {
+                    "chrome" | "chrome124" => builder
+                        .with_fingerprint(impit::fingerprint::database::chrome_125::fingerprint()),
+                    "chrome100" => builder
+                        .with_fingerprint(impit::fingerprint::database::chrome_100::fingerprint()),
+                    "chrome101" => builder
+                        .with_fingerprint(impit::fingerprint::database::chrome_101::fingerprint()),
+                    "chrome104" => builder
+                        .with_fingerprint(impit::fingerprint::database::chrome_104::fingerprint()),
+                    "chrome107" => builder
+                        .with_fingerprint(impit::fingerprint::database::chrome_107::fingerprint()),
+                    "chrome110" => builder
+                        .with_fingerprint(impit::fingerprint::database::chrome_110::fingerprint()),
+                    "chrome116" => builder
+                        .with_fingerprint(impit::fingerprint::database::chrome_116::fingerprint()),
+                    "chrome125" => builder
+                        .with_fingerprint(impit::fingerprint::database::chrome_125::fingerprint()),
+                    "chrome131" => builder
+                        .with_fingerprint(impit::fingerprint::database::chrome_131::fingerprint()),
+                    "chrome136" => builder
+                        .with_fingerprint(impit::fingerprint::database::chrome_136::fingerprint()),
+                    "chrome142" => builder
+                        .with_fingerprint(impit::fingerprint::database::chrome_142::fingerprint()),
+                    "firefox128" | "firefox" => builder
+                        .with_fingerprint(impit::fingerprint::database::firefox_128::fingerprint()),
+                    "firefox133" => builder
+                        .with_fingerprint(impit::fingerprint::database::firefox_133::fingerprint()),
+                    "firefox135" => builder
+                        .with_fingerprint(impit::fingerprint::database::firefox_135::fingerprint()),
+                    "firefox144" => builder
+                        .with_fingerprint(impit::fingerprint::database::firefox_144::fingerprint()),
+                    "okhttp3" => builder
+                        .with_fingerprint(impit::fingerprint::database::okhttp3::fingerprint()),
+                    "okhttp" | "okhttp4" => builder
+                        .with_fingerprint(impit::fingerprint::database::okhttp4::fingerprint()),
+                    "okhttp5" => builder
+                        .with_fingerprint(impit::fingerprint::database::okhttp5::fingerprint()),
+                    _ => {
+                        return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(
+                            "Unsupported browser",
+                        ))
+                    }
+                },
+                None => builder,
+            };
 
         let builder = match http3 {
             Some(true) => builder.with_http3(),
