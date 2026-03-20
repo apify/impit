@@ -156,11 +156,16 @@ impl TlsConfigBuilder {
                 (provider, verifier)
             };
 
-            // Restrict to TLS 1.2 only when the fingerprint doesn't use TLS 1.3 extensions
-            let tls13_enabled = fp.extensions.supported_versions;
+            // Select protocol versions based on fingerprint
+            let protocol_versions: &[&rustls::SupportedProtocolVersion] =
+                if fp.extensions.supported_versions {
+                    rustls::DEFAULT_VERSIONS
+                } else {
+                    &[&rustls::version::TLS12]
+                };
 
-            // Only enable ECH if the fingerprint requests it
             let mut config: rustls::ClientConfig = if ech_enabled {
+                // ECH requires a different builder chain (no explicit protocol versions)
                 rustls::ClientConfig::builder_with_provider(crypto_provider_arc)
                     .with_ech(get_ech_mode())
                     .unwrap()
@@ -168,17 +173,9 @@ impl TlsConfigBuilder {
                     .with_custom_certificate_verifier(verifier)
                     .with_tls_fingerprint(rustls_fingerprint)
                     .with_no_client_auth()
-            } else if tls13_enabled {
-                rustls::ClientConfig::builder_with_provider(crypto_provider_arc)
-                    .with_safe_default_protocol_versions()
-                    .unwrap()
-                    .dangerous()
-                    .with_custom_certificate_verifier(verifier)
-                    .with_tls_fingerprint(rustls_fingerprint)
-                    .with_no_client_auth()
             } else {
                 rustls::ClientConfig::builder_with_provider(crypto_provider_arc)
-                    .with_protocol_versions(&[&rustls::version::TLS12])
+                    .with_protocol_versions(protocol_versions)
                     .unwrap()
                     .dangerous()
                     .with_custom_certificate_verifier(verifier)

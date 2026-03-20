@@ -369,6 +369,7 @@ impl TlsFingerprint {
             record_size_limit: self.extensions.record_size_limit,
             renegotiation_info: true, // Common for both browsers
             padding: self.extensions.padding,
+            supported_versions: self.extensions.supported_versions,
             extension_order,
         };
 
