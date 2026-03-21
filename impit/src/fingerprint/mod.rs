@@ -318,6 +318,48 @@ impl TlsFingerprint {
             .iter()
             .any(|e| matches!(e, ExtensionType::Grease));
 
+        use rustls::internal::msgs::enums::ExtensionType as RustlsExtType;
+
+        let extension_order: Vec<RustlsExtType> = self
+            .extensions
+            .extension_order
+            .iter()
+            .filter_map(|ext| {
+                match ext {
+                    ExtensionType::ServerName => Some(RustlsExtType::ServerName),
+                    ExtensionType::StatusRequest => Some(RustlsExtType::StatusRequest),
+                    ExtensionType::SupportedGroups => Some(RustlsExtType::EllipticCurves),
+                    ExtensionType::EcPointFormats => Some(RustlsExtType::ECPointFormats),
+                    ExtensionType::SignatureAlgorithms => Some(RustlsExtType::SignatureAlgorithms),
+                    ExtensionType::ApplicationLayerProtocolNegotiation => {
+                        Some(RustlsExtType::ALProtocolNegotiation)
+                    }
+                    ExtensionType::SignedCertificateTimestamp => Some(RustlsExtType::SCT),
+                    ExtensionType::KeyShare => Some(RustlsExtType::KeyShare),
+                    ExtensionType::PskKeyExchangeModes => Some(RustlsExtType::PSKKeyExchangeModes),
+                    ExtensionType::SupportedVersions => Some(RustlsExtType::SupportedVersions),
+                    ExtensionType::CompressCertificate => Some(RustlsExtType::CompressCertificate),
+                    ExtensionType::ApplicationSettings => Some(RustlsExtType::ApplicationSettings),
+                    ExtensionType::ExtendedMasterSecret => {
+                        Some(RustlsExtType::ExtendedMasterSecret)
+                    }
+                    ExtensionType::SessionTicket => Some(RustlsExtType::SessionTicket),
+                    ExtensionType::RenegotiationInfo => Some(RustlsExtType::RenegotiationInfo),
+                    ExtensionType::Padding => Some(RustlsExtType::Padding),
+                    ExtensionType::Grease => Some(RustlsExtType::ReservedGrease),
+                    ExtensionType::EarlyData => Some(RustlsExtType::EarlyData),
+                    ExtensionType::PostHandshakeAuth => Some(RustlsExtType::PostHandshakeAuth),
+                    ExtensionType::SignatureAlgorithmsCert => {
+                        Some(RustlsExtType::SignatureAlgorithmsCert)
+                    }
+                    // PreSharedKey and ECH are handled separately by rustls (always last)
+                    ExtensionType::PreSharedKey => None,
+                    // Skip types that don't map cleanly
+                    _ => None,
+                }
+            })
+            .collect();
+
         let extensions_config = TlsExtensionsConfig {
             grease: has_grease,
             signed_certificate_timestamp: self.extensions.signed_certificate_timestamp,
@@ -327,6 +369,8 @@ impl TlsFingerprint {
             record_size_limit: self.extensions.record_size_limit,
             renegotiation_info: true, // Common for both browsers
             padding: self.extensions.padding,
+            supported_versions: self.extensions.supported_versions,
+            extension_order,
         };
 
         let cert_compression = self.extensions.compress_certificate.clone().map(|algos| {

@@ -156,8 +156,16 @@ impl TlsConfigBuilder {
                 (provider, verifier)
             };
 
-            // Only enable ECH if the fingerprint requests it
+            // Select protocol versions based on fingerprint
+            let protocol_versions: &[&rustls::SupportedProtocolVersion] =
+                if fp.extensions.supported_versions {
+                    rustls::DEFAULT_VERSIONS
+                } else {
+                    &[&rustls::version::TLS12]
+                };
+
             let mut config: rustls::ClientConfig = if ech_enabled {
+                // ECH requires a different builder chain (no explicit protocol versions)
                 rustls::ClientConfig::builder_with_provider(crypto_provider_arc)
                     .with_ech(get_ech_mode())
                     .unwrap()
@@ -167,7 +175,7 @@ impl TlsConfigBuilder {
                     .with_no_client_auth()
             } else {
                 rustls::ClientConfig::builder_with_provider(crypto_provider_arc)
-                    .with_safe_default_protocol_versions()
+                    .with_protocol_versions(protocol_versions)
                     .unwrap()
                     .dangerous()
                     .with_custom_certificate_verifier(verifier)
