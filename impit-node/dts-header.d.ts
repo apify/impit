@@ -34,3 +34,19 @@ export declare class StreamConsumed extends StreamError {}
 export declare class ResponseNotRead extends StreamError {}
 export declare class RequestNotRead extends StreamError {}
 export declare class StreamClosed extends StreamError {}
+
+export declare class ImpitResponse {
+  /**
+   * Creates a copy of the response.
+   *
+   * The original response's body methods are re-bound to one half of the
+   * tee'd stream; the returned clone is a standard `Response` backed by the
+   * other half.
+   *
+   * - Calling `clone()` more than once throws a `TypeError`.
+   * - Calling `clone()` after the body has been consumed throws a `TypeError`.
+   *
+   * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/Response/clone | Fetch API `Response.clone()`}
+   */
+  clone(): Response
+}
