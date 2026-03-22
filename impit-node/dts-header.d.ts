@@ -35,7 +35,7 @@ export declare class ResponseNotRead extends StreamError {}
 export declare class RequestNotRead extends StreamError {}
 export declare class StreamClosed extends StreamError {}
 
-export declare class ImpitResponse {
+export interface ImpitResponse {
   /**
    * Creates a copy of the response.
    *

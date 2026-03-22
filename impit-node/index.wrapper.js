@@ -276,9 +276,13 @@ class Impit extends native.Impit {
             configurable: true,
         });
 
+        let bodyConsumed = false;
+        const markConsumed = () => { bodyConsumed = true; };
+
         const nativeBytes = originalResponse.bytes.bind(originalResponse);
         Object.defineProperty(originalResponse, 'bytes', {
             value: async function() {
+                markConsumed();
                 try { return await nativeBytes(); } finally { cleanup(); }
             },
             configurable: true,
@@ -287,6 +291,7 @@ class Impit extends native.Impit {
         const nativeArrayBuffer = originalResponse.arrayBuffer.bind(originalResponse);
         Object.defineProperty(originalResponse, 'arrayBuffer', {
             value: async function() {
+                markConsumed();
                 try { return await nativeArrayBuffer(); } finally { cleanup(); }
             },
             configurable: true,
@@ -295,6 +300,7 @@ class Impit extends native.Impit {
         const nativeJson = originalResponse.json.bind(originalResponse);
         Object.defineProperty(originalResponse, 'json', {
             value: async function() {
+                markConsumed();
                 try { return await nativeJson(); } finally { cleanup(); }
             },
             configurable: true,
@@ -307,12 +313,15 @@ class Impit extends native.Impit {
         let cloned = false;
         Object.defineProperty(originalResponse, 'clone', {
             value: function () {
-                if (cloned) {
-                    throw new TypeError('Response body is already consumed or cloned');
+                if (bodyConsumed) {
+                    throw new TypeError('Response body has already been consumed');
                 }
-                cloned = true;
+                if (cloned) {
+                    throw new TypeError('Response has already been cloned');
+                }
 
                 const [stream1, stream2] = this.body.tee();
+                cloned = true;
 
                 // Create a delegate Response from stream1 for the original's body methods
                 const delegate = new Response(stream1, {

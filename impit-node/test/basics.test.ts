@@ -675,13 +675,44 @@ describe.each([
             response.clone();
 
             expect(() => response.clone()).toThrow(TypeError);
+            expect(() => response.clone()).toThrow(/already been cloned/);
         });
 
-        test('clone() after body consumed throws', async () => {
+        test('clone() after body consumed throws TypeError with clear message', async () => {
             const response = await impit.fetch(getHttpBinUrl('/get'));
             await response.text();
 
-            expect(() => response.clone()).toThrow();
+            expect(() => response.clone()).toThrow(TypeError);
+            expect(() => response.clone()).toThrow(/body has already been consumed/);
+        });
+
+        test('arrayBuffer() works on both original and clone', async () => {
+            const response = await impit.fetch(getHttpBinUrl('/get'));
+            const clone = response.clone();
+
+            const cloneBuf = await clone.arrayBuffer();
+            const originalBuf = await response.arrayBuffer();
+
+            expect(cloneBuf.byteLength).toBeGreaterThan(0);
+            expect(cloneBuf.byteLength).toBe(originalBuf.byteLength);
+        });
+
+        test('reading original first, then clone', async () => {
+            const response = await impit.fetch(getHttpBinUrl('/get'));
+            const clone = response.clone();
+
+            const originalData = await response.json();
+            const cloneData = await clone.json();
+
+            expect(originalData).toEqual(cloneData);
+        });
+
+        test('clone preserves non-200 status', async () => {
+            const response = await impit.fetch(getHttpBinUrl('/status/404'));
+            const clone = response.clone();
+
+            expect(clone.status).toBe(404);
+            expect(clone.ok).toBe(false);
         });
     });
 
