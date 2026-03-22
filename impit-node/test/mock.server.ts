@@ -114,6 +114,25 @@ export async function runServer(port: number): Promise<Server> {
         }
     });
 
+    app.get('/redirect/:n', (req, res) => {
+        const n = parseInt(req.params.n, 10);
+        if (n > 1) {
+            res.redirect(302, `/redirect/${n - 1}`);
+        } else {
+            res.redirect(302, '/get');
+        }
+    });
+
+    app.get('/redirect-to', (req, res) => {
+        const url = req.query.url as string;
+        const statusCode = parseInt(req.query.status_code as string || '302', 10);
+        res.redirect(statusCode, url);
+    });
+
+    app.get('/get', (req, res) => {
+        res.json({ url: `http://localhost:${port}/get` });
+    });
+
     app.get('/cookies/delete', (req, res) => {
         for (const name of Object.keys(req.query)) {
             res.clearCookie(name);
