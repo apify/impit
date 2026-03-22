@@ -51,9 +51,15 @@ async function parseFetchOptions(resource, init) {
             method: resource.method,
             headers: resource.headers,
             body: resource.body,
-            redirect: resource.redirect,
             ...init, // init overrides Request fields
         };
+        // Extract redirect from Request only if not already set by init.
+        // Request.redirect defaults to 'follow', which is indistinguishable
+        // from an explicit 'follow', so we only use it when non-default to
+        // avoid silently overriding instance-level followRedirects.
+        if (!('redirect' in options) && resource.redirect !== 'follow') {
+            options.redirect = resource.redirect;
+        }
     } else if (resource.toString) {
         url = resource.toString();
     } else {

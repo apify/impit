@@ -686,5 +686,58 @@ describe.each([
 
             expect(response.status).toBe(302);
         });
+
+        test('bare Request does not override instance followRedirects: false', async () => {
+            const noRedirect = new Impit({ followRedirects: false });
+            const request = new Request('http://localhost:3001/redirect/1');
+            const response = await noRedirect.fetch(request);
+
+            expect(response.status).toBe(302);
+        });
+
+        test('init overrides Request.redirect', async () => {
+            const request = new Request('http://localhost:3001/redirect/1', {
+                redirect: 'manual',
+            });
+            const response = await impit.fetch(request, { redirect: 'follow' });
+
+            expect(response.status).toBe(200);
+        });
+
+        test('redirect: "error" does not throw on non-redirect response', async () => {
+            const response = await impit.fetch('http://localhost:3001/get', {
+                redirect: 'error',
+            });
+
+            expect(response.status).toBe(200);
+        });
+
+        test('redirect: "follow" still respects instance maxRedirects', async () => {
+            const limited = new Impit({ followRedirects: false, maxRedirects: 1 });
+
+            await expect(
+                limited.fetch('http://localhost:3001/redirect/2', { redirect: 'follow' }),
+            ).rejects.toThrow('Maximum redirect limit (1) exceeded');
+        });
+
+        test('redirect: "manual" with 301 status code', async () => {
+            const response = await impit.fetch(
+                'http://localhost:3001/redirect-to?url=/get&status_code=301',
+                { redirect: 'manual' },
+            );
+
+            expect(response.status).toBe(301);
+            expect(response.headers.get('location')).toBe('/get');
+        });
+
+        test('redirect: "manual" with 307 status code', async () => {
+            const response = await impit.fetch(
+                'http://localhost:3001/redirect-to?url=/get&status_code=307',
+                { redirect: 'manual' },
+            );
+
+            expect(response.status).toBe(307);
+            expect(response.headers.get('location')).toBe('/get');
+        });
     })
 });
