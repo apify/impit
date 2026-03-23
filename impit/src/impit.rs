@@ -238,18 +238,6 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
         // Use fingerprint if provided, otherwise fall back to browser enum
         if let Some(ref fingerprint) = config.fingerprint {
             tls_config_builder.with_tls_fingerprint(fingerprint.tls.clone());
-
-            if let Some(window_size) = fingerprint.http2.initial_stream_window_size {
-                client = client.http2_initial_stream_window_size(window_size);
-            }
-
-            if let Some(window_size) = fingerprint.http2.initial_connection_window_size {
-                client = client.http2_initial_connection_window_size(window_size);
-            }
-
-            if let Some(max_size) = fingerprint.http2.max_header_list_size {
-                client = client.http2_max_header_list_size(max_size);
-            }
         }
 
         if config.max_http_version == Version::HTTP_3 {
@@ -292,6 +280,33 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
             RedirectBehavior::ManualRedirect => {
                 client = client.redirect(reqwest::redirect::Policy::none());
             }
+        }
+
+        // Apply per-client HTTP/2 SETTINGS from the fingerprint.
+        // These use reqwest's builder API which flows through hyper → h2,
+        // so each Impit instance gets its own settings (safe for concurrent use).
+        // HEADER_TABLE_SIZE is handled globally via the h2 fork's default (65536).
+        if let Some(ref fingerprint) = config.fingerprint {
+            let h2 = &fingerprint.http2;
+
+            if let Some(initial_window_size) = h2.settings_initial_window_size {
+                client = client.http2_initial_stream_window_size(initial_window_size);
+            }
+
+            if let Some(max_frame_size) = h2.settings_max_frame_size {
+                client = client.http2_max_frame_size(max_frame_size);
+            }
+
+            if let Some(max_header_list_size) = h2.settings_max_header_list_size {
+                client = client.http2_max_header_list_size(max_header_list_size);
+            }
+
+            if let Some(connection_window_size) = h2.connection_window_size_increment {
+                client = client.http2_initial_connection_window_size(connection_window_size);
+            }
+
+            // Disable adaptive window so our explicit sizes are used as-is.
+            client = client.http2_adaptive_window(false);
         }
 
         client

@@ -2,6 +2,52 @@
 
 use crate::fingerprint::*;
 
+/// Helper to create OS-specific Chrome headers for a given version.
+/// This provides Windows, macOS, and Linux header variants to increase
+/// fingerprint diversity beyond a single OS profile.
+pub fn chrome_headers_for_os(version: &str, os: &str) -> Vec<(String, String)> {
+    let (ua_os, platform) = match os {
+        "windows" => ("Windows NT 10.0; Win64; x64", "\"Windows\""),
+        "linux" => ("X11; Linux x86_64", "\"Linux\""),
+        _ => ("Macintosh; Intel Mac OS X 10_15_7", "\"macOS\""),
+    };
+
+    let sec_ch_ua = match version {
+        "142" => format!("\"Chromium\";v=\"142\", \"Google Chrome\";v=\"142\", \"Not_A Brand\";v=\"99\""),
+        "136" => format!("\"Chromium\";v=\"136\", \"Google Chrome\";v=\"136\", \"Not.A/Brand\";v=\"99\""),
+        "133" => format!("\"Not(A:Brand\";v=\"99\", \"Google Chrome\";v=\"133\", \"Chromium\";v=\"133\""),
+        "131" => format!("\"Google Chrome\";v=\"131\", \"Chromium\";v=\"131\", \"Not_A Brand\";v=\"24\""),
+        _ => format!("\"Chromium\";v=\"{version}\", \"Google Chrome\";v=\"{version}\", \"Not_A Brand\";v=\"99\""),
+    };
+
+    let ua = format!(
+        "Mozilla/5.0 ({ua_os}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{version}.0.0.0 Safari/537.36"
+    );
+
+    let mut headers = vec![
+        ("sec-ch-ua".to_string(), sec_ch_ua),
+        ("sec-ch-ua-mobile".to_string(), "?0".to_string()),
+        ("sec-ch-ua-platform".to_string(), platform.to_string()),
+        ("upgrade-insecure-requests".to_string(), "1".to_string()),
+        ("user-agent".to_string(), ua),
+        ("accept".to_string(), "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7".to_string()),
+        ("sec-fetch-site".to_string(), "none".to_string()),
+        ("sec-fetch-mode".to_string(), "navigate".to_string()),
+        ("sec-fetch-user".to_string(), "?1".to_string()),
+        ("sec-fetch-dest".to_string(), "document".to_string()),
+        ("accept-encoding".to_string(), "gzip, deflate, br, zstd".to_string()),
+        ("accept-language".to_string(), "en-US,en;q=0.9".to_string()),
+    ];
+
+    // Chrome 125+ includes priority header
+    let ver_num: u32 = version.parse().unwrap_or(0);
+    if ver_num >= 125 {
+        headers.push(("priority".to_string(), "u=0, i".to_string()));
+    }
+
+    headers
+}
+
 /// Chrome 142 fingerprint module
 pub mod chrome_142 {
     use super::*;
@@ -17,13 +63,25 @@ pub mod chrome_142 {
         )
     }
 
+    /// Returns Chrome 142 fingerprint with OS-specific headers.
+    /// `os` can be "windows", "macos", or "linux".
+    pub fn fingerprint_with_os(os: &str) -> BrowserFingerprint {
+        BrowserFingerprint::new(
+            "Chrome",
+            "142",
+            tls_fingerprint(),
+            http2_fingerprint(),
+            super::chrome_headers_for_os("142", os),
+        )
+    }
+
     /// Chrome 142 TLS fingerprint
     fn tls_fingerprint() -> TlsFingerprint {
         TlsFingerprint::new(
             // Cipher suites in Chrome 142 preference order
             // GREASE cipher at position 1 (first) - same as Chrome 136
             vec![
-                CipherSuite::Grease,
+                CipherSuite::Grease(0x0a0a),
                 CipherSuite::TLS13_AES_128_GCM_SHA256,
                 CipherSuite::TLS13_AES_256_GCM_SHA384,
                 CipherSuite::TLS13_CHACHA20_POLY1305_SHA256,
@@ -43,7 +101,7 @@ pub mod chrome_142 {
             // Key exchange groups (includes post-quantum hybrid X25519MLKEM768)
             // GREASE at position 1 (first) - same as Chrome 136
             vec![
-                KeyExchangeGroup::Grease,
+                KeyExchangeGroup::Grease(0x8a8a),
                 KeyExchangeGroup::X25519MLKEM768,
                 KeyExchangeGroup::X25519,
                 KeyExchangeGroup::Secp256r1,
@@ -93,7 +151,8 @@ pub mod chrome_142 {
                     ExtensionType::ApplicationSettings,
                 ],
             )
-            .with_new_alps_codepoint(true),
+            .with_new_alps_codepoint(true)
+            .with_permute_extensions(true), // Chrome 110+ randomizes extension order
             // ECH configuration (GREASE mode)
             Some(EchConfig::new(
                 EchMode::Grease {
@@ -114,12 +173,14 @@ pub mod chrome_142 {
                 ":authority".to_string(),
                 ":scheme".to_string(),
                 ":path".to_string(),
-                ":protocol".to_string(),
-                ":status".to_string(),
             ],
-            initial_stream_window_size: Some(6_291_456),
-            initial_connection_window_size: Some(15_663_105),
-            max_header_list_size: Some(262_144),
+            settings_header_table_size: Some(65536),
+            settings_enable_push: Some(false),
+            settings_max_concurrent_streams: Some(1000),
+            settings_initial_window_size: Some(6291456),
+            settings_max_frame_size: None,
+            settings_max_header_list_size: Some(262144),
+            connection_window_size_increment: Some(15663105),
         }
     }
 
@@ -158,13 +219,24 @@ pub mod chrome_136 {
         )
     }
 
+    /// Returns Chrome 136 fingerprint with OS-specific headers.
+    pub fn fingerprint_with_os(os: &str) -> BrowserFingerprint {
+        BrowserFingerprint::new(
+            "Chrome",
+            "136",
+            tls_fingerprint(),
+            http2_fingerprint(),
+            super::chrome_headers_for_os("136", os),
+        )
+    }
+
     /// Chrome 136 TLS fingerprint
     fn tls_fingerprint() -> TlsFingerprint {
         TlsFingerprint::new(
             // Cipher suites in Chrome 136 preference order
             // GREASE cipher at position 1 (first) based on Wireshark capture
             vec![
-                CipherSuite::Grease,
+                CipherSuite::Grease(0x0a0a),
                 CipherSuite::TLS13_AES_128_GCM_SHA256,
                 CipherSuite::TLS13_AES_256_GCM_SHA384,
                 CipherSuite::TLS13_CHACHA20_POLY1305_SHA256,
@@ -184,7 +256,7 @@ pub mod chrome_136 {
             // Key exchange groups (includes post-quantum hybrid X25519MLKEM768)
             // GREASE at position 1 (first) based on Wireshark capture
             vec![
-                KeyExchangeGroup::Grease,
+                KeyExchangeGroup::Grease(0x8a8a),
                 KeyExchangeGroup::X25519MLKEM768,
                 KeyExchangeGroup::X25519,
                 KeyExchangeGroup::Secp256r1,
@@ -234,7 +306,8 @@ pub mod chrome_136 {
                     ExtensionType::ApplicationSettings,
                 ],
             )
-            .with_new_alps_codepoint(true),
+            .with_new_alps_codepoint(true)
+            .with_permute_extensions(true), // Chrome 110+ randomizes extension order
             // ECH configuration (GREASE mode)
             Some(EchConfig::new(
                 EchMode::Grease {
@@ -255,12 +328,14 @@ pub mod chrome_136 {
                 ":authority".to_string(),
                 ":scheme".to_string(),
                 ":path".to_string(),
-                ":protocol".to_string(),
-                ":status".to_string(),
             ],
-            initial_stream_window_size: Some(6_291_456),
-            initial_connection_window_size: Some(15_663_105),
-            max_header_list_size: Some(262_144),
+            settings_header_table_size: Some(65536),
+            settings_enable_push: Some(false),
+            settings_max_concurrent_streams: Some(1000),
+            settings_initial_window_size: Some(6291456),
+            settings_max_frame_size: None,
+            settings_max_header_list_size: Some(262144),
+            connection_window_size_increment: Some(15663105),
         }
     }
 
@@ -296,6 +371,17 @@ pub mod chrome_133 {
             tls_fingerprint(),
             http2_fingerprint(),
             headers(),
+        )
+    }
+
+    /// Returns Chrome 133 fingerprint with OS-specific headers.
+    pub fn fingerprint_with_os(os: &str) -> BrowserFingerprint {
+        BrowserFingerprint::new(
+            "Chrome",
+            "133",
+            tls_fingerprint(),
+            http2_fingerprint(),
+            super::chrome_headers_for_os("133", os),
         )
     }
 
@@ -369,7 +455,8 @@ pub mod chrome_133 {
                     ExtensionType::CompressCertificate,
                     ExtensionType::ApplicationSettings,
                 ],
-            ),
+            )
+            .with_permute_extensions(true), // Chrome 110+ randomizes extension order
             // ECH configuration (GREASE mode)
             Some(EchConfig::new(
                 EchMode::Grease {
@@ -390,12 +477,14 @@ pub mod chrome_133 {
                 ":authority".to_string(),
                 ":scheme".to_string(),
                 ":path".to_string(),
-                ":protocol".to_string(),
-                ":status".to_string(),
             ],
-            initial_stream_window_size: Some(6_291_456),
-            initial_connection_window_size: Some(15_663_105),
-            max_header_list_size: Some(262_144),
+            settings_header_table_size: Some(65536),
+            settings_enable_push: Some(false),
+            settings_max_concurrent_streams: Some(1000),
+            settings_initial_window_size: Some(6291456),
+            settings_max_frame_size: None,
+            settings_max_header_list_size: Some(262144),
+            connection_window_size_increment: Some(15663105),
         }
     }
 
@@ -504,7 +593,8 @@ pub mod chrome_124 {
                     ExtensionType::CompressCertificate,
                     ExtensionType::ApplicationSettings,
                 ],
-            ),
+            )
+            .with_permute_extensions(true), // Chrome 110+ randomizes extension order
             // ECH configuration (GREASE mode)
             Some(EchConfig::new(
                 EchMode::Grease {
@@ -525,12 +615,14 @@ pub mod chrome_124 {
                 ":authority".to_string(),
                 ":scheme".to_string(),
                 ":path".to_string(),
-                ":protocol".to_string(),
-                ":status".to_string(),
             ],
-            initial_stream_window_size: Some(6_291_456),
-            initial_connection_window_size: Some(15_663_105),
-            max_header_list_size: Some(262_144),
+            settings_header_table_size: Some(65536),
+            settings_enable_push: Some(false),
+            settings_max_concurrent_streams: Some(1000),
+            settings_initial_window_size: Some(6291456),
+            settings_max_frame_size: None,
+            settings_max_header_list_size: Some(262144),
+            connection_window_size_increment: Some(15663105),
         }
     }
 
@@ -569,16 +661,27 @@ pub mod chrome_131 {
         )
     }
 
+    /// Returns Chrome 131 fingerprint with OS-specific headers.
+    pub fn fingerprint_with_os(os: &str) -> BrowserFingerprint {
+        BrowserFingerprint::new(
+            "Chrome",
+            "131",
+            tls_fingerprint(),
+            http2_fingerprint(),
+            super::chrome_headers_for_os("131", os),
+        )
+    }
+
     /// Chrome 131 TLS fingerprint
     fn tls_fingerprint() -> TlsFingerprint {
         TlsFingerprint::new(
-            // Cipher suites in Chrome 131 preference order (matching CHROME_CIPHER_SUITES)
+            // Cipher suites in Chrome 131 preference order
+            // GREASE at end (Chrome 131 places GREASE after real suites)
             vec![
                 CipherSuite::TLS13_AES_128_GCM_SHA256,
                 CipherSuite::TLS13_AES_256_GCM_SHA384,
                 CipherSuite::TLS13_CHACHA20_POLY1305_SHA256,
                 CipherSuite::TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-                CipherSuite::Grease,
                 CipherSuite::TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
                 CipherSuite::TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
                 CipherSuite::TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
@@ -590,6 +693,7 @@ pub mod chrome_131 {
                 CipherSuite::TLS_RSA_WITH_AES_256_GCM_SHA384,
                 CipherSuite::TLS_RSA_WITH_AES_128_CBC_SHA,
                 CipherSuite::TLS_RSA_WITH_AES_256_CBC_SHA,
+                CipherSuite::Grease(0x0a0a), // GREASE at end for Chrome 131
             ],
             // Key exchange groups (includes post-quantum hybrid X25519MLKEM768)
             vec![
@@ -597,7 +701,7 @@ pub mod chrome_131 {
                 KeyExchangeGroup::X25519,
                 KeyExchangeGroup::Secp256r1,
                 KeyExchangeGroup::Secp384r1,
-                KeyExchangeGroup::Grease,
+                KeyExchangeGroup::Grease(0x8a8a),
             ],
             // Signature algorithms - order must match DEFAULT_SIGNATURE_VERIFICATION_ALGOS
             // Note: No SHA1 algorithms for Chrome (matches original implementation)
@@ -642,7 +746,8 @@ pub mod chrome_131 {
                     ExtensionType::CompressCertificate,
                     ExtensionType::ApplicationSettings,
                 ],
-            ),
+            )
+            .with_permute_extensions(true), // Chrome 110+ randomizes extension order
             // ECH configuration (GREASE mode)
             Some(EchConfig::new(
                 EchMode::Grease {
@@ -663,12 +768,14 @@ pub mod chrome_131 {
                 ":authority".to_string(),
                 ":scheme".to_string(),
                 ":path".to_string(),
-                ":protocol".to_string(),
-                ":status".to_string(),
             ],
-            initial_stream_window_size: Some(6_291_456),
-            initial_connection_window_size: Some(15_663_105),
-            max_header_list_size: Some(262_144),
+            settings_header_table_size: Some(65536),
+            settings_enable_push: Some(false),
+            settings_max_concurrent_streams: Some(1000),
+            settings_initial_window_size: Some(6291456),
+            settings_max_frame_size: None,
+            settings_max_header_list_size: Some(262144),
+            connection_window_size_increment: Some(15663105),
         }
     }
 
@@ -711,7 +818,7 @@ pub mod chrome_100 {
     pub(crate) fn tls_fingerprint() -> TlsFingerprint {
         TlsFingerprint::new(
             vec![
-                CipherSuite::Grease,
+                CipherSuite::Grease(0x0a0a),
                 CipherSuite::TLS13_AES_128_GCM_SHA256,
                 CipherSuite::TLS13_AES_256_GCM_SHA384,
                 CipherSuite::TLS13_CHACHA20_POLY1305_SHA256,
@@ -729,7 +836,7 @@ pub mod chrome_100 {
                 CipherSuite::TLS_RSA_WITH_AES_256_CBC_SHA,
             ],
             vec![
-                KeyExchangeGroup::Grease,
+                KeyExchangeGroup::Grease(0x8a8a),
                 KeyExchangeGroup::X25519,
                 KeyExchangeGroup::Secp256r1,
                 KeyExchangeGroup::Secp384r1,
@@ -759,7 +866,7 @@ pub mod chrome_100 {
                 false,
                 None,
                 vec![
-                    ExtensionType::Grease,
+                    ExtensionType::Grease(0xbaba),
                     ExtensionType::ServerName,
                     ExtensionType::ExtendedMasterSecret,
                     ExtensionType::RenegotiationInfo,
@@ -775,7 +882,7 @@ pub mod chrome_100 {
                     ExtensionType::SupportedVersions,
                     ExtensionType::CompressCertificate,
                     ExtensionType::ApplicationSettings,
-                    ExtensionType::Grease,
+                    ExtensionType::Grease(0xbaba),
                     ExtensionType::Padding,
                 ],
             )
@@ -795,12 +902,14 @@ pub mod chrome_100 {
                 ":authority".to_string(),
                 ":scheme".to_string(),
                 ":path".to_string(),
-                ":protocol".to_string(),
-                ":status".to_string(),
             ],
-            initial_stream_window_size: Some(6_291_456),
-            initial_connection_window_size: Some(15_663_105),
-            max_header_list_size: Some(262_144),
+            settings_header_table_size: Some(65536),
+            settings_enable_push: Some(false),
+            settings_max_concurrent_streams: Some(1000),
+            settings_initial_window_size: Some(6291456),
+            settings_max_frame_size: None,
+            settings_max_header_list_size: Some(262144),
+            connection_window_size_increment: Some(15663105),
         }
     }
 
@@ -1008,7 +1117,7 @@ pub mod chrome_125 {
         TlsFingerprint::new(
             // Cipher suites in Chrome 125 preference order (matching CHROME_CIPHER_SUITES)
             vec![
-                CipherSuite::Grease,
+                CipherSuite::Grease(0x0a0a),
                 CipherSuite::TLS13_AES_128_GCM_SHA256,
                 CipherSuite::TLS13_AES_256_GCM_SHA384,
                 CipherSuite::TLS13_CHACHA20_POLY1305_SHA256,
@@ -1030,7 +1139,7 @@ pub mod chrome_125 {
                 KeyExchangeGroup::X25519,
                 KeyExchangeGroup::Secp256r1,
                 KeyExchangeGroup::Secp384r1,
-                KeyExchangeGroup::Grease,
+                KeyExchangeGroup::Grease(0x8a8a),
             ],
             // Signature algorithms - order must match DEFAULT_SIGNATURE_VERIFICATION_ALGOS
             // Note: No SHA1 algorithms for Chrome (matches original implementation)
@@ -1075,7 +1184,8 @@ pub mod chrome_125 {
                     ExtensionType::CompressCertificate,
                     ExtensionType::ApplicationSettings,
                 ],
-            ),
+            )
+            .with_permute_extensions(true), // Chrome 110+ randomizes extension order
             // ECH configuration (GREASE mode)
             Some(EchConfig::new(
                 EchMode::Grease {
@@ -1096,12 +1206,14 @@ pub mod chrome_125 {
                 ":authority".to_string(),
                 ":scheme".to_string(),
                 ":path".to_string(),
-                ":protocol".to_string(),
-                ":status".to_string(),
             ],
-            initial_stream_window_size: Some(6_291_456),
-            initial_connection_window_size: Some(15_663_105),
-            max_header_list_size: Some(262_144),
+            settings_header_table_size: Some(65536),
+            settings_enable_push: Some(false),
+            settings_max_concurrent_streams: Some(1000),
+            settings_initial_window_size: Some(6291456),
+            settings_max_frame_size: None,
+            settings_max_header_list_size: Some(262144),
+            connection_window_size_increment: Some(15663105),
         }
     }
 

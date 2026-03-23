@@ -10,6 +10,7 @@ encoding = "0.2.33"
 hickory-client = "0.25.1"
 hickory-proto = "0.25.1"
 log = "0.4.22"
+rand = "0.8"
 mime = "0.3.17"
 reqwest = { version="0.13.1", features = ["json", "gzip", "brotli", "zstd", "deflate", "http3", "cookies", "stream", "socks"] }
 rustls = { version="0.23.36", features=["impit"] }

@@ -2,6 +2,50 @@
 
 use crate::fingerprint::*;
 
+/// Helper to create OS-specific Firefox headers for a given version.
+/// Firefox uses the same TLS fingerprint (NSS) across all platforms,
+/// but the User-Agent string and some header casing differs by OS.
+pub fn firefox_headers_for_os(version: &str, os: &str) -> Vec<(String, String)> {
+    let ua_os = match os {
+        "windows" => "Windows NT 10.0; Win64; x64".to_string(),
+        "linux" => "X11; Linux x86_64".to_string(),
+        // macOS — Firefox uses dot notation (10.15) unlike Chrome (10_15_7)
+        _ => "Macintosh; Intel Mac OS X 10.15".to_string(),
+    };
+
+    let ua = format!(
+        "Mozilla/5.0 ({ua_os}; rv:{version}.0) Gecko/20100101 Firefox/{version}.0"
+    );
+
+    let ver_num: u32 = version.parse().unwrap_or(0);
+
+    let accept_encoding = if ver_num >= 133 {
+        "gzip, deflate, br, zstd"
+    } else {
+        "gzip, deflate, br"
+    };
+
+    let mut headers = vec![
+        ("user-agent".to_string(), ua),
+        ("accept".to_string(), "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8".to_string()),
+        ("accept-language".to_string(), "en-US,en;q=0.5".to_string()),
+        ("accept-encoding".to_string(), accept_encoding.to_string()),
+        ("upgrade-insecure-requests".to_string(), "1".to_string()),
+        ("sec-fetch-dest".to_string(), "document".to_string()),
+        ("sec-fetch-mode".to_string(), "navigate".to_string()),
+        ("sec-fetch-site".to_string(), "none".to_string()),
+        ("sec-fetch-user".to_string(), "?1".to_string()),
+        ("Priority".to_string(), "u=0, i".to_string()),
+    ];
+
+    // Firefox 133+ includes te: trailers
+    if ver_num >= 133 {
+        headers.push(("te".to_string(), "trailers".to_string()));
+    }
+
+    headers
+}
+
 /// Firefox 128 fingerprint module
 pub mod firefox_128 {
     use super::*;
@@ -14,6 +58,18 @@ pub mod firefox_128 {
             tls_fingerprint(),
             http2_fingerprint(),
             headers(),
+        )
+    }
+
+    /// Returns Firefox 128 fingerprint with OS-specific headers.
+    /// `os` can be "windows", "macos", or "linux".
+    pub fn fingerprint_with_os(os: &str) -> BrowserFingerprint {
+        BrowserFingerprint::new(
+            "Firefox",
+            "128",
+            tls_fingerprint(),
+            http2_fingerprint(),
+            super::firefox_headers_for_os("128", os),
         )
     }
 
@@ -117,12 +173,14 @@ pub mod firefox_128 {
                 ":path".to_string(),
                 ":authority".to_string(),
                 ":scheme".to_string(),
-                ":protocol".to_string(),
-                ":status".to_string(),
             ],
-            initial_stream_window_size: Some(131_072),
-            initial_connection_window_size: Some(12_517_377),
-            max_header_list_size: None,
+            settings_header_table_size: Some(65536),
+            settings_enable_push: None,
+            settings_max_concurrent_streams: None,
+            settings_initial_window_size: Some(131072),
+            settings_max_frame_size: Some(16384),
+            settings_max_header_list_size: None,
+            connection_window_size_increment: Some(12517377),
         }
     }
 
@@ -155,6 +213,18 @@ pub mod firefox_133 {
             tls_fingerprint(),
             http2_fingerprint(),
             headers(),
+        )
+    }
+
+    /// Returns Firefox 133 fingerprint with OS-specific headers.
+    /// `os` can be "windows", "macos", or "linux".
+    pub fn fingerprint_with_os(os: &str) -> BrowserFingerprint {
+        BrowserFingerprint::new(
+            "Firefox",
+            "133",
+            tls_fingerprint(),
+            http2_fingerprint(),
+            super::firefox_headers_for_os("133", os),
         )
     }
 
@@ -258,12 +328,14 @@ pub mod firefox_133 {
                 ":path".to_string(),
                 ":authority".to_string(),
                 ":scheme".to_string(),
-                ":protocol".to_string(),
-                ":status".to_string(),
             ],
-            initial_stream_window_size: Some(131_072),
-            initial_connection_window_size: Some(12_517_377),
-            max_header_list_size: None,
+            settings_header_table_size: Some(65536),
+            settings_enable_push: None,
+            settings_max_concurrent_streams: None,
+            settings_initial_window_size: Some(131072),
+            settings_max_frame_size: Some(16384),
+            settings_max_header_list_size: None,
+            connection_window_size_increment: Some(12517377),
         }
     }
 
@@ -297,6 +369,18 @@ pub mod firefox_135 {
             tls_fingerprint(),
             http2_fingerprint(),
             headers(),
+        )
+    }
+
+    /// Returns Firefox 135 fingerprint with OS-specific headers.
+    /// `os` can be "windows", "macos", or "linux".
+    pub fn fingerprint_with_os(os: &str) -> BrowserFingerprint {
+        BrowserFingerprint::new(
+            "Firefox",
+            "135",
+            tls_fingerprint(),
+            http2_fingerprint(),
+            super::firefox_headers_for_os("135", os),
         )
     }
 
@@ -404,12 +488,14 @@ pub mod firefox_135 {
                 ":path".to_string(),
                 ":authority".to_string(),
                 ":scheme".to_string(),
-                ":protocol".to_string(),
-                ":status".to_string(),
             ],
-            initial_stream_window_size: Some(131_072),
-            initial_connection_window_size: Some(12_517_377),
-            max_header_list_size: None,
+            settings_header_table_size: Some(65536),
+            settings_enable_push: None,
+            settings_max_concurrent_streams: None,
+            settings_initial_window_size: Some(131072),
+            settings_max_frame_size: Some(16384),
+            settings_max_header_list_size: None,
+            connection_window_size_increment: Some(12517377),
         }
     }
 
@@ -444,6 +530,18 @@ pub mod firefox_144 {
             firefox_135::tls_fingerprint(),
             firefox_135::http2_fingerprint(),
             headers(),
+        )
+    }
+
+    /// Returns Firefox 144 fingerprint with OS-specific headers.
+    /// `os` can be "windows", "macos", or "linux".
+    pub fn fingerprint_with_os(os: &str) -> BrowserFingerprint {
+        BrowserFingerprint::new(
+            "Firefox",
+            "144",
+            firefox_135::tls_fingerprint(),
+            firefox_135::http2_fingerprint(),
+            super::firefox_headers_for_os("144", os),
         )
     }
 
