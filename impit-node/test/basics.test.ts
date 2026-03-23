@@ -670,20 +670,42 @@ describe.each([
             expect(cloneText).toBe(originalText);
         });
 
-        test('clone() after clone() throws TypeError', async () => {
+        test('multiple clones produce independent readable bodies', async () => {
             const response = await impit.fetch(getHttpBinUrl('/get'));
-            response.clone();
+            const clone1 = response.clone();
+            const clone2 = response.clone();
 
-            expect(() => response.clone()).toThrow(TypeError);
-            expect(() => response.clone()).toThrow(/already been cloned/);
+            const [original, first, second] = await Promise.all([
+                response.json(),
+                clone1.json(),
+                clone2.json(),
+            ]);
+
+            expect(original).toEqual(first);
+            expect(original).toEqual(second);
         });
 
-        test('clone() after body consumed throws TypeError with clear message', async () => {
+        test('clone() after body consumed throws TypeError', async () => {
             const response = await impit.fetch(getHttpBinUrl('/get'));
             await response.text();
 
             expect(() => response.clone()).toThrow(TypeError);
             expect(() => response.clone()).toThrow(/body has already been consumed/);
+        });
+
+        test('response.body is streamable after clone', async () => {
+            const response = await impit.fetch(getHttpBinUrl('/get'));
+            response.clone();
+
+            const reader = response.body.getReader();
+            const chunks: Uint8Array[] = [];
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                chunks.push(value);
+            }
+
+            expect(chunks.length).toBeGreaterThan(0);
         });
 
         test('arrayBuffer() works on both original and clone', async () => {

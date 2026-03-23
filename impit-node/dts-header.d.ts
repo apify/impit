@@ -43,7 +43,6 @@ export interface ImpitResponse {
    * tee'd stream; the returned clone is a standard `Response` backed by the
    * other half.
    *
-   * - Calling `clone()` more than once throws a `TypeError`.
    * - Calling `clone()` after the body has been consumed throws a `TypeError`.
    *
    * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/Response/clone | Fetch API `Response.clone()`}

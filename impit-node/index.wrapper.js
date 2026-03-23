@@ -310,18 +310,13 @@ class Impit extends native.Impit {
             value: new Headers(originalResponse.headers)
         });
 
-        let cloned = false;
         Object.defineProperty(originalResponse, 'clone', {
             value: function () {
                 if (bodyConsumed) {
                     throw new TypeError('Response body has already been consumed');
                 }
-                if (cloned) {
-                    throw new TypeError('Response has already been cloned');
-                }
 
                 const [stream1, stream2] = this.body.tee();
-                cloned = true;
 
                 // Create a delegate Response from stream1 for the original's body methods
                 const delegate = new Response(stream1, {
@@ -330,30 +325,45 @@ class Impit extends native.Impit {
                     headers: this.headers,
                 });
 
+                // Re-patch original's body getter to return the delegate's stream
+                // (the original stream is now locked after tee)
+                Object.defineProperty(this, 'body', {
+                    get: () => delegate.body,
+                    configurable: true,
+                });
+
                 // Re-patch original's body methods to read from the delegate
                 const decodeBuffer = this.decodeBuffer.bind(this);
                 Object.defineProperty(this, 'arrayBuffer', {
                     value: async function () {
+                        markConsumed();
                         try { return await delegate.arrayBuffer(); } finally { cleanup(); }
                     },
+                    configurable: true,
                 });
                 Object.defineProperty(this, 'bytes', {
                     value: async function () {
+                        markConsumed();
                         try { return await delegate.bytes(); } finally { cleanup(); }
                     },
+                    configurable: true,
                 });
                 Object.defineProperty(this, 'json', {
                     value: async function () {
+                        markConsumed();
                         try { return await delegate.json(); } finally { cleanup(); }
                     },
+                    configurable: true,
                 });
                 Object.defineProperty(this, 'text', {
                     value: async function () {
+                        markConsumed();
                         try {
                             const buffer = await delegate.arrayBuffer();
                             return decodeBuffer(Buffer.from(buffer));
                         } finally { cleanup(); }
                     },
+                    configurable: true,
                 });
 
                 // Create the clone from stream2
