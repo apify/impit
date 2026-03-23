@@ -277,12 +277,11 @@ class Impit extends native.Impit {
         });
 
         let bodyConsumed = false;
-        const markConsumed = () => { bodyConsumed = true; };
 
         const nativeBytes = originalResponse.bytes.bind(originalResponse);
         Object.defineProperty(originalResponse, 'bytes', {
             value: async function() {
-                markConsumed();
+                bodyConsumed = true;
                 try { return await nativeBytes(); } finally { cleanup(); }
             },
             configurable: true,
@@ -291,7 +290,7 @@ class Impit extends native.Impit {
         const nativeArrayBuffer = originalResponse.arrayBuffer.bind(originalResponse);
         Object.defineProperty(originalResponse, 'arrayBuffer', {
             value: async function() {
-                markConsumed();
+                bodyConsumed = true;
                 try { return await nativeArrayBuffer(); } finally { cleanup(); }
             },
             configurable: true,
@@ -300,7 +299,7 @@ class Impit extends native.Impit {
         const nativeJson = originalResponse.json.bind(originalResponse);
         Object.defineProperty(originalResponse, 'json', {
             value: async function() {
-                markConsumed();
+                bodyConsumed = true;
                 try { return await nativeJson(); } finally { cleanup(); }
             },
             configurable: true,
@@ -336,28 +335,28 @@ class Impit extends native.Impit {
                 const decodeBuffer = this.decodeBuffer.bind(this);
                 Object.defineProperty(this, 'arrayBuffer', {
                     value: async function () {
-                        markConsumed();
+                        bodyConsumed = true;
                         try { return await delegate.arrayBuffer(); } finally { cleanup(); }
                     },
                     configurable: true,
                 });
                 Object.defineProperty(this, 'bytes', {
                     value: async function () {
-                        markConsumed();
+                        bodyConsumed = true;
                         try { return await delegate.bytes(); } finally { cleanup(); }
                     },
                     configurable: true,
                 });
                 Object.defineProperty(this, 'json', {
                     value: async function () {
-                        markConsumed();
+                        bodyConsumed = true;
                         try { return await delegate.json(); } finally { cleanup(); }
                     },
                     configurable: true,
                 });
                 Object.defineProperty(this, 'text', {
                     value: async function () {
-                        markConsumed();
+                        bodyConsumed = true;
                         try {
                             const buffer = await delegate.arrayBuffer();
                             return decodeBuffer(Buffer.from(buffer));
