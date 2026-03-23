@@ -293,9 +293,9 @@ dependencies = [
 
 [[package]]
 name = "aws-lc-rs"
-version = "1.15.3"
+version = "1.16.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e84ce723ab67259cfeb9877c6a639ee9eb7a27b28123abd71db7f0d5d0cc9d86"
+checksum = "a054912289d18629dc78375ba2c3726a3afe3ff71b4edba9dedfca0e3446d1fc"
 dependencies = [
  "aws-lc-fips-sys",
  "aws-lc-sys",
@@ -305,9 +305,9 @@ dependencies = [
 
 [[package]]
 name = "aws-lc-sys"
-version = "0.36.0"
+version = "0.39.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "43a442ece363113bd4bd4c8b18977a7798dd4d3c3383f34fb61936960e8f4ad8"
+checksum = "1fa7e52a4c5c547c741610a2c6f123f3881e409b714cd27e6798ef020c514f0a"
 dependencies = [
  "bindgen 0.72.1",
  "cc",
@@ -1162,7 +1162,7 @@ dependencies = [
 
 [[package]]
 name = "h2"
-version = "0.4.7"
+version = "0.4.13"
 dependencies = [
  "atomic-waker",
  "bytes",
@@ -2568,8 +2568,8 @@ dependencies = [
 
 [[package]]
 name = "rustls"
-version = "0.23.36"
-source = "git+https://github.com/apify/rustls?rev=4823cdb16098938eccf91af1329e9d5b681e3554#4823cdb16098938eccf91af1329e9d5b681e3554"
+version = "0.23.37"
+source = "git+https://github.com/apify/rustls?branch=impit-main#d19ecc2b4e38978c1c3acabc98a221fa98b9314f"
 dependencies = [
  "aws-lc-rs",
  "brotli",

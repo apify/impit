@@ -75,7 +75,7 @@ pub mod edge_136 {
         TlsFingerprint::new(
             // Same cipher suites as Chrome 136
             vec![
-                CipherSuite::Grease,
+                CipherSuite::Grease(0x0a0a),
                 CipherSuite::TLS13_AES_128_GCM_SHA256,
                 CipherSuite::TLS13_AES_256_GCM_SHA384,
                 CipherSuite::TLS13_CHACHA20_POLY1305_SHA256,
@@ -94,7 +94,7 @@ pub mod edge_136 {
             ],
             // Same key exchange groups as Chrome 136 (includes post-quantum)
             vec![
-                KeyExchangeGroup::Grease,
+                KeyExchangeGroup::Grease(0x8a8a),
                 KeyExchangeGroup::X25519MLKEM768,
                 KeyExchangeGroup::X25519,
                 KeyExchangeGroup::Secp256r1,
@@ -241,14 +241,14 @@ pub mod edge_131 {
                 CipherSuite::TLS_RSA_WITH_AES_256_GCM_SHA384,
                 CipherSuite::TLS_RSA_WITH_AES_128_CBC_SHA,
                 CipherSuite::TLS_RSA_WITH_AES_256_CBC_SHA,
-                CipherSuite::Grease,
+                CipherSuite::Grease(0x0a0a),
             ],
             vec![
                 KeyExchangeGroup::X25519MLKEM768,
                 KeyExchangeGroup::X25519,
                 KeyExchangeGroup::Secp256r1,
                 KeyExchangeGroup::Secp384r1,
-                KeyExchangeGroup::Grease,
+                KeyExchangeGroup::Grease(0x8a8a),
             ],
             vec![
                 SignatureAlgorithm::EcdsaSecp256r1Sha256,

@@ -26,8 +26,9 @@ pub enum CipherSuite {
     TLS_RSA_WITH_AES_256_GCM_SHA384,
     TLS_RSA_WITH_AES_128_CBC_SHA,
     TLS_RSA_WITH_AES_256_CBC_SHA,
-    /// GREASE cipher suite for fingerprinting
-    Grease,
+    /// GREASE cipher suite with parameterized value (RFC 8701).
+    /// The u16 should be one of the 16 GREASE values: 0x0a0a, 0x1a1a, ..., 0xfafa.
+    Grease(u16),
 }
 
 /// Key exchange groups for TLS
@@ -44,8 +45,9 @@ pub enum KeyExchangeGroup {
     Ffdhe4096,
     Ffdhe6144,
     Ffdhe8192,
-    /// GREASE key exchange group for fingerprinting
-    Grease,
+    /// GREASE key exchange group with parameterized value (RFC 8701).
+    /// The u16 should be one of the 16 GREASE values: 0x0a0a, 0x1a1a, ..., 0xfafa.
+    Grease(u16),
 }
 
 /// Signature algorithms for TLS
@@ -103,7 +105,9 @@ pub enum ExtensionType {
     CompressCertificate,
     ApplicationSettings,
     EarlyDataExtension,
-    Grease,
+    /// GREASE extension with parameterized value (RFC 8701).
+    /// The u16 should be one of the 16 GREASE values: 0x0a0a, 0x1a1a, ..., 0xfafa.
+    Grease(u16),
 }
 
 /// Certificate compression algorithms

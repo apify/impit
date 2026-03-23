@@ -135,7 +135,7 @@ pub mod safari_18_0 {
                 None,  // record_size_limit (Safari doesn't send this)
                 // Safari extension order is distinctly different from Chrome
                 vec![
-                    ExtensionType::Grease,
+                    ExtensionType::Grease(0xbaba),
                     ExtensionType::ServerName,
                     ExtensionType::ExtendedMasterSecret,
                     ExtensionType::RenegotiationInfo,
@@ -147,7 +147,7 @@ pub mod safari_18_0 {
                     ExtensionType::KeyShare,
                     ExtensionType::PskKeyExchangeModes,
                     ExtensionType::SupportedVersions,
-                    ExtensionType::Grease,
+                    ExtensionType::Grease(0xbaba),
                     ExtensionType::Padding,
                 ],
             )
@@ -326,7 +326,7 @@ pub mod safari_17_0 {
                 false, // delegated_credentials
                 None,  // record_size_limit
                 vec![
-                    ExtensionType::Grease,
+                    ExtensionType::Grease(0xbaba),
                     ExtensionType::ServerName,
                     ExtensionType::ExtendedMasterSecret,
                     ExtensionType::RenegotiationInfo,
@@ -338,7 +338,7 @@ pub mod safari_17_0 {
                     ExtensionType::KeyShare,
                     ExtensionType::PskKeyExchangeModes,
                     ExtensionType::SupportedVersions,
-                    ExtensionType::Grease,
+                    ExtensionType::Grease(0xbaba),
                     ExtensionType::Padding,
                 ],
             )
@@ -469,7 +469,7 @@ pub mod safari_17_2_ios {
                 false, // delegated_credentials
                 None,  // record_size_limit
                 vec![
-                    ExtensionType::Grease,
+                    ExtensionType::Grease(0xbaba),
                     ExtensionType::ServerName,
                     ExtensionType::ExtendedMasterSecret,
                     ExtensionType::RenegotiationInfo,
@@ -481,7 +481,7 @@ pub mod safari_17_2_ios {
                     ExtensionType::KeyShare,
                     ExtensionType::PskKeyExchangeModes,
                     ExtensionType::SupportedVersions,
-                    ExtensionType::Grease,
+                    ExtensionType::Grease(0xbaba),
                     ExtensionType::Padding,
                 ],
             )

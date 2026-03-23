@@ -81,7 +81,7 @@ pub mod chrome_142 {
             // Cipher suites in Chrome 142 preference order
             // GREASE cipher at position 1 (first) - same as Chrome 136
             vec![
-                CipherSuite::Grease,
+                CipherSuite::Grease(0x0a0a),
                 CipherSuite::TLS13_AES_128_GCM_SHA256,
                 CipherSuite::TLS13_AES_256_GCM_SHA384,
                 CipherSuite::TLS13_CHACHA20_POLY1305_SHA256,
@@ -101,7 +101,7 @@ pub mod chrome_142 {
             // Key exchange groups (includes post-quantum hybrid X25519MLKEM768)
             // GREASE at position 1 (first) - same as Chrome 136
             vec![
-                KeyExchangeGroup::Grease,
+                KeyExchangeGroup::Grease(0x8a8a),
                 KeyExchangeGroup::X25519MLKEM768,
                 KeyExchangeGroup::X25519,
                 KeyExchangeGroup::Secp256r1,
@@ -236,7 +236,7 @@ pub mod chrome_136 {
             // Cipher suites in Chrome 136 preference order
             // GREASE cipher at position 1 (first) based on Wireshark capture
             vec![
-                CipherSuite::Grease,
+                CipherSuite::Grease(0x0a0a),
                 CipherSuite::TLS13_AES_128_GCM_SHA256,
                 CipherSuite::TLS13_AES_256_GCM_SHA384,
                 CipherSuite::TLS13_CHACHA20_POLY1305_SHA256,
@@ -256,7 +256,7 @@ pub mod chrome_136 {
             // Key exchange groups (includes post-quantum hybrid X25519MLKEM768)
             // GREASE at position 1 (first) based on Wireshark capture
             vec![
-                KeyExchangeGroup::Grease,
+                KeyExchangeGroup::Grease(0x8a8a),
                 KeyExchangeGroup::X25519MLKEM768,
                 KeyExchangeGroup::X25519,
                 KeyExchangeGroup::Secp256r1,
@@ -693,7 +693,7 @@ pub mod chrome_131 {
                 CipherSuite::TLS_RSA_WITH_AES_256_GCM_SHA384,
                 CipherSuite::TLS_RSA_WITH_AES_128_CBC_SHA,
                 CipherSuite::TLS_RSA_WITH_AES_256_CBC_SHA,
-                CipherSuite::Grease, // GREASE at end for Chrome 131
+                CipherSuite::Grease(0x0a0a), // GREASE at end for Chrome 131
             ],
             // Key exchange groups (includes post-quantum hybrid X25519MLKEM768)
             vec![
@@ -701,7 +701,7 @@ pub mod chrome_131 {
                 KeyExchangeGroup::X25519,
                 KeyExchangeGroup::Secp256r1,
                 KeyExchangeGroup::Secp384r1,
-                KeyExchangeGroup::Grease,
+                KeyExchangeGroup::Grease(0x8a8a),
             ],
             // Signature algorithms - order must match DEFAULT_SIGNATURE_VERIFICATION_ALGOS
             // Note: No SHA1 algorithms for Chrome (matches original implementation)
@@ -818,7 +818,7 @@ pub mod chrome_100 {
     pub(crate) fn tls_fingerprint() -> TlsFingerprint {
         TlsFingerprint::new(
             vec![
-                CipherSuite::Grease,
+                CipherSuite::Grease(0x0a0a),
                 CipherSuite::TLS13_AES_128_GCM_SHA256,
                 CipherSuite::TLS13_AES_256_GCM_SHA384,
                 CipherSuite::TLS13_CHACHA20_POLY1305_SHA256,
@@ -836,7 +836,7 @@ pub mod chrome_100 {
                 CipherSuite::TLS_RSA_WITH_AES_256_CBC_SHA,
             ],
             vec![
-                KeyExchangeGroup::Grease,
+                KeyExchangeGroup::Grease(0x8a8a),
                 KeyExchangeGroup::X25519,
                 KeyExchangeGroup::Secp256r1,
                 KeyExchangeGroup::Secp384r1,
@@ -866,7 +866,7 @@ pub mod chrome_100 {
                 false,
                 None,
                 vec![
-                    ExtensionType::Grease,
+                    ExtensionType::Grease(0xbaba),
                     ExtensionType::ServerName,
                     ExtensionType::ExtendedMasterSecret,
                     ExtensionType::RenegotiationInfo,
@@ -882,7 +882,7 @@ pub mod chrome_100 {
                     ExtensionType::SupportedVersions,
                     ExtensionType::CompressCertificate,
                     ExtensionType::ApplicationSettings,
-                    ExtensionType::Grease,
+                    ExtensionType::Grease(0xbaba),
                     ExtensionType::Padding,
                 ],
             )
@@ -1117,7 +1117,7 @@ pub mod chrome_125 {
         TlsFingerprint::new(
             // Cipher suites in Chrome 125 preference order (matching CHROME_CIPHER_SUITES)
             vec![
-                CipherSuite::Grease,
+                CipherSuite::Grease(0x0a0a),
                 CipherSuite::TLS13_AES_128_GCM_SHA256,
                 CipherSuite::TLS13_AES_256_GCM_SHA384,
                 CipherSuite::TLS13_CHACHA20_POLY1305_SHA256,
@@ -1139,7 +1139,7 @@ pub mod chrome_125 {
                 KeyExchangeGroup::X25519,
                 KeyExchangeGroup::Secp256r1,
                 KeyExchangeGroup::Secp384r1,
-                KeyExchangeGroup::Grease,
+                KeyExchangeGroup::Grease(0x8a8a),
             ],
             // Signature algorithms - order must match DEFAULT_SIGNATURE_VERIFICATION_ALGOS
             // Note: No SHA1 algorithms for Chrome (matches original implementation)

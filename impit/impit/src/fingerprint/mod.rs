@@ -36,20 +36,73 @@ impl BrowserFingerprint {
     }
 
     /// Produces a deterministically-mutated clone of this fingerprint based on
-    /// the given `seed`.  The mutations toggle *optional* TLS 1.2 cipher suites,
-    /// optional TLS extensions, and optional signature algorithms so that each
-    /// unique seed yields a unique JA4 TLS hash while the underlying TLS config
-    /// remains fully functional.
+    /// the given `seed`.  Uses a seeded PRNG (StdRng) for unlimited randomization
+    /// dimensions while remaining fully deterministic for the same seed.
     ///
-    /// **Diversity**: ~196 000 unique JA4 hashes per base-profile × OS variant
-    /// (64 cipher combos × 16 extension combos × 8 sig-alg combos × ~24 base
-    /// profile+OS combinations).
+    /// ## Randomization dimensions
+    ///
+    /// | Dimension                      | Choices  | JA4 impact       | JA3 impact |
+    /// |-------------------------------|----------|------------------|------------|
+    /// | GREASE cipher value           | 16       | No (excluded)    | Yes        |
+    /// | GREASE key exchange value     | 16       | No (excluded)    | Yes        |
+    /// | GREASE extension value        | 16       | No (excluded)    | Yes        |
+    /// | Optional TLS 1.2 ciphers (8)  | 2^8=256  | Yes              | Yes        |
+    /// | Optional extensions (6)       | 2^6=64   | Yes              | Yes        |
+    /// | Optional sig algs (6)         | 2^6=64   | Yes (extHash)    | Yes        |
+    /// | Key exchange group toggle (2) | 2^2=4    | Yes              | Yes        |
+    /// | ALPS codepoint (old/new)      | 2        | Yes              | Yes        |
+    /// | ECH GREASE toggle             | 2        | Yes              | Yes        |
+    /// | TLS 1.2 cipher order shuffle  | many     | No               | Yes        |
+    /// | Header micro-variations       | many     | N/A              | N/A        |
+    ///
+    /// **JA4 diversity per profile**: ~16.7 million unique hashes
+    /// **JA3 diversity**: practically unlimited (GREASE + order permutations)
+    /// **With 15 profiles**: ~250 million unique JA4 hashes
     pub fn randomize(&self, seed: u64) -> BrowserFingerprint {
+        use rand::rngs::StdRng;
+        use rand::seq::SliceRandom;
+        use rand::{Rng, SeedableRng};
+
+        let mut rng = StdRng::seed_from_u64(seed);
         let mut fp = self.clone();
 
-        // ── 1. Optional TLS 1.2 cipher suites (bits 0-5) ────────────────
+        // ── RFC 8701 GREASE values ──────────────────────────────────────
+        const GREASE_VALUES: [u16; 16] = [
+            0x0a0a, 0x1a1a, 0x2a2a, 0x3a3a, 0x4a4a, 0x5a5a, 0x6a6a, 0x7a7a,
+            0x8a8a, 0x9a9a, 0xaaaa, 0xbaba, 0xcaca, 0xdada, 0xeaea, 0xfafa,
+        ];
+
+        // ── 1. Randomize GREASE values ──────────────────────────────────
+        // Each GREASE slot gets a random value from the 16 RFC 8701 values.
+        // This affects JA3 (which includes GREASE) but not JA4 (which excludes it).
+        let grease_cipher_val = GREASE_VALUES[rng.gen_range(0..16)];
+        let grease_kex_val = GREASE_VALUES[rng.gen_range(0..16)];
+        let grease_ext_val = GREASE_VALUES[rng.gen_range(0..16)];
+
+        // Replace GREASE cipher suite values
+        for cs in &mut fp.tls.cipher_suites {
+            if matches!(cs, CipherSuite::Grease(_)) {
+                *cs = CipherSuite::Grease(grease_cipher_val);
+            }
+        }
+
+        // Replace GREASE key exchange group values
+        for kg in &mut fp.tls.key_exchange_groups {
+            if matches!(kg, KeyExchangeGroup::Grease(_)) {
+                *kg = KeyExchangeGroup::Grease(grease_kex_val);
+            }
+        }
+
+        // Replace GREASE extension type values
+        for ext in &mut fp.tls.extensions.extension_order {
+            if matches!(ext, ExtensionType::Grease(_)) {
+                *ext = ExtensionType::Grease(grease_ext_val);
+            }
+        }
+
+        // ── 2. Optional TLS 1.2 cipher suites (8 toggleable) ───────────
         // These legacy/CBC/RSA-only suites can be independently toggled.
-        // All TLS 1.3 + ECDHE-GCM/ChaCha20 suites always remain.
+        // Core TLS 1.3 + ECDHE-GCM/ChaCha20 suites always remain.
         let optional_ciphers: &[CipherSuite] = &[
             CipherSuite::TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
             CipherSuite::TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
@@ -57,118 +110,227 @@ impl BrowserFingerprint {
             CipherSuite::TLS_RSA_WITH_AES_256_GCM_SHA384,
             CipherSuite::TLS_RSA_WITH_AES_128_CBC_SHA,
             CipherSuite::TLS_RSA_WITH_AES_256_CBC_SHA,
+            CipherSuite::TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
+            CipherSuite::TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
         ];
 
-        for (i, cipher) in optional_ciphers.iter().enumerate() {
-            let remove = (seed >> i) & 1 == 1;
-            if remove {
+        for cipher in optional_ciphers {
+            if rng.gen_bool(0.5) {
                 fp.tls.cipher_suites.retain(|c| c != cipher);
             }
         }
 
-        // ── 2. Optional TLS extensions (bits 6-9) ───────────────────────
-        // Toggle: compress_certificate, application_settings,
-        //         signed_certificate_timestamp, delegated_credentials
-        let toggle_compress_cert = (seed >> 6) & 1 == 1;
-        let toggle_app_settings = (seed >> 7) & 1 == 1;
-        let toggle_sct = (seed >> 8) & 1 == 1;
-        let toggle_delegated = (seed >> 9) & 1 == 1;
-
+        // ── 3. Optional TLS extensions (6 toggleable) ───────────────────
         // compress_certificate
-        if toggle_compress_cert {
+        if rng.gen_bool(0.5) {
             if fp.tls.extensions.compress_certificate.is_some() {
-                // Remove it
                 fp.tls.extensions.compress_certificate = None;
-                fp.tls
-                    .extensions
-                    .extension_order
+                fp.tls.extensions.extension_order
                     .retain(|e| *e != ExtensionType::CompressCertificate);
             } else {
-                // Add it (Brotli, most common)
                 fp.tls.extensions.compress_certificate =
                     Some(vec![CertificateCompressionAlgorithm::Brotli]);
-                if !fp
-                    .tls
-                    .extensions
-                    .extension_order
+                if !fp.tls.extensions.extension_order
                     .contains(&ExtensionType::CompressCertificate)
                 {
-                    // Insert before the last element (or push if empty)
                     let len = fp.tls.extensions.extension_order.len();
-                    fp.tls
-                        .extensions
-                        .extension_order
+                    fp.tls.extensions.extension_order
                         .insert(len.saturating_sub(1), ExtensionType::CompressCertificate);
                 }
             }
         }
 
         // application_settings (ALPS)
-        if toggle_app_settings {
+        if rng.gen_bool(0.5) {
             fp.tls.extensions.application_settings = !fp.tls.extensions.application_settings;
             if !fp.tls.extensions.application_settings {
-                fp.tls
-                    .extensions
-                    .extension_order
+                fp.tls.extensions.extension_order
                     .retain(|e| *e != ExtensionType::ApplicationSettings);
-            } else if !fp
-                .tls
-                .extensions
-                .extension_order
+            } else if !fp.tls.extensions.extension_order
                 .contains(&ExtensionType::ApplicationSettings)
             {
                 let len = fp.tls.extensions.extension_order.len();
-                fp.tls
-                    .extensions
-                    .extension_order
+                fp.tls.extensions.extension_order
                     .insert(len.saturating_sub(1), ExtensionType::ApplicationSettings);
             }
         }
 
         // signed_certificate_timestamp
-        if toggle_sct {
+        if rng.gen_bool(0.5) {
             fp.tls.extensions.signed_certificate_timestamp =
                 !fp.tls.extensions.signed_certificate_timestamp;
             if !fp.tls.extensions.signed_certificate_timestamp {
-                fp.tls
-                    .extensions
-                    .extension_order
+                fp.tls.extensions.extension_order
                     .retain(|e| *e != ExtensionType::SignedCertificateTimestamp);
-            } else if !fp
-                .tls
-                .extensions
-                .extension_order
+            } else if !fp.tls.extensions.extension_order
                 .contains(&ExtensionType::SignedCertificateTimestamp)
             {
                 let len = fp.tls.extensions.extension_order.len();
-                fp.tls
-                    .extensions
-                    .extension_order
+                fp.tls.extensions.extension_order
                     .insert(len.saturating_sub(1), ExtensionType::SignedCertificateTimestamp);
             }
         }
 
         // delegated_credentials
-        if toggle_delegated {
+        if rng.gen_bool(0.5) {
             fp.tls.extensions.delegated_credentials = !fp.tls.extensions.delegated_credentials;
-            // delegated_credentials doesn't appear in extension_order for most profiles
         }
 
-        // ── 3. Optional signature algorithms (bits 10-12) ───────────────
+        // padding extension
+        if rng.gen_bool(0.5) {
+            fp.tls.extensions.padding = !fp.tls.extensions.padding;
+            if fp.tls.extensions.padding {
+                if !fp.tls.extensions.extension_order.contains(&ExtensionType::Padding) {
+                    fp.tls.extensions.extension_order.push(ExtensionType::Padding);
+                }
+            } else {
+                fp.tls.extensions.extension_order
+                    .retain(|e| *e != ExtensionType::Padding);
+            }
+        }
+
+        // record_size_limit
+        if rng.gen_bool(0.5) {
+            if fp.tls.extensions.record_size_limit.is_some() {
+                fp.tls.extensions.record_size_limit = None;
+            } else {
+                // Firefox uses 16385, some use 4096
+                fp.tls.extensions.record_size_limit = Some(if rng.gen_bool(0.7) { 16385 } else { 4096 });
+            }
+        }
+
+        // ── 4. Optional signature algorithms (6 toggleable) ─────────────
         let optional_sigalgs: &[SignatureAlgorithm] = &[
             SignatureAlgorithm::RsaPkcs1Sha384,
             SignatureAlgorithm::RsaPssRsaSha512,
             SignatureAlgorithm::RsaPkcs1Sha512,
+            SignatureAlgorithm::Ed25519,
+            SignatureAlgorithm::EcdsaSha1Legacy,
+            SignatureAlgorithm::RsaPkcs1Sha1,
         ];
 
-        for (i, sigalg) in optional_sigalgs.iter().enumerate() {
-            let remove = (seed >> (10 + i)) & 1 == 1;
-            if remove {
+        for sigalg in optional_sigalgs {
+            if rng.gen_bool(0.5) {
                 fp.tls.signature_algorithms.retain(|s| s != sigalg);
             }
         }
 
+        // ── 5. Key exchange group variations ────────────────────────────
+        // Toggle post-quantum hybrid (X25519MLKEM768) - only present in Chrome 142+
+        if rng.gen_bool(0.5) {
+            if fp.tls.key_exchange_groups.contains(&KeyExchangeGroup::X25519MLKEM768) {
+                fp.tls.key_exchange_groups.retain(|g| *g != KeyExchangeGroup::X25519MLKEM768);
+            }
+        }
+
+        // Toggle Secp384r1
+        if rng.gen_bool(0.5) {
+            if fp.tls.key_exchange_groups.contains(&KeyExchangeGroup::Secp384r1) {
+                fp.tls.key_exchange_groups.retain(|g| *g != KeyExchangeGroup::Secp384r1);
+            }
+        }
+
+        // ── 6. ALPS codepoint toggle (old 17513 vs new 17613) ───────────
+        // Chrome 136+ uses new, older versions use old.  Toggling changes
+        // the extension type code in JA4.
+        if rng.gen_bool(0.5) && fp.tls.extensions.application_settings {
+            fp.tls.extensions.use_new_alps_codepoint = !fp.tls.extensions.use_new_alps_codepoint;
+        }
+
+        // ── 7. ECH GREASE toggle ────────────────────────────────────────
+        // Toggle Encrypted Client Hello GREASE on/off
+        if rng.gen_bool(0.5) {
+            if fp.tls.ech_config.is_some() {
+                fp.tls.ech_config = None;
+            } else {
+                fp.tls.ech_config = Some(EchConfig::new(
+                    EchMode::Grease {
+                        hpke_suite: HpkeKemId::DhKemX25519HkdfSha256,
+                    },
+                    None,
+                ));
+            }
+        }
+
+        // ── 8. TLS 1.2 cipher suite order shuffle (JA3 only) ───────────
+        // JA4 sorts cipher suites, so order doesn't matter.  But JA3 is
+        // order-sensitive, so shuffling TLS 1.2 suites creates massive
+        // JA3 diversity without affecting JA4.
+        // Find the TLS 1.2 block (everything after TLS 1.3 suites and GREASE)
+        let tls12_start = fp.tls.cipher_suites.iter().position(|cs| {
+            !matches!(
+                cs,
+                CipherSuite::TLS13_AES_128_GCM_SHA256
+                    | CipherSuite::TLS13_AES_256_GCM_SHA384
+                    | CipherSuite::TLS13_CHACHA20_POLY1305_SHA256
+                    | CipherSuite::Grease(_)
+            )
+        });
+        if let Some(start) = tls12_start {
+            fp.tls.cipher_suites[start..].shuffle(&mut rng);
+        }
+
+        // ── 9. Header micro-variations ──────────────────────────────────
+        // Vary the User-Agent patch version and Accept-Language quality factors
+        // to create subtle header diversity across sessions.
+        Self::randomize_headers(&mut fp.headers, &mut rng);
+
         fp
+    }
+
+    /// Apply micro-variations to HTTP headers for fingerprint diversity.
+    fn randomize_headers(headers: &mut Vec<(String, String)>, rng: &mut impl rand::Rng) {
+        for (key, value) in headers.iter_mut() {
+            let key_lower = key.to_lowercase();
+
+            // Vary Chrome/Edge UA patch version: Chrome/142.0.0.0 → Chrome/142.0.XXXX.YY
+            if key_lower == "user-agent" {
+                if let Some(chrome_pos) = value.find("Chrome/") {
+                    let after = &value[chrome_pos + 7..];
+                    // Find the major version (e.g., "142")
+                    if let Some(dot_pos) = after.find('.') {
+                        let major = &after[..dot_pos];
+                        if let Ok(ver) = major.parse::<u32>() {
+                            if ver >= 125 {
+                                // Generate realistic build numbers
+                                let build = rng.gen_range(6700..7300);
+                                let patch = rng.gen_range(0..256);
+                                let new_version = format!("{}.0.{}.{}", ver, build, patch);
+
+                                // Find the end of the version string
+                                let version_start = chrome_pos + 7;
+                                // Find next space or end
+                                let version_end = value[version_start..]
+                                    .find(' ')
+                                    .map(|p| version_start + p)
+                                    .unwrap_or(value.len());
+
+                                *value = format!(
+                                    "{}{}{}",
+                                    &value[..version_start],
+                                    new_version,
+                                    &value[version_end..]
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Vary Accept-Language quality factor: en;q=0.9 → en;q=0.{7-9}
+            if key_lower == "accept-language" {
+                let q_values = ["0.9", "0.8", "0.7"];
+                let chosen = q_values[rng.gen_range(0..q_values.len())];
+                if value.contains("en;q=0.9") {
+                    *value = value.replace("en;q=0.9", &format!("en;q={}", chosen));
+                } else if value.contains("en;q=0.5") {
+                    // Firefox uses q=0.5
+                    let ff_q = ["0.5", "0.3", "0.7"];
+                    let ff_chosen = ff_q[rng.gen_range(0..ff_q.len())];
+                    *value = value.replace("en;q=0.5", &format!("en;q={}", ff_chosen));
+                }
+            }
+        }
     }
 }
 
@@ -436,7 +598,7 @@ impl TlsFingerprint {
                 CipherSuite::TLS_RSA_WITH_AES_256_CBC_SHA => {
                     FingerprintCipherSuite::TLS_RSA_WITH_AES_256_CBC_SHA
                 }
-                CipherSuite::Grease => FingerprintCipherSuite::Grease,
+                CipherSuite::Grease(_) => FingerprintCipherSuite::Grease,
             })
             .collect();
 
@@ -454,7 +616,7 @@ impl TlsFingerprint {
                 KeyExchangeGroup::Ffdhe4096 => FingerprintKeyExchangeGroup::Ffdhe4096,
                 KeyExchangeGroup::Ffdhe6144 => FingerprintKeyExchangeGroup::Ffdhe6144,
                 KeyExchangeGroup::Ffdhe8192 => FingerprintKeyExchangeGroup::Ffdhe8192,
-                KeyExchangeGroup::Grease => FingerprintKeyExchangeGroup::Grease,
+                KeyExchangeGroup::Grease(_) => FingerprintKeyExchangeGroup::Grease,
             })
             .collect();
 
@@ -498,8 +660,8 @@ impl TlsFingerprint {
             let mut order = self.extensions.extension_order.clone();
             // Find the range of non-GREASE extensions to shuffle
             // GREASE can appear at the start and/or end - keep those in place
-            let start = if order.first() == Some(&ExtensionType::Grease) { 1 } else { 0 };
-            let end = if order.len() > 1 && order.last() == Some(&ExtensionType::Grease) && start < order.len() - 1 {
+            let start = if matches!(order.first(), Some(ExtensionType::Grease(_))) { 1 } else { 0 };
+            let end = if order.len() > 1 && matches!(order.last(), Some(ExtensionType::Grease(_))) && start < order.len() - 1 {
                 order.len() - 1
             } else {
                 order.len()
@@ -519,13 +681,53 @@ impl TlsFingerprint {
             self.extensions.extension_order.clone()
         };
 
-        // Check if GREASE is needed based on extension order
-        let has_grease = extension_order
+        // Find the GREASE extension value (if any) from the extension order
+        let grease_ext_val = extension_order
             .iter()
-            .any(|e| matches!(e, ExtensionType::Grease));
+            .find_map(|e| match e {
+                ExtensionType::Grease(val) => Some(*val),
+                _ => None,
+            });
+
+        // Map impit ExtensionType → rustls ExtensionType for extension ordering
+        use rustls::internal::msgs::enums::ExtensionType as RustlsExtType;
+        let rustls_extension_order: Vec<RustlsExtType> = extension_order
+            .iter()
+            .filter_map(|ext| match ext {
+                ExtensionType::ServerName => Some(RustlsExtType::ServerName),
+                ExtensionType::StatusRequest => Some(RustlsExtType::StatusRequest),
+                ExtensionType::SupportedGroups => Some(RustlsExtType::EllipticCurves),
+                ExtensionType::EcPointFormats => Some(RustlsExtType::ECPointFormats),
+                ExtensionType::SignatureAlgorithms => Some(RustlsExtType::SignatureAlgorithms),
+                ExtensionType::ApplicationLayerProtocolNegotiation => {
+                    Some(RustlsExtType::ALProtocolNegotiation)
+                }
+                ExtensionType::SignedCertificateTimestamp => Some(RustlsExtType::SCT),
+                ExtensionType::Padding => Some(RustlsExtType::Padding),
+                ExtensionType::SupportedVersions => Some(RustlsExtType::SupportedVersions),
+                ExtensionType::PskKeyExchangeModes => Some(RustlsExtType::PSKKeyExchangeModes),
+                ExtensionType::KeyShare => Some(RustlsExtType::KeyShare),
+                ExtensionType::ExtendedMasterSecret => Some(RustlsExtType::ExtendedMasterSecret),
+                ExtensionType::RenegotiationInfo => Some(RustlsExtType::RenegotiationInfo),
+                ExtensionType::SessionTicket => Some(RustlsExtType::SessionTicket),
+                ExtensionType::CompressCertificate => Some(RustlsExtType::CompressCertificate),
+                ExtensionType::ApplicationSettings => {
+                    if self.extensions.use_new_alps_codepoint {
+                        Some(RustlsExtType::ApplicationSettingsNew)
+                    } else {
+                        Some(RustlsExtType::ApplicationSettings)
+                    }
+                }
+                ExtensionType::PreSharedKey => Some(RustlsExtType::PreSharedKey),
+                ExtensionType::EarlyData => Some(RustlsExtType::EarlyData),
+                ExtensionType::PostHandshakeAuth => Some(RustlsExtType::PostHandshakeAuth),
+                ExtensionType::Grease(_) => Some(RustlsExtType::ReservedGrease),
+                _ => None,
+            })
+            .collect();
 
         let extensions_config = TlsExtensionsConfig {
-            grease: has_grease,
+            grease: grease_ext_val.is_some(),
             signed_certificate_timestamp: self.extensions.signed_certificate_timestamp,
             application_settings: self.extensions.application_settings,
             use_new_alps_codepoint: self.extensions.use_new_alps_codepoint,
@@ -533,6 +735,8 @@ impl TlsFingerprint {
             record_size_limit: self.extensions.record_size_limit,
             renegotiation_info: true, // Common for both browsers
             padding: self.extensions.padding,
+            supported_versions: true,
+            extension_order: rustls_extension_order,
         };
 
         let cert_compression = self.extensions.compress_certificate.clone().map(|algos| {

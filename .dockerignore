@@ -22,3 +22,7 @@ impit/impit-node/*.node
 
 # Git metadata inside vendored dependencies
 impit/h2/.git
+impit/rustls/.git
+
+# Rust build artifacts in vendored rustls
+impit/rustls/target
