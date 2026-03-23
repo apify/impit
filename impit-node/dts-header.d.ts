@@ -34,18 +34,3 @@ export declare class StreamConsumed extends StreamError {}
 export declare class ResponseNotRead extends StreamError {}
 export declare class RequestNotRead extends StreamError {}
 export declare class StreamClosed extends StreamError {}
-
-export interface RequestInit {
-  /**
-   * The redirect mode to use for this request.
-   *
-   * - `'follow'` (default): Follow redirects automatically.
-   * - `'manual'`: Do not follow redirects; return the 3xx response as-is.
-   * - `'error'`: Throw a `TypeError` if the response is a redirect.
-   *
-   * When set, this overrides the instance-level {@link ImpitOptions.followRedirects} option for this request.
-   *
-   * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/RequestInit/redirect | Fetch API `redirect` option}
-   */
-  redirect?: 'follow' | 'manual' | 'error'
-}

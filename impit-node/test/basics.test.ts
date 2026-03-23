@@ -628,6 +628,7 @@ describe.each([
             const response = await impit.fetch('http://localhost:3001/redirect/1');
 
             expect(response.status).toBe(200);
+            expect(response.url).toBe('http://localhost:3001/get');
         });
 
         test('instance-level followRedirects: false disables redirects', async () => {
