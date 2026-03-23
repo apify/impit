@@ -49,5 +49,14 @@ console.log(response.headers);
 console.log(await response.text());
 // console.log(await response.json());
 // ...
+
+// Override redirect behavior per request (default: follows instance-level setting)
+const manualResponse = await impit.fetch("https://example.com/login", {
+    redirect: "manual", // "follow" | "manual" | "error"
+});
+
+if (manualResponse.status === 302) {
+    console.log("Redirect to:", manualResponse.headers.get("location"));
+}
 ```
 

@@ -623,42 +623,122 @@ describe.each([
         });
     });
 
-    // Skipping because of issues with redirected Standby requests on Apify
-    describe.skip('Redirects', () => {
-        test('redirects work by default', async (t) => {
-            const response = await impit.fetch(
-                getHttpBinUrl('/absolute-redirect/1'),
-            );
+    describe('Redirects', () => {
+        test('follows redirects by default', async () => {
+            const response = await impit.fetch('http://localhost:3001/redirect/1');
 
-            t.expect(response.status).toBe(200);
-            t.expect(response.url).toBe(getHttpBinUrl('/get', true));
+            expect(response.status).toBe(200);
+            expect(response.url).toBe('http://localhost:3001/get');
         });
 
-        test('disabling redirects', async (t) => {
-            const impit = new Impit({
-                followRedirects: false
-            });
+        test('instance-level followRedirects: false disables redirects', async () => {
+            const noRedirect = new Impit({ followRedirects: false });
+            const response = await noRedirect.fetch('http://localhost:3001/redirect/1');
 
-            const response = await impit.fetch(
-                getHttpBinUrl('/absolute-redirect/1'),
-            );
-
-            t.expect(response.status).toBe(302);
-            t.expect(response.headers.get('location')).toBe(getHttpBinUrl('/get', false));
-            t.expect(response.url).toBe(getHttpBinUrl('/absolute-redirect/1', true));
+            expect(response.status).toBe(302);
+            expect(response.headers.get('location')).toBe('/get');
         });
 
-        test('limiting redirects', async (t) => {
-            const impit = new Impit({
-                followRedirects: true,
-                maxRedirects: 1
+        test('instance-level maxRedirects limits redirect chain', async () => {
+            const limited = new Impit({ maxRedirects: 1 });
+
+            await expect(
+                limited.fetch('http://localhost:3001/redirect/2'),
+            ).rejects.toThrow('Maximum redirect limit (1) exceeded');
+        });
+
+        test('per-request redirect: "manual" returns 3xx response', async () => {
+            const response = await impit.fetch('http://localhost:3001/redirect/1', {
+                redirect: 'manual',
             });
 
-            const response = impit.fetch(
-                getHttpBinUrl('/absolute-redirect/2'),
+            expect(response.status).toBe(302);
+            expect(response.headers.get('location')).toBe('/get');
+        });
+
+        test('per-request redirect: "error" throws TypeError on redirect', async () => {
+            await expect(
+                impit.fetch('http://localhost:3001/redirect/1', { redirect: 'error' }),
+            ).rejects.toThrow(TypeError);
+        });
+
+        test('per-request redirect: "follow" follows redirects', async () => {
+            const noRedirect = new Impit({ followRedirects: false });
+            const response = await noRedirect.fetch('http://localhost:3001/redirect/1', {
+                redirect: 'follow',
+            });
+
+            expect(response.status).toBe(200);
+        });
+
+        test('per-request redirect: "manual" overrides instance followRedirects: true', async () => {
+            const response = await impit.fetch('http://localhost:3001/redirect/1', {
+                redirect: 'manual',
+            });
+
+            expect(response.status).toBe(302);
+        });
+
+        test('redirect via Request object', async () => {
+            const request = new Request('http://localhost:3001/redirect/1', {
+                redirect: 'manual',
+            });
+            const response = await impit.fetch(request);
+
+            expect(response.status).toBe(302);
+        });
+
+        test('bare Request does not override instance followRedirects: false', async () => {
+            const noRedirect = new Impit({ followRedirects: false });
+            const request = new Request('http://localhost:3001/redirect/1');
+            const response = await noRedirect.fetch(request);
+
+            expect(response.status).toBe(302);
+        });
+
+        test('init overrides Request.redirect', async () => {
+            const request = new Request('http://localhost:3001/redirect/1', {
+                redirect: 'manual',
+            });
+            const response = await impit.fetch(request, { redirect: 'follow' });
+
+            expect(response.status).toBe(200);
+        });
+
+        test('redirect: "error" does not throw on non-redirect response', async () => {
+            const response = await impit.fetch('http://localhost:3001/get', {
+                redirect: 'error',
+            });
+
+            expect(response.status).toBe(200);
+        });
+
+        test('redirect: "follow" still respects instance maxRedirects', async () => {
+            const limited = new Impit({ followRedirects: false, maxRedirects: 1 });
+
+            await expect(
+                limited.fetch('http://localhost:3001/redirect/2', { redirect: 'follow' }),
+            ).rejects.toThrow('Maximum redirect limit (1) exceeded');
+        });
+
+        test('redirect: "manual" with 301 status code', async () => {
+            const response = await impit.fetch(
+                'http://localhost:3001/redirect-to?url=/get&status_code=301',
+                { redirect: 'manual' },
             );
 
-            await t.expect(response).rejects.toThrowError('Too many redirects occurred. Maximum allowed');
+            expect(response.status).toBe(301);
+            expect(response.headers.get('location')).toBe('/get');
+        });
+
+        test('redirect: "manual" with 307 status code', async () => {
+            const response = await impit.fetch(
+                'http://localhost:3001/redirect-to?url=/get&status_code=307',
+                { redirect: 'manual' },
+            );
+
+            expect(response.status).toBe(307);
+            expect(response.headers.get('location')).toBe('/get');
         });
     })
 });
