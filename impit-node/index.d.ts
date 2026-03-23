@@ -403,4 +403,16 @@ export interface RequestInit {
   forceHttp3?: boolean
   /** Abort signal to cancel the request. */
   signal?: AbortSignal
+  /**
+   * The redirect mode to use for this request.
+   *
+   * - `'follow'` (default): Follow redirects automatically.
+   * - `'manual'`: Do not follow redirects; return the 3xx response as-is.
+   * - `'error'`: Throw a `TypeError` if the response is a redirect.
+   *
+   * When set, this overrides the instance-level {@link ImpitOptions.followRedirects} option for this request.
+   *
+   * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/RequestInit#redirect | Fetch API `redirect` option}
+   */
+  redirect?: 'follow' | 'manual' | 'error'
 }

@@ -54,4 +54,15 @@ pub struct RequestInit {
   /// Abort signal to cancel the request.
   #[napi(ts_type = "AbortSignal")]
   pub signal: Option<()>, // This value is consumed in the JS wrapper and is not passed through to the Rust layer.
+  /// The redirect mode to use for this request.
+  ///
+  /// - `'follow'` (default): Follow redirects automatically.
+  /// - `'manual'`: Do not follow redirects; return the 3xx response as-is.
+  /// - `'error'`: Throw a `TypeError` if the response is a redirect.
+  ///
+  /// When set, this overrides the instance-level {@link ImpitOptions.followRedirects} option for this request.
+  ///
+  /// @see {@link https://developer.mozilla.org/en-US/docs/Web/API/RequestInit#redirect | Fetch API `redirect` option}
+  #[napi(ts_type = "'follow' | 'manual' | 'error'")]
+  pub redirect: Option<()>, // This value is consumed in the JS wrapper and is not passed through to the Rust layer.
 }

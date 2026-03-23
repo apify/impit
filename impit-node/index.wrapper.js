@@ -53,6 +53,13 @@ async function parseFetchOptions(resource, init) {
             body: resource.body,
             ...init, // init overrides Request fields
         };
+        // Extract redirect from Request only if not already set by init.
+        // Request.redirect defaults to 'follow', which is indistinguishable
+        // from an explicit 'follow', so we only use it when non-default to
+        // avoid silently overriding instance-level followRedirects.
+        if (!('redirect' in options) && resource.redirect !== 'follow') {
+            options.redirect = resource.redirect;
+        }
     } else if (resource.toString) {
         url = resource.toString();
     } else {
@@ -79,6 +86,7 @@ async function parseFetchOptions(resource, init) {
         timeout: options.timeout,
         forceHttp3: options.forceHttp3,
         signal: options.signal,
+        redirect: options.redirect,
     };
 }
 
@@ -147,7 +155,7 @@ class Impit extends native.Impit {
     }
 
     async fetch(resource, init) {
-        const { url: initialUrl, signal, ...options } = await parseFetchOptions(resource, init);
+        const { url: initialUrl, signal, redirect, ...options } = await parseFetchOptions(resource, init);
 
         // Check immediately if already aborted (before creating any promises)
         signal?.throwIfAborted();
@@ -159,7 +167,7 @@ class Impit extends native.Impit {
         });
 
         try {
-            return await this.#fetchWithRedirectHandling(initialUrl, options, signal, waitForAbort);
+            return await this.#fetchWithRedirectHandling(initialUrl, options, signal, waitForAbort, redirect);
         } catch (err) {
             rethrowNativeError(err);
         } finally {
@@ -173,12 +181,17 @@ class Impit extends native.Impit {
      * @param {object} options
      * @param {AbortSignal} signal
      * @param {Promise} waitForAbort
+     * @param {'follow' | 'manual' | 'error'} [redirect] Per-request redirect mode override
      */
-    async #fetchWithRedirectHandling(initialUrl, options, signal, waitForAbort) {
+    async #fetchWithRedirectHandling(initialUrl, options, signal, waitForAbort, redirect) {
         let url = initialUrl;
         let method = options.method || 'GET';
         let redirectCount = 0;
         const maxRedirects = this.#maxRedirects;
+        const followRedirects = redirect
+            ? redirect === 'follow'
+            : this.#followRedirects;
+        const errorOnRedirect = redirect === 'error';
 
         while (true) {
             signal?.throwIfAborted();
@@ -211,22 +224,28 @@ class Impit extends native.Impit {
                 await this.#setCookies(responseHeaders, url);
             }
 
-            if (this.#followRedirects && isRedirectStatus(originalResponse.status)) {
-                const location = responseHeaders.get('location');
-
-                if (!location) {
-                    return this.#wrapResponse(originalResponse, signal);
+            if (isRedirectStatus(originalResponse.status)) {
+                if (errorOnRedirect) {
+                    throw new TypeError(`URI requested responds with a redirect, redirect mode is set to 'error': ${url}`);
                 }
 
-                redirectCount++;
-                if (redirectCount > maxRedirects) {
-                    throw new Error(`Maximum redirect limit (${maxRedirects}) exceeded`);
+                if (followRedirects) {
+                    const location = responseHeaders.get('location');
+
+                    if (!location) {
+                        return this.#wrapResponse(originalResponse, signal);
+                    }
+
+                    redirectCount++;
+                    if (redirectCount > maxRedirects) {
+                        throw new Error(`Maximum redirect limit (${maxRedirects}) exceeded`);
+                    }
+
+                    url = new URL(location, url).toString();
+                    method = shouldRewriteRedirectToGet(originalResponse.status, method) ? 'GET' : method;
+
+                    continue;
                 }
-
-                url = new URL(location, url).toString();
-                method = shouldRewriteRedirectToGet(originalResponse.status, method) ? 'GET' : method;
-
-                continue;
             }
 
             return this.#wrapResponse(originalResponse, signal);
