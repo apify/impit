@@ -39,7 +39,7 @@ jobs:
             target: x86_64-pc-windows-msvc
           - host: ubuntu-24.04
             target: x86_64-unknown-linux-gnu
-            build: yarn --cwd impit-node build --target x86_64-unknown-linux-gnu --use-napi-cross
+            build: yarn --cwd impit-node build --target x86_64-unknown-linux-gnu
           - host: ubuntu-24.04-arm
             target: aarch64-unknown-linux-musl
             docker: arm64v8/node:20-alpine
@@ -56,7 +56,7 @@ jobs:
                 yarn --cwd impit-node build
           - host: ubuntu-24.04-arm
             target: aarch64-unknown-linux-gnu
-            build: yarn --cwd impit-node build --target aarch64-unknown-linux-gnu --use-napi-cross
+            build: yarn --cwd impit-node build --target aarch64-unknown-linux-gnu
           - host: ubuntu-latest
             target: x86_64-unknown-linux-musl
             docker: node:20-alpine
