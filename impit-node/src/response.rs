@@ -311,6 +311,23 @@ impl<'env> ImpitResponse {
     response.get_named_property("body")
   }
 
+  /// Creates a copy of the response.
+  ///
+  /// The original response's body methods are re-bound to one half of the
+  /// tee'd stream; the returned clone is a standard `Response` backed by the
+  /// other half.
+  ///
+  /// Calling `clone()` after the body has been consumed throws a `TypeError`.
+  ///
+  /// @see {@link https://developer.mozilla.org/en-US/docs/Web/API/Response/clone | Fetch API `Response.clone()`}
+  #[napi(js_name = "clone", ts_return_type = "Response")]
+  pub fn clone_response(&self) -> Result<()> {
+    Err(napi::Error::new(
+      napi::Status::GenericFailure,
+      "clone() is implemented in the JavaScript wrapper".to_string(),
+    ))
+  }
+
   /// Aborts the response.
   ///
   /// This API is called internally and can change without notice.
