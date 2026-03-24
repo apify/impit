@@ -375,6 +375,12 @@ class Impit extends native.Impit {
                     value: this.url,
                     enumerable: true,
                 });
+                Object.defineProperty(clone, 'text', {
+                    value: async function () {
+                        const buffer = await clone.arrayBuffer();
+                        return decodeBuffer(Buffer.from(buffer));
+                    },
+                });
 
                 return clone;
             },
