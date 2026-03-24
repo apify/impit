@@ -623,6 +623,121 @@ describe.each([
         });
     });
 
+    describe('Response.clone()', () => {
+        test('clone returns a standard Response', async () => {
+            const response = await impit.fetch(getHttpBinUrl('/get'));
+            const clone = response.clone();
+
+            expect(clone).toBeInstanceOf(Response);
+            expect(clone.status).toBe(200);
+            expect(clone.ok).toBe(true);
+        });
+
+        test('clone preserves url', async () => {
+            const response = await impit.fetch(getHttpBinUrl('/get'));
+            const clone = response.clone();
+
+            expect(clone.url).toBe(response.url);
+        });
+
+        test('clone preserves headers', async () => {
+            const response = await impit.fetch(getHttpBinUrl('/get'));
+            const clone = response.clone();
+
+            expect(clone.headers.get('content-type')).toBe(
+                response.headers.get('content-type'),
+            );
+        });
+
+        test('both original and clone bodies are independently readable', async () => {
+            const response = await impit.fetch(getHttpBinUrl('/get'));
+            const clone = response.clone();
+
+            const cloneData = await clone.json();
+            const originalData = await response.json();
+
+            expect(cloneData).toEqual(originalData);
+        });
+
+        test('text() works on both original and clone', async () => {
+            const response = await impit.fetch(getHttpBinUrl('/get'));
+            const clone = response.clone();
+
+            const cloneText = await clone.text();
+            const originalText = await response.text();
+
+            expect(cloneText.length).toBeGreaterThan(0);
+            expect(cloneText).toBe(originalText);
+        });
+
+        test('multiple clones produce independent readable bodies', async () => {
+            const response = await impit.fetch(getHttpBinUrl('/get'));
+            const clone1 = response.clone();
+            const clone2 = response.clone();
+
+            const [original, first, second] = await Promise.all([
+                response.json(),
+                clone1.json(),
+                clone2.json(),
+            ]);
+
+            expect(original).toEqual(first);
+            expect(original).toEqual(second);
+        });
+
+        test('clone() after body consumed throws TypeError', async () => {
+            const response = await impit.fetch(getHttpBinUrl('/get'));
+            await response.text();
+
+            expect(() => response.clone()).toThrow(TypeError);
+            expect(() => response.clone()).toThrow(/body has already been consumed/);
+        });
+
+        test('response.body is streamable after clone', async () => {
+            const response = await impit.fetch(getHttpBinUrl('/get'));
+            response.clone();
+
+            const reader = response.body.getReader();
+            const chunks: Uint8Array[] = [];
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                chunks.push(value);
+            }
+
+            expect(chunks.length).toBeGreaterThan(0);
+        });
+
+        test('arrayBuffer() works on both original and clone', async () => {
+            const response = await impit.fetch(getHttpBinUrl('/get'));
+            const clone = response.clone();
+
+            const cloneBuf = await clone.arrayBuffer();
+            const originalBuf = await response.arrayBuffer();
+
+            expect(cloneBuf.byteLength).toBeGreaterThan(0);
+            expect(cloneBuf.byteLength).toBe(originalBuf.byteLength);
+        });
+
+        test('reading original first, then clone', async () => {
+            const response = await impit.fetch(getHttpBinUrl('/get'));
+            const clone = response.clone();
+
+            const originalData = await response.json();
+            const cloneData = await clone.json();
+
+            expect(originalData).toEqual(cloneData);
+        });
+
+        test('clone preserves non-200 status', async () => {
+            const response = await impit.fetch(getHttpBinUrl('/status/404'));
+            const clone = response.clone();
+
+            expect(clone.status).toBe(404);
+            expect(clone.ok).toBe(false);
+        });
+    });
+
     describe('Redirects', () => {
         test('follows redirects by default', async () => {
             const response = await impit.fetch('http://localhost:3001/redirect/1');
