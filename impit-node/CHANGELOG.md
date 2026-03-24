@@ -3,6 +3,38 @@
 All notable changes to this project will be documented in this file.
 
 
+## js-0.12.0 - 2026-03-24
+
+#### Features
+
+- Add per-request `redirect` option to `RequestInit` (#418)
+  - ## Summary  Adds standard Fetch API [`redirect`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit/redirect) option to `RequestInit`, allowing per-request override of the instance-level `followRedirects` setting.  - `'follow'` — follow redirects (default, matches instance behavior) - `'manual'` — return the 3xx response as-is - `'error'` — throw `TypeError` on redirect  When set, overrides the instance-level `followRedirects` for that request. When omitted, instance-level `followRedirects` / `maxRedirects` are used as before.  Also extracts `Request.redirect` when a `Request` object is passed — but only for non-default values (`'manual'`, `'error'`), since `Request.redirect` defaults to `'follow'` per the Fetch API spec and would otherwise silently override instance-level `followRedirects: false`.  ## Changes  - **`index.wrapper.js`** — extract `redirect` in `parseFetchOptions`, thread through `fetch()` → `#fetchWithRedirectHandling()`, override instance-level `followRedirects` / throw on `'error'` - **`dts-header.d.ts`** — add `redirect` to `RequestInit` via interface merging - **`test/basics.test.ts`** — replace skipped httpbin-based redirect tests with 15 local server tests covering all modes, overrides, Request objects, status codes - **`test/mock.server.ts`** — add `/redirect/:n`, `/redirect-to`, `/get` routes - **`README.md`** — add per-request redirect usage example  ---------
+
+
+- Add `clone()` support to `ImpitResponse` (#419)
+  - ## Summary  Implements `Response.clone()` on `ImpitResponse` using `ReadableStream.tee()`, making impit compatible with libraries like [ky](https://github.com/sindresorhus/ky) that call `response.clone()` internally.  ## Approach  When `.clone()` is called:  1. `this.body.tee()` splits the underlying `ReadableStream` into two independent streams (synchronous, no eager buffering) 2. The original response's `.body` getter and body methods (`text`, `json`, `arrayBuffer`, `bytes`) are re-patched to read from one stream 3. A standard `Response` is returned as the clone, backed by the other stream  Multiple clones are supported (matching the Fetch spec) — each call tees the current branch, so the original and all clones can be read independently.  Charset-aware `text()` decoding is preserved on the original via `decodeBuffer`. The clone uses standard `Response.text()` (UTF-8).  Throws `TypeError` on clone after body consumption, matching Fetch API semantics.  ## Changes  - **`index.wrapper.js`** — add `clone()` in `#wrapResponse`, re-patch `.body` getter and body methods with `configurable: true` so subsequent clones work - **`dts-header.d.ts`** — add `clone(): Response` to `ImpitResponse` via declaration merging - **`test/basics.test.ts`** — tests covering: return type, url/header preservation, independent body reads, text() on both, multiple clones, body streaming after clone, clone-after-consume error, arrayBuffer on both, read ordering, non-200 status  ---------
+
+
+
+## js-0.11.0 - 2026-03-13
+
+#### Features
+
+- Support `timeout=None` to disable timeout (#402)
+  - Updates the timeout handling in Python. The default behaviour stays the same, but passing timeout=None now disables the timeout (either client-wide or for the current request). This aligns impit with how httpx handles timeouts.  ---------
+
+
+- Better errors for Node.JS bindings (#406)
+  - Closes https://github.com/apify/impit/issues/397.
+
+
+#### Refactor
+
+- Replace scraper with lol_html for HTML charset prescanning (#398)
+  - Replaces `scraper` dependency with a more lightweight HTML parser from `lol_html`. Adds regression tests to ensure the behaviour stays the same.  ---------
+
+
+
 ## js-0.10.1 - 2026-03-02
 
 #### Bug Fixes
