@@ -3,6 +3,15 @@
 All notable changes to this project will be documented in this file.
 
 
+## js-0.13.0 - 2026-03-26
+
+#### Features
+
+- Add new OkHTTP fingerprints  (#416)
+  - Adds profiles for emulating the fingerprints of the OkHTTP library (JVM / Android HTTP client).
+
+
+
 ## js-0.12.0 - 2026-03-24
 
 #### Features
