@@ -51,6 +51,14 @@ pub struct RequestInit {
   pub timeout: Option<u32>,
   /// Force the request to use HTTP/3. If the server doesn't expect HTTP/3 or the Impit instance doesn't have HTTP/3 enabled (via the {@link ImpitOptions.http3} option), the request will fail.
   pub force_http3: Option<bool>,
+  /// Enable TCP keep-alive probes for this request's connection.
+  ///
+  /// When set to `true`, the underlying socket will send periodic TCP keep-alive probes (every 30 seconds)
+  /// to prevent the connection from being silently dropped by intermediate infrastructure
+  /// (e.g. AWS load balancers, NAT gateways) during long-lived streaming responses.
+  ///
+  /// @default `false`
+  pub tcp_keepalive: Option<bool>,
   /// Abort signal to cancel the request.
   #[napi(ts_type = "AbortSignal")]
   pub signal: Option<()>, // This value is consumed in the JS wrapper and is not passed through to the Rust layer.

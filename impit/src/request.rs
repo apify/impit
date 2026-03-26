@@ -22,6 +22,14 @@ pub struct RequestOptions {
     ///
     /// If [`ImpitBuilder::with_http3`](crate::impit::ImpitBuilder::with_http3) wasn't called, this option will cause [`ErrorType::Http3Disabled`](crate::impit::ErrorType::Http3Disabled) errors.
     pub http3_prior_knowledge: bool,
+    /// Enable TCP keep-alive probes for this request's connection.
+    ///
+    /// When set to `true`, the underlying socket will send periodic TCP keep-alive probes
+    /// to prevent the connection from being silently dropped by intermediate infrastructure
+    /// (e.g. AWS load balancers, NAT gateways) during long-lived streaming responses.
+    ///
+    /// The keep-alive probe interval is fixed at 30 seconds.
+    pub tcp_keepalive: bool,
 }
 
 pub struct ImpitRequest {

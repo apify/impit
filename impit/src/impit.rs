@@ -22,6 +22,7 @@ use crate::{
 pub struct Impit<CookieStoreImpl: CookieStore + 'static> {
     pub(self) base_client: reqwest::Client,
     pub(self) h3_client: Option<reqwest::Client>,
+    pub(self) keepalive_client: reqwest::Client,
     h3_engine: Arc<RwLock<Option<H3Engine>>>,
     config: ImpitBuilder<CookieStoreImpl>,
 }
@@ -231,6 +232,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
 
     fn new_reqwest_client(
         config: &ImpitBuilder<CookieStoreImpl>,
+        tcp_keepalive: Option<Duration>,
     ) -> Result<reqwest::Client, ImpitError> {
         let mut client = reqwest::Client::builder();
         let mut tls_config_builder = tls::TlsConfig::builder();
@@ -285,6 +287,10 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
             client = client.local_address(ip_addr);
         }
 
+        if let Some(interval) = tcp_keepalive {
+            client = client.tcp_keepalive(interval);
+        }
+
         match config.redirect {
             RedirectBehavior::FollowRedirect(max) => {
                 client = client.redirect(reqwest::redirect::Policy::limited(max));
@@ -302,14 +308,19 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
     /// Creates a new [`Impit`] instance based on the options stored in the [`ImpitBuilder`] instance.
     fn new(config: ImpitBuilder<CookieStoreImpl>) -> Result<Self, ImpitError> {
         let mut h3_client: Option<reqwest::Client> = None;
-        let mut base_client = Self::new_reqwest_client(&config)?;
+        let mut base_client = Self::new_reqwest_client(&config, None)?;
+        let keepalive_client =
+            Self::new_reqwest_client(&config, Some(Duration::from_secs(30)))?;
 
         if config.max_http_version == Version::HTTP_3 {
             h3_client = Some(base_client);
-            base_client = Self::new_reqwest_client(&ImpitBuilder::<CookieStoreImpl> {
-                max_http_version: Version::HTTP_2,
-                ..config.clone()
-            })?;
+            base_client = Self::new_reqwest_client(
+                &ImpitBuilder::<CookieStoreImpl> {
+                    max_http_version: Version::HTTP_2,
+                    ..config.clone()
+                },
+                None,
+            )?;
         }
 
         // Set pseudo-header order from fingerprint or fall back to browser enum
@@ -329,6 +340,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
         Ok(Impit {
             base_client,
             h3_client,
+            keepalive_client,
             config,
             h3_engine: Arc::new(RwLock::new(None)),
         })
@@ -406,6 +418,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
         request: ImpitRequest,
         timeout: Option<Duration>,
         http3_prior_knowledge: Option<bool>,
+        tcp_keepalive: bool,
     ) -> Result<Response, ImpitError> {
         let http3_prior_knowledge = http3_prior_knowledge.unwrap_or(false);
         if http3_prior_knowledge && self.config.max_http_version < Version::HTTP_3 {
@@ -421,6 +434,9 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
         let client = if h3 {
             debug!("Using QUIC for request to {url}");
             self.h3_client.as_ref().unwrap_or(&self.base_client)
+        } else if tcp_keepalive {
+            debug!("Using keep-alive client for request to {url}");
+            &self.keepalive_client
         } else {
             debug!("{url} doesn't seem to have HTTP3 support");
             &self.base_client
@@ -514,7 +530,8 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
             Some(Some(d)) => Some(d),
         };
         let http3_prior_knowledge = request_options.http3_prior_knowledge;
-        self.send(request, timeout, Some(http3_prior_knowledge))
+        let tcp_keepalive = request_options.tcp_keepalive;
+        self.send(request, timeout, Some(http3_prior_knowledge), tcp_keepalive)
             .await
     }
 

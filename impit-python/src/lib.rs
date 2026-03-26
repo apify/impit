@@ -88,7 +88,7 @@ fn impit(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     ($($name:ident),*) => {
         $(
             #[pyfunction]
-            #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false, cookie_jar=None, cookies=None, follow_redirects=None, max_redirects=None, proxy=None))]
+            #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false, tcp_keepalive=false, cookie_jar=None, cookies=None, follow_redirects=None, max_redirects=None, proxy=None))]
             fn $name(
                 _py: Python,
                 url: String,
@@ -97,6 +97,7 @@ fn impit(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
                 headers: Option<HashMap<String, String>>,
                 timeout: Option<Either<f64, &str>>,
                 force_http3: Option<bool>,
+                tcp_keepalive: Option<bool>,
                 cookie_jar: Option<pyo3::Bound<'_, pyo3::PyAny>>,
                 cookies: Option<pyo3::Bound<'_, pyo3::PyAny>>,
                 follow_redirects: Option<bool>,
@@ -105,7 +106,7 @@ fn impit(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
             ) -> Result<response::ImpitPyResponse, errors::ImpitPyError> {
                 let client = Client::new(_py, None, None, proxy, Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), None, None, follow_redirects, max_redirects, cookie_jar, cookies, None, None);
 
-                client?.$name(_py, url, content, data, headers, timeout, force_http3)
+                client?.$name(_py, url, content, data, headers, timeout, force_http3, tcp_keepalive)
             }
 
             m.add_function(wrap_pyfunction!($name, m)?)?;
@@ -116,7 +117,7 @@ fn impit(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     http_no_client!(get, post, put, head, patch, delete, options, trace);
 
     #[pyfunction]
-    #[pyo3(signature = (method, url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false, cookie_jar=None, cookies=None, follow_redirects=None, max_redirects=None, proxy=None))]
+    #[pyo3(signature = (method, url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false, tcp_keepalive=false, cookie_jar=None, cookies=None, follow_redirects=None, max_redirects=None, proxy=None))]
     fn stream<'python>(
         _py: Python<'python>,
         method: &str,
@@ -126,6 +127,7 @@ fn impit(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
         headers: Option<HashMap<String, String>>,
         timeout: Option<Either<f64, &str>>,
         force_http3: Option<bool>,
+        tcp_keepalive: Option<bool>,
         cookie_jar: Option<pyo3::Bound<'_, pyo3::PyAny>>,
         cookies: Option<pyo3::Bound<'_, pyo3::PyAny>>,
         follow_redirects: Option<bool>,
@@ -157,6 +159,7 @@ fn impit(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
             headers,
             timeout,
             force_http3,
+            tcp_keepalive,
         )
     }
 

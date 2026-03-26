@@ -125,6 +125,10 @@ impl ImpitWrapper {
         .as_ref()
         .and_then(|init| init.force_http3)
         .unwrap_or_default(),
+      tcp_keepalive: request_init
+        .as_ref()
+        .and_then(|init| init.tcp_keepalive)
+        .unwrap_or_default(),
     });
 
     let method = request_init

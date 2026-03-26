@@ -504,6 +504,7 @@ class Client:
         headers: dict[str, str] | None = None,
         timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
+        tcp_keepalive: bool | None = None,
     ) -> Response:
         """Make a GET request.
 
@@ -514,6 +515,7 @@ class Client:
             headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
             timeout: Per-request timeout in seconds. Pass ``None`` to disable the timeout entirely. Defaults to ``USE_CLIENT_DEFAULT`` (inherits the client-level timeout).
             force_http3: Force HTTP/3 protocol
+            tcp_keepalive: Enable TCP keep-alive probes for this connection (every 30s). Prevents long-lived connections from being silently dropped by intermediate infrastructure.
         """
 
     def post(
@@ -524,6 +526,7 @@ class Client:
         headers: dict[str, str] | None = None,
         timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
+        tcp_keepalive: bool | None = None,
     ) -> Response:
         """Make a POST request.
 
@@ -534,6 +537,7 @@ class Client:
             headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
             timeout: Per-request timeout in seconds. Pass ``None`` to disable the timeout entirely. Defaults to ``USE_CLIENT_DEFAULT`` (inherits the client-level timeout).
             force_http3: Force HTTP/3 protocol
+            tcp_keepalive: Enable TCP keep-alive probes for this connection (every 30s). Prevents long-lived connections from being silently dropped by intermediate infrastructure.
 
         """
 
@@ -545,6 +549,7 @@ class Client:
         headers: dict[str, str] | None = None,
         timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
+        tcp_keepalive: bool | None = None,
     ) -> Response:
         """Make a PUT request.
 
@@ -555,6 +560,7 @@ class Client:
             headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
             timeout: Per-request timeout in seconds. Pass ``None`` to disable the timeout entirely. Defaults to ``USE_CLIENT_DEFAULT`` (inherits the client-level timeout).
             force_http3: Force HTTP/3 protocol
+            tcp_keepalive: Enable TCP keep-alive probes for this connection (every 30s). Prevents long-lived connections from being silently dropped by intermediate infrastructure.
         """
 
     def patch(
@@ -565,6 +571,7 @@ class Client:
         headers: dict[str, str] | None = None,
         timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
+        tcp_keepalive: bool | None = None,
     ) -> Response:
         """Make a PATCH request.
 
@@ -575,6 +582,7 @@ class Client:
             headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
             timeout: Per-request timeout in seconds. Pass ``None`` to disable the timeout entirely. Defaults to ``USE_CLIENT_DEFAULT`` (inherits the client-level timeout).
             force_http3: Force HTTP/3 protocol
+            tcp_keepalive: Enable TCP keep-alive probes for this connection (every 30s). Prevents long-lived connections from being silently dropped by intermediate infrastructure.
         """
 
     def delete(
@@ -585,6 +593,7 @@ class Client:
         headers: dict[str, str] | None = None,
         timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
+        tcp_keepalive: bool | None = None,
     ) -> Response:
         """Make a DELETE request.
 
@@ -595,6 +604,7 @@ class Client:
             headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
             timeout: Per-request timeout in seconds. Pass ``None`` to disable the timeout entirely. Defaults to ``USE_CLIENT_DEFAULT`` (inherits the client-level timeout).
             force_http3: Force HTTP/3 protocol
+            tcp_keepalive: Enable TCP keep-alive probes for this connection (every 30s). Prevents long-lived connections from being silently dropped by intermediate infrastructure.
         """
 
     def head(
@@ -605,6 +615,7 @@ class Client:
         headers: dict[str, str] | None = None,
         timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
+        tcp_keepalive: bool | None = None,
     ) -> Response:
         """Make a HEAD request.
 
@@ -615,6 +626,7 @@ class Client:
             headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
             timeout: Per-request timeout in seconds. Pass ``None`` to disable the timeout entirely. Defaults to ``USE_CLIENT_DEFAULT`` (inherits the client-level timeout).
             force_http3: Force HTTP/3 protocol
+            tcp_keepalive: Enable TCP keep-alive probes for this connection (every 30s). Prevents long-lived connections from being silently dropped by intermediate infrastructure.
         """
 
     def options(
@@ -625,6 +637,7 @@ class Client:
         headers: dict[str, str] | None = None,
         timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
+        tcp_keepalive: bool | None = None,
     ) -> Response:
         """Make an OPTIONS request.
 
@@ -635,6 +648,7 @@ class Client:
             headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
             timeout: Per-request timeout in seconds. Pass ``None`` to disable the timeout entirely. Defaults to ``USE_CLIENT_DEFAULT`` (inherits the client-level timeout).
             force_http3: Force HTTP/3 protocol
+            tcp_keepalive: Enable TCP keep-alive probes for this connection (every 30s). Prevents long-lived connections from being silently dropped by intermediate infrastructure.
         """
 
     def trace(
@@ -645,6 +659,7 @@ class Client:
         headers: dict[str, str] | None = None,
         timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
+        tcp_keepalive: bool | None = None,
     ) -> Response:
         """Make a TRACE request.
 
@@ -655,6 +670,7 @@ class Client:
             headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
             timeout: Per-request timeout in seconds. Pass ``None`` to disable the timeout entirely. Defaults to ``USE_CLIENT_DEFAULT`` (inherits the client-level timeout).
             force_http3: Force HTTP/3 protocol
+            tcp_keepalive: Enable TCP keep-alive probes for this connection (every 30s). Prevents long-lived connections from being silently dropped by intermediate infrastructure.
         """
 
     def request(
@@ -666,6 +682,7 @@ class Client:
         headers: dict[str, str] | None = None,
         timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
+        tcp_keepalive: bool | None = None,
         stream: bool = False,
     ) -> Response:
         """Make an HTTP request with the specified method.
@@ -678,6 +695,7 @@ class Client:
             headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
             timeout: Per-request timeout in seconds. Pass ``None`` to disable the timeout entirely. Defaults to ``USE_CLIENT_DEFAULT`` (inherits the client-level timeout).
             force_http3: Force HTTP/3 protocol
+            tcp_keepalive: Enable TCP keep-alive probes for this connection (every 30s). Prevents long-lived connections from being silently dropped by intermediate infrastructure.
             stream: Whether to return a streaming response (default: False)
         """
 
@@ -690,6 +708,7 @@ class Client:
         headers: dict[str, str] | None = None,
         timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
+        tcp_keepalive: bool | None = None,
     ) -> AbstractContextManager[Response]:
         """Make a streaming request with the specified method.
 
@@ -712,6 +731,7 @@ class Client:
             headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
             timeout: Per-request timeout in seconds. Pass ``None`` to disable the timeout entirely. Defaults to ``USE_CLIENT_DEFAULT`` (inherits the client-level timeout).
             force_http3: Force HTTP/3 protocol
+            tcp_keepalive: Enable TCP keep-alive probes for this connection (every 30s). Prevents long-lived connections from being silently dropped by intermediate infrastructure.
         """
 
 
@@ -845,6 +865,7 @@ class AsyncClient:
         headers: dict[str, str] | None = None,
         timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
+        tcp_keepalive: bool | None = None,
     ) -> Response:
         """Make an asynchronous GET request.
 
@@ -855,6 +876,7 @@ class AsyncClient:
             headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
             timeout: Per-request timeout in seconds. Pass ``None`` to disable the timeout entirely. Defaults to ``USE_CLIENT_DEFAULT`` (inherits the client-level timeout).
             force_http3: Force HTTP/3 protocol
+            tcp_keepalive: Enable TCP keep-alive probes for this connection (every 30s). Prevents long-lived connections from being silently dropped by intermediate infrastructure.
         """
 
     async def post(
@@ -865,6 +887,7 @@ class AsyncClient:
         headers: dict[str, str] | None = None,
         timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
+        tcp_keepalive: bool | None = None,
     ) -> Response:
         """Make an asynchronous POST request.
 
@@ -875,6 +898,7 @@ class AsyncClient:
             headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
             timeout: Per-request timeout in seconds. Pass ``None`` to disable the timeout entirely. Defaults to ``USE_CLIENT_DEFAULT`` (inherits the client-level timeout).
             force_http3: Force HTTP/3 protocol
+            tcp_keepalive: Enable TCP keep-alive probes for this connection (every 30s). Prevents long-lived connections from being silently dropped by intermediate infrastructure.
 
         """
 
@@ -886,6 +910,7 @@ class AsyncClient:
         headers: dict[str, str] | None = None,
         timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
+        tcp_keepalive: bool | None = None,
     ) -> Response:
         """Make an asynchronous PUT request.
 
@@ -896,6 +921,7 @@ class AsyncClient:
             headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
             timeout: Per-request timeout in seconds. Pass ``None`` to disable the timeout entirely. Defaults to ``USE_CLIENT_DEFAULT`` (inherits the client-level timeout).
             force_http3: Force HTTP/3 protocol
+            tcp_keepalive: Enable TCP keep-alive probes for this connection (every 30s). Prevents long-lived connections from being silently dropped by intermediate infrastructure.
         """
 
     async def patch(
@@ -906,6 +932,7 @@ class AsyncClient:
         headers: dict[str, str] | None = None,
         timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
+        tcp_keepalive: bool | None = None,
     ) -> Response:
         """Make an asynchronous PATCH request.
 
@@ -916,6 +943,7 @@ class AsyncClient:
             headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
             timeout: Per-request timeout in seconds. Pass ``None`` to disable the timeout entirely. Defaults to ``USE_CLIENT_DEFAULT`` (inherits the client-level timeout).
             force_http3: Force HTTP/3 protocol
+            tcp_keepalive: Enable TCP keep-alive probes for this connection (every 30s). Prevents long-lived connections from being silently dropped by intermediate infrastructure.
         """
 
     async def delete(
@@ -926,6 +954,7 @@ class AsyncClient:
         headers: dict[str, str] | None = None,
         timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
+        tcp_keepalive: bool | None = None,
     ) -> Response:
         """Make an asynchronous DELETE request.
 
@@ -936,6 +965,7 @@ class AsyncClient:
             headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
             timeout: Per-request timeout in seconds. Pass ``None`` to disable the timeout entirely. Defaults to ``USE_CLIENT_DEFAULT`` (inherits the client-level timeout).
             force_http3: Force HTTP/3 protocol
+            tcp_keepalive: Enable TCP keep-alive probes for this connection (every 30s). Prevents long-lived connections from being silently dropped by intermediate infrastructure.
         """
 
     async def head(
@@ -946,6 +976,7 @@ class AsyncClient:
         headers: dict[str, str] | None = None,
         timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
+        tcp_keepalive: bool | None = None,
     ) -> Response:
         """Make an asynchronous HEAD request.
 
@@ -956,6 +987,7 @@ class AsyncClient:
             headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
             timeout: Per-request timeout in seconds. Pass ``None`` to disable the timeout entirely. Defaults to ``USE_CLIENT_DEFAULT`` (inherits the client-level timeout).
             force_http3: Force HTTP/3 protocol
+            tcp_keepalive: Enable TCP keep-alive probes for this connection (every 30s). Prevents long-lived connections from being silently dropped by intermediate infrastructure.
         """
 
     async def options(
@@ -966,6 +998,7 @@ class AsyncClient:
         headers: dict[str, str] | None = None,
         timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
+        tcp_keepalive: bool | None = None,
     ) -> Response:
         """Make an asynchronous OPTIONS request.
 
@@ -976,6 +1009,7 @@ class AsyncClient:
             headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
             timeout: Per-request timeout in seconds. Pass ``None`` to disable the timeout entirely. Defaults to ``USE_CLIENT_DEFAULT`` (inherits the client-level timeout).
             force_http3: Force HTTP/3 protocol
+            tcp_keepalive: Enable TCP keep-alive probes for this connection (every 30s). Prevents long-lived connections from being silently dropped by intermediate infrastructure.
         """
 
     async def trace(
@@ -986,6 +1020,7 @@ class AsyncClient:
         headers: dict[str, str] | None = None,
         timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
+        tcp_keepalive: bool | None = None,
     ) -> Response:
         """Make an asynchronous TRACE request.
 
@@ -996,6 +1031,7 @@ class AsyncClient:
             headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
             timeout: Per-request timeout in seconds. Pass ``None`` to disable the timeout entirely. Defaults to ``USE_CLIENT_DEFAULT`` (inherits the client-level timeout).
             force_http3: Force HTTP/3 protocol
+            tcp_keepalive: Enable TCP keep-alive probes for this connection (every 30s). Prevents long-lived connections from being silently dropped by intermediate infrastructure.
         """
 
     async def request(
@@ -1007,6 +1043,7 @@ class AsyncClient:
         headers: dict[str, str] | None = None,
         timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
+        tcp_keepalive: bool | None = None,
         stream: bool = False,
     ) -> Response:
         """Make an asynchronous HTTP request with the specified method.
@@ -1019,6 +1056,7 @@ class AsyncClient:
             headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
             timeout: Per-request timeout in seconds. Pass ``None`` to disable the timeout entirely. Defaults to ``USE_CLIENT_DEFAULT`` (inherits the client-level timeout).
             force_http3: Force HTTP/3 protocol
+            tcp_keepalive: Enable TCP keep-alive probes for this connection (every 30s). Prevents long-lived connections from being silently dropped by intermediate infrastructure.
             stream: Whether to return a streaming response (default: False)
         """
 
@@ -1031,6 +1069,7 @@ class AsyncClient:
         headers: dict[str, str] | None = None,
         timeout: float | str | None = USE_CLIENT_DEFAULT,
         force_http3: bool | None = None,
+        tcp_keepalive: bool | None = None,
     ) -> AbstractAsyncContextManager[Response]:
         """Make an asynchronous streaming request with the specified method.
 
@@ -1053,6 +1092,7 @@ class AsyncClient:
             headers: HTTP headers for this request. Override both client-level and impersonation headers (case-insensitive). To remove an impersonated header, pass an empty string as the value
             timeout: Per-request timeout in seconds. Pass ``None`` to disable the timeout entirely. Defaults to ``USE_CLIENT_DEFAULT`` (inherits the client-level timeout).
             force_http3: Force HTTP/3 protocol
+            tcp_keepalive: Enable TCP keep-alive probes for this connection (every 30s). Prevents long-lived connections from being silently dropped by intermediate infrastructure.
         """
 
 
@@ -1064,6 +1104,7 @@ def stream(
     headers: dict[str, str] | None = None,
     timeout: float | str | None = USE_CLIENT_DEFAULT,
     force_http3: bool | None = None,
+    tcp_keepalive: bool | None = None,
     follow_redirects: bool | None = None,
     max_redirects: int | None = None,
     cookie_jar: CookieJar | None = None,
@@ -1097,6 +1138,7 @@ def get(
     headers: dict[str, str] | None = None,
     timeout: float | str | None = USE_CLIENT_DEFAULT,
     force_http3: bool | None = None,
+    tcp_keepalive: bool | None = None,
     follow_redirects: bool | None = None,
     max_redirects: int | None = None,
     cookie_jar: CookieJar | None = None,
@@ -1130,6 +1172,7 @@ def post(
     headers: dict[str, str] | None = None,
     timeout: float | str | None = USE_CLIENT_DEFAULT,
     force_http3: bool | None = None,
+    tcp_keepalive: bool | None = None,
     follow_redirects: bool | None = None,
     max_redirects: int | None = None,
     cookie_jar: CookieJar | None = None,
@@ -1163,6 +1206,7 @@ def put(
     headers: dict[str, str] | None = None,
     timeout: float | str | None = USE_CLIENT_DEFAULT,
     force_http3: bool | None = None,
+    tcp_keepalive: bool | None = None,
     follow_redirects: bool | None = None,
     max_redirects: int | None = None,
     cookie_jar: CookieJar | None = None,
@@ -1196,6 +1240,7 @@ def patch(
     headers: dict[str, str] | None = None,
     timeout: float | str | None = USE_CLIENT_DEFAULT,
     force_http3: bool | None = None,
+    tcp_keepalive: bool | None = None,
     follow_redirects: bool | None = None,
     max_redirects: int | None = None,
     cookie_jar: CookieJar | None = None,
@@ -1229,6 +1274,7 @@ def delete(
     headers: dict[str, str] | None = None,
     timeout: float | str | None = USE_CLIENT_DEFAULT,
     force_http3: bool | None = None,
+    tcp_keepalive: bool | None = None,
     follow_redirects: bool | None = None,
     max_redirects: int | None = None,
     cookie_jar: CookieJar | None = None,
@@ -1262,6 +1308,7 @@ def head(
     headers: dict[str, str] | None = None,
     timeout: float | str | None = USE_CLIENT_DEFAULT,
     force_http3: bool | None = None,
+    tcp_keepalive: bool | None = None,
     follow_redirects: bool | None = None,
     max_redirects: int | None = None,
     cookie_jar: CookieJar | None = None,
@@ -1295,6 +1342,7 @@ def options(
     headers: dict[str, str] | None = None,
     timeout: float | str | None = USE_CLIENT_DEFAULT,
     force_http3: bool | None = None,
+    tcp_keepalive: bool | None = None,
     follow_redirects: bool | None = None,
     max_redirects: int | None = None,
     cookie_jar: CookieJar | None = None,
@@ -1325,6 +1373,7 @@ def trace(
     headers: dict[str, str] | None = None,
     timeout: float | str | None = USE_CLIENT_DEFAULT,
     force_http3: bool | None = None,
+    tcp_keepalive: bool | None = None,
     follow_redirects: bool | None = None,
     max_redirects: int | None = None,
     cookie_jar: CookieJar | None = None,

@@ -155,7 +155,7 @@ impl Client {
         })
     }
 
-    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false))]
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false, tcp_keepalive=false))]
     pub fn get(
         &self,
         py: Python<'_>,
@@ -165,6 +165,7 @@ impl Client {
         headers: Option<HashMap<String, String>>,
         timeout: Option<Either<f64, &str>>,
         force_http3: Option<bool>,
+        tcp_keepalive: Option<bool>,
     ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request(
             py,
@@ -176,10 +177,11 @@ impl Client {
             timeout,
             force_http3,
             Some(false),
+            tcp_keepalive,
         )
     }
 
-    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false))]
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false, tcp_keepalive=false))]
     pub fn head(
         &self,
         py: Python<'_>,
@@ -189,6 +191,7 @@ impl Client {
         headers: Option<HashMap<String, String>>,
         timeout: Option<Either<f64, &str>>,
         force_http3: Option<bool>,
+        tcp_keepalive: Option<bool>,
     ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request(
             py,
@@ -200,10 +203,11 @@ impl Client {
             timeout,
             force_http3,
             Some(false),
+            tcp_keepalive,
         )
     }
 
-    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false))]
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false, tcp_keepalive=false))]
     pub fn post(
         &self,
         py: Python<'_>,
@@ -213,6 +217,7 @@ impl Client {
         headers: Option<HashMap<String, String>>,
         timeout: Option<Either<f64, &str>>,
         force_http3: Option<bool>,
+        tcp_keepalive: Option<bool>,
     ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request(
             py,
@@ -224,10 +229,11 @@ impl Client {
             timeout,
             force_http3,
             Some(false),
+            tcp_keepalive,
         )
     }
 
-    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false))]
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false, tcp_keepalive=false))]
     pub fn patch(
         &self,
         py: Python<'_>,
@@ -237,6 +243,7 @@ impl Client {
         headers: Option<HashMap<String, String>>,
         timeout: Option<Either<f64, &str>>,
         force_http3: Option<bool>,
+        tcp_keepalive: Option<bool>,
     ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request(
             py,
@@ -248,10 +255,11 @@ impl Client {
             timeout,
             force_http3,
             Some(false),
+            tcp_keepalive,
         )
     }
 
-    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false))]
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false, tcp_keepalive=false))]
     pub fn put(
         &self,
         py: Python<'_>,
@@ -261,6 +269,7 @@ impl Client {
         headers: Option<HashMap<String, String>>,
         timeout: Option<Either<f64, &str>>,
         force_http3: Option<bool>,
+        tcp_keepalive: Option<bool>,
     ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request(
             py,
@@ -272,10 +281,11 @@ impl Client {
             timeout,
             force_http3,
             Some(false),
+            tcp_keepalive,
         )
     }
 
-    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false))]
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false, tcp_keepalive=false))]
     pub fn delete(
         &self,
         py: Python<'_>,
@@ -285,6 +295,7 @@ impl Client {
         headers: Option<HashMap<String, String>>,
         timeout: Option<Either<f64, &str>>,
         force_http3: Option<bool>,
+        tcp_keepalive: Option<bool>,
     ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request(
             py,
@@ -296,10 +307,11 @@ impl Client {
             timeout,
             force_http3,
             Some(false),
+            tcp_keepalive,
         )
     }
 
-    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false))]
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false, tcp_keepalive=false))]
     pub fn options(
         &self,
         py: Python<'_>,
@@ -309,6 +321,7 @@ impl Client {
         headers: Option<HashMap<String, String>>,
         timeout: Option<Either<f64, &str>>,
         force_http3: Option<bool>,
+        tcp_keepalive: Option<bool>,
     ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request(
             py,
@@ -320,10 +333,11 @@ impl Client {
             timeout,
             force_http3,
             Some(false),
+            tcp_keepalive,
         )
     }
 
-    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false))]
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false, tcp_keepalive=false))]
     pub fn trace(
         &self,
         py: Python<'_>,
@@ -333,6 +347,7 @@ impl Client {
         headers: Option<HashMap<String, String>>,
         timeout: Option<Either<f64, &str>>,
         force_http3: Option<bool>,
+        tcp_keepalive: Option<bool>,
     ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request(
             py,
@@ -344,10 +359,11 @@ impl Client {
             timeout,
             force_http3,
             Some(false),
+            tcp_keepalive,
         )
     }
 
-    #[pyo3(signature = (method, url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false))]
+    #[pyo3(signature = (method, url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false, tcp_keepalive=false))]
     pub fn stream<'python>(
         &self,
         py: Python<'python>,
@@ -358,6 +374,7 @@ impl Client {
         headers: Option<HashMap<String, String>>,
         timeout: Option<Either<f64, &str>>,
         force_http3: Option<bool>,
+        tcp_keepalive: Option<bool>,
     ) -> Result<Bound<'python, PyAny>, PyErr> {
         let response = self.request(
             py,
@@ -369,6 +386,7 @@ impl Client {
             timeout,
             force_http3,
             Some(true),
+            tcp_keepalive,
         )?;
 
         let fun: Py<PyAny> = PyModule::from_code(
@@ -393,7 +411,7 @@ impl Client {
         Ok(wrapped_response.into_bound(py))
     }
 
-    #[pyo3(signature = (method, url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false, stream=false))]
+    #[pyo3(signature = (method, url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false, stream=false, tcp_keepalive=false))]
     pub fn request(
         &self,
         py: Python<'_>,
@@ -405,6 +423,7 @@ impl Client {
         timeout: Option<Either<f64, &str>>,
         force_http3: Option<bool>,
         stream: Option<bool>,
+        tcp_keepalive: Option<bool>,
     ) -> Result<ImpitPyResponse, ImpitPyError> {
         let mut headers = headers.clone();
 
@@ -440,6 +459,7 @@ impl Client {
                 .collect(),
             timeout,
             http3_prior_knowledge: force_http3.unwrap_or(false),
+            tcp_keepalive: tcp_keepalive.unwrap_or(false),
         };
 
         py.detach(|| {
