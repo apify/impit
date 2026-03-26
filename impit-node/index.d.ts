@@ -267,7 +267,11 @@ export type Browser =  'chrome'|
 'firefox128'|
 'firefox133'|
 'firefox135'|
-'firefox144';
+'firefox144'|
+'okhttp'|
+'okhttp3'|
+'okhttp4'|
+'okhttp5';
 
 export type HttpMethod =  'GET'|
 'POST'|
