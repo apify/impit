@@ -140,7 +140,7 @@ jobs:
           name: sphinx-doc
           path: docs/python/
       - name: Setup pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
       - name: Upload docs to github pages
         uses: actions/upload-pages-artifact@v4
         with:
