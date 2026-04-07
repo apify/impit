@@ -194,65 +194,67 @@ class Impit extends native.Impit {
         const errorOnRedirect = redirect === 'error';
         let lastResponse = null;
 
-        while (true) {
-            signal?.throwIfAborted();
+        try {
+            while (true) {
+                signal?.throwIfAborted();
 
-            const headers = [...(options.headers || [])];
-            const hasUserCookie = headers.some(([k]) => k.toLowerCase() === 'cookie');
+                const headers = [...(options.headers || [])];
+                const hasUserCookie = headers.some(([k]) => k.toLowerCase() === 'cookie');
 
-            if (this.#cookieJar && !hasUserCookie) {
-                const cookieHeader = await this.#getCookies(url);
-                if (cookieHeader) {
-                    headers.push(['Cookie', cookieHeader]);
-                }
-            }
-
-            const response = super.fetch(url, {
-                ...options,
-                method,
-                headers,
-                body: method === 'GET' ? undefined : options.body,
-            });
-
-            const originalResponse = await Promise.race([
-                response,
-                waitForAbort
-            ]).catch((e) => {
-                e.cause = lastResponse;
-                throw e;
-            });
-
-            lastResponse = this.#wrapResponse(originalResponse, signal);
-
-            if (this.#cookieJar) {
-                await this.#setCookies(lastResponse.headers, url);
-            }
-
-            if (isRedirectStatus(originalResponse.status)) {
-                if (errorOnRedirect) {
-                    throw new TypeError(`URI requested responds with a redirect, redirect mode is set to 'error': ${url}`);
+                if (this.#cookieJar && !hasUserCookie) {
+                    const cookieHeader = await this.#getCookies(url);
+                    if (cookieHeader) {
+                        headers.push(['Cookie', cookieHeader]);
+                    }
                 }
 
-                if (followRedirects) {
-                    const location = lastResponse.headers.get('location');
+                const response = super.fetch(url, {
+                    ...options,
+                    method,
+                    headers,
+                    body: method === 'GET' ? undefined : options.body,
+                });
 
-                    if (!location) {
-                        return lastResponse;
+                const originalResponse = await Promise.race([
+                    response,
+                    waitForAbort
+                ]);
+
+                lastResponse = this.#wrapResponse(originalResponse, signal);
+
+                if (this.#cookieJar) {
+                    await this.#setCookies(lastResponse.headers, url);
+                }
+
+                if (isRedirectStatus(originalResponse.status)) {
+                    if (errorOnRedirect) {
+                        throw new TypeError(`URI requested responds with a redirect, redirect mode is set to 'error': ${url}`);
                     }
 
-                    redirectCount++;
-                    if (redirectCount > maxRedirects) {
-                        throw new Error(`Maximum redirect limit (${maxRedirects}) exceeded`, { cause: lastResponse });
+                    if (followRedirects) {
+                        const location = lastResponse.headers.get('location');
+
+                        if (!location) {
+                            return lastResponse;
+                        }
+
+                        redirectCount++;
+                        if (redirectCount > maxRedirects) {
+                            throw new Error(`Maximum redirect limit (${maxRedirects}) exceeded`, { cause: lastResponse });
+                        }
+
+                        url = new URL(location, url).toString();
+                        method = shouldRewriteRedirectToGet(originalResponse.status, method) ? 'GET' : method;
+
+                        continue;
                     }
-
-                    url = new URL(location, url).toString();
-                    method = shouldRewriteRedirectToGet(originalResponse.status, method) ? 'GET' : method;
-
-                    continue;
                 }
-            }
 
-            return lastResponse;
+                return lastResponse;
+            }
+        } catch (e) {
+            e.cause = lastResponse;
+            throw e;
         }
     }
 
