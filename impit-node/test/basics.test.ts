@@ -858,13 +858,14 @@ describe.each([
 
         test('throws final redirect as error cause', async () => {
             const limited = new Impit({ maxRedirects: 1 });
+            
             try {
                 await limited.fetch('http://localhost:3001/redirect/2');
                 expect.unreachable('should have thrown');
             } catch (e) {
-                expect(e).toBeInstanceOf(Error)
-                const error = (e as Error)
-                expect(error.message.startsWith('Maximum redirect limit')).toBe(true)
+                expect(e).toBeInstanceOf(Error);
+                const error = e as Error;
+                expect(error.message.startsWith('Maximum redirect limit')).toBe(true);
                 expect(error.cause).toBeInstanceOf(ImpitResponse);
                 const response = error.cause as ImpitResponse;
                 expect(response.url).toBe('http://localhost:3001/redirect/1');
