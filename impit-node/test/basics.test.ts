@@ -855,5 +855,22 @@ describe.each([
             expect(response.status).toBe(307);
             expect(response.headers.get('location')).toBe('/get');
         });
+
+        test('throws final redirect as error cause', async () => {
+            const limited = new Impit({ maxRedirects: 1 });
+
+            let error: Error | undefined;
+            try {
+                await limited.fetch('http://localhost:3001/redirect/2');
+            } catch (cause) {
+                error = cause as Error;
+            }
+
+            expect(error).toBe(expect.any(Error));
+            const response = error!.cause as Response;
+            expect(response).toBe(expect.any(Response));
+            expect(response.url).toBe('http://localhost:3001/redirect/2');
+            expect(response.headers.get('location')).toBe('/relative-redirect/1');
+        });
     })
 });
