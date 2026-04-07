@@ -192,6 +192,7 @@ class Impit extends native.Impit {
             ? redirect === 'follow'
             : this.#followRedirects;
         const errorOnRedirect = redirect === 'error';
+        let lastResponse = null;
 
         while (true) {
             signal?.throwIfAborted();
@@ -216,12 +217,15 @@ class Impit extends native.Impit {
             const originalResponse = await Promise.race([
                 response,
                 waitForAbort
-            ]);
+            ]).catch((e) => {
+                e.cause = lastResponse;
+                throw e;
+            });
 
-            const responseHeaders = new Headers(originalResponse.headers);
+            lastResponse = this.#wrapResponse(originalResponse, signal);
 
             if (this.#cookieJar) {
-                await this.#setCookies(responseHeaders, url);
+                await this.#setCookies(lastResponse.headers, url);
             }
 
             if (isRedirectStatus(originalResponse.status)) {
@@ -230,17 +234,15 @@ class Impit extends native.Impit {
                 }
 
                 if (followRedirects) {
-                    const location = responseHeaders.get('location');
+                    const location = lastResponse.headers.get('location');
 
                     if (!location) {
-                        return this.#wrapResponse(originalResponse, signal);
+                        return lastResponse;
                     }
 
                     redirectCount++;
                     if (redirectCount > maxRedirects) {
-                        throw new Error(`Maximum redirect limit (${maxRedirects}) exceeded`, {
-                            cause: this.#wrapResponse(originalResponse, signal),
-                        });
+                        throw new Error(`Maximum redirect limit (${maxRedirects}) exceeded`, { cause: lastResponse });
                     }
 
                     url = new URL(location, url).toString();
@@ -250,7 +252,7 @@ class Impit extends native.Impit {
                 }
             }
 
-            return this.#wrapResponse(originalResponse, signal);
+            return lastResponse;
         }
     }
 

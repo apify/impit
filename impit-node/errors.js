@@ -75,7 +75,7 @@ function rethrowNativeError(err) {
         const [, code, message] = match;
         const ErrorClass = errorClassMap[code];
         if (ErrorClass) {
-            throw new ErrorClass(message);
+            throw new ErrorClass(message, { cause: err.cause });
         }
     }
     throw err;
