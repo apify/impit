@@ -238,7 +238,9 @@ class Impit extends native.Impit {
 
                     redirectCount++;
                     if (redirectCount > maxRedirects) {
-                        throw new Error(`Maximum redirect limit (${maxRedirects}) exceeded`, { cause: response });
+                        throw new Error(`Maximum redirect limit (${maxRedirects}) exceeded`, {
+                            cause: this.#wrapResponse(originalResponse, signal),
+                        });
                     }
 
                     url = new URL(location, url).toString();

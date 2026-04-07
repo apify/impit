@@ -1,7 +1,7 @@
 import http from 'http';
 import { test, describe, expect, beforeAll, afterAll } from 'vitest';
 
-import { HttpMethod, Impit, Browser } from '../index.wrapper.js';
+import { HttpMethod, Impit, Browser, ImpitResponse } from '../index.wrapper.js';
 import type { AddressInfo, Server } from 'net';
 import { routes, runProxyServer, runServer } from './mock.server.js';
 
@@ -858,19 +858,18 @@ describe.each([
 
         test('throws final redirect as error cause', async () => {
             const limited = new Impit({ maxRedirects: 1 });
-
-            let error: Error | undefined;
             try {
                 await limited.fetch('http://localhost:3001/redirect/2');
-            } catch (cause) {
-                error = cause as Error;
+                expect.unreachable('should have thrown');
+            } catch (e) {
+                expect(e).toBeInstanceOf(Error)
+                const error = (e as Error)
+                expect(error.message.startsWith('Maximum redirect limit')).toBe(true)
+                expect(error.cause).toBeInstanceOf(ImpitResponse);
+                const response = error.cause as ImpitResponse;
+                expect(response.url).toBe('http://localhost:3001/redirect/1');
+                expect(response.headers.get('location')).toBe('/get');
             }
-
-            expect(error).toBe(expect.any(Error));
-            const response = error!.cause as Response;
-            expect(response).toBe(expect.any(Response));
-            expect(response.url).toBe('http://localhost:3001/redirect/2');
-            expect(response.headers.get('location')).toBe('/relative-redirect/1');
         });
     })
 });
