@@ -1,13 +1,14 @@
 import http from 'http';
 import { test, describe, expect, beforeAll, afterAll } from 'vitest';
 
-import { HttpMethod, Impit, Browser } from '../index.wrapper.js';
+import { HttpMethod, Impit, Browser, ImpitResponse } from '../index.wrapper.js';
 import type { AddressInfo, Server } from 'net';
 import { routes, runProxyServer, runServer } from './mock.server.js';
 
 import { CookieJar } from 'tough-cookie';
 import { runSocksServer } from 'socks-server-lib';
 import { Server as ProxyServer } from 'proxy-chain';
+import { TimeoutError } from '../index.wrapper.js';
 
 function getHttpBinUrl(path: string, https?: boolean): string {
     https ??= true;
@@ -190,6 +191,7 @@ describe.each([
             const proxyPort = (proxy.address() as AddressInfo)?.port;
 
             const impit = new Impit({
+                browser,
                 proxyUrl: `http://user:@127.0.0.1:${proxyPort}`,
             });
 
@@ -747,7 +749,7 @@ describe.each([
         });
 
         test('instance-level followRedirects: false disables redirects', async () => {
-            const noRedirect = new Impit({ followRedirects: false });
+            const noRedirect = new Impit({ browser, followRedirects: false });
             const response = await noRedirect.fetch('http://localhost:3001/redirect/1');
 
             expect(response.status).toBe(302);
@@ -755,7 +757,7 @@ describe.each([
         });
 
         test('instance-level maxRedirects limits redirect chain', async () => {
-            const limited = new Impit({ maxRedirects: 1 });
+            const limited = new Impit({ browser, maxRedirects: 1 });
 
             await expect(
                 limited.fetch('http://localhost:3001/redirect/2'),
@@ -778,7 +780,7 @@ describe.each([
         });
 
         test('per-request redirect: "follow" follows redirects', async () => {
-            const noRedirect = new Impit({ followRedirects: false });
+            const noRedirect = new Impit({ browser, followRedirects: false });
             const response = await noRedirect.fetch('http://localhost:3001/redirect/1', {
                 redirect: 'follow',
             });
@@ -804,7 +806,7 @@ describe.each([
         });
 
         test('bare Request does not override instance followRedirects: false', async () => {
-            const noRedirect = new Impit({ followRedirects: false });
+            const noRedirect = new Impit({ browser, followRedirects: false });
             const request = new Request('http://localhost:3001/redirect/1');
             const response = await noRedirect.fetch(request);
 
@@ -829,7 +831,7 @@ describe.each([
         });
 
         test('redirect: "follow" still respects instance maxRedirects', async () => {
-            const limited = new Impit({ followRedirects: false, maxRedirects: 1 });
+            const limited = new Impit({ browser, followRedirects: false, maxRedirects: 1 });
 
             await expect(
                 limited.fetch('http://localhost:3001/redirect/2', { redirect: 'follow' }),
@@ -854,6 +856,55 @@ describe.each([
 
             expect(response.status).toBe(307);
             expect(response.headers.get('location')).toBe('/get');
+        });
+
+        test('throws last redirect response as error cause when maxRedirects is exceeded', async () => {
+            const limited = new Impit({ browser, maxRedirects: 1 });
+            
+            try {
+                await limited.fetch('http://localhost:3001/redirect/2');
+                expect.unreachable('should have thrown');
+            } catch (e) {
+                expect(e).toBeInstanceOf(Error);
+                const error = e as Error;
+                expect(error.message.startsWith('Maximum redirect limit')).toBe(true);
+                expect(error.cause).toBeInstanceOf(ImpitResponse);
+                const response = error.cause as ImpitResponse;
+                expect(response.url).toBe('http://localhost:3001/redirect/1');
+                expect(response.headers.get('location')).toBe('/get');
+            }
+        });
+
+        test('throws last redirect response as error cause when request timeout is exceeded', async () => {
+            try {
+                await impit.fetch('http://localhost:3001/redirect-to?url=/stall/1000', {
+                    timeout: 100,
+                });
+                expect.unreachable('should have thrown');
+            } catch (e) {
+                expect(e).toBeInstanceOf(TimeoutError);
+                const error = e as TimeoutError;
+                expect(error.cause).toBeInstanceOf(ImpitResponse);
+                const response = error.cause as ImpitResponse;
+                expect(response.url).toBe('http://localhost:3001/redirect-to?url=/stall/1000');
+                expect(response.headers.get('location')).toBe('/stall/1000');
+            }
+        });
+
+        test('throws last redirect response as error cause when signal is aborted', async () => {
+            try {
+                await impit.fetch('http://localhost:3001/redirect-to?url=/stall/1000', {
+                    signal: AbortSignal.timeout(100),
+                });
+                expect.unreachable('should have thrown');
+            } catch (e) {
+                expect(e).toBeInstanceOf(DOMException);
+                const error = e as DOMException;
+                expect(error.cause).toBeInstanceOf(ImpitResponse);
+                const response = error.cause as ImpitResponse;
+                expect(response.url).toBe('http://localhost:3001/redirect-to?url=/stall/1000');
+                expect(response.headers.get('location')).toBe('/stall/1000');
+            }
         });
     })
 });

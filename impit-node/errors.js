@@ -1,4 +1,9 @@
-class ImpitError extends Error { constructor(msg) { super(msg); this.name = this.constructor.name; } }
+class ImpitError extends Error {
+    constructor(msg, options) {
+        super(msg, options);
+        this.name = this.constructor.name;
+    }
+}
 class HTTPError extends ImpitError {}
 class RequestError extends ImpitError {}
 class TransportError extends RequestError {}
@@ -75,7 +80,7 @@ function rethrowNativeError(err) {
         const [, code, message] = match;
         const ErrorClass = errorClassMap[code];
         if (ErrorClass) {
-            throw new ErrorClass(message);
+            throw new ErrorClass(message, { cause: err.cause });
         }
     }
     throw err;

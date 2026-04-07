@@ -69,6 +69,14 @@ export async function runServer(port: number): Promise<Server> {
         }, delay);
     });
 
+    app.get('/stall/:ms', (req, res) => {
+        const delay = parseInt(req.params.ms, 10);
+
+        setTimeout(() => {
+            res.sendStatus(200);
+        }, delay);
+    });
+
     app.get('/cookies', (req, res) => {
         const cookies: Record<string, string> = {};
         const cookieHeader = req.headers.cookie;
