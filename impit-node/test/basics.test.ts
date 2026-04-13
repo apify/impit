@@ -502,6 +502,11 @@ describe.each([
             t.expect(text).toContain(routes.charsetMetaHttpEquiv.bodyString);
         });
 
+        test('non-ASCII header values are decoded as ISO-8859-1', async (t) => {
+            const response = await impit.fetch(new URL(routes.nonAsciiHeader.path, "http://127.0.0.1:3001").href);
+            t.expect(response.headers.get('x-non-ascii')).toBe(routes.nonAsciiHeader.headerValue);
+        });
+
         test('.json() method works', async (t) => {
         const response = await impit.fetch(getHttpBinUrl('/json'));
         const json = await response.json();

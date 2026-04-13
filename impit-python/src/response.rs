@@ -541,7 +541,7 @@ impl ImpitPyResponse {
         let headers = HashMap::from_iter(val.headers().iter().map(|(k, v)| {
             (
                 k.as_str().to_string(),
-                v.to_str().unwrap_or_default().to_string(),
+                v.as_bytes().iter().map(|&b| b as char).collect(),
             )
         }));
 

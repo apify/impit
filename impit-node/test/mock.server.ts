@@ -20,6 +20,10 @@ export const routes = {
         path: '/charset/meta-http-equiv',
         bodyString: WIN1250_STRING,
     },
+    nonAsciiHeader: {
+        path: '/non-ascii-header',
+        headerValue: 'Dienstag, 31. März 2026',
+    },
 }
 
 export async function runServer(port: number): Promise<Server> {
@@ -48,6 +52,21 @@ export async function runServer(port: number): Promise<Server> {
         ]);
         res.writeHead(200, { 'Content-Type': 'text/html' });
         res.end(html);
+    });
+
+    app.get(routes.nonAsciiHeader.path, (req, res) => {
+        const socket = res.socket!;
+        socket.write('HTTP/1.1 200 OK\r\n');
+        socket.write('Content-Type: text/plain\r\n');
+        socket.write(Buffer.concat([
+            Buffer.from('X-Non-Ascii: Dienstag, 31. M'),
+            Buffer.from([0xE4]), // ä in ISO-8859-1
+            Buffer.from('rz 2026\r\n'),
+        ]));
+        socket.write('Content-Length: 2\r\n');
+        socket.write('\r\n');
+        socket.write('ok');
+        socket.end();
     });
 
     app.get('/socket', (req, res) => {

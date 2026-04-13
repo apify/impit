@@ -91,15 +91,10 @@ impl<'env> ImpitResponse {
       .to_string();
     let mut headers_vec: Vec<(String, String)> = Vec::new();
     for (k, v) in response.headers().iter() {
-      match v.to_str() {
-        Ok(val) => headers_vec.push((k.as_str().to_string(), val.to_string())),
-        Err(e) => {
-          return Err(napi::Error::new(
-            napi::Status::GenericFailure,
-            format!("Failed to parse header value for '{}': {:?}", k.as_str(), e),
-          ));
-        }
-      }
+      headers_vec.push((
+        k.as_str().to_string(),
+        v.as_bytes().iter().map(|&b| b as char).collect(),
+      ));
     }
     let headers = Headers(headers_vec);
     let ok = response.status().is_success();
