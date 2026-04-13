@@ -190,6 +190,7 @@ describe.each([
             const proxyPort = (proxy.address() as AddressInfo)?.port;
 
             const impit = new Impit({
+                browser,
                 proxyUrl: `http://user:@127.0.0.1:${proxyPort}`,
             });
 
@@ -747,7 +748,7 @@ describe.each([
         });
 
         test('instance-level followRedirects: false disables redirects', async () => {
-            const noRedirect = new Impit({ followRedirects: false });
+            const noRedirect = new Impit({ browser, followRedirects: false });
             const response = await noRedirect.fetch('http://localhost:3001/redirect/1');
 
             expect(response.status).toBe(302);
@@ -755,7 +756,7 @@ describe.each([
         });
 
         test('instance-level maxRedirects limits redirect chain', async () => {
-            const limited = new Impit({ maxRedirects: 1 });
+            const limited = new Impit({ browser, maxRedirects: 1 });
 
             await expect(
                 limited.fetch('http://localhost:3001/redirect/2'),
@@ -778,7 +779,7 @@ describe.each([
         });
 
         test('per-request redirect: "follow" follows redirects', async () => {
-            const noRedirect = new Impit({ followRedirects: false });
+            const noRedirect = new Impit({ browser, followRedirects: false });
             const response = await noRedirect.fetch('http://localhost:3001/redirect/1', {
                 redirect: 'follow',
             });
@@ -804,7 +805,7 @@ describe.each([
         });
 
         test('bare Request does not override instance followRedirects: false', async () => {
-            const noRedirect = new Impit({ followRedirects: false });
+            const noRedirect = new Impit({ browser, followRedirects: false });
             const request = new Request('http://localhost:3001/redirect/1');
             const response = await noRedirect.fetch(request);
 
@@ -829,7 +830,7 @@ describe.each([
         });
 
         test('redirect: "follow" still respects instance maxRedirects', async () => {
-            const limited = new Impit({ followRedirects: false, maxRedirects: 1 });
+            const limited = new Impit({ browser, followRedirects: false, maxRedirects: 1 });
 
             await expect(
                 limited.fetch('http://localhost:3001/redirect/2', { redirect: 'follow' }),
