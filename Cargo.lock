@@ -1245,6 +1245,7 @@ dependencies = [
  "log",
  "lol_html",
  "mime",
+ "rand",
  "reqwest",
  "rustls",
  "rustls-platform-verifier",

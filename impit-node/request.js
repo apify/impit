@@ -1,7 +1,6 @@
 // Taken from https://github.com/nodejs/undici/blob/14e62db0d0cff4bea27357aa5bd14881459b27c7/lib/web/fetch/body.js#L120
 // patched for use with Impit
-async function generateMultipartFormData(formData) {
-    const boundary = `----formdata-impit-0${`${Math.random().toString().slice(0, 5)}`.padStart(11, '0')}`;
+async function generateMultipartFormData(formData, boundary) {
     const prefix = `--${boundary}\r\nContent-Disposition: form-data`;
 
     /*! formdata-polyfill. MIT License. Jimmy Wärting <https://jimmy.warting.se/opensource> */
@@ -76,7 +75,7 @@ async function generateMultipartFormData(formData) {
 
 
 // logic from https://github.com/nodejs/undici/blob/14e62db0d0cff4bea27357aa5bd14881459b27c7/lib/web/fetch/body.js#L90
-async function castToTypedArray(body) {
+async function castToTypedArray(body, boundary) {
     let typedArray = body;
     let type = "";
 
@@ -95,7 +94,7 @@ async function castToTypedArray(body) {
         typedArray = new Uint8Array(await body.arrayBuffer());
         type = body.type;
     } else if (body instanceof FormData) {
-        return await generateMultipartFormData(body);
+        return await generateMultipartFormData(body, boundary);
     } else if (body instanceof ReadableStream) {
         const reader = body.getReader();
         const chunks = [];

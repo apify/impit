@@ -637,4 +637,40 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
     ) -> Result<Response, ImpitError> {
         self.make_request(Method::PATCH, url, body, options).await
     }
+
+    pub fn generate_multipart_boundary(&self) -> String {
+        use rand::Rng;
+
+        match &self.config.fingerprint {
+            Some(fp) => match fp.name.as_str() {
+                "Chrome" => {
+                    const CHARS: &[u8] =
+                        b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+                    let mut rng = rand::rng();
+                    let suffix: String = (0..16)
+                        .map(|_| CHARS[rng.random_range(0..CHARS.len())] as char)
+                        .collect();
+                    format!("----WebKitFormBoundary{suffix}")
+                }
+                "Firefox" => {
+                    let mut rng = rand::rng();
+                    let suffix: String = (0..20)
+                        .map(|_| rng.random_range(0u8..10).to_string())
+                        .collect();
+                    format!("---------------------------{suffix}")
+                }
+                _ => Self::default_multipart_boundary(),
+            },
+            None => Self::default_multipart_boundary(),
+        }
+    }
+
+    fn default_multipart_boundary() -> String {
+        use rand::Rng;
+        let mut rng = rand::rng();
+        let suffix: String = (0..16)
+            .map(|_| rng.random_range(0u8..10).to_string())
+            .collect();
+        format!("----formdata-impit-{suffix}")
+    }
 }
