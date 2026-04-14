@@ -47,19 +47,16 @@ jobs:
               node-version: 24
               registry-url: 'https://registry.npmjs.org'
 
-          - name: Enable Corepack
-            run: |
-              corepack enable
-              corepack prepare yarn@stable --activate
-
-          - name: Activate cache for Node.js
-            uses: actions/setup-node@v6
+          - uses: pnpm/action-setup@v4.1.0
+            name: Install pnpm
             with:
-              cache: yarn
-              cache-dependency-path: impit-node/yarn.lock
+              run_install: false
 
           - name: Install dependencies
-            run: yarn install
+            shell: bash
+            run: pnpm install --frozen-lockfile --prefer-offline --loglevel error
+            env:
+              HUSKY: "0"
 
           - name: Download all artifacts
             uses: actions/download-artifact@v8
@@ -67,7 +64,7 @@ jobs:
               path: artifacts
 
           - name: Move artifacts
-            run: yarn artifacts
+            run: pnpm artifacts
 
           - name: List packages
             run: ls -R ./npm
@@ -76,20 +73,20 @@ jobs:
           - name: Calculate version
             id: get-new-version
             run: |
-              echo ::set-output name=TARGET_VERSION::$(npx semver --increment ${{ github.event.inputs.bump }} $(npm show impit version))
+              echo ::set-output name=TARGET_VERSION::$(pnpm dlx semver --increment ${{ github.event.inputs.bump }} $(npm show impit version))
 
           - name: Set version
             run: |
-              yarn version ${{ steps.get-new-version.outputs.TARGET_VERSION }}
-              yarn copy-version
+              npm version --no-git-tag-version ${{ steps.get-new-version.outputs.TARGET_VERSION }}
+              pnpm copy-version
 
           - name: Publish to npm
-            run: npm publish --provenance
+            run: pnpm publish --no-git-checks --provenance
 
           - name: Update lockfile
             run: |
               for i in $(seq 1 5); do
-                yarn install --no-immutable && exit 0
+                pnpm install --lockfile-only && exit 0
                 [ $i -lt 5 ] && echo "Attempt $i failed, waiting 30s before retry..." && sleep 30
               done
               exit 1

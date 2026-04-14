@@ -33,13 +33,13 @@ jobs:
         settings:
           - host: macos-latest
             target: x86_64-apple-darwin
-            build: yarn --cwd impit-node build --target x86_64-apple-darwin
+            build: pnpm build --target x86_64-apple-darwin
           - host: windows-latest
-            build: yarn --cwd impit-node build --target x86_64-pc-windows-msvc
+            build: pnpm build --target x86_64-pc-windows-msvc
             target: x86_64-pc-windows-msvc
           - host: ubuntu-22.04
             target: x86_64-unknown-linux-gnu
-            build: yarn --cwd impit-node build --target x86_64-unknown-linux-gnu
+            build: pnpm build --target x86_64-unknown-linux-gnu
           - host: ubuntu-22.04-arm
             target: aarch64-unknown-linux-musl
             docker: arm64v8/node:20-alpine
@@ -51,12 +51,11 @@ jobs:
                 apk update
                 apk upgrade
                 rustup-init -y
-                yarn global add pnpm lerna
-                corepack enable
-                yarn --cwd impit-node build
+                npm install -g pnpm@10.24.0
+                cd impit-node && pnpm install --frozen-lockfile && pnpm build
           - host: ubuntu-22.04-arm
             target: aarch64-unknown-linux-gnu
-            build: yarn --cwd impit-node build --target aarch64-unknown-linux-gnu
+            build: pnpm build --target aarch64-unknown-linux-gnu
           - host: ubuntu-latest
             target: x86_64-unknown-linux-musl
             docker: node:20-alpine
@@ -69,7 +68,7 @@ jobs:
                 apk update
                 apk upgrade
                 rustup-init -y
-                yarn global add pnpm lerna
+                npm install -g pnpm@10.24.0
                 rustup target add aarch64-unknown-linux-musl
                 wget https://github.com/napi-rs/napi-rs/releases/download/linux-musl-cross%4010/aarch64-linux-musl-cross.tgz
                 tar -xvf aarch64-linux-musl-cross.tgz
@@ -78,36 +77,28 @@ jobs:
                 ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/14.2.0/crtbeginS.o /usr/lib/crtbeginS.o
                 ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/14.2.0/crtendS.o /usr/lib/crtendS.o
                 ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/14.2.0/libgcc.a /usr/lib/libgcc.a
-                corepack enable
-                yarn --cwd impit-node build --target x86_64-unknown-linux-musl
+                cd impit-node && pnpm install --frozen-lockfile && pnpm build --target x86_64-unknown-linux-musl
           - host: macos-latest
             target: aarch64-apple-darwin
-            build: yarn --cwd impit-node build --target aarch64-apple-darwin
+            build: pnpm build --target aarch64-apple-darwin
           - host: windows-latest
             target: aarch64-pc-windows-msvc
-            build: yarn --cwd impit-node build --target aarch64-pc-windows-msvc
+            build: pnpm build --target aarch64-pc-windows-msvc
     name: stable - ${{ matrix.settings.target }} - node@22
     runs-on: ${{ matrix.settings.host }}
     steps:
       - uses: actions/checkout@v6
 
-      - name: Use Node.js 20
+      - name: Use Node.js 24
         uses: actions/setup-node@v6
         with:
           node-version: 24
 
-      - name: Enable Corepack
-        run: |
-          corepack enable
-          corepack prepare yarn@stable --activate
-
-      - name: Activate cache for Node.js 20
-        uses: actions/setup-node@v6
-        if: ${{ matrix.settings.target != 'x86_64-unknown-linux-musl' }}
+      - uses: pnpm/action-setup@v4.1.0
+        name: Install pnpm
         with:
-          node-version: 24
-          cache: yarn
-          cache-dependency-path: impit-node/yarn.lock
+          run_install: false
+
       - name: Install
         uses: dtolnay/rust-toolchain@stable
         if: ${{ !matrix.settings.docker }}
@@ -134,17 +125,19 @@ jobs:
         shell: bash
       - name: Setup node x86
         if: matrix.settings.target == 'i686-pc-windows-msvc'
-        run: yarn --cwd impit-node config set supportedArchitectures.cpu "ia32"
+        run: pnpm config set supportedArchitectures.cpu "ia32"
         shell: bash
       - name: Install dependencies
-        run: yarn --cwd impit-node install
+        if: ${{ !matrix.settings.docker }}
+        shell: bash
+        run: pnpm install --frozen-lockfile --prefer-offline --loglevel error
+        env:
+          HUSKY: "0"
       - name: Setup node x86
         uses: actions/setup-node@v6
         if: matrix.settings.target == 'i686-pc-windows-msvc'
         with:
           node-version: 24
-          cache: yarn
-          cache-dependency-path: impit-node/yarn.lock
           architecture: x86
       - name: Build in docker
         uses: maus007/docker-run-action-fork@207a4e2a8ebf7e4b985656ba990b1e53715dce2a
@@ -176,8 +169,10 @@ jobs:
           - host: windows-latest
             target: x86_64-pc-windows-msvc
         node:
+          - '18'
           - '20'
           - '22'
+          - '24'
     runs-on: ${{ matrix.settings.host }}
     steps:
       - uses: actions/checkout@v6
@@ -187,19 +182,17 @@ jobs:
           node-version: ${{ matrix.node }}
           architecture: x64
 
-      - name: Enable Corepack
-        run: |
-          corepack enable
-          corepack prepare yarn@stable --activate
-
-      - name: Activate cache for Node.js
-        uses: actions/setup-node@v6
+      - uses: pnpm/action-setup@v4.1.0
+        name: Install pnpm
         with:
-            cache: yarn
-            cache-dependency-path: impit-node/yarn.lock
+          run_install: false
 
       - name: Install dependencies
-        run: yarn --cwd impit-node install
+        working-directory: impit-node
+        shell: bash
+        run: pnpm install --frozen-lockfile --prefer-offline --loglevel error
+        env:
+          HUSKY: "0"
       - name: Download artifacts
         uses: actions/download-artifact@v8
         with:
@@ -209,9 +202,10 @@ jobs:
         run: ls -R .
         shell: bash
       - name: Test bindings
+        working-directory: impit-node
         env:
             APIFY_HTTPBIN_TOKEN: ${{ secrets.APIFY_HTTPBIN_TOKEN }}
-        run: yarn --cwd impit-node test
+        run: pnpm test
   test-linux-x64-gnu-binding:
     name: Test bindings on Linux-x64-gnu - node@${{ matrix.node }}
     needs:
@@ -220,8 +214,10 @@ jobs:
       fail-fast: false
       matrix:
         node:
+          - '18'
           - '20'
           - '22'
+          - '24'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -230,18 +226,17 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
 
-      - name: Enable Corepack
-        run: |
-          corepack enable
-          corepack prepare yarn@stable --activate
-
-      - name: Activate cache for Node.js
-        uses: actions/setup-node@v6
+      - uses: pnpm/action-setup@v4.1.0
+        name: Install pnpm
         with:
-            cache: yarn
-            cache-dependency-path: impit-node/yarn.lock
+          run_install: false
+
       - name: Install dependencies
-        run: yarn --cwd impit-node install
+        working-directory: impit-node
+        shell: bash
+        run: pnpm install --frozen-lockfile --prefer-offline --loglevel error
+        env:
+          HUSKY: "0"
       - name: Download artifacts
         uses: actions/download-artifact@v8
         with:
@@ -251,7 +246,7 @@ jobs:
         run: ls -R .
         shell: bash
       - name: Test bindings
-        run: docker run -e CI=1 -e APIFY_HTTPBIN_TOKEN=${{ secrets.APIFY_HTTPBIN_TOKEN }} --rm -v $(pwd):/build -w /build node:${{ matrix.node }}-slim sh -c "corepack enable && yarn --cwd impit-node test"
+        run: docker run -e CI=1 -e APIFY_HTTPBIN_TOKEN=${{ secrets.APIFY_HTTPBIN_TOKEN }} --rm -v $(pwd):/build -w /build node:${{ matrix.node }}-slim sh -c "npm install -g pnpm@10.24.0 && cd impit-node && pnpm test"
 
   test-linux-aarch64-gnu-binding:
     name: Test bindings on Linux-aarch64-gnu - node@${{ matrix.node }}
@@ -261,8 +256,10 @@ jobs:
       fail-fast: false
       matrix:
         node:
+          - '18'
           - '20'
           - '22'
+          - '24'
     runs-on: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v6
@@ -271,19 +268,17 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
 
-      - name: Enable Corepack
-        run: |
-          corepack enable
-          corepack prepare yarn@stable --activate
-
-      - name: Activate cache for Node.js
-        uses: actions/setup-node@v6
+      - uses: pnpm/action-setup@v4.1.0
+        name: Install pnpm
         with:
-            cache: yarn
-            cache-dependency-path: impit-node/yarn.lock
+          run_install: false
 
       - name: Install dependencies
-        run: yarn --cwd impit-node install
+        working-directory: impit-node
+        shell: bash
+        run: pnpm install --frozen-lockfile --prefer-offline --loglevel error
+        env:
+          HUSKY: "0"
       - name: Download artifacts
         uses: actions/download-artifact@v8
         with:
@@ -293,9 +288,10 @@ jobs:
         run: ls -R .
         shell: bash
       - name: Test bindings
+        working-directory: impit-node
         env:
             APIFY_HTTPBIN_TOKEN: ${{ secrets.APIFY_HTTPBIN_TOKEN }}
-        run: yarn --cwd impit-node test
+        run: pnpm test
 
   test-linux-aarch64-musl-binding:
     name: Test bindings on Linux-aarch64-musl - node@${{ matrix.node }}
@@ -305,8 +301,10 @@ jobs:
       fail-fast: false
       matrix:
         node:
+          - '18'
           - '20'
           - '22'
+          - '24'
     runs-on: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v6
@@ -314,17 +312,6 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
-
-      - name: Enable Corepack
-        run: |
-          corepack enable
-          corepack prepare yarn@stable --activate
-
-      - name: Activate cache for Node.js
-        uses: actions/setup-node@v6
-        with:
-            cache: yarn
-            cache-dependency-path: impit-node/yarn.lock
 
       - name: Download artifacts
         uses: actions/download-artifact@v8
@@ -336,7 +323,7 @@ jobs:
         shell: bash
       - name: Test bindings
         run: |
-          docker run -e CI=1 -e APIFY_HTTPBIN_TOKEN=${{ secrets.APIFY_HTTPBIN_TOKEN }} --rm -v $(pwd):/build -w /build arm64v8/node:${{ matrix.node }}-alpine sh -c "corepack enable && yarn --cwd impit-node install && yarn --cwd impit-node test"
+          docker run -e CI=1 -e APIFY_HTTPBIN_TOKEN=${{ secrets.APIFY_HTTPBIN_TOKEN }} --rm -v $(pwd):/build -w /build arm64v8/node:${{ matrix.node }}-alpine sh -c "npm install -g pnpm@10.24.0 && cd impit-node && pnpm install --frozen-lockfile && pnpm test"
 
   test-linux-x64-musl-binding:
     name: Test bindings on x86_64-unknown-linux-musl - node@${{ matrix.node }}
@@ -346,8 +333,10 @@ jobs:
       fail-fast: false
       matrix:
         node:
+          - '18'
           - '20'
           - '22'
+          - '24'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -355,17 +344,6 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
-
-      - name: Enable Corepack
-        run: |
-          corepack enable
-          corepack prepare yarn@stable --activate
-
-      - name: Activate cache for Node.js
-        uses: actions/setup-node@v6
-        with:
-            cache: yarn
-            cache-dependency-path: impit-node/yarn.lock
 
       - name: Download artifacts
         uses: actions/download-artifact@v8
@@ -377,5 +355,4 @@ jobs:
         shell: bash
       - name: Test bindings
         run: |
-          docker run -e CI=1 -e APIFY_HTTPBIN_TOKEN=${{ secrets.APIFY_HTTPBIN_TOKEN }} --rm -v $(pwd):/build -w /build node:${{ matrix.node }}-alpine sh -c "corepack enable && yarn --cwd impit-node install && yarn --cwd impit-node test"
-
+          docker run -e CI=1 -e APIFY_HTTPBIN_TOKEN=${{ secrets.APIFY_HTTPBIN_TOKEN }} --rm -v $(pwd):/build -w /build node:${{ matrix.node }}-alpine sh -c "npm install -g pnpm@10.24.0 && cd impit-node && pnpm install --frozen-lockfile && pnpm test"

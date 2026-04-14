@@ -52,23 +52,20 @@ jobs:
         with:
           node-version: 24
 
-      - name: Enable Corepack
-        run: |
-          corepack enable
-          corepack prepare yarn@stable --activate
-
-      - name: Activate cache for Node.js
-        uses: actions/setup-node@v6
+      - uses: pnpm/action-setup@v4.1.0
+        name: Install pnpm
         with:
-          node-version: 24
-          cache: yarn
-          cache-dependency-path: impit-node/yarn.lock
+          run_install: false
 
       - name: Install dependencies
-        run: cd impit-node && yarn
+        working-directory: impit-node
+        shell: bash
+        run: pnpm install --frozen-lockfile --prefer-offline --loglevel error
+        env:
+          HUSKY: "0"
 
       - name: Build docs
-        run: cd impit-node && yarn docs
+        run: cd impit-node && pnpm docs
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
