@@ -657,10 +657,26 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
                     let b: u64 = rng.random();
                     format!("----geckoformboundary{a:x}{b:x}")
                 }
+                "OkHttp" => Self::uuid_boundary(),
                 _ => Self::default_multipart_boundary(),
             },
             None => Self::default_multipart_boundary(),
         }
+    }
+
+    fn uuid_boundary() -> String {
+        let mut bytes = [0u8; 16];
+        rand::rng().fill(&mut bytes);
+        bytes[6] = (bytes[6] & 0x0f) | 0x40; // version 4
+        bytes[8] = (bytes[8] & 0x3f) | 0x80; // variant 1
+        format!(
+            "{:08x}-{:04x}-{:04x}-{:04x}-{:012x}",
+            u32::from_be_bytes([bytes[0], bytes[1], bytes[2], bytes[3]]),
+            u16::from_be_bytes([bytes[4], bytes[5]]),
+            u16::from_be_bytes([bytes[6], bytes[7]]),
+            u16::from_be_bytes([bytes[8], bytes[9]]),
+            u64::from_be_bytes([0, 0, bytes[10], bytes[11], bytes[12], bytes[13], bytes[14], bytes[15]]),
+        )
     }
 
     fn default_multipart_boundary() -> String {
