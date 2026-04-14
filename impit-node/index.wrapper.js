@@ -40,7 +40,7 @@ function canonicalizeHeaders(headers) {
     return [];
 }
 
-async function parseFetchOptions(resource, init, boundary) {
+async function parseFetchOptions(resource, init, getBoundary) {
     let url;
     let options = { ...init };
 
@@ -69,7 +69,7 @@ async function parseFetchOptions(resource, init, boundary) {
     options.headers = canonicalizeHeaders(options?.headers);
 
     if (options?.body) {
-        const { body: requestBody, type } = await castToTypedArray(options.body, boundary);
+        const { body: requestBody, type } = await castToTypedArray(options.body, getBoundary);
         options.body = requestBody;
         if (type && !options.headers.some(([key]) => key.toLowerCase() === 'content-type')) {
             options.headers.push(['Content-Type', type]);
@@ -155,7 +155,7 @@ class Impit extends native.Impit {
     }
 
     async fetch(resource, init) {
-        const { url: initialUrl, signal, redirect, ...options } = await parseFetchOptions(resource, init, super.getMultipartBoundary());
+        const { url: initialUrl, signal, redirect, ...options } = await parseFetchOptions(resource, init, () => super.getMultipartBoundary());
 
         // Check immediately if already aborted (before creating any promises)
         signal?.throwIfAborted();

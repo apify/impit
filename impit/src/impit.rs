@@ -1,6 +1,7 @@
 use tokio::sync::RwLock;
 
 use log::debug;
+use rand::Rng;
 use reqwest::{cookie::CookieStore, header::HeaderMap, Method, Response, Version};
 use std::{fmt::Debug, net::IpAddr, str::FromStr, sync::Arc, time::Duration};
 use url::Url;
@@ -639,8 +640,6 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
     }
 
     pub fn generate_multipart_boundary(&self) -> String {
-        use rand::Rng;
-
         match &self.config.fingerprint {
             Some(fp) => match fp.name.as_str() {
                 "Chrome" => {
@@ -665,7 +664,6 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
     }
 
     fn default_multipart_boundary() -> String {
-        use rand::Rng;
         let mut rng = rand::rng();
         let suffix: String = (0..16)
             .map(|_| rng.random_range(0u8..10).to_string())
