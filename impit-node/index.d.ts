@@ -77,7 +77,6 @@ export declare class Impit {
    * ```
    */
   constructor(options?: ImpitOptions | undefined | null)
-  getMultipartBoundary(): string
   /**
    * Fetch a URL with the given options.
    *

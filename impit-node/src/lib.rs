@@ -85,7 +85,7 @@ impl ImpitWrapper {
     })
   }
 
-  #[napi(js_name = "getMultipartBoundary")]
+  #[napi(js_name = "getMultipartBoundary", skip_typescript)]
   pub fn get_multipart_boundary(&self) -> String {
     self.inner.generate_multipart_boundary()
   }
