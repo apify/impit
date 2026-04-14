@@ -654,10 +654,9 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
                 }
                 "Firefox" => {
                     let mut rng = rand::rng();
-                    let suffix: String = (0..20)
-                        .map(|_| rng.random_range(0u8..10).to_string())
-                        .collect();
-                    format!("---------------------------{suffix}")
+                    let a: u64 = rng.random();
+                    let b: u64 = rng.random();
+                    format!("----geckoformboundary{a:x}{b:x}")
                 }
                 _ => Self::default_multipart_boundary(),
             },
