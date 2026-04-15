@@ -170,7 +170,6 @@ jobs:
           - host: windows-latest
             target: x86_64-pc-windows-msvc
         node:
-          - '18'
           - '20'
           - '22'
           - '24'
@@ -216,7 +215,6 @@ jobs:
       fail-fast: false
       matrix:
         node:
-          - '18'
           - '20'
           - '22'
           - '24'
@@ -259,7 +257,6 @@ jobs:
       fail-fast: false
       matrix:
         node:
-          - '18'
           - '20'
           - '22'
           - '24'
@@ -305,7 +302,6 @@ jobs:
       fail-fast: false
       matrix:
         node:
-          - '18'
           - '20'
           - '22'
           - '24'
@@ -337,7 +333,6 @@ jobs:
       fail-fast: false
       matrix:
         node:
-          - '18'
           - '20'
           - '22'
           - '24'
