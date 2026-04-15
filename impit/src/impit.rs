@@ -637,4 +637,11 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
     ) -> Result<Response, ImpitError> {
         self.make_request(Method::PATCH, url, body, options).await
     }
+
+    pub fn generate_multipart_boundary(&self) -> String {
+        match &self.config.fingerprint {
+            Some(fp) => fp.generate_multipart_boundary(),
+            None => crate::fingerprint::default_multipart_boundary(),
+        }
+    }
 }

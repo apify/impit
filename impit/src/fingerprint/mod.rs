@@ -6,6 +6,8 @@
 pub mod database;
 mod types;
 
+use rand::Rng;
+
 pub use types::*;
 
 /// A complete browser fingerprint containing TLS, HTTP/2, and HTTP header configurations.
@@ -34,6 +36,36 @@ impl BrowserFingerprint {
             headers,
         }
     }
+
+    pub fn generate_multipart_boundary(&self) -> String {
+        match self.name.as_str() {
+            "Chrome" => {
+                const CHARS: &[u8] =
+                    b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+                let mut rng = rand::rng();
+                let suffix: String = (0..16)
+                    .map(|_| CHARS[rng.random_range(0..CHARS.len())] as char)
+                    .collect();
+                format!("----WebKitFormBoundary{suffix}")
+            }
+            "Firefox" => {
+                let mut rng = rand::rng();
+                let a: u64 = rng.random();
+                let b: u64 = rng.random();
+                format!("----geckoformboundary{a:x}{b:x}")
+            }
+            "OkHttp" => uuid::Uuid::new_v4().to_string(),
+            _ => default_multipart_boundary(),
+        }
+    }
+}
+
+pub fn default_multipart_boundary() -> String {
+    let mut rng = rand::rng();
+    let suffix: String = (0..16)
+        .map(|_| rng.random_range(0u8..10).to_string())
+        .collect();
+    format!("----formdata-impit-{suffix}")
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]

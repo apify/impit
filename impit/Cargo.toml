@@ -21,3 +21,5 @@ rustls-platform-verifier = "0.6"
 webpki-root-certs = "1.0.5"
 hyper-util = "0.1.18"
 hyper = "1.7.0"
+rand = "0.9"
+uuid = { version = "1", features = ["v4"] }

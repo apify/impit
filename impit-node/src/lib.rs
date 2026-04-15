@@ -85,6 +85,11 @@ impl ImpitWrapper {
     })
   }
 
+  #[napi(js_name = "getMultipartBoundary", skip_typescript)]
+  pub fn get_multipart_boundary(&self) -> String {
+    self.inner.generate_multipart_boundary()
+  }
+
   #[napi(ts_args_type = "resource: string | URL | Request, init?: RequestInit")]
   /// Fetch a URL with the given options.
   ///
