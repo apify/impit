@@ -1,4 +1,3 @@
-const { castToTypedArray } = require('./request.js');
 const errors = require('./errors.js');
 const { rethrowNativeError } = errors;
 let native = null;
@@ -104,6 +103,100 @@ class Impit extends native.Impit {
         }
     }
 
+    // Taken from https://github.com/nodejs/undici/blob/14e62db0d0cff4bea27357aa5bd14881459b27c7/lib/web/fetch/body.js#L120
+    async #generateMultipartFormData(formData) {
+        const boundary = super.getMultipartBoundary();
+        const prefix = `--${boundary}\r\nContent-Disposition: form-data`;
+
+        /*! formdata-polyfill. MIT License. Jimmy Wärting <https://jimmy.warting.se/opensource> */
+        const escape = (str) => str.replace(/\n/g, '%0A').replace(/\r/g, '%0D').replace(/"/g, '%22');
+        const normalizeLinefeeds = (value) => value.replace(/\r?\n|\r/g, '\r\n');
+
+        const blobParts = [];
+        const rn = new Uint8Array([13, 10]);
+        const textEncoder = new TextEncoder();
+
+        for (const [name, value] of formData) {
+            if (typeof value === 'string') {
+                const chunk = textEncoder.encode(prefix +
+                    `; name="${escape(normalizeLinefeeds(name))}"` +
+                    `\r\n\r\n${normalizeLinefeeds(value)}\r\n`);
+                blobParts.push(chunk);
+            } else {
+                const chunk = textEncoder.encode(`${prefix}; name="${escape(normalizeLinefeeds(name))}"` +
+                    (value.name ? `; filename="${escape(value.name)}"` : '') + '\r\n' +
+                    `Content-Type: ${value.type || 'application/octet-stream'}\r\n\r\n`);
+                blobParts.push(chunk, value, rn);
+            }
+        }
+
+        blobParts.push(textEncoder.encode(`--${boundary}--\r\n`));
+
+        const action = async function* () {
+            for (const part of blobParts) {
+                if (part.stream) {
+                    yield* part.stream();
+                } else {
+                    yield part;
+                }
+            }
+        };
+
+        const parts = [];
+        for await (const part of action()) {
+            if (part instanceof Uint8Array) {
+                parts.push(part);
+            } else if (part instanceof Blob) {
+                parts.push(new Uint8Array(await part.arrayBuffer()));
+            } else {
+                throw new TypeError('Unsupported part type');
+            }
+        }
+        const body = new Uint8Array(parts.reduce((acc, part) => acc + part.length, 0));
+        let offset = 0;
+        for (const part of parts) {
+            body.set(part, offset);
+            offset += part.length;
+        }
+
+        return { body, type: `multipart/form-data; boundary=${boundary}` };
+    }
+
+    // Based on https://github.com/nodejs/undici/blob/14e62db0d0cff4bea27357aa5bd14881459b27c7/lib/web/fetch/body.js#L90
+    async #serializeBody(body) {
+        if (typeof body === 'string') {
+            return { body: new TextEncoder().encode(body), type: 'text/plain;charset=UTF-8' };
+        } else if (body instanceof URLSearchParams) {
+            return { body: new TextEncoder().encode(body.toString()), type: 'application/x-www-form-urlencoded;charset=UTF-8' };
+        } else if (body instanceof ArrayBuffer) {
+            return { body: new Uint8Array(body.slice()), type: '' };
+        } else if (ArrayBuffer.isView(body)) {
+            return { body: new Uint8Array(body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength)), type: '' };
+        } else if (body instanceof Blob) {
+            return { body: new Uint8Array(await body.arrayBuffer()), type: body.type };
+        } else if (body instanceof FormData) {
+            return await this.#generateMultipartFormData(body);
+        } else if (body instanceof ReadableStream) {
+            const reader = body.getReader();
+            const chunks = [];
+            let done = false;
+            while (!done) {
+                const { done: streamDone, value } = await reader.read();
+                done = streamDone;
+                if (value) chunks.push(value);
+            }
+            const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
+            const typedArray = new Uint8Array(totalLength);
+            let offset = 0;
+            for (const chunk of chunks) {
+                typedArray.set(chunk, offset);
+                offset += chunk.length;
+            }
+            return { body: typedArray, type: '' };
+        }
+        return { body, type: '' };
+    }
+
     async #parseFetchOptions(resource, init) {
         let url;
         let options = { ...init };
@@ -128,8 +221,7 @@ class Impit extends native.Impit {
         options.headers = canonicalizeHeaders(options?.headers);
 
         if (options?.body) {
-            const boundary = options.body instanceof FormData ? super.getMultipartBoundary() : undefined;
-            const { body: requestBody, type } = await castToTypedArray(options.body, boundary);
+            const { body: requestBody, type } = await this.#serializeBody(options.body);
             options.body = requestBody;
             if (type && !options.headers.some(([key]) => key.toLowerCase() === 'content-type')) {
                 options.headers.push(['Content-Type', type]);
