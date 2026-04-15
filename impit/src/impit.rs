@@ -1,7 +1,6 @@
 use tokio::sync::RwLock;
 
 use log::debug;
-use rand::Rng;
 use reqwest::{cookie::CookieStore, header::HeaderMap, Method, Response, Version};
 use std::{fmt::Debug, net::IpAddr, str::FromStr, sync::Arc, time::Duration};
 use url::Url;
@@ -641,38 +640,8 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
 
     pub fn generate_multipart_boundary(&self) -> String {
         match &self.config.fingerprint {
-            Some(fp) => match fp.name.as_str() {
-                "Chrome" => {
-                    const CHARS: &[u8] =
-                        b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-                    let mut rng = rand::rng();
-                    let suffix: String = (0..16)
-                        .map(|_| CHARS[rng.random_range(0..CHARS.len())] as char)
-                        .collect();
-                    format!("----WebKitFormBoundary{suffix}")
-                }
-                "Firefox" => {
-                    let mut rng = rand::rng();
-                    let a: u64 = rng.random();
-                    let b: u64 = rng.random();
-                    format!("----geckoformboundary{a:x}{b:x}")
-                }
-                "OkHttp" => Self::uuid_boundary(),
-                _ => Self::default_multipart_boundary(),
-            },
-            None => Self::default_multipart_boundary(),
+            Some(fp) => fp.generate_multipart_boundary(),
+            None => crate::fingerprint::default_multipart_boundary(),
         }
-    }
-
-    fn uuid_boundary() -> String {
-        uuid::Uuid::new_v4().to_string()
-    }
-
-    fn default_multipart_boundary() -> String {
-        let mut rng = rand::rng();
-        let suffix: String = (0..16)
-            .map(|_| rng.random_range(0u8..10).to_string())
-            .collect();
-        format!("----formdata-impit-{suffix}")
     }
 }
