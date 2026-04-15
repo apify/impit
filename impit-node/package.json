@@ -42,6 +42,13 @@
   "engines": {
     "node": ">= 20"
   },
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "10.x",
+      "onFail": "error"
+    }
+  },
   "scripts": {
     "artifacts": "napi artifacts --output-dir ../artifacts --npm-dir npm",
     "build": "napi build --platform --release --no-const-enum",
