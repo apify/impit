@@ -40,56 +40,6 @@ function canonicalizeHeaders(headers) {
     return [];
 }
 
-async function parseFetchOptions(resource, init, getBoundary) {
-    let url;
-    let options = { ...init };
-
-    // Handle Request instance
-    if (resource instanceof Request) {
-        url = resource.url;
-        options = {
-            method: resource.method,
-            headers: resource.headers,
-            body: resource.body,
-            ...init, // init overrides Request fields
-        };
-        // Extract redirect from Request only if not already set by init.
-        // Request.redirect defaults to 'follow', which is indistinguishable
-        // from an explicit 'follow', so we only use it when non-default to
-        // avoid silently overriding instance-level followRedirects.
-        if (!('redirect' in options) && resource.redirect !== 'follow') {
-            options.redirect = resource.redirect;
-        }
-    } else if (resource.toString) {
-        url = resource.toString();
-    } else {
-        url = resource;
-    }
-
-    options.headers = canonicalizeHeaders(options?.headers);
-
-    if (options?.body) {
-        const { body: requestBody, type } = await castToTypedArray(options.body, getBoundary);
-        options.body = requestBody;
-        if (type && !options.headers.some(([key]) => key.toLowerCase() === 'content-type')) {
-            options.headers.push(['Content-Type', type]);
-        }
-    } else {
-        delete options.body;
-    }
-
-    return {
-        url: url,
-        method: options.method,
-        headers: options.headers,
-        body: options.body,
-        timeout: options.timeout,
-        forceHttp3: options.forceHttp3,
-        signal: options.signal,
-        redirect: options.redirect,
-    };
-}
-
 function isRedirectStatus(status) {
     return [301, 302, 303, 307, 308].includes(status);
 }
@@ -154,8 +104,54 @@ class Impit extends native.Impit {
         }
     }
 
+    async #parseFetchOptions(resource, init) {
+        let url;
+        let options = { ...init };
+
+        if (resource instanceof Request) {
+            url = resource.url;
+            options = {
+                method: resource.method,
+                headers: resource.headers,
+                body: resource.body,
+                ...init,
+            };
+            if (!('redirect' in options) && resource.redirect !== 'follow') {
+                options.redirect = resource.redirect;
+            }
+        } else if (resource.toString) {
+            url = resource.toString();
+        } else {
+            url = resource;
+        }
+
+        options.headers = canonicalizeHeaders(options?.headers);
+
+        if (options?.body) {
+            const boundary = options.body instanceof FormData ? super.getMultipartBoundary() : undefined;
+            const { body: requestBody, type } = await castToTypedArray(options.body, boundary);
+            options.body = requestBody;
+            if (type && !options.headers.some(([key]) => key.toLowerCase() === 'content-type')) {
+                options.headers.push(['Content-Type', type]);
+            }
+        } else {
+            delete options.body;
+        }
+
+        return {
+            url: url,
+            method: options.method,
+            headers: options.headers,
+            body: options.body,
+            timeout: options.timeout,
+            forceHttp3: options.forceHttp3,
+            signal: options.signal,
+            redirect: options.redirect,
+        };
+    }
+
     async fetch(resource, init) {
-        const { url: initialUrl, signal, redirect, ...options } = await parseFetchOptions(resource, init, () => super.getMultipartBoundary());
+        const { url: initialUrl, signal, redirect, ...options } = await this.#parseFetchOptions(resource, init);
 
         // Check immediately if already aborted (before creating any promises)
         signal?.throwIfAborted();

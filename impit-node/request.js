@@ -75,7 +75,7 @@ async function generateMultipartFormData(formData, boundary) {
 
 
 // logic from https://github.com/nodejs/undici/blob/14e62db0d0cff4bea27357aa5bd14881459b27c7/lib/web/fetch/body.js#L90
-async function castToTypedArray(body, getBoundary) {
+async function castToTypedArray(body, boundary) {
     let typedArray = body;
     let type = "";
 
@@ -94,7 +94,7 @@ async function castToTypedArray(body, getBoundary) {
         typedArray = new Uint8Array(await body.arrayBuffer());
         type = body.type;
     } else if (body instanceof FormData) {
-        return await generateMultipartFormData(body, getBoundary());
+        return await generateMultipartFormData(body, boundary);
     } else if (body instanceof ReadableStream) {
         const reader = body.getReader();
         const chunks = [];
