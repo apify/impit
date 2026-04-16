@@ -42,13 +42,6 @@
   "engines": {
     "node": ">= 20"
   },
-  "devEngines": {
-    "packageManager": {
-      "name": "pnpm",
-      "version": "10.x",
-      "onFail": "error"
-    }
-  },
   "scripts": {
     "artifacts": "napi artifacts --output-dir ../artifacts --npm-dir npm",
     "build": "napi build --platform --release --no-const-enum",
@@ -57,7 +50,8 @@
     "prepublishOnly": "napi prepublish -t npm --no-gh-release",
     "test": "vitest --retry=3 && node ./test/e2e/run-e2e-tests.mjs",
     "universal": "napi universal",
-    "copy-version": "napi version"
+    "copy-version": "napi version",
+    "preinstall": "npx only-allow pnpm"
   },
   "packageManager": "pnpm@10.24.0",
   "description": "Impit for JavaScript",
