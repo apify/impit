@@ -52,18 +52,10 @@ jobs:
         with:
           node-version: 24
 
-      - uses: pnpm/action-setup@v4.1.0
-        name: Install pnpm
+      - name: Install pnpm and dependencies
+        uses: apify/workflows/pnpm-install@main
         with:
-          version: 10.24.0
-          run_install: false
-
-      - name: Install dependencies
-        working-directory: impit-node
-        shell: bash
-        run: pnpm install --frozen-lockfile --prefer-offline --loglevel error
-        env:
-          HUSKY: "0"
+          working-directory: impit-node
 
       - name: Build docs
         run: cd impit-node && pnpm run docs

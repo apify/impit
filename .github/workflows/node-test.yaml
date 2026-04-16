@@ -94,11 +94,11 @@ jobs:
         with:
           node-version: 24
 
-      - uses: pnpm/action-setup@v4.1.0
-        name: Install pnpm
+      - name: Install pnpm and dependencies
+        if: ${{ !matrix.settings.docker }}
+        uses: apify/workflows/pnpm-install@main
         with:
-          version: 10.24.0
-          run_install: false
+          working-directory: impit-node
 
       - name: Install
         uses: dtolnay/rust-toolchain@stable
@@ -128,12 +128,6 @@ jobs:
         if: matrix.settings.target == 'i686-pc-windows-msvc'
         run: pnpm config set supportedArchitectures.cpu "ia32"
         shell: bash
-      - name: Install dependencies
-        if: ${{ !matrix.settings.docker }}
-        shell: bash
-        run: pnpm install --frozen-lockfile --prefer-offline --loglevel error
-        env:
-          HUSKY: "0"
       - name: Setup node x86
         uses: actions/setup-node@v6
         if: matrix.settings.target == 'i686-pc-windows-msvc'
@@ -182,18 +176,11 @@ jobs:
           node-version: ${{ matrix.node }}
           architecture: x64
 
-      - uses: pnpm/action-setup@v4.1.0
-        name: Install pnpm
+      - name: Install pnpm and dependencies
+        uses: apify/workflows/pnpm-install@main
         with:
-          version: 10.24.0
-          run_install: false
+          working-directory: impit-node
 
-      - name: Install dependencies
-        working-directory: impit-node
-        shell: bash
-        run: pnpm install --frozen-lockfile --prefer-offline --loglevel error
-        env:
-          HUSKY: "0"
       - name: Download artifacts
         uses: actions/download-artifact@v8
         with:
@@ -226,18 +213,11 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
 
-      - uses: pnpm/action-setup@v4.1.0
-        name: Install pnpm
+      - name: Install pnpm and dependencies
+        uses: apify/workflows/pnpm-install@main
         with:
-          version: 10.24.0
-          run_install: false
+          working-directory: impit-node
 
-      - name: Install dependencies
-        working-directory: impit-node
-        shell: bash
-        run: pnpm install --frozen-lockfile --prefer-offline --loglevel error
-        env:
-          HUSKY: "0"
       - name: Download artifacts
         uses: actions/download-artifact@v8
         with:
@@ -268,18 +248,11 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
 
-      - uses: pnpm/action-setup@v4.1.0
-        name: Install pnpm
+      - name: Install pnpm and dependencies
+        uses: apify/workflows/pnpm-install@main
         with:
-          version: 10.24.0
-          run_install: false
+          working-directory: impit-node
 
-      - name: Install dependencies
-        working-directory: impit-node
-        shell: bash
-        run: pnpm install --frozen-lockfile --prefer-offline --loglevel error
-        env:
-          HUSKY: "0"
       - name: Download artifacts
         uses: actions/download-artifact@v8
         with:
