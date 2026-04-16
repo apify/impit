@@ -67,11 +67,11 @@ jobs:
           - name: Calculate version
             id: get-new-version
             run: |
-              echo ::set-output name=TARGET_VERSION::$(pnpm dlx semver --increment ${{ github.event.inputs.bump }} $(npm show impit version))
+              echo "TARGET_VERSION=$(pnpm dlx semver --increment ${{ github.event.inputs.bump }} $(npm show impit version))" >> "$GITHUB_OUTPUT"
 
           - name: Set version
             run: |
-              npm version --no-git-tag-version ${{ steps.get-new-version.outputs.TARGET_VERSION }}
+              pnpm version --no-git-tag-version ${{ steps.get-new-version.outputs.TARGET_VERSION }}
               pnpm copy-version
 
           - name: Publish to npm
