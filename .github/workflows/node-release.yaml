@@ -93,6 +93,7 @@ jobs:
                 author_email: noreply@apify.com
                 message: "chore(js-release): Update package version [skip ci]"
                 tag: "js-${{ steps.get-new-version.outputs.TARGET_VERSION }}"
+                pull: '--rebase --autostash'
 
     changelog:
       name: Generate changelog
@@ -124,6 +125,7 @@ jobs:
             author_email: github-actions[bot]@users.noreply.github.com
             message: "docs: update changelog [skip ci]"
             add: 'impit-node/CHANGELOG.md'
+            pull: '--rebase --autostash'
 
         - name: Create release
           uses: softprops/action-gh-release@v2
