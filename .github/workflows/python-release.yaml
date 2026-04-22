@@ -65,6 +65,7 @@ jobs:
             message: "chore(py-release): bump `pyproject.toml` version [skip ci]"
             add: 'impit-python/pyproject.toml'
             tag: "py-${{ steps.increment_version.outputs.new_version }}"
+            pull: '--rebase --autostash'
 
     test:
         needs: [get_version]
@@ -133,6 +134,7 @@ jobs:
             author_email: github-actions[bot]@users.noreply.github.com
             message: "docs: update changelog [skip ci]"
             add: 'impit-python/CHANGELOG.md'
+            pull: '--rebase --autostash'
 
         - name: Create release
           uses: softprops/action-gh-release@v2

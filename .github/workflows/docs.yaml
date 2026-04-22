@@ -52,23 +52,13 @@ jobs:
         with:
           node-version: 24
 
-      - name: Enable Corepack
-        run: |
-          corepack enable
-          corepack prepare yarn@stable --activate
-
-      - name: Activate cache for Node.js
-        uses: actions/setup-node@v6
+      - name: Install pnpm and dependencies
+        uses: apify/workflows/pnpm-install@main
         with:
-          node-version: 24
-          cache: yarn
-          cache-dependency-path: impit-node/yarn.lock
-
-      - name: Install dependencies
-        run: cd impit-node && yarn
+          working-directory: impit-node
 
       - name: Build docs
-        run: cd impit-node && yarn docs
+        run: cd impit-node && pnpm run docs
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
