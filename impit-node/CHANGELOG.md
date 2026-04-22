@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 
 
+## js-0.13.1 - 2026-04-22
+
+#### Bug Fixes
+
+- Decode non-ASCII response header values as ISO-8859-1 (#434)
+
+- Use browser-matching multipart boundary format (#435)
+  - Moves multipart boundary generation from JS to Rust where the browser fingerprint is available. Each browser profile now produces boundaries matching the real browser format:  - Chrome: `----WebKitFormBoundary` + 16 alphanumeric chars - Firefox: `----geckoformboundary` + two random uint64 hex values - OkHttp: UUID v4 (`xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx`) - No fingerprint: `----formdata-impit-*` (default, unchanged)  The boundary is generated lazily — the NAPI call only happens when the body is actually a `FormData` instance. The method is not exposed in public types.
+
+
+
 ## js-0.13.0 - 2026-03-26
 
 #### Features
