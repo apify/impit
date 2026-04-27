@@ -6,6 +6,7 @@ minimumReleaseAgeExclude:
   - "apify"
   - "crawlee"
   - "got-scraping"
+  - "impit-*"
 
 nodeLinker: hoisted
 linkWorkspacePackages: true
