@@ -1,5 +1,9 @@
 const errors = require('./errors.js');
 const { rethrowNativeError } = errors;
+const {
+    VanillaFallbackController,
+    cloneHeadersWithSetCookie,
+} = require('./vanilla-fallback.js');
 let native = null;
 try {
     native = require('./index.js');
@@ -58,19 +62,36 @@ class Impit extends native.Impit {
     #cookieJar;
     #followRedirects;
     #maxRedirects;
+    #vanillaFallbackEnabled;
+    #vanillaClient = null;
+    #vanillaClientOptions;
+    #vanillaFallbackController;
 
     constructor(options) {
+        const normalizedOptions = {
+            ...options,
+            headers: canonicalizeHeaders(options?.headers),
+        };
+
         // Pass options to native. When cookieJar is provided, pass a truthy value
         // to signal that JS handles cookies (actual cookie ops happen in JS).
         // Redirects are always handled in JS layer.
-        super({
-            ...options,
-            headers: canonicalizeHeaders(options?.headers),
-        });
+        super(normalizedOptions);
 
         this.#cookieJar = options?.cookieJar;
         this.#followRedirects = options?.followRedirects ?? true;
         this.#maxRedirects = options?.maxRedirects ?? 20;
+        this.#vanillaFallbackEnabled = Boolean(options?.browser && options?.vanillaFallback);
+        this.#vanillaFallbackController = this.#vanillaFallbackEnabled
+            ? new VanillaFallbackController(options)
+            : null;
+        this.#vanillaClientOptions = this.#vanillaFallbackEnabled
+            ? {
+                ...normalizedOptions,
+                browser: undefined,
+                vanillaFallback: false,
+            }
+            : null;
     }
 
     /**
@@ -242,6 +263,44 @@ class Impit extends native.Impit {
         };
     }
 
+    async #fetchWithCompatibilityTransport(rawUrl, options) {
+        return this.#vanillaFallbackController.fetchWithCompatibilityTransport(rawUrl, options);
+    }
+
+    #getVanillaClient() {
+        if (!this.#vanillaFallbackEnabled) {
+            return null;
+        }
+
+        if (!this.#vanillaClient) {
+            this.#vanillaClient = new native.Impit(this.#vanillaClientOptions);
+        }
+
+        return this.#vanillaClient;
+    }
+
+    async #fetchWithVanillaFallback(url, options) {
+        try {
+            return await super.fetch(url, options);
+        } catch (error) {
+            if (!this.#vanillaFallbackEnabled || !this.#vanillaFallbackController?.shouldRetry(error)) {
+                throw error;
+            }
+
+            const parsedUrl = new URL(url);
+            if (this.#vanillaFallbackController.canUseCompatibilityTransport(parsedUrl)) {
+                return this.#fetchWithCompatibilityTransport(url, options);
+            }
+
+            const vanillaClient = this.#getVanillaClient();
+            if (!vanillaClient) {
+                throw error;
+            }
+
+            return vanillaClient.fetch(url, options);
+        }
+    }
+
     async fetch(resource, init) {
         const { url: initialUrl, signal, redirect, ...options } = await this.#parseFetchOptions(resource, init);
 
@@ -294,7 +353,7 @@ class Impit extends native.Impit {
                 }
             }
 
-            const response = super.fetch(url, {
+            const response = this.#fetchWithVanillaFallback(url, {
                 ...options,
                 method,
                 headers,
@@ -394,7 +453,7 @@ class Impit extends native.Impit {
         });
 
         Object.defineProperty(originalResponse, 'headers', {
-            value: new Headers(originalResponse.headers)
+            value: cloneHeadersWithSetCookie(originalResponse.headers)
         });
 
         Object.defineProperty(originalResponse, 'clone', {

@@ -1,9 +1,16 @@
 import http from 'http';
+import https from 'https';
 import { test, describe, expect, beforeAll, afterAll } from 'vitest';
 
 import { HttpMethod, Impit, Browser } from '../index.wrapper.js';
 import type { AddressInfo, Server } from 'net';
 import { routes, runProxyServer, runServer } from './mock.server.js';
+import {
+    createTransportFailure,
+    createWrappedResponse,
+    LOCALHOST_TLS_CERT,
+    LOCALHOST_TLS_KEY,
+} from './vanilla-fallback.helpers.js';
 
 import { CookieJar } from 'tough-cookie';
 import { runSocksServer } from 'socks-server-lib';
@@ -862,4 +869,247 @@ describe.each([
             expect(response.headers.get('location')).toBe('/get');
         });
     })
+});
+
+describe('vanillaFallback', () => {
+    test('retries with the compatibility transport and preserves per-request options', async () => {
+        const nativePrototype = Object.getPrototypeOf(Impit.prototype);
+        const originalFetch = nativePrototype.fetch;
+        const cookieJar = {
+            async getCookieString() {
+                return 'session=abc';
+            },
+            async setCookie() {},
+        };
+        const callers: Array<{
+            isWrapper: boolean;
+            headers: [string, string][];
+            timeout: number | undefined;
+        }> = [];
+
+        nativePrototype.fetch = async function (url: string, init?: any) {
+            callers.push({
+                isWrapper: this instanceof Impit,
+                headers: [...(init?.headers ?? [])],
+                timeout: init?.timeout,
+            });
+
+            if (this instanceof Impit) {
+                throw createTransportFailure();
+            }
+
+            return originalFetch.call(this, url, init);
+        };
+
+        try {
+            const impit = new Impit({
+                browser: Browser.Chrome,
+                vanillaFallback: true,
+                cookieJar,
+            });
+            const response = await impit.fetch(getHttpBinUrl('/headers'), {
+                headers: { 'Impit-Test': 'foo' },
+                timeout: 1234,
+            });
+            const json = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(callers).toHaveLength(1);
+            expect(callers[0]?.isWrapper).toBe(true);
+            expect(callers[0]?.headers).toContainEqual(['Impit-Test', 'foo']);
+            expect(callers[0]?.headers).toContainEqual(['Cookie', 'session=abc']);
+            expect(callers[0]?.timeout).toBe(1234);
+            expect(json.headers?.['Impit-Test']).toBe('foo');
+            expect(json.headers?.Cookie).toBe('session=abc');
+            expect(json.headers?.['Accept-Encoding']).toBe('gzip, deflate, br');
+        } finally {
+            nativePrototype.fetch = originalFetch;
+        }
+    });
+
+    test('uses the compatibility transport through an HTTP proxy', async () => {
+        const nativePrototype = Object.getPrototypeOf(Impit.prototype);
+        const originalFetch = nativePrototype.fetch;
+        let wrapperCalls = 0;
+
+        nativePrototype.fetch = async function () {
+            wrapperCalls += 1;
+            throw createTransportFailure();
+        };
+
+        try {
+            const impit = new Impit({
+                browser: Browser.Chrome,
+                vanillaFallback: true,
+                proxyUrl: 'http://localhost:3002',
+            });
+            const response = await impit.fetch(getHttpBinUrl('/get'));
+            const json = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(wrapperCalls).toBe(1);
+            expect(json).toHaveProperty('url');
+            expect(json).toHaveProperty('headers');
+        } finally {
+            nativePrototype.fetch = originalFetch;
+        }
+    });
+
+    test('aborts compatibility fallback requests and closes the socket', async () => {
+        const nativePrototype = Object.getPrototypeOf(Impit.prototype);
+        const originalFetch = nativePrototype.fetch;
+        let clientSocketClosed = false;
+        let resolveConnectionSeen!: () => void;
+        let resolveSocketClosed!: () => void;
+        const connectionSeen = new Promise<void>((resolve) => {
+            resolveConnectionSeen = resolve;
+        });
+        const socketClosed = new Promise<void>((resolve) => {
+            resolveSocketClosed = resolve;
+        });
+        const hangingServer = https.createServer({
+            key: LOCALHOST_TLS_KEY,
+            cert: LOCALHOST_TLS_CERT,
+        }, (_req, res) => {
+            setTimeout(() => {
+                res.end('late');
+            }, 1000);
+        });
+        hangingServer.on('secureConnection', (socket) => {
+            resolveConnectionSeen();
+            socket.on('close', () => {
+                clientSocketClosed = true;
+                resolveSocketClosed();
+            });
+        });
+
+        await new Promise<void>((resolve) => hangingServer.listen(0, '127.0.0.1', () => resolve()));
+        const port = (hangingServer.address() as AddressInfo).port;
+
+        nativePrototype.fetch = async function () {
+            throw createTransportFailure();
+        };
+
+        try {
+            const impit = new Impit({
+                browser: Browser.Chrome,
+                vanillaFallback: true,
+                ignoreTlsErrors: true,
+            });
+
+            await expect(
+                impit.fetch(`https://127.0.0.1:${port}/`, {
+                    signal: AbortSignal.timeout(200),
+                }),
+            ).rejects.toBeTruthy();
+
+            await Promise.race([
+                connectionSeen,
+                new Promise((_, reject) => setTimeout(() => reject(new Error('socket was never opened')), 1000)),
+            ]);
+            await Promise.race([
+                socketClosed,
+                new Promise((_, reject) => setTimeout(() => reject(new Error('socket was not closed after abort')), 1000)),
+            ]);
+            expect(clientSocketClosed).toBe(true);
+        } finally {
+            nativePrototype.fetch = originalFetch;
+            hangingServer.closeAllConnections?.();
+            await new Promise<void>((resolve, reject) =>
+                hangingServer.close((error) => (error ? reject(error) : resolve())),
+            );
+        }
+    }, 10_000);
+
+    test('delegates to the native vanilla client when compatibility transport cannot preserve proxy semantics', async () => {
+        const nativePrototype = Object.getPrototypeOf(Impit.prototype);
+        const originalFetch = nativePrototype.fetch;
+        const callers: boolean[] = [];
+
+        nativePrototype.fetch = async function (url: string) {
+            callers.push(this instanceof Impit);
+
+            if (this instanceof Impit) {
+                throw createTransportFailure();
+            }
+
+            return createWrappedResponse('vanilla ok', url);
+        };
+
+        try {
+            const impit = new Impit({
+                browser: Browser.Chrome,
+                vanillaFallback: true,
+                proxyUrl: 'socks5://localhost:7625',
+            });
+
+            const response = await impit.fetch('https://example.com/');
+
+            expect(await response.text()).toBe('vanilla ok');
+            expect(callers).toEqual([true, false]);
+        } finally {
+            nativePrototype.fetch = originalFetch;
+        }
+    });
+
+    test('does not retry post-send transport failures', async () => {
+        const nativePrototype = Object.getPrototypeOf(Impit.prototype);
+        const originalFetch = nativePrototype.fetch;
+        const originalHttpRequest = http.request;
+        const originalHttpsRequest = https.request;
+        let compatibilityTransportCalls = 0;
+
+        nativePrototype.fetch = async function () {
+            throw new Error('ReadError: Failed to read data from the server.');
+        };
+        http.request = ((...args: Parameters<typeof http.request>) => {
+            compatibilityTransportCalls += 1;
+            return originalHttpRequest(...args);
+        }) as typeof http.request;
+        https.request = ((...args: Parameters<typeof https.request>) => {
+            compatibilityTransportCalls += 1;
+            return originalHttpsRequest(...args);
+        }) as typeof https.request;
+
+        try {
+            const impit = new Impit({
+                browser: Browser.Chrome,
+                vanillaFallback: true,
+            });
+
+            await expect(impit.fetch('https://example.com/')).rejects.toThrow(
+                /Failed to read data from the server/i,
+            );
+            expect(compatibilityTransportCalls).toBe(0);
+        } finally {
+            nativePrototype.fetch = originalFetch;
+            http.request = originalHttpRequest;
+            https.request = originalHttpsRequest;
+        }
+    });
+
+    test('does not retry when vanillaFallback is disabled', async () => {
+        const nativePrototype = Object.getPrototypeOf(Impit.prototype);
+        const originalFetch = nativePrototype.fetch;
+        let callCount = 0;
+
+        nativePrototype.fetch = async function () {
+            callCount += 1;
+            throw createTransportFailure();
+        };
+
+        try {
+            const impit = new Impit({
+                browser: Browser.Chrome,
+                vanillaFallback: false,
+            });
+
+            await expect(impit.fetch('http://localhost:3001/get')).rejects.toThrow(
+                /internal HTTP library/i,
+            );
+            expect(callCount).toBe(1);
+        } finally {
+            nativePrototype.fetch = originalFetch;
+        }
+    });
 });
