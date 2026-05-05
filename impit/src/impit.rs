@@ -27,6 +27,13 @@ pub struct Impit<CookieStoreImpl: CookieStore + 'static> {
     config: ImpitBuilder<CookieStoreImpl>,
 }
 
+struct PreparedRequest {
+    method: Method,
+    url: Url,
+    headers: HeaderMap,
+    body: Option<Vec<u8>>,
+}
+
 impl<CookieStoreImpl: CookieStore + 'static> Default for Impit<CookieStoreImpl> {
     fn default() -> Self {
         ImpitBuilder::<CookieStoreImpl>::default().build().unwrap()
@@ -314,11 +321,13 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
         }
 
         let vanilla_client = if config.vanilla_fallback && config.fingerprint.is_some() {
-            Some(Self::new_reqwest_client(&ImpitBuilder::<CookieStoreImpl> {
-                fingerprint: None,
-                max_http_version: Version::HTTP_2,
-                ..config.clone()
-            })?)
+            Some(Self::new_reqwest_client(
+                &ImpitBuilder::<CookieStoreImpl> {
+                    fingerprint: None,
+                    max_http_version: Version::HTTP_2,
+                    ..config.clone()
+                },
+            )?)
         } else {
             None
         };
@@ -416,14 +425,13 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
     async fn execute_request(
         &self,
         client: &reqwest::Client,
-        method: Method,
-        url: Url,
-        headers: HeaderMap,
-        body: Option<Vec<u8>>,
+        prepared: &PreparedRequest,
         timeout: Option<Duration>,
         h3: bool,
     ) -> Result<Response, reqwest::Error> {
-        let mut req = client.request(method, url).headers(headers);
+        let mut req = client
+            .request(prepared.method.clone(), prepared.url.clone())
+            .headers(prepared.headers.clone());
 
         if h3 {
             req = req.version(Version::HTTP_3);
@@ -433,7 +441,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
             req = req.timeout(t);
         }
 
-        if let Some(b) = body {
+        if let Some(b) = prepared.body.clone() {
             req = req.body(b);
         }
 
@@ -478,17 +486,14 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
             RedirectBehavior::ManualRedirect => 0,
         };
 
-        let primary_result = self
-            .execute_request(
-                client,
-                method.clone(),
-                request.url.clone(),
-                header_map.clone(),
-                request.body.clone(),
-                timeout,
-                h3,
-            )
-            .await;
+        let prepared = PreparedRequest {
+            method: method.clone(),
+            url: request.url.clone(),
+            headers: header_map,
+            body: request.body,
+        };
+
+        let primary_result = self.execute_request(client, &prepared, timeout, h3).await;
 
         let response = match primary_result {
             Ok(resp) => resp,
@@ -504,7 +509,10 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
                     }),
                 );
 
-                let fallback_client = self.vanilla_client.as_ref().filter(|_| primary_error.is_connect_error());
+                let fallback_client = self
+                    .vanilla_client
+                    .as_ref()
+                    .filter(|_| primary_error.is_connect_error());
                 let Some(vanilla_client) = fallback_client else {
                     return Err(primary_error);
                 };
@@ -513,15 +521,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
                     "Primary request to {url} failed with {primary_error}, retrying with vanilla client"
                 );
                 match self
-                    .execute_request(
-                        vanilla_client,
-                        method.clone(),
-                        request.url.clone(),
-                        header_map,
-                        request.body,
-                        timeout,
-                        false,
-                    )
+                    .execute_request(vanilla_client, &prepared, timeout, false)
                     .await
                 {
                     Ok(resp) => resp,
