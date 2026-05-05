@@ -22,6 +22,7 @@ use crate::{
 pub struct Impit<CookieStoreImpl: CookieStore + 'static> {
     pub(self) base_client: reqwest::Client,
     pub(self) h3_client: Option<reqwest::Client>,
+    pub(self) vanilla_client: Option<reqwest::Client>,
     h3_engine: Arc<RwLock<Option<H3Engine>>>,
     config: ImpitBuilder<CookieStoreImpl>,
 }
@@ -107,7 +108,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Default for ImpitBuilder<CookieStor
         ImpitBuilder {
             fingerprint: None,
             ignore_tls_errors: false,
-            vanilla_fallback: true,
+            vanilla_fallback: false,
             proxy_url: String::new(),
             request_timeout: Duration::from_secs(30),
             max_http_version: Version::HTTP_2,
@@ -312,6 +313,16 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
             })?;
         }
 
+        let vanilla_client = if config.vanilla_fallback && config.fingerprint.is_some() {
+            Some(Self::new_reqwest_client(&ImpitBuilder::<CookieStoreImpl> {
+                fingerprint: None,
+                max_http_version: Version::HTTP_2,
+                ..config.clone()
+            })?)
+        } else {
+            None
+        };
+
         // Set pseudo-header order from fingerprint or fall back to browser enum
         let pseudo_headers_order: Vec<String> = if let Some(ref fingerprint) = config.fingerprint {
             fingerprint.http2.pseudo_header_order.to_vec()
@@ -329,6 +340,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
         Ok(Impit {
             base_client,
             h3_client,
+            vanilla_client,
             config,
             h3_engine: Arc::new(RwLock::new(None)),
         })
@@ -401,6 +413,33 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
         }
     }
 
+    async fn execute_request(
+        &self,
+        client: &reqwest::Client,
+        method: Method,
+        url: Url,
+        headers: HeaderMap,
+        body: Option<Vec<u8>>,
+        timeout: Option<Duration>,
+        h3: bool,
+    ) -> Result<Response, reqwest::Error> {
+        let mut req = client.request(method, url).headers(headers);
+
+        if h3 {
+            req = req.version(Version::HTTP_3);
+        }
+
+        if let Some(t) = timeout {
+            req = req.timeout(t);
+        }
+
+        if let Some(b) = body {
+            req = req.body(b);
+        }
+
+        req.send().await
+    }
+
     async fn send(
         &self,
         request: ImpitRequest,
@@ -426,40 +465,35 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
             &self.base_client
         };
 
-        let header_map: Result<HeaderMap, ImpitError> = HttpHeaders::from(request.headers).into();
+        let header_map_result: Result<HeaderMap, ImpitError> =
+            HttpHeaders::from(request.headers).into();
+        let header_map = header_map_result?;
 
         let method = Method::from_str(&request.method).map_err(|_| {
             ImpitError::InvalidMethod(format!("Invalid HTTP method: {}", request.method))
         })?;
 
-        let mut client_request = client
-            .request(method.clone(), request.url.clone())
-            .headers(header_map?);
-
-        if h3 {
-            client_request = client_request.version(Version::HTTP_3);
-        }
-
-        if let Some(timeout) = timeout {
-            client_request = client_request.timeout(timeout);
-        }
-
-        client_request = match request.body {
-            Some(body) => client_request.body(body),
-            None => client_request,
+        let max_redirects = match self.config.redirect {
+            RedirectBehavior::FollowRedirect(max) => max,
+            RedirectBehavior::ManualRedirect => 0,
         };
 
-        let response = client_request.send().await;
+        let primary_result = self
+            .execute_request(
+                client,
+                method.clone(),
+                request.url.clone(),
+                header_map.clone(),
+                request.body.clone(),
+                timeout,
+                h3,
+            )
+            .await;
 
-        let response = match response {
+        let response = match primary_result {
             Ok(resp) => resp,
             Err(err) => {
-                let max_redirects = match self.config.redirect {
-                    RedirectBehavior::FollowRedirect(max) => max,
-                    RedirectBehavior::ManualRedirect => 0,
-                };
-
-                return Err(ImpitError::from(
+                let primary_error = ImpitError::from(
                     err,
                     Some(ErrorContext {
                         timeout: Some(timeout.unwrap_or(self.config.request_timeout)),
@@ -468,7 +502,31 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
                         protocol: Some(request.url.scheme().to_string()),
                         url: Some(url.clone()),
                     }),
-                ));
+                );
+
+                let fallback_client = self.vanilla_client.as_ref().filter(|_| primary_error.is_connect_error());
+                let Some(vanilla_client) = fallback_client else {
+                    return Err(primary_error);
+                };
+
+                debug!(
+                    "Primary request to {url} failed with {primary_error}, retrying with vanilla client"
+                );
+                match self
+                    .execute_request(
+                        vanilla_client,
+                        method.clone(),
+                        request.url.clone(),
+                        header_map,
+                        request.body,
+                        timeout,
+                        false,
+                    )
+                    .await
+                {
+                    Ok(resp) => resp,
+                    Err(_) => return Err(primary_error),
+                }
             }
         };
 

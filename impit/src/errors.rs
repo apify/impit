@@ -105,6 +105,10 @@ impl From<reqwest::Error> for ImpitError {
 }
 
 impl ImpitError {
+    pub fn is_connect_error(&self) -> bool {
+        matches!(self, ImpitError::ConnectError(_))
+    }
+
     pub fn from(error: reqwest::Error, context: Option<ErrorContext>) -> Self {
         let context = context.unwrap_or_default();
         if error.is_timeout() {
