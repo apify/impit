@@ -3,6 +3,15 @@
 All notable changes to this project will be documented in this file.
 
 
+## js-0.14.0 - 2026-05-07
+
+#### Features
+
+- Return the `vanillaFallback` option as an alternative for failing requests (#441)
+  - The `vanillaFallback` option has been noop in a few of the latest versions of `impit`. The changes from this PR return this feature to support, e.g., servers with old TLS stacks that uncover some of the emulation discrepancies and cause the requests to fail.
+
+
+
 ## js-0.13.1 - 2026-04-22
 
 #### Bug Fixes
