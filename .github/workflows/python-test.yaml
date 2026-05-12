@@ -183,7 +183,7 @@ jobs:
           githubToken: ${{ github.token }}
           dockerRunArgs: -v ${{ github.workspace }}:/io -w /io/impit-python
           env: |
-            APIFY_HTTPBIN_TOKEN: ${{ secrets.APIFY_HTTPBIN_TOKEN }}
+            APIFY_HTTPBIN_TOKEN: ${{ secrets.APIFY_HTTPBIN_TOKEN || '' }}
           install: |
             apk add py3-virtualenv
           run: |
