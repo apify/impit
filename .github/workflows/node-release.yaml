@@ -28,7 +28,7 @@ jobs:
 
     publish:
         outputs:
-          bumped-version-commit-sha: ${{ steps.commit.outputs.commit_long_sha || github.sha }}
+          bumped-version-commit-sha: ${{ steps.commit.outputs.commit-sha || github.sha }}
           new_version: ${{ steps.get-new-version.outputs.TARGET_VERSION }}
         defaults:
           run:
@@ -85,15 +85,29 @@ jobs:
               done
               exit 1
 
+          - name: Stage changes
+            working-directory: .
+            run: |
+              git pull --rebase --autostash
+              git add -A
+
           - name: Commit changes
             id: commit
-            uses: EndBug/add-and-commit@v10
+            uses: apify/workflows/commit@v0.44.0
             with:
-                author_name: Apify Release Bot
-                author_email: noreply@apify.com
-                message: "chore(js-release): Update package version [skip ci]"
-                tag: "js-${{ steps.get-new-version.outputs.TARGET_VERSION }}"
-                pull: '--rebase --autostash'
+                commit-message: "chore(js-release): Update package version [skip ci]"
+                github-token: ${{ secrets.APIFY_SERVICE_ACCOUNT_GITHUB_TOKEN }}
+
+          - name: Create version tag
+            working-directory: .
+            env:
+              GH_TOKEN: ${{ secrets.APIFY_SERVICE_ACCOUNT_GITHUB_TOKEN }}
+              TAG_NAME: "js-${{ steps.get-new-version.outputs.TARGET_VERSION }}"
+              COMMIT_SHA: ${{ steps.commit.outputs.commit-sha }}
+            run: |
+              gh api -X POST "repos/${GITHUB_REPOSITORY}/git/refs" \
+                -f ref="refs/tags/${TAG_NAME}" \
+                -f sha="${COMMIT_SHA}"
 
     changelog:
       name: Generate changelog
@@ -117,15 +131,24 @@ jobs:
             OUTPUT: impit-node/CHANGELOG.md
             GITHUB_REPO: ${{ github.repository }}
 
+        - name: Stage new changelog
+          id: stage_changelog
+          run: |
+            git pull --rebase --autostash
+            git add impit-node/CHANGELOG.md
+            if git diff --cached --quiet; then
+              echo "has-changes=false" >> "$GITHUB_OUTPUT"
+            else
+              echo "has-changes=true" >> "$GITHUB_OUTPUT"
+            fi
+
         - name: Commit new changelog
           id: commit_changelog
-          uses: EndBug/add-and-commit@v10
+          if: steps.stage_changelog.outputs.has-changes == 'true'
+          uses: apify/workflows/commit@v0.44.0
           with:
-            author_name: github-actions[bot]
-            author_email: github-actions[bot]@users.noreply.github.com
-            message: "docs: update changelog [skip ci]"
-            add: 'impit-node/CHANGELOG.md'
-            pull: '--rebase --autostash'
+            commit-message: "docs: update changelog [skip ci]"
+            github-token: ${{ secrets.APIFY_SERVICE_ACCOUNT_GITHUB_TOKEN }}
 
         - name: Create release
           uses: softprops/action-gh-release@v2
