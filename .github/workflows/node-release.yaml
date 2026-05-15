@@ -28,7 +28,7 @@ jobs:
 
     publish:
         outputs:
-          bumped-version-commit-sha: ${{ steps.commit.outputs.commit_sha || github.sha }}
+          bumped-version-commit-sha: ${{ steps.commit.outputs.commit_long_sha }}
           new_version: ${{ steps.get-new-version.outputs.TARGET_VERSION }}
         defaults:
           run:
@@ -98,7 +98,7 @@ jobs:
             env:
               GH_TOKEN: ${{ secrets.APIFY_SERVICE_ACCOUNT_GITHUB_TOKEN }}
               TAG_NAME: "js-${{ steps.get-new-version.outputs.TARGET_VERSION }}"
-              COMMIT_SHA: ${{ steps.commit.outputs.commit_sha }}
+              COMMIT_SHA: ${{ steps.commit.outputs.commit_long_sha }}
             run: |
               gh api -X POST "repos/${GITHUB_REPOSITORY}/git/refs" \
                 -f ref="refs/tags/${TAG_NAME}" \
