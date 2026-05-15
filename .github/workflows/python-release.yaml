@@ -19,7 +19,7 @@ jobs:
     get_version:
       runs-on: ubuntu-latest
       outputs:
-        bumped-version-commit-sha: ${{ steps.commit_version.outputs.commit_sha || github.sha }}
+        bumped-version-commit-sha: ${{ steps.commit_version.outputs.commit_sha }}
         new_version: ${{ steps.increment_version.outputs.new_version }}
       steps:
         - uses: actions/checkout@v6
@@ -123,7 +123,7 @@ jobs:
             token: ${{ secrets.APIFY_SERVICE_ACCOUNT_GITHUB_TOKEN }}
             ref: master
             fetch-depth: 0
-  
+
         - name: Generate a changelog
           uses: orhun/git-cliff-action@v4
           id: git-cliff
