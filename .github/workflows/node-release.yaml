@@ -28,7 +28,7 @@ jobs:
 
     publish:
         outputs:
-          bumped-version-commit-sha: ${{ steps.commit.outputs.commit-sha || github.sha }}
+          bumped-version-commit-sha: ${{ steps.commit.outputs.commit_sha || github.sha }}
           new_version: ${{ steps.get-new-version.outputs.TARGET_VERSION }}
         defaults:
           run:
@@ -85,17 +85,12 @@ jobs:
               done
               exit 1
 
-          - name: Stage changes
-            working-directory: .
-            run: |
-              git pull --rebase --autostash
-              git add -A
-
           - name: Commit changes
             id: commit
-            uses: apify/workflows/commit@v0.44.0
+            uses: apify/actions/signed-commit@v1.0.0
             with:
-                commit-message: "chore(js-release): Update package version [skip ci]"
+                message: "chore(js-release): Update package version [skip ci]"
+                pull: '--rebase --autostash'
                 github-token: ${{ secrets.APIFY_SERVICE_ACCOUNT_GITHUB_TOKEN }}
 
           - name: Create version tag
@@ -103,7 +98,7 @@ jobs:
             env:
               GH_TOKEN: ${{ secrets.APIFY_SERVICE_ACCOUNT_GITHUB_TOKEN }}
               TAG_NAME: "js-${{ steps.get-new-version.outputs.TARGET_VERSION }}"
-              COMMIT_SHA: ${{ steps.commit.outputs.commit-sha }}
+              COMMIT_SHA: ${{ steps.commit.outputs.commit_sha }}
             run: |
               gh api -X POST "repos/${GITHUB_REPOSITORY}/git/refs" \
                 -f ref="refs/tags/${TAG_NAME}" \
@@ -131,23 +126,13 @@ jobs:
             OUTPUT: impit-node/CHANGELOG.md
             GITHUB_REPO: ${{ github.repository }}
 
-        - name: Stage new changelog
-          id: stage_changelog
-          run: |
-            git pull --rebase --autostash
-            git add impit-node/CHANGELOG.md
-            if git diff --cached --quiet; then
-              echo "has-changes=false" >> "$GITHUB_OUTPUT"
-            else
-              echo "has-changes=true" >> "$GITHUB_OUTPUT"
-            fi
-
         - name: Commit new changelog
           id: commit_changelog
-          if: steps.stage_changelog.outputs.has-changes == 'true'
-          uses: apify/workflows/commit@v0.44.0
+          uses: apify/actions/signed-commit@v1.0.0
           with:
-            commit-message: "docs: update changelog [skip ci]"
+            message: "docs: update changelog [skip ci]"
+            add: impit-node/CHANGELOG.md
+            pull: '--rebase --autostash'
             github-token: ${{ secrets.APIFY_SERVICE_ACCOUNT_GITHUB_TOKEN }}
 
         - name: Create release
