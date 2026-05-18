@@ -19,7 +19,7 @@ jobs:
     get_version:
       runs-on: ubuntu-latest
       outputs:
-        bumped-version-commit-sha: ${{ steps.commit_version.outputs.commit_long_sha || github.sha }}
+        bumped-version-commit-sha: ${{ steps.commit_version.outputs.commit_long_sha }}
         new_version: ${{ steps.increment_version.outputs.new_version }}
       steps:
         - uses: actions/checkout@v6
@@ -58,14 +58,22 @@ jobs:
 
         - name: Commit new version
           id: commit_version
-          uses: EndBug/add-and-commit@v10
+          uses: apify/actions/signed-commit@v1.1.2
           with:
-            author_name: github-actions[bot]
-            author_email: github-actions[bot]@users.noreply.github.com
             message: "chore(py-release): bump `pyproject.toml` version [skip ci]"
-            add: 'impit-python/pyproject.toml'
-            tag: "py-${{ steps.increment_version.outputs.new_version }}"
+            add: impit-python/pyproject.toml
             pull: '--rebase --autostash'
+            github-token: ${{ secrets.APIFY_SERVICE_ACCOUNT_GITHUB_TOKEN }}
+
+        - name: Create version tag
+          env:
+            GH_TOKEN: ${{ secrets.APIFY_SERVICE_ACCOUNT_GITHUB_TOKEN }}
+            TAG_NAME: "py-${{ steps.increment_version.outputs.new_version }}"
+            COMMIT_SHA: ${{ steps.commit_version.outputs.commit_long_sha }}
+          run: |
+            gh api -X POST "repos/${GITHUB_REPOSITORY}/git/refs" \
+              -f ref="refs/tags/${TAG_NAME}" \
+              -f sha="${COMMIT_SHA}"
 
     test:
         needs: [get_version]
@@ -115,7 +123,7 @@ jobs:
             token: ${{ secrets.APIFY_SERVICE_ACCOUNT_GITHUB_TOKEN }}
             ref: master
             fetch-depth: 0
-  
+
         - name: Generate a changelog
           uses: orhun/git-cliff-action@v4
           id: git-cliff
@@ -128,13 +136,12 @@ jobs:
 
         - name: Commit new changelog
           id: commit_changelog
-          uses: EndBug/add-and-commit@v10
+          uses: apify/actions/signed-commit@v1.1.2
           with:
-            author_name: github-actions[bot]
-            author_email: github-actions[bot]@users.noreply.github.com
             message: "docs: update changelog [skip ci]"
-            add: 'impit-python/CHANGELOG.md'
+            add: impit-python/CHANGELOG.md
             pull: '--rebase --autostash'
+            github-token: ${{ secrets.APIFY_SERVICE_ACCOUNT_GITHUB_TOKEN }}
 
         - name: Create release
           uses: softprops/action-gh-release@v2
