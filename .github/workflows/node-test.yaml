@@ -96,7 +96,7 @@ jobs:
 
       - name: Install pnpm and dependencies
         if: ${{ !matrix.settings.docker }}
-        uses: apify/workflows/pnpm-install@main
+        uses: apify/actions/pnpm-install@v1.1.2
         with:
           working-directory: impit-node
 
@@ -167,6 +167,15 @@ jobs:
           - '20'
           - '22'
           - '24'
+        exclude:
+          # @pnpm/exe does not ship a working binary for Intel macOS (darwin-x64) due to an upstream Node.js SEA bug.
+          # See https://github.com/pnpm/pnpm/issues/11423 and https://github.com/nodejs/node/issues/62893.
+          # We just skip this combination, as Node 20 is EOL anyway,
+          # and we test the same target on Node 22+, so chances are that the bindings work on Node 20 as well.
+          - settings:
+              host: macos-latest
+              target: x86_64-apple-darwin
+            node: '20'
     runs-on: ${{ matrix.settings.host }}
     steps:
       - uses: actions/checkout@v6
@@ -177,7 +186,7 @@ jobs:
           architecture: x64
 
       - name: Install pnpm and dependencies
-        uses: apify/workflows/pnpm-install@main
+        uses: apify/actions/pnpm-install@v1.1.2
         with:
           working-directory: impit-node
 
@@ -214,7 +223,7 @@ jobs:
           node-version: ${{ matrix.node }}
 
       - name: Install pnpm and dependencies
-        uses: apify/workflows/pnpm-install@main
+        uses: apify/actions/pnpm-install@v1.1.2
         with:
           working-directory: impit-node
 
@@ -249,7 +258,7 @@ jobs:
           node-version: ${{ matrix.node }}
 
       - name: Install pnpm and dependencies
-        uses: apify/workflows/pnpm-install@main
+        uses: apify/actions/pnpm-install@v1.1.2
         with:
           working-directory: impit-node
 
