@@ -96,7 +96,7 @@ jobs:
 
       - name: Install pnpm and dependencies
         if: ${{ !matrix.settings.docker }}
-        uses: apify/actions/pnpm-install@v1.1.0
+        uses: apify/actions/pnpm-install@v1.1.1
         with:
           working-directory: impit-node
 
@@ -177,7 +177,7 @@ jobs:
           architecture: x64
 
       - name: Install pnpm and dependencies
-        uses: apify/actions/pnpm-install@v1.1.0
+        uses: apify/actions/pnpm-install@v1.1.1
         with:
           working-directory: impit-node
 
@@ -214,7 +214,7 @@ jobs:
           node-version: ${{ matrix.node }}
 
       - name: Install pnpm and dependencies
-        uses: apify/actions/pnpm-install@v1.1.0
+        uses: apify/actions/pnpm-install@v1.1.1
         with:
           working-directory: impit-node
 
@@ -249,7 +249,7 @@ jobs:
           node-version: ${{ matrix.node }}
 
       - name: Install pnpm and dependencies
-        uses: apify/actions/pnpm-install@v1.1.0
+        uses: apify/actions/pnpm-install@v1.1.1
         with:
           working-directory: impit-node
 
