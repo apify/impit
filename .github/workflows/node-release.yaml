@@ -87,7 +87,7 @@ jobs:
 
           - name: Commit changes
             id: commit
-            uses: apify/actions/signed-commit@v1.0.0
+            uses: apify/actions/signed-commit@v1.1.2
             with:
                 message: "chore(js-release): Update package version [skip ci]"
                 pull: '--rebase --autostash'
@@ -128,7 +128,7 @@ jobs:
 
         - name: Commit new changelog
           id: commit_changelog
-          uses: apify/actions/signed-commit@v1.0.0
+          uses: apify/actions/signed-commit@v1.1.2
           with:
             message: "docs: update changelog [skip ci]"
             add: impit-node/CHANGELOG.md
