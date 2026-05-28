@@ -1,24 +1,16 @@
 use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::sync::{Mutex, RwLock};
+use tokio::sync::RwLock;
 
 use hickory_proto::rr::rdata::svcb::SvcParamValue;
-use hickory_proto::rr::{Name, RData};
-use hickory_proto::runtime::TokioRuntimeProvider;
-use hickory_proto::ProtoError;
-
-use hickory_client::client::{Client, ClientHandle};
-use hickory_client::proto::runtime::iocompat::AsyncIoTokioAsStd;
-use hickory_client::proto::tcp::TcpClientStream;
+use hickory_proto::rr::{Name, RData, RecordType};
+use hickory_resolver::TokioResolver;
 use log::debug;
-use tokio::net::TcpStream as TokioTcpStream;
 
 /// A struct encapsulating the components required to make HTTP/3 requests.
 pub struct H3Engine {
-    /// The DNS client used to resolve DNS queries.
-    client: Arc<Option<Mutex<Client>>>,
-    /// The background task that processes DNS queries.
-    bg_join_handle: Option<tokio::task::JoinHandle<Result<(), ProtoError>>>,
+    /// The DNS resolver used to query HTTPS records for h3 discovery.
+    resolver: Option<TokioResolver>,
     /// A map of hosts that support HTTP/3.
     ///
     /// This is populated by the DNS queries and manual calls to `set_h3_support` (based on the `Alt-Svc` header).
@@ -28,33 +20,17 @@ pub struct H3Engine {
 
 impl H3Engine {
     pub async fn init() -> Self {
-        // todo: use the DNS server from the system config
-        let (stream, sender) = TcpClientStream::<AsyncIoTokioAsStd<TokioTcpStream>>::new(
-            ([8, 8, 8, 8], 53).into(),
-            None,
-            None,
-            TokioRuntimeProvider::new(),
-        );
-        let client_result = Client::new(stream, sender, None).await;
-
-        match client_result {
-            Ok((client, bg)) => {
-                let bg_join_handle = tokio::spawn(bg);
-
-                H3Engine {
-                    client: Arc::new(Some(Mutex::new(client))),
-                    bg_join_handle: Some(bg_join_handle),
-                    h3_alt_svc: Arc::new(RwLock::new(HashMap::new())),
-                }
-            }
+        let resolver = match TokioResolver::builder_tokio().and_then(|builder| builder.build()) {
+            Ok(resolver) => Some(resolver),
             Err(err) => {
-                debug!("Failed to create DNS client for HTTP3 resolution: {}", err);
-                H3Engine {
-                    client: Arc::new(None),
-                    bg_join_handle: None,
-                    h3_alt_svc: Arc::new(RwLock::new(HashMap::new())),
-                }
+                debug!("Failed to create DNS resolver for HTTP3 resolution: {}", err);
+                None
             }
+        };
+
+        H3Engine {
+            resolver,
+            h3_alt_svc: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 
@@ -71,23 +47,14 @@ impl H3Engine {
             Err(_) => return false,
         };
 
-        if let Some(client) = self.client.as_ref() {
-            let response = {
-                let mut client = client.lock().await;
-                client
-                    .query(
-                        domain_name,
-                        hickory_proto::rr::DNSClass::IN,
-                        hickory_proto::rr::RecordType::HTTPS,
-                    )
-                    .await
-            };
+        if let Some(resolver) = self.resolver.as_ref() {
+            let response = resolver.lookup(domain_name, RecordType::HTTPS).await;
 
             let dns_h3_support = response.is_ok_and(|response| {
                 response.answers().iter().any(|answer| {
-                    if let RData::HTTPS(data) = answer.data() {
-                        return data.svc_params().iter().any(|param| {
-                            if let SvcParamValue::Alpn(alpn_protocols) = param.1.clone() {
+                    if let RData::HTTPS(data) = &answer.data {
+                        return data.0.svc_params.iter().any(|param| {
+                            if let SvcParamValue::Alpn(alpn_protocols) = &param.1 {
                                 return alpn_protocols.0.iter().any(|alpn| alpn == "h3");
                             }
 
@@ -113,13 +80,5 @@ impl H3Engine {
         }
 
         cache.insert(host.to_owned(), supports_h3);
-    }
-}
-
-impl Drop for H3Engine {
-    fn drop(&mut self) {
-        if let Some(join_handle) = self.bg_join_handle.as_ref() {
-            join_handle.abort();
-        }
     }
 }
