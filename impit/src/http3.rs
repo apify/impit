@@ -23,7 +23,10 @@ impl H3Engine {
         let resolver = match TokioResolver::builder_tokio().and_then(|builder| builder.build()) {
             Ok(resolver) => Some(resolver),
             Err(err) => {
-                debug!("Failed to create DNS resolver for HTTP3 resolution: {}", err);
+                debug!(
+                    "Failed to create DNS resolver for HTTP3 resolution: {}",
+                    err
+                );
                 None
             }
         };
