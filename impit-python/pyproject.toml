@@ -135,5 +135,8 @@ warn_unused_ignores = true
 module = ["pproxy"]
 ignore_missing_imports = true
 
+[tool.uv]
+exclude-newer = "1 day"
+
 [tool.uv.sources]
 stubdoc = { git = "https://github.com/bayashi-cl/stubdoc" }

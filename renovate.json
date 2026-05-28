@@ -12,6 +12,9 @@
 		"automerge": true,
 		"automergeType": "branch"
 	},
+	"cargo": {
+		"enabled": false
+	},
 	"packageRules": [
 		{
 			"matchUpdateTypes": ["patch", "minor"],
