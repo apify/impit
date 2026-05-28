@@ -144,7 +144,7 @@ jobs:
             github-token: ${{ secrets.APIFY_SERVICE_ACCOUNT_GITHUB_TOKEN }}
 
         - name: Create release
-          uses: softprops/action-gh-release@v2
+          uses: softprops/action-gh-release@v3
           with:
             tag_name: "py-${{ needs.get_version.outputs.new_version }}"
             name: "impit-python@${{ needs.get_version.outputs.new_version }}"
