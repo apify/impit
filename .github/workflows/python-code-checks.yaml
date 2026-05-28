@@ -4,6 +4,9 @@ on:
   workflow_dispatch: null
   workflow_call:
 
+permissions:
+  contents: read
+
 jobs:
   lint_check:
     name: Lint check
