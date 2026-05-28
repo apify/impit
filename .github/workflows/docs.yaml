@@ -82,7 +82,7 @@ jobs:
         uses: astral-sh/setup-uv@v7
 
       - name: Disable automatic `uv` builds
-        run: printf "\n[tool.uv]\npackage = false" >> pyproject.toml
+        run: sed -i '/^\[tool\.uv\]$/a package = false' pyproject.toml
         working-directory: impit-python
 
       - name: Install dependencies
