@@ -27,7 +27,7 @@ jobs:
           python-version: "${{ matrix.python-version }}"
 
       - name: Disable automatic `uv` builds
-        run: printf "\n[tool.uv]\npackage = false" >> pyproject.toml
+        run: sed -i '/^\[tool\.uv\]$/a package = false' pyproject.toml
         working-directory: impit-python
 
       - name: Install Python dependencies
@@ -60,7 +60,7 @@ jobs:
           python-version: "${{ matrix.python-version }}"
 
       - name: Disable automatic `uv` builds
-        run: printf "\n[tool.uv]\npackage = false" >> pyproject.toml
+        run: sed -i '/^\[tool\.uv\]$/a package = false' pyproject.toml
         working-directory: impit-python
 
       - name: Install Python dependencies
