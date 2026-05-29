@@ -3,6 +3,21 @@
 All notable changes to this project will be documented in this file.
 
 
+## js-0.14.1 - 2026-05-29
+
+#### Bug Fixes
+
+- Handle missing APIFY_HTTPBIN_TOKEN in musllinux aarch64 Python tests (#444)
+  - Third-party PRs run without repository secrets, and the `musllinux` `aarch64` Python job was passing `APIFY_HTTPBIN_TOKEN` to `run-on-arch-action` in a way that produced a non-flat env value. That caused the job to fail before tests could use their existing fallback behavior.  ---------
+
+
+- Migrate `http3` DNS lookup from `hickory-client` to `hickory-resolver` (#454)
+  - `impit/src/http3.rs` only used hickory to fire a single HTTPS-record DNS query against a hard-coded `8.8.8.8:53` for h3 discovery. Migrated that to `hickory-resolver 0.26.1`, which: - pulls in the patched `hickory-proto 0.26.1`, - uses the system DNS config instead of hard-coding Google's resolver, - drops the manual background-task plumbing and `Drop` impl since the resolver manages its own connections.  API shifts handled along the way: `Record::data()` → `Record.data` (now a public field), `SVCB::svc_params()` → `SVCB.svc_params` (public field).
+
+
+- Drop only-allow preinstall from the published package (#464)
+
+
 ## js-0.14.0 - 2026-05-07
 
 #### Features
