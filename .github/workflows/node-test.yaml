@@ -42,7 +42,7 @@ jobs:
             build: pnpm build --target x86_64-unknown-linux-gnu
           - host: ubuntu-22.04-arm
             target: aarch64-unknown-linux-musl
-            docker: arm64v8/node:20-alpine
+            docker: arm64v8/node:22-alpine
             build: |-
                 export PATH="/usr/local/cargo/bin/rustup:/root/.cargo/bin:$PATH" RUSTFLAGS="-C target-feature=-crt-static --cfg reqwest_unstable" CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER=gcc CC=gcc CXX="g++" GN_EXE=gn
                 apk add --update --no-cache bash wget cmake musl-dev clang llvm build-base python3 gcc g++ perl
@@ -58,7 +58,7 @@ jobs:
             build: pnpm build --target aarch64-unknown-linux-gnu
           - host: ubuntu-latest
             target: x86_64-unknown-linux-musl
-            docker: node:20-alpine
+            docker: node:22-alpine
             # Script taken from https://github.com/napi-rs/napi-rs/blob/main/alpine.Dockerfile
             build: |
                 export PATH="/aarch64-linux-musl-cross/bin:/usr/local/cargo/bin/rustup:/root/.cargo/bin:$PATH" RUSTFLAGS="-C target-feature=-crt-static --cfg reqwest_unstable" CC="clang" CXX="clang++" GN_EXE=gn
