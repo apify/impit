@@ -36,6 +36,7 @@ pub enum Browser {
   OkHttp3,
   OkHttp4,
   OkHttp5,
+  Ios18,
 }
 
 /// Options for configuring an {@link Impit} instance.
@@ -143,6 +144,7 @@ impl From<Browser> for BrowserFingerprint {
       Browser::OkHttp3 => impit::fingerprint::database::okhttp3::fingerprint(),
       Browser::OkHttp | Browser::OkHttp4 => impit::fingerprint::database::okhttp4::fingerprint(),
       Browser::OkHttp5 => impit::fingerprint::database::okhttp5::fingerprint(),
+      Browser::Ios18 => impit::fingerprint::database::ios_18::fingerprint(),
     }
   }
 }

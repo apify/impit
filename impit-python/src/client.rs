@@ -91,6 +91,8 @@ impl Client {
                         .with_fingerprint(impit::fingerprint::database::okhttp4::fingerprint()),
                     "okhttp5" => builder
                         .with_fingerprint(impit::fingerprint::database::okhttp5::fingerprint()),
+                    "ios18" => builder
+                        .with_fingerprint(impit::fingerprint::database::ios_18::fingerprint()),
                     _ => panic!("Unsupported browser"),
                 },
                 None => builder,

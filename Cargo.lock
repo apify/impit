@@ -2154,7 +2154,7 @@ dependencies = [
 [[package]]
 name = "rustls"
 version = "0.23.39"
-source = "git+https://github.com/apify/rustls?rev=d0a6a3eb5526176bd2e0a366f4f1b83598e2cd83#d0a6a3eb5526176bd2e0a366f4f1b83598e2cd83"
+source = "git+https://github.com/apify/rustls?rev=1ebb6d466a557858cdd8c836ffcbb26d04d7a9f9#1ebb6d466a557858cdd8c836ffcbb26d04d7a9f9"
 dependencies = [
  "aws-lc-rs",
  "brotli",
@@ -2166,6 +2166,7 @@ dependencies = [
  "rustls-webpki",
  "subtle",
  "zeroize",
+ "zlib-rs",
 ]
 
 [[package]]
@@ -3421,6 +3422,12 @@ dependencies = [
  "quote",
  "syn",
 ]
+
+[[package]]
+name = "zlib-rs"
+version = "0.6.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3be3d40e40a133f9c916ee3f9f4fa2d9d63435b5fbe1bfc6d9dae0aa0ada1513"
 
 [[package]]
 name = "zmij"
