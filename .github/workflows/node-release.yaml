@@ -80,8 +80,8 @@ jobs:
           - name: Update lockfile
             run: |
               for i in $(seq 1 5); do
-                pnpm install --lockfile-only && exit 0
-                [ $i -lt 5 ] && echo "Attempt $i failed, waiting 30s before retry..." && sleep 30
+                pnpm install --lockfile-only && pnpm install --frozen-lockfile && exit 0
+                [ $i -lt 5 ] && echo "Attempt $i failed (lockfile out of sync, likely registry propagation lag), waiting 30s before retry..." && sleep 30
               done
               exit 1
 
