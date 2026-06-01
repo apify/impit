@@ -51,6 +51,9 @@ importers:
       impit-linux-arm64-gnu:
         specifier: 0.14.1
         version: 0.14.1
+      impit-linux-arm64-musl:
+        specifier: 0.14.1
+        version: 0.14.1
       impit-linux-x64-gnu:
         specifier: 0.14.1
         version: 0.14.1
@@ -1068,6 +1071,13 @@ packages:
     cpu: [arm64]
     os: [linux]
     libc: [glibc]
+
+  impit-linux-arm64-musl@0.14.1:
+    resolution: {integrity: sha512-lFatihYntVIN814AnoNm/hSw5iONLKt6XtaAaJahZNdJOU+zsclcg9pbK0/61aENamkpIBpok/H8j5Sw/Xjuuw==}
+    engines: {node: '>= 10'}
+    cpu: [arm64]
+    os: [linux]
+    libc: [musl]
 
   impit-linux-x64-gnu@0.14.1:
     resolution: {integrity: sha512-oioVQzHqSi68BzxRpVLbNv9HRgOxAA21QNlzCMyeEM3/c02MkURCQ1W66yAlEFOR1gaqPZDJi/ymnmIGk6+PjQ==}
@@ -2447,6 +2457,9 @@ snapshots:
     optional: true
 
   impit-linux-arm64-gnu@0.14.1:
+    optional: true
+
+  impit-linux-arm64-musl@0.14.1:
     optional: true
 
   impit-linux-x64-gnu@0.14.1:
