@@ -1,0 +1,6 @@
+{
+  "compilerOptions": {
+    "types": ["node"]
+  },
+  "files": ["index.d.ts"]
+}

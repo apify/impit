@@ -4,6 +4,9 @@ on:
   workflow_dispatch: null
   workflow_call:
 
+permissions:
+  contents: read
+
 jobs:
   lint_check:
     name: Lint check
@@ -22,12 +25,12 @@ jobs:
           python-version: "${{ matrix.python-version }}"
 
       - name: Set up uv package manager
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@v8.1.0
         with:
           python-version: "${{ matrix.python-version }}"
 
       - name: Disable automatic `uv` builds
-        run: printf "\n[tool.uv]\npackage = false" >> pyproject.toml
+        run: sed -i '/^\[tool\.uv\]$/a package = false' pyproject.toml
         working-directory: impit-python
 
       - name: Install Python dependencies
@@ -55,12 +58,12 @@ jobs:
           python-version: "${{ matrix.python-version }}"
 
       - name: Set up uv package manager
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@v8.1.0
         with:
           python-version: "${{ matrix.python-version }}"
 
       - name: Disable automatic `uv` builds
-        run: printf "\n[tool.uv]\npackage = false" >> pyproject.toml
+        run: sed -i '/^\[tool\.uv\]$/a package = false' pyproject.toml
         working-directory: impit-python
 
       - name: Install Python dependencies

@@ -53,7 +53,7 @@ jobs:
           node-version: 24
 
       - name: Install pnpm and dependencies
-        uses: apify/actions/pnpm-install@v1.1.2
+        uses: apify/actions/pnpm-install@v1.2.0
         with:
           working-directory: impit-node
 
@@ -79,10 +79,10 @@ jobs:
           python-version: 3.x
 
       - name: Set up uv package manager
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@v8.1.0
 
       - name: Disable automatic `uv` builds
-        run: printf "\n[tool.uv]\npackage = false" >> pyproject.toml
+        run: sed -i '/^\[tool\.uv\]$/a package = false' pyproject.toml
         working-directory: impit-python
 
       - name: Install dependencies
@@ -132,7 +132,7 @@ jobs:
       - name: Setup pages
         uses: actions/configure-pages@v6
       - name: Upload docs to github pages
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v5
         with:
           path: docs
       - name: Deploy to GitHub Pages
