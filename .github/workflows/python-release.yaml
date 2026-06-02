@@ -58,7 +58,7 @@ jobs:
 
         - name: Commit new version
           id: commit_version
-          uses: apify/actions/signed-commit@v1.1.2
+          uses: apify/actions/signed-commit@v1.2.0
           with:
             message: "chore(py-release): bump `pyproject.toml` version [skip ci]"
             add: impit-python/pyproject.toml
@@ -136,7 +136,7 @@ jobs:
 
         - name: Commit new changelog
           id: commit_changelog
-          uses: apify/actions/signed-commit@v1.1.2
+          uses: apify/actions/signed-commit@v1.2.0
           with:
             message: "docs: update changelog [skip ci]"
             add: impit-python/CHANGELOG.md
