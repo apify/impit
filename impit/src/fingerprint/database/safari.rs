@@ -81,15 +81,15 @@ pub mod ios_18 {
                 true,                                              // status_request
                 true,                                              // supported_groups
                 true,                                              // signature_algorithms
-                true,                                              // application_layer_protocol_negotiation
-                true,                                              // signed_certificate_timestamp
-                true,                                              // key_share
-                true,                                              // psk_key_exchange_modes
-                true,                                              // supported_versions
+                true, // application_layer_protocol_negotiation
+                true, // signed_certificate_timestamp
+                true, // key_share
+                true, // psk_key_exchange_modes
+                true, // supported_versions
                 Some(vec![CertificateCompressionAlgorithm::Zlib]), // compress_certificate
-                false,                                             // application_settings
-                false,                                             // delegated_credentials
-                None,                                              // record_size_limit
+                false, // application_settings
+                false, // delegated_credentials
+                None, // record_size_limit
                 vec![
                     ExtensionType::Grease,
                     ExtensionType::ServerName,
