@@ -271,7 +271,8 @@ export type Browser =  'chrome'|
 'okhttp'|
 'okhttp3'|
 'okhttp4'|
-'okhttp5';
+'okhttp5'|
+'ios18';
 
 export type HttpMethod =  'GET'|
 'POST'|

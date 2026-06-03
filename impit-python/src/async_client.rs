@@ -98,6 +98,8 @@ impl AsyncClient {
                         .with_fingerprint(impit::fingerprint::database::okhttp4::fingerprint()),
                     "okhttp5" => builder
                         .with_fingerprint(impit::fingerprint::database::okhttp5::fingerprint()),
+                    "ios18" => builder
+                        .with_fingerprint(impit::fingerprint::database::ios_18::fingerprint()),
                     _ => {
                         return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(
                             "Unsupported browser",
