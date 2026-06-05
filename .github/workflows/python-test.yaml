@@ -50,7 +50,7 @@ jobs:
           ref: ${{ inputs.commit_sha }}
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v8.1.0
+        uses: astral-sh/setup-uv@v8.2.0
 
       - uses: actions/setup-python@v6
         with:
@@ -93,7 +93,7 @@ jobs:
           ref: ${{ inputs.commit_sha }}
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v8.1.0
+        uses: astral-sh/setup-uv@v8.2.0
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -209,7 +209,7 @@ jobs:
           ref: ${{ inputs.commit_sha }}
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v8.1.0
+        uses: astral-sh/setup-uv@v8.2.0
 
       - uses: actions/setup-python@v6
         with:
@@ -264,7 +264,7 @@ jobs:
           ref: ${{ inputs.commit_sha }}
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v8.1.0
+        uses: astral-sh/setup-uv@v8.2.0
 
       - name: Set up Python
         uses: actions/setup-python@v6
