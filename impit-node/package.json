@@ -28,7 +28,7 @@
     "@types/express": "^5.0.0",
     "@types/node": "^24.0.0",
     "express": "^5.0.0",
-    "proxy-chain": "^2.5.9",
+    "proxy-chain": "^3.0.0",
     "socks-server-lib": "^0.0.3",
     "tough-cookie": "^6.0.0",
     "typedoc": "^0.28.13",
