@@ -5,6 +5,7 @@ mod async_client;
 mod client;
 mod cookies;
 mod errors;
+mod fingerprint;
 mod request;
 mod response;
 
@@ -102,10 +103,10 @@ fn impit(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
                 follow_redirects: Option<bool>,
                 max_redirects: Option<u16>,
                 proxy: Option<String>,
-            ) -> Result<response::ImpitPyResponse, errors::ImpitPyError> {
+            ) -> PyResult<response::ImpitPyResponse> {
                 let client = Client::new(_py, None, None, proxy, Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), None, None, follow_redirects, max_redirects, cookie_jar, cookies, None, None);
 
-                client?.$name(_py, url, content, data, headers, timeout, force_http3)
+                Ok(client?.$name(_py, url, content, data, headers, timeout, force_http3)?)
             }
 
             m.add_function(wrap_pyfunction!($name, m)?)?;
