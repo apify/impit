@@ -7,7 +7,7 @@ from typing import Literal
 
 import pytest
 
-from impit import AsyncClient, Browser, Cookies, StreamClosed, StreamConsumed, TooManyRedirects
+from impit import AsyncClient, Browser, Cookies, RemoteProtocolError, StreamClosed, StreamConsumed, TooManyRedirects
 
 from .httpbin import get_httpbin_url
 from .setup_proxy import start_proxy_server
@@ -26,6 +26,22 @@ def thread_server(port_holder: list[int]) -> None:
     client_ip, *_ = addr
     response = f'HTTP/1.1 200 OK\r\nContent-Length: {len(client_ip)}\r\n\r\n{client_ip}'.encode()
     conn.send(response)
+    conn.close()
+    server.close()
+
+
+def truncating_server(port_holder: list[int]) -> None:
+    """Announce a `Content-Length` larger than the body actually sent, then close the socket mid-body."""
+    server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    server.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
+    server.bind(('::', 0))
+    port_holder[0] = server.getsockname()[1]
+    server.listen(1)
+
+    conn, _ = server.accept()
+    conn.recv(1024)
+    conn.send(b'HTTP/1.1 200 OK\r\nContent-Length: 100\r\n\r\n0123456789')
     conn.close()
     server.close()
 
@@ -638,3 +654,19 @@ class TestStreamRequest:
 
         with pytest.raises(StreamClosed):
             _ = response.content
+
+    async def test_truncated_stream_raises(self, browser: Browser) -> None:
+        port_holder = [0]
+        thread = threading.Thread(target=truncating_server, args=(port_holder,))
+        thread.start()
+        await asyncio.sleep(0.1)
+
+        impit = AsyncClient(browser=browser)
+
+        async with impit.stream('GET', f'http://localhost:{port_holder[0]}/', timeout=5) as response:
+            assert response.status_code == 200
+
+            with pytest.raises(RemoteProtocolError):
+                _ = b''.join([item async for item in response.aiter_bytes()])
+
+        thread.join()
