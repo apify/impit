@@ -58,7 +58,8 @@ afterAll(async () => {
         }),
         new Promise<void>(async (res) => {
             const server = await getProxyServer();
-            server?.close(true, () => res())
+            await server?.close(true);
+            res();
         }),
         Promise.race([
             new Promise<void>(res => {

@@ -172,11 +172,6 @@ export async function runServer(port: number): Promise<Server> {
 
 export async function runProxyServer(port: number): Promise<ProxyServer> {
     const server = new ProxyServer({ port });
-    return new Promise((res, rej) => {
-        server.listen(() => {
-            res(server);
-        }).catch((err) => {
-            rej(err);
-        });
-    });
+    await server.listen();
+    return server;
 }
