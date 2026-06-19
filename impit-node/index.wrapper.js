@@ -43,6 +43,23 @@ function isRedirectStatus(status) {
     return [301, 302, 303, 307, 308].includes(status);
 }
 
+// Stream chunks may be strings (e.g. a ReadableStream or Node stream that wasn't
+// fed bytes); encode them so they aren't coerced to zero bytes by Uint8Array.set.
+function toUint8Array(chunk) {
+    return typeof chunk === 'string' ? new TextEncoder().encode(chunk) : new Uint8Array(chunk);
+}
+
+function concatUint8Arrays(chunks) {
+    const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
+    const result = new Uint8Array(totalLength);
+    let offset = 0;
+    for (const chunk of chunks) {
+        result.set(chunk, offset);
+        offset += chunk.length;
+    }
+    return result;
+}
+
 function shouldRewriteRedirectToGet(httpStatus, method) {
     // See https://github.com/mozilla-firefox/firefox/blob/911b3eec6c5e58a9a49e23aa105e49aa76e00f9c/netwerk/protocol/http/HttpBaseChannel.cpp#L4801
     if ([301, 302].includes(httpStatus)) {
@@ -183,16 +200,16 @@ class Impit extends native.Impit {
             while (!done) {
                 const { done: streamDone, value } = await reader.read();
                 done = streamDone;
-                if (value) chunks.push(value);
+                if (value != null) chunks.push(toUint8Array(value));
             }
-            const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
-            const typedArray = new Uint8Array(totalLength);
-            let offset = 0;
-            for (const chunk of chunks) {
-                typedArray.set(chunk, offset);
-                offset += chunk.length;
+            return { body: concatUint8Arrays(chunks), type: '' };
+        } else if (body && typeof body[Symbol.asyncIterator] === 'function') {
+            // Node.js streams (e.g. Readable.from(...)) and other async iterables.
+            const chunks = [];
+            for await (const chunk of body) {
+                chunks.push(toUint8Array(chunk));
             }
-            return { body: typedArray, type: '' };
+            return { body: concatUint8Arrays(chunks), type: '' };
         }
         return { body, type: '' };
     }
