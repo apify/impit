@@ -3,6 +3,47 @@
 All notable changes to this project will be documented in this file.
 
 
+## py-0.13.0 - 2026-06-19
+
+#### Bug Fixes
+
+- Decode non-ASCII response header values as ISO-8859-1 (#434)
+
+- Use browser-matching multipart boundary format (#435)
+  - Moves multipart boundary generation from JS to Rust where the browser fingerprint is available. Each browser profile now produces boundaries matching the real browser format:  - Chrome: `----WebKitFormBoundary` + 16 alphanumeric chars - Firefox: `----geckoformboundary` + two random uint64 hex values - OkHttp: UUID v4 (`xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx`) - No fingerprint: `----formdata-impit-*` (default, unchanged)  The boundary is generated lazily — the NAPI call only happens when the body is actually a `FormData` instance. The method is not exposed in public types.
+
+
+- Migrate `http3` DNS lookup from `hickory-client` to `hickory-resolver` (#454)
+  - `impit/src/http3.rs` only used hickory to fire a single HTTPS-record DNS query against a hard-coded `8.8.8.8:53` for h3 discovery. Migrated that to `hickory-resolver 0.26.1`, which: - pulls in the patched `hickory-proto 0.26.1`, - uses the system DNS config instead of hard-coding Google's resolver, - drops the manual background-task plumbing and `Drop` impl since the resolver manages its own connections.  API shifts handled along the way: `Record::data()` → `Record.data` (now a public field), `SVCB::svc_params()` → `SVCB.svc_params` (public field).
+
+
+- Share browser-string resolution across sync and async clients (#481)
+  - The sync and async Python clients each hand-maintained their own `browser` string → fingerprint match, and the two had drifted. The async client mapped `chrome124` to the `chrome_125` fingerprint (mislabeled, even though a real `chrome_124` fingerprint exists in the core database), while the sync client didn't recognize `chrome124` at all and fell back to `panic!("Unsupported browser")`, aborting across the FFI boundary instead of raising a catchable Python exception.  The bare `chrome` alias is intentionally left at `chrome_125` in both clients to preserve current behavior and the pinned JA4 test.
+
+
+- Raise on mid-stream body errors instead of silent EOF (#482)
+  - Mid-stream body errors (connection reset, truncated chunked transfer) were mapped to `StopIteration`/`StopAsyncIteration`, which signal normal end-of-iteration — so `for`/`async for` ended silently and callers processed partial bodies as complete (a silent data-integrity bug, [#475](https://github.com/apify/impit/issues/475)). Both sync and async iterators now propagate the classified `ImpitError` as a real exception and set the consumed/closed flags consistently with the clean-EOF branch.  Streamed truncation surfaces in reqwest as a `Decode`-kinded error rather than `Body`, so the existing unexpected-EOF classification missed it and fell through to the catch-all `HTTPError`. The guard is widened to cover `is_decode()`, so truncated streams now raise `RemoteProtocolError`, matching httpx.  Verified against a vanilla server that truncates the body mid-response; added sync + async regression tests.
+
+
+#### Features
+
+- Better errors for Node.JS bindings (#406)
+  - Closes https://github.com/apify/impit/issues/397.
+
+
+- Add new OkHTTP fingerprints  (#416)
+  - Adds profiles for emulating the fingerprints of the OkHTTP library (JVM / Android HTTP client).
+
+
+- Return the `vanillaFallback` option as an alternative for failing requests (#441)
+  - The `vanillaFallback` option has been noop in a few of the latest versions of `impit`. The changes from this PR return this feature to support, e.g., servers with old TLS stacks that uncover some of the emulation discrepancies and cause the requests to fail.
+
+
+- Add iOS 18 system TLS fingerprint (#465)
+  - Adds an iOS 18 system TLS fingerprint as `Browser::Ios18` (string: `"ios18"`).
+
+
+
 ## py-0.12.0 - 2026-03-06
 
 #### Features
