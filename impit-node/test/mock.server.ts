@@ -26,8 +26,56 @@ export const routes = {
     },
 }
 
+function parseMultipart(body: Buffer, boundary: string): Record<string, string> {
+    const form: Record<string, string> = {};
+    const delimiter = Buffer.from(`--${boundary}`);
+    const separator = Buffer.from('\r\n\r\n');
+
+    let start = body.indexOf(delimiter);
+    while (start !== -1) {
+        start += delimiter.length;
+        const next = body.indexOf(delimiter, start);
+        if (next === -1) break;
+
+        const part = body.subarray(start, next);
+        const headerEnd = part.indexOf(separator);
+        if (headerEnd !== -1) {
+            const headerText = part.subarray(0, headerEnd).toString('utf8');
+            const nameMatch = headerText.match(/name="([^"]+)"/);
+            if (nameMatch) {
+                // Strip the trailing CRLF that precedes the next boundary.
+                const value = part.subarray(headerEnd + separator.length, part.length - 2).toString('utf8');
+                form[nameMatch[1]] = value;
+            }
+        }
+        start = next;
+    }
+
+    return form;
+}
+
 export async function runServer(port: number): Promise<Server> {
     const app = express();
+
+    // httpbin-like echo endpoint, so body tests don't depend on an external service.
+    app.all('/post', express.raw({ type: () => true, limit: '10mb' }), (req, res) => {
+        const body: Buffer = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
+        const contentType = req.headers['content-type'] ?? '';
+
+        let form: Record<string, string> | undefined;
+        if (contentType.includes('application/x-www-form-urlencoded')) {
+            form = Object.fromEntries(new URLSearchParams(body.toString('utf8')));
+        } else if (contentType.includes('multipart/form-data')) {
+            const boundary = contentType.match(/boundary=(.+)$/)?.[1];
+            if (boundary) form = parseMultipart(body, boundary);
+        }
+
+        res.json({
+            data: form ? '' : body.toString('utf8'),
+            form: form ?? {},
+            headers: req.headers,
+        });
+    });
 
     app.get(routes.charset.path, (req, res) => {
         res.set('Content-Type', 'text/plain; charset=windows-1250');
