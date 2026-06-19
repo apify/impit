@@ -22,7 +22,7 @@ jobs:
         bumped-version-commit-sha: ${{ steps.commit_version.outputs.commit_long_sha }}
         new_version: ${{ steps.increment_version.outputs.new_version }}
       steps:
-        - uses: actions/checkout@v6
+        - uses: actions/checkout@v7
           with:
             token: ${{ secrets.APIFY_SERVICE_ACCOUNT_GITHUB_TOKEN }}
 
@@ -118,7 +118,7 @@ jobs:
         release_body: ${{ steps.git-cliff.outputs.content }}
       steps:
         - name: Checkout
-          uses: actions/checkout@v6
+          uses: actions/checkout@v7
           with:
             token: ${{ secrets.APIFY_SERVICE_ACCOUNT_GITHUB_TOKEN }}
             ref: master
