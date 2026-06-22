@@ -1,4 +1,5 @@
 import http from 'http';
+import { Readable } from 'node:stream';
 import { test, describe, expect, beforeAll, afterAll } from 'vitest';
 
 import { HttpMethod, Impit, Browser } from '../index.wrapper.js';
@@ -471,6 +472,68 @@ describe.each([
                 body: 'foo'
             });
             await expect(response).resolves.toBeTruthy();
+        });
+
+        const localPostUrl = 'http://localhost:3001/post';
+        const streamingTypes = ['ReadableStream', 'Readable'];
+        test.each([
+            ['string', () => STRING_PAYLOAD],
+            ['Blob', () => new Blob([STRING_PAYLOAD], { type: 'application/json' })],
+            ['URLSearchParams', () => new URLSearchParams(JSON.parse(STRING_PAYLOAD))],
+            ['FormData', () => { const form = new FormData(); form.append('Impit-Test', 'foořžš'); return form; }],
+            ['ReadableStream', () => new ReadableStream({ start(controller) { controller.enqueue(new TextEncoder().encode(STRING_PAYLOAD)); controller.close(); } })],
+            ['Readable', () => Readable.from(STRING_PAYLOAD)],
+        ])('passing Request with %s body', async (type, makeBody) => {
+            const request = new Request(localPostUrl, {
+                method: 'POST',
+                body: makeBody() as BodyInit,
+                ...(streamingTypes.includes(type) ? { duplex: 'half' } : {}),
+            } as RequestInit);
+
+            const response = await impit.fetch(request);
+            const json = await response.json();
+
+            if (type === 'URLSearchParams' || type === 'FormData') {
+                expect(json.form).toEqual(JSON.parse(STRING_PAYLOAD));
+            } else {
+                expect(json.data).toEqual(STRING_PAYLOAD);
+            }
+        });
+
+        test('passing a Node Readable stream as body', async () => {
+            const response = await impit.fetch(localPostUrl, {
+                method: HttpMethod.Post,
+                body: Readable.from(STRING_PAYLOAD) as any,
+            });
+            const json = await response.json();
+
+            expect(json.data).toEqual(STRING_PAYLOAD);
+        });
+
+        // https://github.com/apify/impit/issues/486
+        test('passing a ReadableStream that yields string chunks', async () => {
+            const stream = new ReadableStream({
+                start(controller) { controller.enqueue(STRING_PAYLOAD); controller.close(); },
+            });
+
+            const response = await impit.fetch(localPostUrl, { method: HttpMethod.Post, body: stream });
+            const json = await response.json();
+
+            expect(json.data).toEqual(STRING_PAYLOAD);
+        });
+
+        test('Request with body preserves its Content-Type', async () => {
+            const request = new Request(localPostUrl, {
+                method: 'POST',
+                body: STRING_PAYLOAD,
+                headers: { 'Content-Type': 'application/json' },
+            });
+
+            const response = await impit.fetch(request);
+            const json = await response.json();
+
+            expect(json.headers?.['content-type']).toBe('application/json');
+            expect(json.data).toEqual(STRING_PAYLOAD);
         });
     });
 
