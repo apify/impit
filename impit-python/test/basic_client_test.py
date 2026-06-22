@@ -2,7 +2,7 @@ import json
 import socket
 import threading
 import time
-from http.cookiejar import CookieJar
+from http.cookiejar import Cookie, CookieJar
 from typing import Literal
 
 import pytest
@@ -54,6 +54,21 @@ def truncating_server(port_holder: list[int]) -> None:
     conn, _ = server.accept()
     conn.recv(1024)
     conn.send(b'HTTP/1.1 200 OK\r\nContent-Length: 100\r\n\r\n0123456789')
+    conn.close()
+    server.close()
+
+
+def cookie_setting_server(port_holder: list[int]) -> None:
+    """Serve a single 200 response carrying a `Set-Cookie` header."""
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    server.bind(('127.0.0.1', 0))
+    port_holder[0] = server.getsockname()[1]
+    server.listen(1)
+
+    conn, _ = server.accept()
+    conn.recv(1024)
+    conn.send(b'HTTP/1.1 200 OK\r\nContent-Length: 2\r\nSet-Cookie: server-cookie=1; Path=/\r\n\r\nok')
     conn.close()
     server.close()
 
@@ -262,6 +277,36 @@ class TestBasicRequests:
         assert len(cookies) == 2
         assert cookies.get('preset-cookie') == '123'
         assert cookies.get('set-by-server') == '321'
+
+    @pytest.mark.filterwarnings('ignore::pytest.PytestUnraisableExceptionWarning')
+    def test_failing_cookie_jar_does_not_crash(self, browser: Browser) -> None:
+        """A cookie jar whose `set_cookie` raises must not crash the process.
+
+        Regression test for https://github.com/apify/impit/issues/478: the error used to be
+        `.unwrap()`ed inside reqwest's cookie-store callback, so a panic escaped across the FFI
+        boundary as an uncatchable `PanicException` (and, with `panic = "abort"`, a hard process
+        abort) instead of the request completing. The offending cookie is now skipped.
+        """
+
+        class ExplodingCookieJar(CookieJar):
+            def set_cookie(self, cookie: Cookie) -> None:
+                raise RuntimeError(f'cookie jar refuses to store {cookie.name}')
+
+        jar = ExplodingCookieJar()
+
+        port_holder = [0]
+        thread = threading.Thread(target=cookie_setting_server, args=(port_holder,))
+        thread.start()
+        time.sleep(0.1)
+
+        impit = Client(browser=browser, cookie_jar=jar)
+
+        response = impit.get(f'http://127.0.0.1:{port_holder[0]}/', timeout=5)
+
+        # The request completes and the offending cookie is skipped instead of crashing the process.
+        assert response.status_code == 200
+        assert len(jar) == 0
+        thread.join()
 
     def test_client_headers_override_impersonation_headers(self, browser: Browser) -> None:
         if browser is None:

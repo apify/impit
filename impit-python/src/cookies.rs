@@ -91,13 +91,23 @@ impl CookieStore for PythonCookieJar {
 
                 kwargs.set_item("rest", rest).unwrap_or_default();
 
-                let py_cookie = self.cookie_constructor.call(py, (), Some(&kwargs)).unwrap();
+                // This runs inside reqwest's cookie-store callback, driven by the HTTP stack.
+                // A hostile server's malformed `Set-Cookie` (e.g. one that `http.cookiejar.Cookie`
+                // rejects) or a custom cookie jar whose `set_cookie` raises must not be
+                // `.unwrap()`ed here: the panic would unwind across the FFI boundary and abort
+                // the whole process instead of surfacing as a catchable error. Skip the offending
+                // cookie and report it through `sys.unraisablehook` instead. See issue #478.
+                let stored = self
+                    .cookie_constructor
+                    .call(py, (), Some(&kwargs))
+                    .and_then(|py_cookie| {
+                        let args = PyTuple::new(py, vec![py_cookie])?;
+                        self.cookie_jar.call_method1(py, "set_cookie", args)
+                    });
 
-                let args = PyTuple::new(py, vec![py_cookie]).unwrap();
-
-                self.cookie_jar
-                    .call_method1(py, "set_cookie", args)
-                    .unwrap();
+                if let Err(err) = stored {
+                    err.write_unraisable(py, None);
+                }
             }
         });
     }
