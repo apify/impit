@@ -46,29 +46,29 @@ importers:
         version: 4.1.4(@types/node@24.12.2)(vite@8.0.16(@types/node@24.12.2)(yaml@2.8.3))
     optionalDependencies:
       impit-darwin-arm64:
-        specifier: 0.14.1
-        version: 0.14.1
+        specifier: 0.14.2
+        version: 0.14.2
       impit-darwin-x64:
-        specifier: 0.14.1
-        version: 0.14.1
+        specifier: 0.14.2
+        version: 0.14.2
       impit-linux-arm64-gnu:
-        specifier: 0.14.1
-        version: 0.14.1
+        specifier: 0.14.2
+        version: 0.14.2
       impit-linux-arm64-musl:
-        specifier: 0.14.1
-        version: 0.14.1
+        specifier: 0.14.2
+        version: 0.14.2
       impit-linux-x64-gnu:
-        specifier: 0.14.1
-        version: 0.14.1
+        specifier: 0.14.2
+        version: 0.14.2
       impit-linux-x64-musl:
-        specifier: 0.14.1
-        version: 0.14.1
+        specifier: 0.14.2
+        version: 0.14.2
       impit-win32-arm64-msvc:
-        specifier: 0.14.1
-        version: 0.14.1
+        specifier: 0.14.2
+        version: 0.14.2
       impit-win32-x64-msvc:
-        specifier: 0.14.1
-        version: 0.14.1
+        specifier: 0.14.2
+        version: 0.14.2
 
 packages:
 
@@ -1056,54 +1056,54 @@ packages:
     resolution: {integrity: sha512-im9DjEDQ55s9fL4EYzOAv0yMqmMBSZp6G0VvFyTMPKWxiSBHUj9NW/qqLmXUwXrrM7AvqSlTCfvqRb0cM8yYqw==}
     engines: {node: '>=0.10.0'}
 
-  impit-darwin-arm64@0.14.1:
-    resolution: {integrity: sha512-K3KXto3gzR60kOFFxRmuxPNl3sPhdTLLpjBIW3RKD6vJFiGV5YH/T218WBECygPxRaIhESfsxfcOYrP53bHgFw==}
+  impit-darwin-arm64@0.14.2:
+    resolution: {integrity: sha512-ChvxbJj893rWAhHXJ3kkGe8Pg4lsZwQ1Dt0w/noCkNe436gm0nIQ/eBBbwIJBsY4Ev7q6fgi/QerF2trSyUXmg==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [darwin]
 
-  impit-darwin-x64@0.14.1:
-    resolution: {integrity: sha512-k+w8SBHUtLX3KbzsCqSmcwitHfbOXXsLryL++KVahtFqU5D93T1buoTANnd63/mm5dNyadecIGG0MQ7SwvWx8g==}
+  impit-darwin-x64@0.14.2:
+    resolution: {integrity: sha512-r1g3WkwljcRgY1V0yBCUJ0/Sy6OHLc4RUrfz3mHi2X4WvkTk7aY17K4X+baBx+tcpOfE/ME/iWAY/PesOM9JVA==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [darwin]
 
-  impit-linux-arm64-gnu@0.14.1:
-    resolution: {integrity: sha512-yBT7h6cVHL/hefzI/qjJc22fKP386O0inReOpUzCnb4SGnwhEHvL9nJk3OzU2prO9vvKNKSb6vfRBcvQ8HHH1g==}
+  impit-linux-arm64-gnu@0.14.2:
+    resolution: {integrity: sha512-JZJqUnEqFiktcXVgg/AIKkSv8SGu5zoQ7lf9CSvS0eEiwSlHnLUPwBiFc9/mSHDIUQkM9qlvJyGUiGqGEt9K6A==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
     libc: [glibc]
 
-  impit-linux-arm64-musl@0.14.1:
-    resolution: {integrity: sha512-lFatihYntVIN814AnoNm/hSw5iONLKt6XtaAaJahZNdJOU+zsclcg9pbK0/61aENamkpIBpok/H8j5Sw/Xjuuw==}
+  impit-linux-arm64-musl@0.14.2:
+    resolution: {integrity: sha512-ZsL9JAFEZBP3tvT8h4pkcg/b/MtHP8mZSgsncD6z9+qKM/IjqiDYwQunKaAYMwGu0EEbjtaU4C1zTK6ipnvwbA==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
     libc: [musl]
 
-  impit-linux-x64-gnu@0.14.1:
-    resolution: {integrity: sha512-oioVQzHqSi68BzxRpVLbNv9HRgOxAA21QNlzCMyeEM3/c02MkURCQ1W66yAlEFOR1gaqPZDJi/ymnmIGk6+PjQ==}
+  impit-linux-x64-gnu@0.14.2:
+    resolution: {integrity: sha512-3/keeSOCiByIfbOpmvixRXDlCdcyf112ru0fNl7AcpC1RtQz48ctsAn6R4+xEEnULO63By5VK9X0HNm1O2gUdw==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
     libc: [glibc]
 
-  impit-linux-x64-musl@0.14.1:
-    resolution: {integrity: sha512-v7fBi405zZepQo0LqH51H+aXc/MYEtrQviIK+34kEqFBYOaSC9+wFZrs6A4WwrF9DaUuRZ3klisljwglN7rxDQ==}
+  impit-linux-x64-musl@0.14.2:
+    resolution: {integrity: sha512-BiUXZhj6lQOrZmeYB4HqYiBS5XvM/clrSVyZyae/CJshELUyYOLNxnTOxabd0tWR6J9ntC7bZwDrwskWD/TePA==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
     libc: [musl]
 
-  impit-win32-arm64-msvc@0.14.1:
-    resolution: {integrity: sha512-W4kPvvra8dXDdtJQbkxWPCCouUlZpOrLqHsJ7gc8CwAr69ljZqw6v+qB395nCD1rn3u32dV4d4fjBsyMdolQoA==}
+  impit-win32-arm64-msvc@0.14.2:
+    resolution: {integrity: sha512-GQT3ITrIbh5P6FLzoHGuBpjrP/rzZoC3T0510+yCtLdQ1qQQzEIi1iCUElpCokyL4J/D4BdCRMS3wv3TzhcM4w==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [win32]
 
-  impit-win32-x64-msvc@0.14.1:
-    resolution: {integrity: sha512-gwzWsaORyzq294t8CCxfHAmqulnQNQZK8ad8YM6oQaGVXeUFa8r/ZnR+PglfYcrYF/GbYwGrf9U8StUU8KFLmQ==}
+  impit-win32-x64-msvc@0.14.2:
+    resolution: {integrity: sha512-J6MpD0GzoMN9ydb2iT2oagE0Y4rbkKf8fDxrMh3/txp2sfzYDDfbcC4sySMm2b8QB4ERhB6N5YzcpGBAHbx/0w==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [win32]
@@ -2457,28 +2457,28 @@ snapshots:
     dependencies:
       safer-buffer: 2.1.2
 
-  impit-darwin-arm64@0.14.1:
+  impit-darwin-arm64@0.14.2:
     optional: true
 
-  impit-darwin-x64@0.14.1:
+  impit-darwin-x64@0.14.2:
     optional: true
 
-  impit-linux-arm64-gnu@0.14.1:
+  impit-linux-arm64-gnu@0.14.2:
     optional: true
 
-  impit-linux-arm64-musl@0.14.1:
+  impit-linux-arm64-musl@0.14.2:
     optional: true
 
-  impit-linux-x64-gnu@0.14.1:
+  impit-linux-x64-gnu@0.14.2:
     optional: true
 
-  impit-linux-x64-musl@0.14.1:
+  impit-linux-x64-musl@0.14.2:
     optional: true
 
-  impit-win32-arm64-msvc@0.14.1:
+  impit-win32-arm64-msvc@0.14.2:
     optional: true
 
-  impit-win32-x64-msvc@0.14.1:
+  impit-win32-x64-msvc@0.14.2:
     optional: true
 
   inherits@2.0.4: {}
