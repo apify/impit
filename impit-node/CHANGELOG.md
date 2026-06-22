@@ -3,6 +3,23 @@
 All notable changes to this project will be documented in this file.
 
 
+## js-0.14.2 - 2026-06-22
+
+#### Bug Fixes
+
+- Raise on mid-stream body errors instead of silent EOF (#482)
+  - Mid-stream body errors (connection reset, truncated chunked transfer) were mapped to `StopIteration`/`StopAsyncIteration`, which signal normal end-of-iteration — so `for`/`async for` ended silently and callers processed partial bodies as complete (a silent data-integrity bug, [#475](https://github.com/apify/impit/issues/475)). Both sync and async iterators now propagate the classified `ImpitError` as a real exception and set the consumed/closed flags consistently with the clean-EOF branch.  Streamed truncation surfaces in reqwest as a `Decode`-kinded error rather than `Body`, so the existing unexpected-EOF classification missed it and fell through to the catch-all `HTTPError`. The guard is widened to cover `is_decode()`, so truncated streams now raise `RemoteProtocolError`, matching httpx.  Verified against a vanilla server that truncates the body mid-response; added sync + async regression tests.
+
+
+- Encode string chunks when serializing stream bodies (#487)
+
+#### Features
+
+- Add iOS 18 system TLS fingerprint (#465)
+  - Adds an iOS 18 system TLS fingerprint as `Browser::Ios18` (string: `"ios18"`).
+
+
+
 ## js-0.14.1 - 2026-05-29
 
 #### Bug Fixes
