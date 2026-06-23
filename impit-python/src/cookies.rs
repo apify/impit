@@ -104,6 +104,11 @@ impl CookieStore for PythonCookieJar {
 
     fn cookies(&self, url: &Url) -> Option<reqwest::header::HeaderValue> {
         Python::attach(|py| {
+            let host = url.host_str().unwrap_or_default();
+            // Detect IP-literal hosts via the typed `Host` enum so the check is robust to
+            // IPv6 bracket notation and casing (unlike string-parsing `host_str()`).
+            let host_is_ip = matches!(url.host(), Some(url::Host::Ipv4(_) | url::Host::Ipv6(_)));
+
             let cookie_list = PyIterator::from_object(&self.cookie_jar.bind_borrowed(py)).unwrap();
 
             cookie_list
@@ -123,7 +128,7 @@ impl CookieStore for PythonCookieJar {
                         .and_then(|attr| attr.extract::<bool>())
                         .unwrap_or_default();
 
-                    if !domain_matches(url.host_str().unwrap_or_default(), &domain) {
+                    if !domain_matches(host, host_is_ip, &domain) {
                         return None;
                     }
                     if !url.path().starts_with(&path) {
@@ -179,11 +184,14 @@ impl CookieStore for PythonCookieJar {
 /// following the domain matching rules of
 /// [RFC 6265, §5.1.3](https://www.rfc-editor.org/rfc/rfc6265#section-5.1.3).
 ///
+/// `host_is_ip` must be `true` when `host` is an IP-address literal; such hosts only
+/// match an identical cookie domain (no subdomain matching), per §5.1.3.
+///
 /// Leading dot on the cookie domain (e.g. `.example.com`) is ignored, as
 /// permitted by [RFC 6265, §4.1.2.3](https://www.rfc-editor.org/rfc/rfc6265#section-4.1.2.3).
 ///
 /// An empty cookie domain imposes no host restriction and therefore matches any host.
-fn domain_matches(host: &str, cookie_domain: &str) -> bool {
+fn domain_matches(host: &str, host_is_ip: bool, cookie_domain: &str) -> bool {
     let cookie_domain = cookie_domain.strip_prefix('.').unwrap_or(cookie_domain);
 
     if cookie_domain.is_empty() {
@@ -198,16 +206,23 @@ fn domain_matches(host: &str, cookie_domain: &str) -> bool {
     // RFC 6265 §5.1.3: suffix (subdomain) matching applies to host names only.
     // An IP-address host must match the cookie domain exactly (handled above),
     // otherwise e.g. cookie domain `0.0.1` would match host `127.0.0.1`.
-    if host.parse::<std::net::IpAddr>().is_ok() {
+    if host_is_ip {
         return false;
     }
 
     // Subdomain match: the cookie domain must be a suffix of the host on a `.`
-    // label boundary. `host` (from `Url::host_str`) is already lowercase for
-    // http(s) URLs, so lowercase the cookie domain to keep the match case-insensitive.
-    let cookie_domain = cookie_domain.to_ascii_lowercase();
-    host.strip_suffix(cookie_domain.as_str())
-        .is_some_and(|prefix| prefix.ends_with('.'))
+    // label boundary (e.g. host `www.example.com`, cookie domain `example.com`).
+    // Compared case-insensitively without allocating, so it does not depend on the
+    // host already being lowercased.
+    let Some(prefix_len) = host
+        .len()
+        .checked_sub(cookie_domain.len())
+        .filter(|&n| n > 0)
+    else {
+        return false;
+    };
+    host.as_bytes()[prefix_len - 1] == b'.'
+        && host[prefix_len..].eq_ignore_ascii_case(cookie_domain)
 }
 
 impl PythonCookieJar {

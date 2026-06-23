@@ -13,6 +13,7 @@ rustls = { version="0.23.36" }
 tokio = { version="1.41.1", features = ["full"] }
 h2 = "0.4.7"
 reqwest = "0.13.1"
+url = "2.5.8"
 tokio-stream = "0.1.17"
 bytes = "1.9.0"
 pyo3 = { version = "0.29", features = ["extension-module", "auto-initialize", "either"] }
