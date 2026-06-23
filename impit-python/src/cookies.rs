@@ -190,6 +190,11 @@ fn domain_matches(host: &str, cookie_domain: &str) -> bool {
         return true;
     }
 
+    // Host names are case-insensitive; normalise both sides instead of trusting the
+    // caller to pass a lowercased host.
+    let host = host.to_ascii_lowercase();
+    let cookie_domain = cookie_domain.to_ascii_lowercase();
+
     // RFC 6265 §5.1.3: an IP-address host only matches an identical cookie domain.
     if host.parse::<std::net::IpAddr>().is_ok() {
         return host == cookie_domain;
@@ -199,7 +204,7 @@ fn domain_matches(host: &str, cookie_domain: &str) -> bool {
     // on a `.` label boundary (e.g. host `www.example.com`, cookie domain `example.com`).
     host == cookie_domain
         || host
-            .strip_suffix(cookie_domain)
+            .strip_suffix(cookie_domain.as_str())
             .is_some_and(|prefix| prefix.ends_with('.'))
 }
 
