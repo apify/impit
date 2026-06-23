@@ -105,9 +105,14 @@ impl CookieStore for PythonCookieJar {
     fn cookies(&self, url: &Url) -> Option<reqwest::header::HeaderValue> {
         Python::attach(|py| {
             let host = url.host_str().unwrap_or_default();
-            // Detect IP-literal hosts via the typed `Host` enum so the check is robust to
-            // IPv6 bracket notation and casing (unlike string-parsing `host_str()`).
-            let host_is_ip = matches!(url.host(), Some(url::Host::Ipv4(_) | url::Host::Ipv6(_)));
+            // An IP-literal host (including bracketed IPv6 like `[::1]`) only matches a
+            // cookie domain exactly. Strip IPv6 brackets before parsing as an IP address.
+            let host_is_ip = host
+                .strip_prefix('[')
+                .and_then(|h| h.strip_suffix(']'))
+                .unwrap_or(host)
+                .parse::<std::net::IpAddr>()
+                .is_ok();
 
             let cookie_list = PyIterator::from_object(&self.cookie_jar.bind_borrowed(py)).unwrap();
 

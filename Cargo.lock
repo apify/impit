@@ -1376,7 +1376,6 @@ dependencies = [
  "rustls",
  "tokio",
  "tokio-stream",
- "url",
  "urlencoding",
 ]
 
