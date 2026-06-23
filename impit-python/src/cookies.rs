@@ -190,10 +190,24 @@ fn domain_matches(host: &str, cookie_domain: &str) -> bool {
         return true;
     }
 
-    let host = host.to_ascii_lowercase();
-    let cookie_domain = cookie_domain.to_ascii_lowercase();
+    // Exact match (host names are case-insensitive).
+    if host.eq_ignore_ascii_case(cookie_domain) {
+        return true;
+    }
 
-    host == cookie_domain || host.ends_with(&format!(".{cookie_domain}"))
+    // RFC 6265 §5.1.3: suffix (subdomain) matching applies to host names only.
+    // An IP-address host must match the cookie domain exactly (handled above),
+    // otherwise e.g. cookie domain `0.0.1` would match host `127.0.0.1`.
+    if host.parse::<std::net::IpAddr>().is_ok() {
+        return false;
+    }
+
+    // Subdomain match: the cookie domain must be a suffix of the host on a `.`
+    // label boundary. `host` (from `Url::host_str`) is already lowercase for
+    // http(s) URLs, so lowercase the cookie domain to keep the match case-insensitive.
+    let cookie_domain = cookie_domain.to_ascii_lowercase();
+    host.strip_suffix(cookie_domain.as_str())
+        .is_some_and(|prefix| prefix.ends_with('.'))
 }
 
 impl PythonCookieJar {

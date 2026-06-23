@@ -31,6 +31,31 @@ def thread_server(port_holder: list[int]) -> None:
     server.close()
 
 
+def cookie_echo_server(port_holder: list[int], captured: dict[str, str]) -> None:
+    """Serve a single HTTP/1.1 request on 127.0.0.1 and record its `Cookie` header."""
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    server.bind(('127.0.0.1', 0))
+    port_holder[0] = server.getsockname()[1]
+    server.listen(1)
+
+    conn, _ = server.accept()
+    request = b''
+    while b'\r\n\r\n' not in request:
+        chunk = conn.recv(4096)
+        if not chunk:
+            break
+        request += chunk
+
+    for line in request.decode('utf-8', errors='replace').split('\r\n'):
+        if line.lower().startswith('cookie:'):
+            captured['cookie'] = line.split(':', 1)[1].strip()
+
+    conn.send(b'HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nok')
+    conn.close()
+    server.close()
+
+
 class TestBasicRequests:
     @pytest.mark.parametrize(
         ('protocol'),
@@ -196,6 +221,28 @@ class TestBasicRequests:
         response = impit.get(url, cookies=cookies).json()
 
         assert response['cookies'] == {'exact_match': 'yes', 'subdomain_ok': 'yes'}
+
+    def test_cookie_domain_matching_for_ip_hosts(self) -> None:
+        # RFC 6265 §5.1.3: subdomain/suffix matching applies to host names only, so an
+        # IP-address host must match the cookie domain exactly. Without that rule a
+        # cookie scoped to `0.0.1` would leak to host `127.0.0.1` (it is a label-boundary
+        # suffix of the IP). A local server is used so the request host is a real IP.
+        port_holder = [0]
+        captured: dict[str, str] = {}
+        thread = threading.Thread(target=cookie_echo_server, args=(port_holder, captured))
+        thread.start()
+        time.sleep(0.1)
+
+        cookies = Cookies()
+        cookies.set('exact_ip', 'yes', domain='127.0.0.1')  # exact IP match -> sent
+        cookies.set('ip_suffix_leak', 'no', domain='0.0.1')  # IP host matches exactly -> NOT sent
+
+        impit.get(f'http://127.0.0.1:{port_holder[0]}/', cookies=cookies, timeout=5)
+        thread.join()
+
+        sent = captured.get('cookie', '')
+        sent_names = {part.split('=')[0].strip() for part in sent.split(';') if '=' in part}
+        assert sent_names == {'exact_ip'}
 
     @pytest.mark.skip(reason='Flaky under the CI environment')
     def test_http3_works(self) -> None:
