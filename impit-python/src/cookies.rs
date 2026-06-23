@@ -123,7 +123,7 @@ impl CookieStore for PythonCookieJar {
                         .and_then(|attr| attr.extract::<bool>())
                         .unwrap_or_default();
 
-                    if !domain.is_empty() && !url.host_str().unwrap_or_default().contains(&domain) {
+                    if !domain_matches(url.host_str().unwrap_or_default(), &domain) {
                         return None;
                     }
                     if !url.path().starts_with(&path) {
@@ -173,6 +173,34 @@ impl CookieStore for PythonCookieJar {
                 .ok()
         })
     }
+}
+
+/// Checks whether a request `host` may receive a cookie scoped to `cookie_domain`,
+/// following the domain matching rules of
+/// [RFC 6265, §5.1.3](https://www.rfc-editor.org/rfc/rfc6265#section-5.1.3).
+///
+/// A host domain-matches a cookie domain when the two are equal, or when the host
+/// is a subdomain of the cookie domain — that is, the host ends with the cookie
+/// domain preceded by a `.` label separator. The comparison is case-insensitive,
+/// and a leading dot on the cookie domain (e.g. `.example.com`) is ignored, as
+/// permitted by [RFC 6265, §4.1.2.3](https://www.rfc-editor.org/rfc/rfc6265#section-4.1.2.3).
+///
+/// This is deliberately *not* a substring check: doing so would leak cookies to
+/// look-alike or superstring hosts. For example, a cookie scoped to `example.com`
+/// must not be sent to `notexample.com` or `example.com.attacker.net`.
+///
+/// An empty cookie domain imposes no host restriction and therefore matches any host.
+fn domain_matches(host: &str, cookie_domain: &str) -> bool {
+    let cookie_domain = cookie_domain.strip_prefix('.').unwrap_or(cookie_domain);
+
+    if cookie_domain.is_empty() {
+        return true;
+    }
+
+    let host = host.to_ascii_lowercase();
+    let cookie_domain = cookie_domain.to_ascii_lowercase();
+
+    host == cookie_domain || host.ends_with(&format!(".{cookie_domain}"))
 }
 
 impl PythonCookieJar {
