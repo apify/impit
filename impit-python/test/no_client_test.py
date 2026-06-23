@@ -176,10 +176,6 @@ class TestBasicRequests:
         assert cookies.get('set-by-server') == '321'
 
     def test_cookie_domain_matching_does_not_leak_to_lookalike_hosts(self) -> None:
-        # Regression test for https://github.com/apify/impit/issues/473.
-        # Cookie domain matching must follow RFC 6265 host/domain matching, not a raw
-        # substring check, otherwise a cookie scoped to e.g. `example.com` would leak to
-        # look-alike (`notexample.com`) or superstring (`example.com.attacker.net`) hosts.
         url = get_httpbin_url('/cookies')
         host = urllib.parse.urlparse(url).hostname or ''
         # The host must have at least two labels for this test to be meaningful.
@@ -191,6 +187,7 @@ class TestBasicRequests:
         # These domain-match the host and must be sent.
         cookies.set('exact_match', 'yes', domain=host)  # host == domain
         cookies.set('subdomain_ok', 'yes', domain=parent_domain)  # host is a subdomain of the cookie domain
+
         # These only match the host as a substring (not on a label boundary) and must NOT
         # be sent. With the old `.contains()` check both of these would leak.
         cookies.set('substring_leak', 'no', domain=host[1:])  # e.g. host `httpbin.org` vs `ttpbin.org`

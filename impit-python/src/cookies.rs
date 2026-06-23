@@ -179,15 +179,8 @@ impl CookieStore for PythonCookieJar {
 /// following the domain matching rules of
 /// [RFC 6265, §5.1.3](https://www.rfc-editor.org/rfc/rfc6265#section-5.1.3).
 ///
-/// A host domain-matches a cookie domain when the two are equal, or when the host
-/// is a subdomain of the cookie domain — that is, the host ends with the cookie
-/// domain preceded by a `.` label separator. The comparison is case-insensitive,
-/// and a leading dot on the cookie domain (e.g. `.example.com`) is ignored, as
+/// Leading dot on the cookie domain (e.g. `.example.com`) is ignored, as
 /// permitted by [RFC 6265, §4.1.2.3](https://www.rfc-editor.org/rfc/rfc6265#section-4.1.2.3).
-///
-/// This is deliberately *not* a substring check: doing so would leak cookies to
-/// look-alike or superstring hosts. For example, a cookie scoped to `example.com`
-/// must not be sent to `notexample.com` or `example.com.attacker.net`.
 ///
 /// An empty cookie domain imposes no host restriction and therefore matches any host.
 fn domain_matches(host: &str, cookie_domain: &str) -> bool {
