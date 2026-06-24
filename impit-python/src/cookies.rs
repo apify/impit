@@ -123,7 +123,7 @@ impl CookieStore for PythonCookieJar {
                         .and_then(|attr| attr.extract::<bool>())
                         .unwrap_or_default();
 
-                    if !domain.is_empty() && !url.host_str().unwrap_or_default().contains(&domain) {
+                    if !domain_matches(url.host_str().unwrap_or_default(), &domain) {
                         return None;
                     }
                     if !url.path().starts_with(&path) {
@@ -173,6 +173,39 @@ impl CookieStore for PythonCookieJar {
                 .ok()
         })
     }
+}
+
+/// Checks whether a request `host` may receive a cookie scoped to `cookie_domain`,
+/// following the domain matching rules of
+/// [RFC 6265, §5.1.3](https://www.rfc-editor.org/rfc/rfc6265#section-5.1.3).
+///
+/// Leading dot on the cookie domain (e.g. `.example.com`) is ignored, as
+/// permitted by [RFC 6265, §4.1.2.3](https://www.rfc-editor.org/rfc/rfc6265#section-4.1.2.3).
+///
+/// An empty cookie domain imposes no host restriction and therefore matches any host.
+fn domain_matches(host: &str, cookie_domain: &str) -> bool {
+    let cookie_domain = cookie_domain.strip_prefix('.').unwrap_or(cookie_domain);
+
+    if cookie_domain.is_empty() {
+        return true;
+    }
+
+    // Host names are case-insensitive; normalise both sides instead of trusting the
+    // caller to pass a lowercased host.
+    let host = host.to_ascii_lowercase();
+    let cookie_domain = cookie_domain.to_ascii_lowercase();
+
+    // RFC 6265 §5.1.3: an IP-address host only matches an identical cookie domain.
+    if host.parse::<std::net::IpAddr>().is_ok() {
+        return host == cookie_domain;
+    }
+
+    // Exact match, or subdomain match where the cookie domain is a suffix of the host
+    // on a `.` label boundary (e.g. host `www.example.com`, cookie domain `example.com`).
+    host == cookie_domain
+        || host
+            .strip_suffix(cookie_domain.as_str())
+            .is_some_and(|prefix| prefix.ends_with('.'))
 }
 
 impl PythonCookieJar {
