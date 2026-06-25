@@ -3,6 +3,15 @@
 All notable changes to this project will be documented in this file.
 
 
+## py-0.13.1 - 2026-06-25
+
+#### Bug Fixes
+
+- Cookie domain matching (#488)
+  - Replace substring match by matching according to [RFC 6265, §5.1.3](https://www.rfc-editor.org/rfc/rfc6265#section-5.1.3). Add test.  # Issues: Closes: #473  ---------
+
+
+
 ## py-0.13.0 - 2026-06-19
 
 #### Bug Fixes
