@@ -91,13 +91,7 @@ impl CookieStore for PythonCookieJar {
 
                 kwargs.set_item("rest", rest).unwrap_or_default();
 
-                // A hostile or buggy server can send a `Set-Cookie` that
-                // `http.cookiejar.Cookie` rejects (e.g. a bad domain/expiry), and a custom
-                // cookie jar's `set_cookie` may raise too. Skip the offending cookie instead
-                // of `.unwrap()`ing: a panic here would unwind across the FFI boundary and
-                // abort the host process rather than raise a catchable Python exception.
-                // Cookie parsing errors are ignored silently, matching the Node binding's
-                // `setCookie` handling in `index.wrapper.js`.
+                // Cookie parsing errors are ignored silently.
                 let py_cookie = match self.cookie_constructor.call(py, (), Some(&kwargs)) {
                     Ok(py_cookie) => py_cookie,
                     Err(_) => continue,

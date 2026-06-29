@@ -203,20 +203,13 @@ class TestBasicRequests:
                 # but it's ok - https://www.rfc-editor.org/rfc/rfc6265#section-4.1.2.3
                 assert cookie.domain == '127.0.0.1'
 
-    def test_malformed_cookie_is_skipped_not_crashing(self, browser: Browser) -> None:
-        """A cookie the jar rejects is skipped instead of aborting the process.
-
-        Regression test for https://github.com/apify/impit/issues/478: `set_cookies`
-        runs inside reqwest's cookie-store callback, so a raising `set_cookie` used to
-        `.unwrap()` into a Rust panic that unwound across the FFI boundary and aborted
-        the host process. It must now be caught and the offending cookie skipped, while
-        valid cookies in the same response are still stored.
-        """
+    def test_rejected_cookie_is_skipped_not_crashing(self, browser: Browser) -> None:
+        """A cookie jar rejects are skipped instead of aborting the process."""
 
         class RejectingCookieJar(CookieJar):
             def set_cookie(self, cookie: Cookie) -> None:
                 if cookie.name == 'bad':
-                    raise ValueError('cookie jar rejects this cookie')
+                    raise ValueError('simulate parsing error')
                 super().set_cookie(cookie)
 
         cookies_jar = RejectingCookieJar()
@@ -233,13 +226,10 @@ class TestBasicRequests:
             },
         )
 
-        # The request must return normally rather than aborting the interpreter.
         response = impit.get(url)
         assert response.status_code == 200
 
-        names = {cookie.name for cookie in cookies_jar}
-        assert 'bad' not in names  # the rejected cookie was skipped
-        assert 'good' in names  # a valid cookie in the same response is still stored
+        assert {'good'} == {cookie.name for cookie in cookies_jar}
 
     def test_cookie_jar_works(self, browser: Browser) -> None:
         cookies = Cookies({'preset-cookie': '123'})
