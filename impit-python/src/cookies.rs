@@ -91,13 +91,30 @@ impl CookieStore for PythonCookieJar {
 
                 kwargs.set_item("rest", rest).unwrap_or_default();
 
-                let py_cookie = self.cookie_constructor.call(py, (), Some(&kwargs)).unwrap();
+                // A hostile or buggy server can send a `Set-Cookie` that
+                // `http.cookiejar.Cookie` rejects (e.g. a bad domain/expiry), and a custom
+                // cookie jar's `set_cookie` may raise too. Skip the offending cookie and warn
+                // instead of `.unwrap()`ing: a panic here would unwind across the FFI boundary
+                // and abort the host process rather than raise a catchable Python exception.
+                let py_cookie = match self.cookie_constructor.call(py, (), Some(&kwargs)) {
+                    Ok(py_cookie) => py_cookie,
+                    Err(err) => {
+                        warn_skipped_cookie(py, cookie.name(), &err);
+                        continue;
+                    }
+                };
 
-                let args = PyTuple::new(py, vec![py_cookie]).unwrap();
+                let args = match PyTuple::new(py, vec![py_cookie]) {
+                    Ok(args) => args,
+                    Err(err) => {
+                        warn_skipped_cookie(py, cookie.name(), &err);
+                        continue;
+                    }
+                };
 
-                self.cookie_jar
-                    .call_method1(py, "set_cookie", args)
-                    .unwrap();
+                if let Err(err) = self.cookie_jar.call_method1(py, "set_cookie", args) {
+                    warn_skipped_cookie(py, cookie.name(), &err);
+                }
             }
         });
     }
@@ -172,6 +189,21 @@ impl CookieStore for PythonCookieJar {
                 .parse::<reqwest::header::HeaderValue>()
                 .ok()
         })
+    }
+}
+
+/// Emits a Python `UserWarning` that a `Set-Cookie` was skipped because the cookie jar
+/// rejected it, instead of letting the error panic across the FFI boundary.
+fn warn_skipped_cookie(py: Python<'_>, cookie_name: &str, err: &PyErr) {
+    let message = format!("Skipping malformed cookie {cookie_name:?}: {err}");
+
+    let warned = PyModule::import(py, "warnings")
+        .and_then(|warnings| warnings.call_method1("warn", (message.as_str(),)));
+
+    // Fall back to stderr if even emitting the warning fails, so the cookie is never
+    // silently dropped and we still avoid aborting the process.
+    if warned.is_err() {
+        eprintln!("{message}");
     }
 }
 
