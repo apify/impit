@@ -91,7 +91,7 @@ impl CookieStore for PythonCookieJar {
 
                 kwargs.set_item("rest", rest).unwrap_or_default();
 
-                // Cookie parsing errors are ignored silently.
+                // Malformed cookies and cookie-jar insertion errors are ignored silently.
                 let py_cookie = match self.cookie_constructor.call(py, (), Some(&kwargs)) {
                     Ok(py_cookie) => py_cookie,
                     Err(_) => continue,

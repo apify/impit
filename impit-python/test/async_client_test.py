@@ -194,7 +194,7 @@ class TestBasicRequests:
 
     @pytest.mark.asyncio
     async def test_rejected_cookie_is_skipped_not_crashing(self, browser: Browser) -> None:
-        """A cookie jar rejects are skipped instead of aborting the process."""
+        """Cookies rejected by the cookie jar are skipped instead of aborting the process."""
 
         class RejectingCookieJar(CookieJar):
             def set_cookie(self, cookie: Cookie) -> None:
