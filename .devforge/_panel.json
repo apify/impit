@@ -1,0 +1,13 @@
+{
+  "tier": "medium",
+  "reason": "Small, localized code change but it alters the public response-header decoding contract across both language bindings (blast-radius override lifts small→medium). Extra scrutiny warranted because the change sits between two conflicting prior decisions (#434 vs #479) and the full workspace can't be compiled locally.",
+  "reviewers": [
+    { "use": "staff-review", "model": "sonnet" }
+  ],
+  "final_reviewers": [
+    { "use": "thermonuclear", "model": "sonnet" },
+    { "use": "code-review", "model": "sonnet" }
+  ],
+  "inner_iterations": 3,
+  "final_review_rounds": 2
+}

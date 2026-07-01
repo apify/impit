@@ -1,0 +1,22 @@
+{
+  "stages": {
+    "verify_request": { "use": "brainstorming", "model": "opus" },
+    "architect":   { "use": "writing-plans", "model": "opus" },
+    "implementer": { "use": "feature-dev",   "model": "opus" },
+    "reviewers": [
+      { "use": "staff-review",  "model": "sonnet" }
+    ],
+    "final_reviewers": [
+      { "use": "thermonuclear", "model": "sonnet" },
+      { "use": "code-review",   "model": "sonnet" }
+    ]
+  },
+  "oracle": {
+    "commands": [
+      "rustc --edition 2021 --test /home/user/impit/.devforge/oracle_header_decode.rs -o /home/user/impit/.devforge/oracle_header_decode && /home/user/impit/.devforge/oracle_header_decode"
+    ],
+    "note": "Full-workspace `cargo test` cannot run here: the pinned git dependency github.com/apify/h2 returns 403 through the org egress proxy and its cargo cache is empty. The oracle instead compiles+runs a standalone rustc --test copy of the pure decode_header_value helper, verifying the exact algorithm (UTF-8-first with latin-1 fallback) independent of h2. Binding compile/integration must be confirmed in CI where github egress is permitted."
+  },
+  "limits": { "inner_iterations": 3, "final_review_rounds": 2 },
+  "plan_mode_gate": true
+}
