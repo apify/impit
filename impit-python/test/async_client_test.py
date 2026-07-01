@@ -46,6 +46,39 @@ def truncating_server(port_holder: list[int]) -> None:
     server.close()
 
 
+def header_encoding_server(port_holder: list[int]) -> None:
+    """Send a response carrying a UTF-8 header value and a lone ISO-8859-1 byte."""
+    server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    server.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
+    server.bind(('::', 0))
+    port_holder[0] = server.getsockname()[1]
+    server.listen(1)
+
+    conn, _ = server.accept()
+    conn.recv(1024)
+    body = b'ok'
+    response = b''.join(
+        [
+            b'HTTP/1.1 200 OK\r\n',
+            b'Content-Type: text/plain\r\n',
+            b'X-Utf8: ',
+            'attachment; filename="naïve.pdf"'.encode(),
+            b'\r\n',
+            b'X-Latin1: M',
+            bytes([0xE4]),  # 'a' with diaeresis in ISO-8859-1; not valid UTF-8 on its own
+            b'rz\r\n',
+            b'Content-Length: ',
+            str(len(body)).encode(),
+            b'\r\n\r\n',
+            body,
+        ]
+    )
+    conn.send(response)
+    conn.close()
+    server.close()
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     ('browser', 'ja4'),
@@ -424,6 +457,29 @@ class TestBasicRequests:
         assert response.text == remote_address
         assert response.status_code == 200
         thread.join()
+
+    @pytest.mark.asyncio
+    async def test_header_value_decoding_and_raw_bytes(self, browser: Browser) -> None:
+        port_holder = [0]
+        thread = threading.Thread(target=header_encoding_server, args=(port_holder,))
+        thread.start()
+        await asyncio.sleep(0.1)
+
+        impit = AsyncClient(browser=browser)
+        response = await impit.get(f'http://127.0.0.1:{port_holder[0]}/', timeout=5)
+        thread.join()
+
+        utf8_value = 'attachment; filename="naïve.pdf"'
+
+        # Python follows httpx semantics: a UTF-8 header value decodes correctly as str...
+        assert response.headers['x-utf8'] == utf8_value
+        # ...and a lone non-UTF-8 byte falls back to ISO-8859-1.
+        assert response.headers['x-latin1'] == 'März'
+
+        # raw_headers exposes the exact wire bytes (httpx Headers.raw equivalent).
+        raw = dict(response.raw_headers)
+        assert raw[b'x-utf8'] == utf8_value.encode('utf-8')
+        assert raw[b'x-latin1'] == b'M' + bytes([0xE4]) + b'rz'
 
 
 @pytest.mark.parametrize(

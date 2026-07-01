@@ -50,7 +50,7 @@ def test_response_raw_headers() -> None:
     assert all(isinstance(k, bytes) and isinstance(v, bytes) for k, v in raw)
     assert (b'Content-Type', b'application/json') in raw
     # A non-ASCII value is preserved as its exact UTF-8 bytes.
-    assert (b'X-Unicode', 'naïve'.encode('utf-8')) in raw
+    assert (b'X-Unicode', 'naïve'.encode()) in raw
 
 
 def test_response_headers_encoding() -> None:
