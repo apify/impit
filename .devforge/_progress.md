@@ -22,3 +22,12 @@
 
 ## State
 - Phase: design-gate (awaiting human approval before any source edit).
+
+## Finish (rev 2)
+- PR #492 opened: https://github.com/apify/impit/pull/492 (base master).
+- Oracle green throughout (rustfmt/rustc/rustdoc + ruff/py_compile). Binding compile + JS/Py test
+  execution are CI-gated (h2 egress 403 blocks local build).
+- Reviewer staff-review: PASS. Final reviewers thermonuclear + code-review: both PASS after 2
+  final-reopen rounds (fixed: clone() dropping rawHeaders, index.d.ts, wire-order/casing overclaims).
+- Approvals: design gate rev1 + rev2 (chat), create-PR (chat) 2026-07-01.
+- Phase: done.
