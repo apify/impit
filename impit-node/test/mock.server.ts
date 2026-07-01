@@ -24,6 +24,10 @@ export const routes = {
         path: '/non-ascii-header',
         headerValue: 'Dienstag, 31. März 2026',
     },
+    utf8Header: {
+        path: '/utf8-header',
+        headerValue: 'attachment; filename="naïve.pdf"',
+    },
 }
 
 function parseMultipart(body: Buffer, boundary: string): Record<string, string> {
@@ -110,6 +114,22 @@ export async function runServer(port: number): Promise<Server> {
             Buffer.from('X-Non-Ascii: Dienstag, 31. M'),
             Buffer.from([0xE4]), // ä in ISO-8859-1
             Buffer.from('rz 2026\r\n'),
+        ]));
+        socket.write('Content-Length: 2\r\n');
+        socket.write('\r\n');
+        socket.write('ok');
+        socket.end();
+    });
+
+    app.get(routes.utf8Header.path, (req, res) => {
+        const socket = res.socket!;
+        socket.write('HTTP/1.1 200 OK\r\n');
+        socket.write('Content-Type: text/plain\r\n');
+        // Header value carrying UTF-8 bytes (the ï is 0xC3 0xAF).
+        socket.write(Buffer.concat([
+            Buffer.from('X-Utf8: '),
+            Buffer.from(routes.utf8Header.headerValue, 'utf-8'),
+            Buffer.from('\r\n'),
         ]));
         socket.write('Content-Length: 2\r\n');
         socket.write('\r\n');

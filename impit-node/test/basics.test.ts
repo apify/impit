@@ -571,6 +571,11 @@ describe.each([
             t.expect(response.headers.get('x-non-ascii')).toBe(routes.nonAsciiHeader.headerValue);
         });
 
+        test('UTF-8 header values are decoded as UTF-8', async (t) => {
+            const response = await impit.fetch(new URL(routes.utf8Header.path, "http://127.0.0.1:3001").href);
+            t.expect(response.headers.get('x-utf8')).toBe(routes.utf8Header.headerValue);
+        });
+
         test('.json() method works', async (t) => {
         const response = await impit.fetch(getHttpBinUrl('/json'));
         const json = await response.json();

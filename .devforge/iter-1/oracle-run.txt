@@ -1,0 +1,10 @@
+
+running 5 tests
+test tests::empty_is_empty ... ok
+test tests::ascii_is_unchanged ... ok
+test tests::iso_8859_1_fallback_never_produces_replacement_char ... ok
+test tests::utf8_is_decoded_as_utf8 ... ok
+test tests::invalid_utf8_falls_back_to_iso_8859_1 ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

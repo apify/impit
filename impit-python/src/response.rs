@@ -5,7 +5,10 @@ use tokio::sync::Mutex as AsyncMutex;
 use bytes::Bytes;
 use encoding::label::encoding_from_whatwg_label;
 use futures::{Stream, StreamExt};
-use impit::{errors::ImpitError, utils::ContentType};
+use impit::{
+    errors::ImpitError,
+    utils::{decode_header_value, ContentType},
+};
 use pyo3::prelude::*;
 use reqwest::{Response, StatusCode, Version};
 use std::pin::Pin;
@@ -539,7 +542,7 @@ impl ImpitPyResponse {
         let headers = HashMap::from_iter(val.headers().iter().map(|(k, v)| {
             (
                 k.as_str().to_string(),
-                v.as_bytes().iter().map(|&b| b as char).collect::<String>(),
+                decode_header_value(v.as_bytes()),
             )
         }));
 

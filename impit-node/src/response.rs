@@ -1,6 +1,6 @@
 #![allow(clippy::await_holding_refcell_ref, deprecated)]
 use crate::abortable_stream::AbortableStream;
-use impit::utils::{decode, ContentType};
+use impit::utils::{decode, decode_header_value, ContentType};
 use napi::bindgen_prelude::JsObjectValue;
 use napi::{
   bindgen_prelude::{
@@ -93,7 +93,7 @@ impl<'env> ImpitResponse {
     for (k, v) in response.headers().iter() {
       headers_vec.push((
         k.as_str().to_string(),
-        v.as_bytes().iter().map(|&b| b as char).collect(),
+        decode_header_value(v.as_bytes()),
       ));
     }
     let headers = Headers(headers_vec);
