@@ -1,5 +1,0 @@
-# Regenerable per-iteration transients
-iter-*/diff.patch
-iter-*/test-results.txt
-oracle_header_decode
-oracle_header_decode.rs

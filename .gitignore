@@ -1,6 +1,7 @@
 /target
 /artifacts
 .idea
+.devforge/
 
 # Python
 __pycache__
