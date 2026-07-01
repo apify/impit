@@ -19,16 +19,19 @@ Decision (confirmed with maintainer): **behave like httpx in Python, like Fetch 
   `b as char` and drop the JS "UTF-8 header" string test.
 
 **Raw-bytes accessor (new public API, both bindings):**
-- **Python** — mirror httpx's `Response.headers.raw`: expose `raw_headers` on the response as
-  `list[tuple[bytes, bytes]]` (name, value), preserving order and duplicates (reqwest yields
-  repeated headers separately). This closes a real httpx-compat gap.
+- **Python** — httpx-`.raw`-like: expose `raw_headers` on the response as
+  `list[tuple[bytes, bytes]]` (name, value).
 - **JS** — no Fetch precedent, so this is an explicit impit extension: expose `rawHeaders` on the
   response as `Array<[string, Uint8Array]>` (name as string per Fetch conventions, value as raw
-  bytes), same order/duplicate semantics. Justified because HMAC callers need exact bytes and
-  latin-1 strings, while recoverable, are error-prone to reverse by hand.
+  bytes). Justified because HMAC callers need exact bytes and latin-1 strings, while recoverable,
+  are error-prone to reverse by hand. Preserved across `clone()`.
 
-Both accessors return the untouched wire bytes, so a signature/HMAC caller never depends on any
-string decoding.
+Both accessors return the untouched header VALUE bytes, so a signature/HMAC caller never depends
+on string decoding. **Caveat (reqwest limitation):** by the time impit sees a response, reqwest's
+`HeaderMap` has already normalized header names to lowercase and discarded the original
+cross-header wire order, so — unlike httpx's `.raw`, which keeps the raw list — names are
+lowercased and order is not the wire order. Duplicate values for a given name are preserved. The
+value bytes (the part that matters for signatures) are exact.
 
 ## Alternatives + the call
 - **Symmetric UTF-8-first in both (previous rev):** rejected per maintainer — deviates from

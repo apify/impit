@@ -16,9 +16,12 @@ Response header values must decode correctly for the common modern case (UTF-8, 
    `U+FFFD` (fixes #479 for Python; keeps #430/#434 guarantees).
 2. JS decodes headers Fetch-style: strict ISO-8859-1 isomorphic decode (`b as char`), so string
    values stay byte-recoverable via `Buffer.from(v,'binary')`. JS UTF-8 mojibake is intentional.
-3. Both bindings expose a raw-bytes accessor returning the exact wire bytes, order + duplicates
-   preserved: Python `raw_headers: list[tuple[bytes,bytes]]` (httpx `.raw` parity); JS
-   `rawHeaders: Array<[string, Uint8Array]>` (impit extension).
+3. Both bindings expose a raw-bytes accessor returning the exact header VALUE bytes (duplicate
+   values preserved): Python `raw_headers: list[tuple[bytes,bytes]]`; JS
+   `rawHeaders: Array<[string, Uint8Array]>` (impit extension). Caveat imposed by reqwest's
+   `HeaderMap`: header names are normalized to lowercase and original cross-header wire order is
+   NOT preserved — so this is httpx-`.raw`-*like*, not byte-identical. JS `rawHeaders` survives
+   `clone()`.
 4. Tests: Python UTF-8 decode + raw bytes exact; JS latin-1 decode retained + raw bytes exact.
 5. #479 resolution documented as intentionally split (JS = Fetch parity + rawHeaders escape hatch).
 

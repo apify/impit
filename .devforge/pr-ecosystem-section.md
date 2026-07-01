@@ -17,8 +17,14 @@ does via the shared `decode_header_value` helper:
   [`httpx/_models.py` @ v0.28.1, `raw` property](https://github.com/encode/httpx/blob/0.28.1/httpx/_models.py#L152-L156).
   Our new `Response.raw_headers` returns the same `list[tuple[bytes, bytes]]` shape.
 
-So Python callers get the same decoded strings *and* the same raw-bytes escape hatch they would
-from httpx.
+So Python callers get the same decoded strings *and* a raw-bytes escape hatch like httpx's.
+
+> **Caveat vs. httpx `.raw`:** impit is built on `reqwest`, whose `HeaderMap` normalizes header
+> names to lowercase and does not retain the original cross-header wire order — that information
+> is gone before impit ever sees the response. So `raw_headers` (and JS `rawHeaders`) is
+> httpx-`.raw`-*like* but not byte-identical: header **names** are lowercased and cross-header
+> order is not guaranteed. Header **values** — the bytes that matter for signature/HMAC
+> verification — are exact, and duplicate values for a name are preserved.
 
 ### JavaScript — matches the Fetch API / undici (which impit-node implements)
 

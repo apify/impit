@@ -453,10 +453,12 @@ impl ImpitPyResponse {
         Ok(())
     }
 
-    /// Raw, undecoded header name/value pairs as `(bytes, bytes)`, in the order the server sent
-    /// them (duplicate names preserved). Equivalent to httpx's `Response.headers.raw`.
+    /// Raw, undecoded header name/value pairs as `(bytes, bytes)`. Similar to httpx's
+    /// `Response.headers.raw`, but note two differences imposed by the underlying HTTP client:
+    /// header names are normalized to lowercase and the original wire order is not preserved
+    /// (duplicate values for a name are kept). Header *values* are the exact bytes received.
     ///
-    /// Unlike `headers` (str values decoded UTF-8-first), this returns the exact wire bytes, for
+    /// Unlike `headers` (str values decoded UTF-8-first), this returns the exact value bytes, for
     /// callers that need them - e.g. verifying a header signature/HMAC.
     #[getter]
     fn raw_headers<'py>(&self, py: Python<'py>) -> Vec<(Bound<'py, PyBytes>, Bound<'py, PyBytes>)> {

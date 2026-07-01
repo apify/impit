@@ -578,15 +578,20 @@ describe.each([
             const latin1 = response.headers.get('x-utf8');
             t.expect(latin1).not.toBe(routes.utf8Header.headerValue);
 
-            // rawHeaders exposes the exact wire bytes, which decode to the real UTF-8 value.
-            const rawHeaders = (response as unknown as { rawHeaders: Array<[string, Uint8Array]> }).rawHeaders;
-            const rawPair = rawHeaders.find(([k]) => k.toLowerCase() === 'x-utf8');
+            // rawHeaders exposes the exact value bytes, which decode to the real UTF-8 value.
+            const rawPair = response.rawHeaders.find(([k]) => k.toLowerCase() === 'x-utf8');
             t.expect(rawPair).toBeDefined();
             const rawBytes = Buffer.from(rawPair![1]);
             t.expect(rawBytes.toString('utf8')).toBe(routes.utf8Header.headerValue);
 
             // The ISO-8859-1 string also round-trips back to those exact bytes (the standard Fetch workaround).
             t.expect(Buffer.from(latin1!, 'latin1').equals(rawBytes)).toBe(true);
+
+            // rawHeaders survives clone() (clone() returns a Fetch Response augmented by impit).
+            const cloned = response.clone() as unknown as { rawHeaders: Array<[string, Uint8Array]> };
+            const clonedPair = cloned.rawHeaders.find(([k]) => k.toLowerCase() === 'x-utf8');
+            t.expect(clonedPair).toBeDefined();
+            t.expect(Buffer.from(clonedPair![1]).equals(rawBytes)).toBe(true);
         });
 
         test('.json() method works', async (t) => {
