@@ -19,10 +19,11 @@ preserved and the latin-1 fallback stays byte-reversible. It is strictly better 
 issue's own suggestion (`from_utf8_lossy`), which would turn #434's bare `0xE4` into `U+FFFD`
 and reintroduce corruption for exactly the case #434 fixed.
 
-Rust expresses this cleanly and allocation-efficiently:
-`String::from_utf8(bytes.to_vec()).unwrap_or_else(|e| e.into_bytes().iter().map(|&b| b as char).collect())`
-— the common UTF-8 path is a single move with no per-byte work; the fallback reuses the same
-owned buffer.
+Rust expresses this cleanly by validating against the borrow first:
+`match std::str::from_utf8(bytes) { Ok(v) => v.to_owned(), Err(_) => bytes.iter().map(|&b| b as char).collect() }`
+— `str::from_utf8` checks validity without copying, so the common UTF-8 path allocates exactly
+once (`to_owned`) and the latin-1 fallback allocates exactly once (the `collect`); neither path
+does a redundant intermediate copy.
 
 ## Alternatives + the call
 - **`from_utf8_lossy` (issue's suggestion):** rejected — lossy and regresses #434 (replacement

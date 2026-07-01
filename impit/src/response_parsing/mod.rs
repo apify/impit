@@ -157,8 +157,10 @@ pub fn determine_encoding(bytes: &[u8]) -> Option<encoding::EncodingRef> {
 /// assert_eq!(decode_header_value(&[b'M', 0xE4, b'r', b'z']), "März");
 /// ```
 pub fn decode_header_value(bytes: &[u8]) -> String {
-    String::from_utf8(bytes.to_vec())
-        .unwrap_or_else(|e| e.into_bytes().iter().map(|&b| b as char).collect())
+    match std::str::from_utf8(bytes) {
+        Ok(valid) => valid.to_owned(),
+        Err(_) => bytes.iter().map(|&b| b as char).collect(),
+    }
 }
 
 /// A struct that represents the contents of the `Content-Type` header.
