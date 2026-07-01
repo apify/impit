@@ -1,60 +1,62 @@
-# Design — fix #479 header decoding without regressing #434
+# Design (rev 2) — fix #479: per-ecosystem header decoding + raw-bytes accessor
 
 ## What we're solving
-Response header values are decoded as ISO-8859-1 (`b as char`) in both bindings. That was a
-deliberate choice in PR #434 to stop non-ASCII header bytes from crashing Node / emptying
-Python (issue #430). But ISO-8859-1 mangles the far more common case — headers whose bytes are
-UTF-8 (e.g. `Content-Disposition: filename="naïve.pdf"`) — into mojibake (`ï` → `Ã¯`), breaking
-filename extraction and any byte-exact re-encoding. We need both cases correct at once.
+Header values are decoded as ISO-8859-1 (`b as char`), garbling UTF-8 headers (#479). Rather
+than force one behavior on both bindings, we make each binding faithful to the reference client
+it already claims to implement, and give callers who need exact bytes (HMAC/signature checks) a
+raw accessor — mirroring what httpx already offers.
+
+Decision (confirmed with maintainer): **behave like httpx in Python, like Fetch in JS**, and
+**add a raw-header-bytes accessor to both**.
 
 ## How
-Decode with **UTF-8 first, ISO-8859-1 fallback**:
+**Decoding (the split):**
+- **Python = httpx semantics.** Decode UTF-8-first with an ISO-8859-1 fallback (httpx tries
+  ascii→utf-8→iso-8859-1). This is the shared `decode_header_value` helper we already built.
+- **JS = Fetch semantics.** Keep strict ISO-8859-1 isomorphic decode (`b as char`, i.e. PR
+  #434's behavior). This means impit-node's string headers stay byte-recoverable via the standard
+  `Buffer.from(v, 'binary')` idiom, matching `fetch()`/undici/axios. Revert the JS call site to
+  `b as char` and drop the JS "UTF-8 header" string test.
 
-- If the header bytes are valid UTF-8 → decode as UTF-8 (fixes #479's mojibake).
-- Otherwise → fall back to the existing byte-preserving `b as char` latin-1 decode (keeps #434;
-  e.g. bare `0xE4` → `ä`).
+**Raw-bytes accessor (new public API, both bindings):**
+- **Python** — mirror httpx's `Response.headers.raw`: expose `raw_headers` on the response as
+  `list[tuple[bytes, bytes]]` (name, value), preserving order and duplicates (reqwest yields
+  repeated headers separately). This closes a real httpx-compat gap.
+- **JS** — no Fetch precedent, so this is an explicit impit extension: expose `rawHeaders` on the
+  response as `Array<[string, Uint8Array]>` (name as string per Fetch conventions, value as raw
+  bytes), same order/duplicate semantics. Justified because HMAC callers need exact bytes and
+  latin-1 strings, while recoverable, are error-prone to reverse by hand.
 
-This never emits `U+FFFD` replacement characters, so #430's non-crash / non-empty guarantee is
-preserved and the latin-1 fallback stays byte-reversible. It is strictly better than the
-issue's own suggestion (`from_utf8_lossy`), which would turn #434's bare `0xE4` into `U+FFFD`
-and reintroduce corruption for exactly the case #434 fixed.
-
-Rust expresses this cleanly by validating against the borrow first:
-`match std::str::from_utf8(bytes) { Ok(v) => v.to_owned(), Err(_) => bytes.iter().map(|&b| b as char).collect() }`
-— `str::from_utf8` checks validity without copying, so the common UTF-8 path allocates exactly
-once (`to_owned`) and the latin-1 fallback allocates exactly once (the `collect`); neither path
-does a redundant intermediate copy.
+Both accessors return the untouched wire bytes, so a signature/HMAC caller never depends on any
+string decoding.
 
 ## Alternatives + the call
-- **`from_utf8_lossy` (issue's suggestion):** rejected — lossy and regresses #434 (replacement
-  chars, irreversible) as shown above.
-- **Latin-1 always (status quo):** rejected — this is the bug.
-- **UTF-8 always / error on invalid:** rejected — re-breaks #430 (invalid-UTF-8 latin-1 headers).
-- **Expose raw header bytes API for HMAC/signature callers:** deferred — useful but a separate,
-  larger public-API addition; note as follow-up, out of scope here.
-- **Chosen: UTF-8-first with latin-1 fallback**, placed in one shared helper.
+- **Symmetric UTF-8-first in both (previous rev):** rejected per maintainer — deviates from
+  strict Fetch on JS and breaks the `Buffer.from(v,'binary')` recovery idiom.
+- **Latin-1 everywhere + raw bytes only:** rejected — leaves Python worse than httpx.
+- **Skip the raw accessor:** rejected — HMAC/signature callers have no correct alternative once
+  decoding is lossy (distinct byte sequences can decode to the same string).
+- **Chosen:** per-ecosystem decode + raw accessor in both.
 
-## Major changes (key areas, not exhaustive)
-- Add a shared `decode_header_value(&[u8]) -> String` helper in the core crate's
-  `response_parsing` module, re-exported through `impit::utils`, so both bindings share one
-  tested implementation instead of duplicating the closure. Cover it with core unit tests
-  (ASCII, UTF-8, invalid-UTF-8 latin-1, empty).
-- Node (`impit-node/src/response.rs`): replace the inline `b as char` map with a call to the
-  shared helper.
-- Python (`impit-python/src/response.rs`): same replacement.
-- Tests: add a UTF-8 header regression test to the Node suite (mirrors the existing latin-1
-  test in `basics.test.ts` / `mock.server.ts`); the existing latin-1 test is the guard that the
-  fallback still works.
+## Major changes (key areas)
+- Core crate: keep `decode_header_value` (UTF-8-first); Python consumes it, JS does not.
+- `impit-python/src/response.rs`: keep helper for the string dict; add `raw_headers` getter
+  returning byte-pair tuples.
+- `impit-node/src/response.rs`: revert string decode to `b as char`; add `rawHeaders` accessor
+  returning name/`Uint8Array` pairs; update the `.d.ts`/napi surface.
+- Tests: Python — UTF-8 decodes correctly + `raw_headers` returns exact bytes. JS — existing
+  latin-1 test stays; add a `rawHeaders` test asserting exact wire bytes (and that string decode
+  remains latin-1). Core — existing `decode_header_value` unit tests unchanged.
+- Docs: note the intentional Python/JS decoding difference; note JS `rawHeaders` is an impit
+  extension beyond Fetch.
 
 ## Risks / open questions
-- **Ambiguous bytes:** a byte sequence that is *coincidentally* valid UTF-8 but was meant as
-  latin-1 will now decode as UTF-8. This is unavoidable without out-of-band charset info and
-  UTF-8 is the correct modern default; the tradeoff is intended.
-- **Environment/oracle limitation:** the full Rust workspace cannot compile here — the pinned
-  git dep `github.com/apify/h2` is blocked (403) by org egress and its cache is empty. The
-  devforge oracle therefore runs a standalone `rustc --test` copy of the helper to prove the
-  algorithm; full binding compilation/integration must be verified in CI. Reviewers should treat
-  binding-compile as unverified-locally.
-- **Python test gap:** Python has no existing header-decode test; adding one requires the
-  maturin build (also unavailable here). Node coverage + shared-helper unit tests carry the
-  correctness signal; a Python test is a nice-to-have follow-up if the build is available in CI.
+- **#479 becomes a partial fix by design:** JS UTF-8 headers stay latin-1 (mojibake) on the
+  string API; the fix for JS callers is `rawHeaders` + their own decode, matching Fetch. The
+  issue/PR must state this explicitly so it isn't read as "not fixed."
+- **New public API surface in both bindings** — naming (`raw_headers` / `rawHeaders`), return
+  shapes, and multi-value/duplicate semantics are the things to lock at this gate.
+- **Build/oracle limit unchanged:** full workspace + napi/maturin can't build here
+  (github.com/apify/h2 egress 403). Core helper is oracle-tested via standalone rustc; the new
+  accessors' binding compilation + JS/Py tests must be verified in CI. The `rawHeaders` napi/pyo3
+  wiring in particular is only compile-checkable in CI.

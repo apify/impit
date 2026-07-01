@@ -11,12 +11,16 @@ Response header values must decode correctly for the common modern case (UTF-8, 
 - Existing regression guard: `impit-node/test/basics.test.ts:569` + `impit-node/test/mock.server.ts:105-118`
 - Shared helper candidate home: `impit/src/response_parsing/mod.rs`, re-exported via `impit::utils`
 
-## Acceptance
-1. A header whose bytes are valid UTF-8 decodes as UTF-8 (fixes #479 mojibake).
-2. A header with invalid-UTF-8 latin-1 bytes still decodes byte-for-byte as latin-1 (keeps #434).
-3. No `U+FFFD` replacement chars introduced (keeps #430 non-crash / non-empty).
-4. Applied symmetrically in Node and Python bindings.
-5. Regression test present for the UTF-8 case (at minimum in Node, which has the existing suite).
+## Acceptance (rev 2 — per-ecosystem, confirmed with maintainer)
+1. Python decodes headers httpx-style: UTF-8-first with ISO-8859-1 fallback, never crash/empty/
+   `U+FFFD` (fixes #479 for Python; keeps #430/#434 guarantees).
+2. JS decodes headers Fetch-style: strict ISO-8859-1 isomorphic decode (`b as char`), so string
+   values stay byte-recoverable via `Buffer.from(v,'binary')`. JS UTF-8 mojibake is intentional.
+3. Both bindings expose a raw-bytes accessor returning the exact wire bytes, order + duplicates
+   preserved: Python `raw_headers: list[tuple[bytes,bytes]]` (httpx `.raw` parity); JS
+   `rawHeaders: Array<[string, Uint8Array]>` (impit extension).
+4. Tests: Python UTF-8 decode + raw bytes exact; JS latin-1 decode retained + raw bytes exact.
+5. #479 resolution documented as intentionally split (JS = Fetch parity + rawHeaders escape hatch).
 
-## Explicitly out of scope (note as follow-up)
-Exposing raw header bytes for HMAC/signature callers — larger API addition, separate issue.
+## Now in scope (was previously deferred)
+Raw header bytes accessor for HMAC/signature callers — included per maintainer decision.
