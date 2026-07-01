@@ -180,6 +180,22 @@ class Response:
         print(response.headers) # {'content-type': 'text/html; charset=utf-8', ... }
     """
 
+    @property
+    def raw_headers(self) -> list[tuple[bytes, bytes]]:
+        """Raw, undecoded header name/value pairs as ``(bytes, bytes)``.
+
+        Similar to httpx's ``Response.headers.raw``, but note two differences imposed by the
+        underlying HTTP client: header names are normalized to lowercase and the original wire
+        order is not preserved (duplicate values for a name are kept). Header *values* are the
+        exact bytes received - useful when a header carries UTF-8 or when verifying a header
+        signature/HMAC.
+
+        .. code-block:: python
+
+            response = await client.get("https://crawlee.dev")
+            print(response.raw_headers) # [(b'content-type', b'text/html; charset=utf-8'), ... ]
+        """
+
     text: str
     """Response body as text. Decoded from :attr:`content` using :attr:`encoding`.
 
