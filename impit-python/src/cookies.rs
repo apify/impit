@@ -91,13 +91,18 @@ impl CookieStore for PythonCookieJar {
 
                 kwargs.set_item("rest", rest).unwrap_or_default();
 
-                let py_cookie = self.cookie_constructor.call(py, (), Some(&kwargs)).unwrap();
+                // Malformed cookies and cookie-jar insertion errors are ignored silently.
+                let py_cookie = match self.cookie_constructor.call(py, (), Some(&kwargs)) {
+                    Ok(py_cookie) => py_cookie,
+                    Err(_) => continue,
+                };
 
-                let args = PyTuple::new(py, vec![py_cookie]).unwrap();
+                let args = match PyTuple::new(py, vec![py_cookie]) {
+                    Ok(args) => args,
+                    Err(_) => continue,
+                };
 
-                self.cookie_jar
-                    .call_method1(py, "set_cookie", args)
-                    .unwrap();
+                let _ = self.cookie_jar.call_method1(py, "set_cookie", args);
             }
         });
     }

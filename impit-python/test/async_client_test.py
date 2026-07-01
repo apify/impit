@@ -2,7 +2,7 @@ import asyncio
 import json
 import socket
 import threading
-from http.cookiejar import CookieJar
+from http.cookiejar import Cookie, CookieJar
 from typing import Literal
 
 import pytest
@@ -191,6 +191,35 @@ class TestBasicRequests:
                 # Crate cookies, ignores the starting dot in the domain
                 # but it's ok - https://www.rfc-editor.org/rfc/rfc6265#section-4.1.2.3
                 assert cookie.domain == '127.0.0.1'
+
+    @pytest.mark.asyncio
+    async def test_rejected_cookie_is_skipped_not_crashing(self, browser: Browser) -> None:
+        """Cookies rejected by the cookie jar are skipped instead of aborting the process."""
+
+        class RejectingCookieJar(CookieJar):
+            def set_cookie(self, cookie: Cookie) -> None:
+                if cookie.name == 'bad':
+                    raise ValueError('simulate parsing error')
+                super().set_cookie(cookie)
+
+        cookies_jar = RejectingCookieJar()
+
+        impit = AsyncClient(browser=browser, cookie_jar=cookies_jar, follow_redirects=True)
+
+        url = get_httpbin_url(
+            '/response-headers',
+            query={
+                'set-cookie': [
+                    'bad=1; Path=/',
+                    'good=2; Path=/',
+                ]
+            },
+        )
+
+        response = await impit.get(url)
+        assert response.status_code == 200
+
+        assert {'good'} == {cookie.name for cookie in cookies_jar}
 
     @pytest.mark.asyncio
     async def test_cookie_jar_works(self, browser: Browser) -> None:

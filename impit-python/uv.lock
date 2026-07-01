@@ -388,7 +388,7 @@ wheels = [
 
 [[package]]
 name = "impit"
-version = "0.12.0"
+version = "0.13.1"
 source = { editable = "." }
 
 [package.dev-dependencies]
