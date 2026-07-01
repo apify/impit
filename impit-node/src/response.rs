@@ -62,8 +62,8 @@ pub struct ImpitResponse {
   ///
   /// In case of redirects, this will be the final URL after all redirects have been followed.
   pub url: String,
-  // Raw, undecoded header name/value byte pairs, in wire order (duplicates preserved).
-  // Exposed to JS through the `rawHeaders` getter.
+  // Raw, undecoded header name/value byte pairs (values exact; names lowercased, order not the
+  // original wire order - see the `rawHeaders` getter docs). Exposed via the `rawHeaders` getter.
   raw_header_pairs: Vec<(String, Vec<u8>)>,
   // Shared sender used to immediately signal abort to the JS ReadableStream without polling.
   abort_receiver: Arc<tokio::sync::Mutex<Option<tokio::sync::mpsc::Receiver<()>>>>,

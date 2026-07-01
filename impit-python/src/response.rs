@@ -227,8 +227,8 @@ pub struct ImpitPyResponse {
     content: Option<Vec<u8>>,
     inner: Option<Response>,
     inner_state: InnerResponseState,
-    // Raw, undecoded header name/value byte pairs, in wire order (duplicates preserved).
-    // Exposed to Python through the `raw_headers` getter (httpx `Headers.raw` equivalent).
+    // Raw, undecoded header name/value byte pairs (values exact; names lowercased, order not the
+    // original wire order - see the `raw_headers` getter docs). Exposed via the `raw_headers` getter.
     raw_headers: Vec<(Vec<u8>, Vec<u8>)>,
 }
 
