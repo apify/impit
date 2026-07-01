@@ -10,6 +10,7 @@ use impit::{
     utils::{decode_header_value, ContentType},
 };
 use pyo3::prelude::*;
+use pyo3::types::PyBytes;
 use reqwest::{Response, StatusCode, Version};
 use std::pin::Pin;
 
@@ -226,6 +227,9 @@ pub struct ImpitPyResponse {
     content: Option<Vec<u8>>,
     inner: Option<Response>,
     inner_state: InnerResponseState,
+    // Raw, undecoded header name/value byte pairs, in wire order (duplicates preserved).
+    // Exposed to Python through the `raw_headers` getter (httpx `Headers.raw` equivalent).
+    raw_headers: Vec<(Vec<u8>, Vec<u8>)>,
 }
 
 #[pymethods]
@@ -240,6 +244,12 @@ impl ImpitPyResponse {
         default_encoding: Option<&str>,
     ) -> Self {
         let headers = headers.unwrap_or_default();
+
+        // No wire bytes for a manually constructed response; use the UTF-8 bytes of the strings.
+        let raw_headers: Vec<(Vec<u8>, Vec<u8>)> = headers
+            .iter()
+            .map(|(k, v)| (k.clone().into_bytes(), v.clone().into_bytes()))
+            .collect();
 
         let encoding = match headers
             .iter()
@@ -270,6 +280,7 @@ impl ImpitPyResponse {
             content: Some(content.unwrap_or_default()),
             inner: None,
             inner_state: InnerResponseState::Read,
+            raw_headers,
         }
     }
 
@@ -442,6 +453,19 @@ impl ImpitPyResponse {
         Ok(())
     }
 
+    /// Raw, undecoded header name/value pairs as `(bytes, bytes)`, in the order the server sent
+    /// them (duplicate names preserved). Equivalent to httpx's `Response.headers.raw`.
+    ///
+    /// Unlike `headers` (str values decoded UTF-8-first), this returns the exact wire bytes, for
+    /// callers that need them - e.g. verifying a header signature/HMAC.
+    #[getter]
+    fn raw_headers<'py>(&self, py: Python<'py>) -> Vec<(Bound<'py, PyBytes>, Bound<'py, PyBytes>)> {
+        self.raw_headers
+            .iter()
+            .map(|(name, value)| (PyBytes::new(py, name), PyBytes::new(py, value)))
+            .collect()
+    }
+
     #[getter]
     fn content(&mut self, py: Python<'_>) -> PyResult<Vec<u8>> {
         self.read(py)
@@ -539,11 +563,18 @@ impl ImpitPyResponse {
             _ => "Unknown".to_string(),
         };
         let is_redirect = val.status().is_redirection();
+        // Python/httpx semantics: decode header values UTF-8-first with an ISO-8859-1 fallback.
         let headers = HashMap::from_iter(
             val.headers()
                 .iter()
                 .map(|(k, v)| (k.as_str().to_string(), decode_header_value(v.as_bytes()))),
         );
+        // Exact wire bytes for callers that need them (httpx `Headers.raw` equivalent).
+        let raw_headers: Vec<(Vec<u8>, Vec<u8>)> = val
+            .headers()
+            .iter()
+            .map(|(k, v)| (k.as_str().as_bytes().to_vec(), v.as_bytes().to_vec()))
+            .collect();
 
         let content_type_charset = headers
             .get("content-type")
@@ -599,6 +630,7 @@ impl ImpitPyResponse {
             is_stream_consumed,
             inner_state,
             inner,
+            raw_headers,
         })
     }
 }

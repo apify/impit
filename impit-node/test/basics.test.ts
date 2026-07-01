@@ -571,9 +571,22 @@ describe.each([
             t.expect(response.headers.get('x-non-ascii')).toBe(routes.nonAsciiHeader.headerValue);
         });
 
-        test('UTF-8 header values are decoded as UTF-8', async (t) => {
+        test('raw header bytes preserve the exact wire value while the string stays ISO-8859-1 (Fetch-style)', async (t) => {
             const response = await impit.fetch(new URL(routes.utf8Header.path, "http://127.0.0.1:3001").href);
-            t.expect(response.headers.get('x-utf8')).toBe(routes.utf8Header.headerValue);
+
+            // Fetch semantics: the string form is ISO-8859-1, so a UTF-8 value reads back as mojibake.
+            const latin1 = response.headers.get('x-utf8');
+            t.expect(latin1).not.toBe(routes.utf8Header.headerValue);
+
+            // rawHeaders exposes the exact wire bytes, which decode to the real UTF-8 value.
+            const rawHeaders = (response as unknown as { rawHeaders: Array<[string, Uint8Array]> }).rawHeaders;
+            const rawPair = rawHeaders.find(([k]) => k.toLowerCase() === 'x-utf8');
+            t.expect(rawPair).toBeDefined();
+            const rawBytes = Buffer.from(rawPair![1]);
+            t.expect(rawBytes.toString('utf8')).toBe(routes.utf8Header.headerValue);
+
+            // The ISO-8859-1 string also round-trips back to those exact bytes (the standard Fetch workaround).
+            t.expect(Buffer.from(latin1!, 'latin1').equals(rawBytes)).toBe(true);
         });
 
         test('.json() method works', async (t) => {
