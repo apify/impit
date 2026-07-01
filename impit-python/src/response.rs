@@ -539,12 +539,11 @@ impl ImpitPyResponse {
             _ => "Unknown".to_string(),
         };
         let is_redirect = val.status().is_redirection();
-        let headers = HashMap::from_iter(val.headers().iter().map(|(k, v)| {
-            (
-                k.as_str().to_string(),
-                decode_header_value(v.as_bytes()),
-            )
-        }));
+        let headers = HashMap::from_iter(
+            val.headers()
+                .iter()
+                .map(|(k, v)| (k.as_str().to_string(), decode_header_value(v.as_bytes()))),
+        );
 
         let content_type_charset = headers
             .get("content-type")

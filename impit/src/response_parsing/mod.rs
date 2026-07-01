@@ -150,8 +150,8 @@ pub fn determine_encoding(bytes: &[u8]) -> Option<encoding::EncodingRef> {
 /// ```rust
 /// use impit::utils::decode_header_value;
 ///
-/// // Valid UTF-8 is decoded as UTF-8.
-/// assert_eq!(decode_header_value(&[b'n', b'a', 0xC3, 0xAF, b've']), "naïve");
+/// // Valid UTF-8 is decoded as UTF-8 (the ï is the two UTF-8 bytes 0xC3 0xAF).
+/// assert_eq!(decode_header_value(&[b'n', b'a', 0xC3, 0xAF, b'v', b'e']), "naïve");
 ///
 /// // A lone 0xE4 is not valid UTF-8, so it falls back to ISO-8859-1 ('ä').
 /// assert_eq!(decode_header_value(&[b'M', 0xE4, b'r', b'z']), "März");
@@ -229,7 +229,10 @@ mod tests {
     #[test]
     fn invalid_utf8_falls_back_to_iso_8859_1() {
         // Lone 0xE4 ('ä' in ISO-8859-1) is not valid UTF-8 (PR #434 / issue #430).
-        let bytes = [b'D', b'i', b'e', b'n', b's', b't', b'a', b'g', b',', b' ', b'3', b'1', b'.', b' ', b'M', 0xE4, b'r', b'z', b' ', b'2', b'0', b'2', b'6'];
+        let bytes = [
+            b'D', b'i', b'e', b'n', b's', b't', b'a', b'g', b',', b' ', b'3', b'1', b'.', b' ',
+            b'M', 0xE4, b'r', b'z', b' ', b'2', b'0', b'2', b'6',
+        ];
         assert_eq!(decode_header_value(&bytes), "Dienstag, 31. März 2026");
     }
 

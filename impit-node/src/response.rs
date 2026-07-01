@@ -91,10 +91,7 @@ impl<'env> ImpitResponse {
       .to_string();
     let mut headers_vec: Vec<(String, String)> = Vec::new();
     for (k, v) in response.headers().iter() {
-      headers_vec.push((
-        k.as_str().to_string(),
-        decode_header_value(v.as_bytes()),
-      ));
+      headers_vec.push((k.as_str().to_string(), decode_header_value(v.as_bytes())));
     }
     let headers = Headers(headers_vec);
     let ok = response.status().is_success();
