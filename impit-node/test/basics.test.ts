@@ -566,9 +566,14 @@ describe.each([
             t.expect(text).toContain(routes.charsetMetaHttpEquiv.bodyString);
         });
 
-        test('non-ASCII header values are decoded as ISO-8859-1', async (t) => {
+        test('non-UTF-8 header values fall back to ISO-8859-1', async (t) => {
             const response = await impit.fetch(new URL(routes.nonAsciiHeader.path, "http://127.0.0.1:3001").href);
             t.expect(response.headers.get('x-non-ascii')).toBe(routes.nonAsciiHeader.headerValue);
+        });
+
+        test('UTF-8 header values are decoded as UTF-8', async (t) => {
+            const response = await impit.fetch(new URL(routes.utf8Header.path, "http://127.0.0.1:3001").href);
+            t.expect(response.headers.get('content-disposition')).toBe(routes.utf8Header.headerValue);
         });
 
         test('.json() method works', async (t) => {

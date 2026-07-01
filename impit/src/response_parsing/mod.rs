@@ -120,6 +120,45 @@ pub fn decode(bytes: &[u8], preferred_encoding: Option<encoding::EncodingRef>) -
         .unwrap()
 }
 
+/// Decodes an HTTP header value into a `String`.
+///
+/// [RFC 9110 §5.5](https://www.rfc-editor.org/rfc/rfc9110#section-5.5) restricts header field
+/// values to ASCII, treating any bytes in the `obs-text` range (`0x80..=0xFF`) as opaque with no
+/// defined encoding. In practice servers use two conventions for such bytes:
+///
+/// - UTF-8 (e.g. `Content-Disposition: attachment; filename="naïve.pdf"`),
+/// - ISO-8859-1 / Latin-1 (e.g. `Last-Modified: Dienstag, 31. März 2026`).
+///
+/// This function tries UTF-8 first (which also covers the pure-ASCII common case) and falls back to
+/// an infallible byte-for-byte Latin-1 decode when the bytes are not valid UTF-8. This resolves the
+/// common UTF-8 case correctly while remaining lossless for Latin-1 values, matching the behaviour
+/// of Python's `httpx` header decoding. A pure Latin-1 decode would mangle UTF-8 values into
+/// mojibake, while `String::from_utf8_lossy` would irreversibly replace valid Latin-1 bytes with
+/// `U+FFFD`.
+///
+/// ### Example
+/// ```rust
+/// use impit::utils::decode_header_value;
+///
+/// // Valid UTF-8 is decoded as UTF-8 (e.g. a Content-Disposition filename).
+/// assert_eq!(
+///     decode_header_value("attachment; filename=\"naïve.pdf\"".as_bytes()),
+///     "attachment; filename=\"naïve.pdf\""
+/// );
+///
+/// // A lone 0xE4 (ä in ISO-8859-1) is not valid UTF-8, so it falls back to Latin-1.
+/// assert_eq!(
+///     decode_header_value(b"Dienstag, 31. M\xE4rz 2026"),
+///     "Dienstag, 31. März 2026"
+/// );
+/// ```
+pub fn decode_header_value(bytes: &[u8]) -> String {
+    match std::str::from_utf8(bytes) {
+        Ok(value) => value.to_string(),
+        Err(_) => bytes.iter().map(|&b| b as char).collect(),
+    }
+}
+
 /// Determines the encoding of a byte stream.
 ///
 /// If the checks fail, the function returns `None`.
