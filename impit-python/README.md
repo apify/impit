@@ -10,9 +10,19 @@ It allows you to switch the TLS fingerprints and the HTTP headers of your reques
 
 ## Installation
 
-```bash
-pip install impit
-```
+`impit` is published on [PyPI](https://pypi.org/project/impit/) and [conda-forge](https://anaconda.org/conda-forge/impit).
+
+- From [PyPI](https://pypi.org/project/impit/), it can be installed with [pip](https://pip.pypa.io/):
+
+    ```bash
+    pip install impit
+    ```
+
+- From [conda-forge](https://anaconda.org/conda-forge/impit), it can be installed with [conda](https://docs.conda.io/en/latest/):
+
+    ```bash
+    conda install conda-forge::impit
+    ```
 
 ### Compatibility
 
