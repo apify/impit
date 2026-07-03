@@ -133,36 +133,6 @@ pub fn determine_encoding(bytes: &[u8]) -> Option<encoding::EncodingRef> {
     None
 }
 
-/// Decodes an HTTP header value into a [`String`].
-///
-/// Header values arrive as raw bytes with no charset declaration. Per RFC 9110 §5.5 they are
-/// nominally ISO-8859-1 (the `obs-text` range), but in practice modern servers routinely send
-/// UTF-8 (for example `Content-Disposition: attachment; filename="naïve.pdf"`).
-///
-/// This function decodes the bytes as UTF-8 when they form valid UTF-8, and otherwise falls back
-/// to a byte-for-byte ISO-8859-1 decode (each byte `0x00..=0xFF` maps to the code point
-/// `U+0000..=U+00FF`). This fixes the common UTF-8 case without corrupting genuine ISO-8859-1
-/// values, never fails, and never emits `U+FFFD` replacement characters — so no header value can
-/// crash a caller or come back empty.
-///
-/// ### Example
-///
-/// ```rust
-/// use impit::utils::decode_header_value;
-///
-/// // Valid UTF-8 is decoded as UTF-8 (the ï is the two UTF-8 bytes 0xC3 0xAF).
-/// assert_eq!(decode_header_value(&[b'n', b'a', 0xC3, 0xAF, b'v', b'e']), "naïve");
-///
-/// // A lone 0xE4 is not valid UTF-8, so it falls back to ISO-8859-1 ('ä').
-/// assert_eq!(decode_header_value(&[b'M', 0xE4, b'r', b'z']), "März");
-/// ```
-pub fn decode_header_value(bytes: &[u8]) -> String {
-    match std::str::from_utf8(bytes) {
-        Ok(valid) => valid.to_owned(),
-        Err(_) => bytes.iter().map(|&b| b as char).collect(),
-    }
-}
-
 /// A struct that represents the contents of the `Content-Type` header.
 ///
 /// The struct is used to extract the charset from the `Content-Type` header and convert it to an [`encoding::EncodingRef`].
@@ -201,50 +171,5 @@ impl ContentType {
 impl From<ContentType> for Option<encoding::EncodingRef> {
     fn from(val: ContentType) -> Self {
         encoding::label::encoding_from_whatwg_label(val.charset.as_str())
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::decode_header_value;
-
-    #[test]
-    fn ascii_is_unchanged() {
-        assert_eq!(decode_header_value(b"application/json"), "application/json");
-    }
-
-    #[test]
-    fn empty_is_empty() {
-        assert_eq!(decode_header_value(b""), "");
-    }
-
-    #[test]
-    fn utf8_is_decoded_as_utf8() {
-        // "naïve.pdf" — the ï is UTF-8 bytes 0xC3 0xAF (issue #479).
-        let bytes = "attachment; filename=\"naïve.pdf\"".as_bytes();
-        assert_eq!(
-            decode_header_value(bytes),
-            "attachment; filename=\"naïve.pdf\""
-        );
-    }
-
-    #[test]
-    fn invalid_utf8_falls_back_to_iso_8859_1() {
-        // Lone 0xE4 ('ä' in ISO-8859-1) is not valid UTF-8 (PR #434 / issue #430).
-        let bytes = [
-            b'D', b'i', b'e', b'n', b's', b't', b'a', b'g', b',', b' ', b'3', b'1', b'.', b' ',
-            b'M', 0xE4, b'r', b'z', b' ', b'2', b'0', b'2', b'6',
-        ];
-        assert_eq!(decode_header_value(&bytes), "Dienstag, 31. März 2026");
-    }
-
-    #[test]
-    fn iso_8859_1_fallback_never_produces_replacement_char() {
-        // Every non-UTF-8 byte maps to exactly one char, so the result round-trips back to bytes.
-        let bytes = [0xE4, 0xF6, 0xFC, 0xFF];
-        let decoded = decode_header_value(&bytes);
-        assert!(!decoded.contains('\u{FFFD}'));
-        let roundtrip: Vec<u8> = decoded.chars().map(|c| c as u8).collect();
-        assert_eq!(roundtrip, bytes);
     }
 }

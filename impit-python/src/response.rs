@@ -5,10 +5,7 @@ use tokio::sync::Mutex as AsyncMutex;
 use bytes::Bytes;
 use encoding::label::encoding_from_whatwg_label;
 use futures::{Stream, StreamExt};
-use impit::{
-    errors::ImpitError,
-    utils::{decode_header_value, ContentType},
-};
+use impit::{errors::ImpitError, utils::ContentType};
 use pyo3::prelude::*;
 use pyo3::types::PyBytes;
 use reqwest::{Response, StatusCode, Version};
@@ -573,11 +570,12 @@ impl ImpitPyResponse {
             .map(|(k, v)| (k.as_str().as_bytes().to_vec(), v.as_bytes().to_vec()))
             .collect();
 
-        // Charset detection only needs the content-type value.
+        // Charset detection only needs the content-type value, which is ASCII per RFC 9110
+        // (media type + charset are tokens), so a lossy UTF-8 decode is sufficient.
         let content_type_charset = val
             .headers()
             .get("content-type")
-            .map(|v| decode_header_value(v.as_bytes()))
+            .map(|v| String::from_utf8_lossy(v.as_bytes()).into_owned())
             .and_then(|ct| ContentType::from(&ct).ok())
             .and_then(|ct| ct.into());
 
