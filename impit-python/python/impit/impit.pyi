@@ -178,6 +178,9 @@ class Response:
     Provides case-insensitive ``str`` access, plus a ``.raw`` property exposing the exact header
     value bytes received on the wire (useful for UTF-8 header values or signature/HMAC checks).
 
+    This is a read view: each access rebuilds the object from the response, so in-place mutations
+    (``response.headers['x'] = ...``) do not persist on the response.
+
     .. code-block:: python
 
         response = await client.get("https://crawlee.dev")

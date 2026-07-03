@@ -454,6 +454,8 @@ impl ImpitPyResponse {
     /// `.raw` property exposing the exact header value bytes received on the wire (useful for UTF-8
     /// values or header signature/HMAC verification). Built from the raw wire bytes; `Headers`
     /// itself picks the decoding (ascii, then utf-8, then iso-8859-1), matching httpx.
+    ///
+    /// Read view: each access rebuilds the object, so in-place mutations do not persist.
     #[getter]
     fn headers<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
         let raw: Vec<(Bound<'py, PyBytes>, Bound<'py, PyBytes>)> = self
