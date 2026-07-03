@@ -47,7 +47,7 @@ def truncating_server(port_holder: list[int]) -> None:
 
 
 def header_encoding_server(port_holder: list[int]) -> None:
-    """Send a response carrying a UTF-8 header value and a lone ISO-8859-1 byte."""
+    """Send a response carrying a UTF-8 header value on the wire."""
     server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     server.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
@@ -65,9 +65,6 @@ def header_encoding_server(port_holder: list[int]) -> None:
             b'X-Utf8: ',
             'attachment; filename="naïve.pdf"'.encode(),
             b'\r\n',
-            b'X-Latin1: M',
-            bytes([0xE4]),  # 'a' with diaeresis in ISO-8859-1; not valid UTF-8 on its own
-            b'rz\r\n',
             b'Content-Length: ',
             str(len(body)).encode(),
             b'\r\n\r\n',
@@ -471,15 +468,12 @@ class TestBasicRequests:
 
         utf8_value = 'attachment; filename="naïve.pdf"'
 
-        # Python follows httpx semantics: a UTF-8 header value decodes correctly as str...
+        # httpx semantics: with only ASCII/UTF-8 headers present, the chosen encoding is utf-8, so
+        # the UTF-8 header value decodes correctly as str.
+        assert response.headers.encoding == 'utf-8'
         assert response.headers['x-utf8'] == utf8_value
-        # ...and a lone non-UTF-8 byte falls back to ISO-8859-1.
-        assert response.headers['x-latin1'] == 'März'
-
-        # raw_headers exposes the exact wire bytes (httpx Headers.raw equivalent).
-        raw = dict(response.raw_headers)
-        assert raw[b'x-utf8'] == utf8_value.encode('utf-8')
-        assert raw[b'x-latin1'] == b'M' + bytes([0xE4]) + b'rz'
+        # Headers.raw exposes the exact wire bytes.
+        assert dict(response.headers.raw)[b'x-utf8'] == utf8_value.encode('utf-8')
 
 
 @pytest.mark.parametrize(

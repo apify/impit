@@ -480,11 +480,6 @@ class Impit extends native.Impit {
                     value: this.url,
                     enumerable: true,
                 });
-                // Preserve the impit-specific raw header bytes across clone().
-                Object.defineProperty(clone, 'rawHeaders', {
-                    value: this.rawHeaders,
-                    enumerable: true,
-                });
                 Object.defineProperty(clone, 'text', {
                     value: async function () {
                         const buffer = await clone.arrayBuffer();

@@ -2,6 +2,7 @@ from importlib import metadata
 from typing import Literal
 
 from .cookies import Cookies
+from .headers import Headers
 from .impit import (
     USE_CLIENT_DEFAULT,
     AsyncClient,
@@ -61,6 +62,7 @@ __all__ = [
     'DecodingError',
     'HTTPError',
     'HTTPStatusError',
+    'Headers',
     'InvalidURL',
     'LocalProtocolError',
     'NetworkError',

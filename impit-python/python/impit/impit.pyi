@@ -1,6 +1,7 @@
 from __future__ import annotations
 from http.cookiejar import CookieJar
 from .cookies import Cookies
+from .headers import Headers
 
 from typing import Literal, Any
 from collections.abc import Iterator, AsyncIterator
@@ -171,30 +172,18 @@ class Response:
         print(response.http_version) # 'HTTP/2'
     """
 
-    headers: dict[str, str]
-    """Response headers as a Python dictionary.
+    headers: Headers
+    """Response headers as an httpx-style :class:`Headers` object.
+
+    Provides case-insensitive ``str`` access, plus a ``.raw`` property exposing the exact header
+    value bytes received on the wire (useful for UTF-8 header values or signature/HMAC checks).
 
     .. code-block:: python
 
         response = await client.get("https://crawlee.dev")
-        print(response.headers) # {'content-type': 'text/html; charset=utf-8', ... }
+        print(response.headers['content-type']) # 'text/html; charset=utf-8'
+        print(response.headers.raw) # [(b'content-type', b'text/html; charset=utf-8'), ... ]
     """
-
-    @property
-    def raw_headers(self) -> list[tuple[bytes, bytes]]:
-        """Raw, undecoded header name/value pairs as ``(bytes, bytes)``.
-
-        Similar to httpx's ``Response.headers.raw``, but note two differences imposed by the
-        underlying HTTP client: header names are normalized to lowercase and the original wire
-        order is not preserved (duplicate values for a name are kept). Header *values* are the
-        exact bytes received - useful when a header carries UTF-8 or when verifying a header
-        signature/HMAC.
-
-        .. code-block:: python
-
-            response = await client.get("https://crawlee.dev")
-            print(response.raw_headers) # [(b'content-type', b'text/html; charset=utf-8'), ... ]
-        """
 
     text: str
     """Response body as text. Decoded from :attr:`content` using :attr:`encoding`.

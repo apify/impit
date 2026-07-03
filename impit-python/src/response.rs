@@ -202,8 +202,6 @@ pub struct ImpitPyResponse {
     #[pyo3(get)]
     http_version: String,
     #[pyo3(get)]
-    headers: HashMap<String, String>,
-    #[pyo3(get)]
     encoding: String,
     #[pyo3(get)]
     is_redirect: bool,
@@ -227,8 +225,8 @@ pub struct ImpitPyResponse {
     content: Option<Vec<u8>>,
     inner: Option<Response>,
     inner_state: InnerResponseState,
-    // Raw, undecoded header name/value byte pairs (values exact; names lowercased, order not the
-    // original wire order - see the `raw_headers` getter docs). Exposed via the `raw_headers` getter.
+    // Raw, undecoded header name/value byte pairs. The `headers` getter builds the Python-side
+    // `Headers` object (httpx-style: str access + `.raw`) from these exact wire bytes.
     raw_headers: Vec<(Vec<u8>, Vec<u8>)>,
 }
 
@@ -270,7 +268,6 @@ impl ImpitPyResponse {
             status_code,
             reason_phrase,
             http_version: "HTTP/1.1".to_string(),
-            headers,
             encoding,
             is_redirect: false,
             url: url.unwrap_or_default(),
@@ -453,19 +450,20 @@ impl ImpitPyResponse {
         Ok(())
     }
 
-    /// Raw, undecoded header name/value pairs as `(bytes, bytes)`. Similar to httpx's
-    /// `Response.headers.raw`, but note two differences imposed by the underlying HTTP client:
-    /// header names are normalized to lowercase and the original wire order is not preserved
-    /// (duplicate values for a name are kept). Header *values* are the exact bytes received.
-    ///
-    /// Unlike `headers` (str values decoded UTF-8-first), this returns the exact value bytes, for
-    /// callers that need them - e.g. verifying a header signature/HMAC.
+    /// Response headers as an httpx-style [`Headers`] object: case-insensitive `str` access plus a
+    /// `.raw` property exposing the exact header value bytes received on the wire (useful for UTF-8
+    /// values or header signature/HMAC verification). Built from the raw wire bytes; `Headers`
+    /// itself picks the decoding (ascii, then utf-8, then iso-8859-1), matching httpx.
     #[getter]
-    fn raw_headers<'py>(&self, py: Python<'py>) -> Vec<(Bound<'py, PyBytes>, Bound<'py, PyBytes>)> {
-        self.raw_headers
+    fn headers<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
+        let raw: Vec<(Bound<'py, PyBytes>, Bound<'py, PyBytes>)> = self
+            .raw_headers
             .iter()
             .map(|(name, value)| (PyBytes::new(py, name), PyBytes::new(py, value)))
-            .collect()
+            .collect();
+        py.import("impit.headers")?
+            .getattr("Headers")?
+            .call1((raw,))
     }
 
     #[getter]
@@ -565,22 +563,20 @@ impl ImpitPyResponse {
             _ => "Unknown".to_string(),
         };
         let is_redirect = val.status().is_redirection();
-        // Python/httpx semantics: decode header values UTF-8-first with an ISO-8859-1 fallback.
-        let headers = HashMap::from_iter(
-            val.headers()
-                .iter()
-                .map(|(k, v)| (k.as_str().to_string(), decode_header_value(v.as_bytes()))),
-        );
-        // Exact wire bytes for callers that need them (httpx `Headers.raw` equivalent).
+        // Exact wire header bytes; the Python `Headers` object (str access + `.raw`) is built from
+        // these, and it — not Rust — chooses the decoding (ascii/utf-8/iso-8859-1), matching httpx.
         let raw_headers: Vec<(Vec<u8>, Vec<u8>)> = val
             .headers()
             .iter()
             .map(|(k, v)| (k.as_str().as_bytes().to_vec(), v.as_bytes().to_vec()))
             .collect();
 
-        let content_type_charset = headers
+        // Charset detection only needs the content-type value.
+        let content_type_charset = val
+            .headers()
             .get("content-type")
-            .and_then(|ct| ContentType::from(ct).ok())
+            .map(|v| decode_header_value(v.as_bytes()))
+            .and_then(|ct| ContentType::from(&ct).ok())
             .and_then(|ct| ct.into());
 
         let (content, inner_state, encoding, inner, is_closed, is_stream_consumed) = if !stream {
@@ -624,7 +620,6 @@ impl ImpitPyResponse {
             reason_phrase,
             http_version,
             is_redirect,
-            headers,
             encoding: encoding.name().to_string(),
             text: None,
             content,

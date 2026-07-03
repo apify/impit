@@ -571,27 +571,16 @@ describe.each([
             t.expect(response.headers.get('x-non-ascii')).toBe(routes.nonAsciiHeader.headerValue);
         });
 
-        test('raw header bytes preserve the exact wire value while the string stays ISO-8859-1 (Fetch-style)', async (t) => {
+        test('UTF-8 header values stay ISO-8859-1 and are byte-recoverable (Fetch-style)', async (t) => {
             const response = await impit.fetch(new URL(routes.utf8Header.path, "http://127.0.0.1:3001").href);
 
             // Fetch semantics: the string form is ISO-8859-1, so a UTF-8 value reads back as mojibake.
             const latin1 = response.headers.get('x-utf8');
             t.expect(latin1).not.toBe(routes.utf8Header.headerValue);
 
-            // rawHeaders exposes the exact value bytes, which decode to the real UTF-8 value.
-            const rawPair = response.rawHeaders.find(([k]) => k.toLowerCase() === 'x-utf8');
-            t.expect(rawPair).toBeDefined();
-            const rawBytes = Buffer.from(rawPair![1]);
-            t.expect(rawBytes.toString('utf8')).toBe(routes.utf8Header.headerValue);
-
-            // The ISO-8859-1 string also round-trips back to those exact bytes (the standard Fetch workaround).
-            t.expect(Buffer.from(latin1!, 'latin1').equals(rawBytes)).toBe(true);
-
-            // rawHeaders survives clone() (clone() returns a Fetch Response augmented by impit).
-            const cloned = response.clone() as unknown as { rawHeaders: Array<[string, Uint8Array]> };
-            const clonedPair = cloned.rawHeaders.find(([k]) => k.toLowerCase() === 'x-utf8');
-            t.expect(clonedPair).toBeDefined();
-            t.expect(Buffer.from(clonedPair![1]).equals(rawBytes)).toBe(true);
+            // ISO-8859-1 is a bijection, so the exact wire bytes are recoverable, and re-decoding
+            // as UTF-8 yields the real value — no dedicated raw-header accessor needed.
+            t.expect(Buffer.from(latin1!, 'latin1').toString('utf8')).toBe(routes.utf8Header.headerValue);
         });
 
         test('.json() method works', async (t) => {

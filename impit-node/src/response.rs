@@ -5,7 +5,6 @@ use napi::bindgen_prelude::JsObjectValue;
 use napi::{
   bindgen_prelude::{
     BufferSlice, FromNapiValue, Function, Object, ReadableStream, Result, This, ToNapiValue,
-    Uint8Array,
   },
   sys, Env, JsValue, Unknown,
 };
@@ -62,9 +61,6 @@ pub struct ImpitResponse {
   ///
   /// In case of redirects, this will be the final URL after all redirects have been followed.
   pub url: String,
-  // Raw, undecoded header name/value byte pairs (values exact; names lowercased, order not the
-  // original wire order - see the `rawHeaders` getter docs). Exposed via the `rawHeaders` getter.
-  raw_header_pairs: Vec<(String, Vec<u8>)>,
   // Shared sender used to immediately signal abort to the JS ReadableStream without polling.
   abort_receiver: Arc<tokio::sync::Mutex<Option<tokio::sync::mpsc::Receiver<()>>>>,
   abort_sender: Arc<tokio::sync::Mutex<Option<tokio::sync::mpsc::Sender<()>>>>,
@@ -94,16 +90,14 @@ impl<'env> ImpitResponse {
       .unwrap_or("")
       .to_string();
     // JS Fetch semantics: header values are decoded as ISO-8859-1 (each byte 0x00..=0xFF maps to
-    // the code point U+0000..=U+00FF). This keeps the string form byte-recoverable via
-    // `Buffer.from(value, 'latin1')`; callers needing exact UTF-8 use the `rawHeaders` accessor.
+    // the code point U+0000..=U+00FF). Since that mapping is a bijection, the string stays
+    // byte-recoverable via `Buffer.from(value, 'latin1')`.
     let mut headers_vec: Vec<(String, String)> = Vec::new();
-    let mut raw_header_pairs: Vec<(String, Vec<u8>)> = Vec::new();
     for (k, v) in response.headers().iter() {
       headers_vec.push((
         k.as_str().to_string(),
         v.as_bytes().iter().map(|&b| b as char).collect(),
       ));
-      raw_header_pairs.push((k.as_str().to_string(), v.as_bytes().to_vec()));
     }
     let headers = Headers(headers_vec);
     let ok = response.status().is_success();
@@ -116,39 +110,9 @@ impl<'env> ImpitResponse {
       headers,
       ok,
       url,
-      raw_header_pairs,
       abort_receiver: Arc::new(tokio::sync::Mutex::new(None)),
       abort_sender: Arc::new(tokio::sync::Mutex::new(None)),
     })
-  }
-
-  /// Raw, undecoded response header values as `[name, bytes]` pairs.
-  ///
-  /// Unlike {@link headers}, whose values are decoded as ISO-8859-1 strings (matching the Fetch
-  /// API), this exposes the exact value bytes received on the wire. Use it when a header carries
-  /// UTF-8 (e.g. a `Content-Disposition` filename) or when verifying a header signature/HMAC,
-  /// where the precise bytes matter:
-  ///
-  /// @example
-  /// ```ts
-  /// const [, raw] = response.rawHeaders.find(([k]) => k.toLowerCase() === 'content-disposition');
-  /// const value = new TextDecoder('utf-8').decode(raw);
-  /// ```
-  ///
-  /// Header names are lowercased and the original wire order is not preserved (the underlying
-  /// HTTP client normalizes header names into a map); duplicate values for a name are kept. This
-  /// is an impit extension; the standard Fetch `Response` has no raw-header accessor.
-  #[napi(
-    getter,
-    js_name = "rawHeaders",
-    ts_return_type = "Array<[string, Uint8Array]>"
-  )]
-  pub fn raw_headers(&self) -> Vec<(String, Uint8Array)> {
-    self
-      .raw_header_pairs
-      .iter()
-      .map(|(name, value)| (name.clone(), Uint8Array::from(value.clone())))
-      .collect()
   }
 
   fn get_inner_response(&self, env: &Env, mut this: This<Object>) -> Result<Object<'_>> {

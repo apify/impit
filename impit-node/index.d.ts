@@ -143,18 +143,6 @@ export declare class ImpitResponse {
    * In case of redirects, this will be the final URL after all redirects have been followed.
    */
   url: string
-  /**
-   * Raw, undecoded response header values as `[name, bytes]` pairs.
-   *
-   * Unlike {@link headers}, whose values are decoded as ISO-8859-1 strings (matching the Fetch
-   * API), this exposes the exact value bytes received on the wire. Use it when a header carries
-   * UTF-8 (e.g. a `Content-Disposition` filename) or when verifying a header signature/HMAC.
-   *
-   * Names are lowercased and the original wire order is not preserved (the underlying HTTP client
-   * normalizes header names into a map); duplicate values for a name are kept. This is an impit
-   * extension - the standard Fetch `Response` has no raw-header accessor.
-   */
-  get rawHeaders(): Array<[string, Uint8Array]>
   /** @ignore */
   decodeBuffer(buffer: Buffer): string
   /**
