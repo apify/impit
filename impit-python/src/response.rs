@@ -7,6 +7,7 @@ use encoding::label::encoding_from_whatwg_label;
 use futures::{Stream, StreamExt};
 use impit::{errors::ImpitError, utils::ContentType};
 use pyo3::prelude::*;
+use pyo3::types::PyBytes;
 use reqwest::{Response, StatusCode, Version};
 use std::pin::Pin;
 
@@ -198,8 +199,6 @@ pub struct ImpitPyResponse {
     #[pyo3(get)]
     http_version: String,
     #[pyo3(get)]
-    headers: HashMap<String, String>,
-    #[pyo3(get)]
     encoding: String,
     #[pyo3(get)]
     is_redirect: bool,
@@ -223,6 +222,9 @@ pub struct ImpitPyResponse {
     content: Option<Vec<u8>>,
     inner: Option<Response>,
     inner_state: InnerResponseState,
+    // Raw, undecoded header name/value byte pairs. The `headers` getter builds the Python-side
+    // `Headers` object (httpx-style: str access + `.raw`) from these exact wire bytes.
+    raw_headers: Vec<(Vec<u8>, Vec<u8>)>,
 }
 
 #[pymethods]
@@ -237,6 +239,12 @@ impl ImpitPyResponse {
         default_encoding: Option<&str>,
     ) -> Self {
         let headers = headers.unwrap_or_default();
+
+        // No wire bytes for a manually constructed response; use the UTF-8 bytes of the strings.
+        let raw_headers: Vec<(Vec<u8>, Vec<u8>)> = headers
+            .iter()
+            .map(|(k, v)| (k.clone().into_bytes(), v.clone().into_bytes()))
+            .collect();
 
         let encoding = match headers
             .iter()
@@ -257,7 +265,6 @@ impl ImpitPyResponse {
             status_code,
             reason_phrase,
             http_version: "HTTP/1.1".to_string(),
-            headers,
             encoding,
             is_redirect: false,
             url: url.unwrap_or_default(),
@@ -267,6 +274,7 @@ impl ImpitPyResponse {
             content: Some(content.unwrap_or_default()),
             inner: None,
             inner_state: InnerResponseState::Read,
+            raw_headers,
         }
     }
 
@@ -439,6 +447,24 @@ impl ImpitPyResponse {
         Ok(())
     }
 
+    /// Response headers as an httpx-style [`Headers`] object: case-insensitive `str` access plus a
+    /// `.raw` property exposing the exact header value bytes received on the wire (useful for UTF-8
+    /// values or header signature/HMAC verification). Built from the raw wire bytes; `Headers`
+    /// itself picks the decoding (ascii, then utf-8, then iso-8859-1), matching httpx.
+    ///
+    /// Read view: each access rebuilds the object, so in-place mutations do not persist.
+    #[getter]
+    fn headers<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
+        let raw: Vec<(Bound<'py, PyBytes>, Bound<'py, PyBytes>)> = self
+            .raw_headers
+            .iter()
+            .map(|(name, value)| (PyBytes::new(py, name), PyBytes::new(py, value)))
+            .collect();
+        py.import("impit.headers")?
+            .getattr("Headers")?
+            .call1((raw,))
+    }
+
     #[getter]
     fn content(&mut self, py: Python<'_>) -> PyResult<Vec<u8>> {
         self.read(py)
@@ -536,16 +562,21 @@ impl ImpitPyResponse {
             _ => "Unknown".to_string(),
         };
         let is_redirect = val.status().is_redirection();
-        let headers = HashMap::from_iter(val.headers().iter().map(|(k, v)| {
-            (
-                k.as_str().to_string(),
-                v.as_bytes().iter().map(|&b| b as char).collect::<String>(),
-            )
-        }));
+        // Exact wire header bytes; the Python `Headers` object (str access + `.raw`) is built from
+        // these, and it — not Rust — chooses the decoding (ascii/utf-8/iso-8859-1), matching httpx.
+        let raw_headers: Vec<(Vec<u8>, Vec<u8>)> = val
+            .headers()
+            .iter()
+            .map(|(k, v)| (k.as_str().as_bytes().to_vec(), v.as_bytes().to_vec()))
+            .collect();
 
-        let content_type_charset = headers
+        // Charset detection only needs the content-type value, which is ASCII per RFC 9110
+        // (media type + charset are tokens), so a lossy UTF-8 decode is sufficient.
+        let content_type_charset = val
+            .headers()
             .get("content-type")
-            .and_then(|ct| ContentType::from(ct).ok())
+            .map(|v| String::from_utf8_lossy(v.as_bytes()).into_owned())
+            .and_then(|ct| ContentType::from(&ct).ok())
             .and_then(|ct| ct.into());
 
         let (content, inner_state, encoding, inner, is_closed, is_stream_consumed) = if !stream {
@@ -589,7 +620,6 @@ impl ImpitPyResponse {
             reason_phrase,
             http_version,
             is_redirect,
-            headers,
             encoding: encoding.name().to_string(),
             text: None,
             content,
@@ -597,6 +627,7 @@ impl ImpitPyResponse {
             is_stream_consumed,
             inner_state,
             inner,
+            raw_headers,
         })
     }
 }

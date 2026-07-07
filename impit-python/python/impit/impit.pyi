@@ -1,6 +1,7 @@
 from __future__ import annotations
 from http.cookiejar import CookieJar
 from .cookies import Cookies
+from .headers import Headers
 
 from typing import Literal, Any
 from collections.abc import Iterator, AsyncIterator
@@ -171,13 +172,20 @@ class Response:
         print(response.http_version) # 'HTTP/2'
     """
 
-    headers: dict[str, str]
-    """Response headers as a Python dictionary.
+    headers: Headers
+    """Response headers as an httpx-style :class:`Headers` object.
+
+    Provides case-insensitive ``str`` access, plus a ``.raw`` property exposing the exact header
+    value bytes received on the wire (useful for UTF-8 header values or signature/HMAC checks).
+
+    This is a read view: each access rebuilds the object from the response, so in-place mutations
+    (``response.headers['x'] = ...``) do not persist on the response.
 
     .. code-block:: python
 
         response = await client.get("https://crawlee.dev")
-        print(response.headers) # {'content-type': 'text/html; charset=utf-8', ... }
+        print(response.headers['content-type']) # 'text/html; charset=utf-8'
+        print(response.headers.raw) # [(b'content-type', b'text/html; charset=utf-8'), ... ]
     """
 
     text: str

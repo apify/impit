@@ -40,6 +40,21 @@ def test_response_constructor_with_headers() -> None:
     assert response.headers['Content-Type'] == 'application/json'
 
 
+def test_response_headers_raw() -> None:
+    # response.headers is an httpx-style Headers object exposing exact bytes via `.raw`.
+    response = Response(200, headers={'Content-Type': 'application/json', 'X-Unicode': 'naïve'})
+
+    raw = response.headers.raw
+
+    assert isinstance(raw, list)
+    assert all(isinstance(k, bytes) and isinstance(v, bytes) for k, v in raw)
+    assert (b'Content-Type', b'application/json') in raw
+    # A non-ASCII value is preserved as its exact UTF-8 bytes.
+    assert (b'X-Unicode', 'naïve'.encode()) in raw
+    # Case-insensitive str access still works.
+    assert response.headers['content-type'] == 'application/json'
+
+
 def test_response_headers_encoding() -> None:
     response = Response(
         200, headers={'Content-Type': 'text/plain; charset=cp1250'}, content=b'\x9e\x64\xe1\xf8\x65\x6e\xed'

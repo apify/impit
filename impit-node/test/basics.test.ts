@@ -571,6 +571,18 @@ describe.each([
             t.expect(response.headers.get('x-non-ascii')).toBe(routes.nonAsciiHeader.headerValue);
         });
 
+        test('UTF-8 header values stay ISO-8859-1 and are byte-recoverable (Fetch-style)', async (t) => {
+            const response = await impit.fetch(new URL(routes.utf8Header.path, "http://127.0.0.1:3001").href);
+
+            // Fetch semantics: the string form is ISO-8859-1, so a UTF-8 value reads back as mojibake.
+            const latin1 = response.headers.get('x-utf8');
+            t.expect(latin1).not.toBe(routes.utf8Header.headerValue);
+
+            // ISO-8859-1 is a bijection, so the exact wire bytes are recoverable, and re-decoding
+            // as UTF-8 yields the real value — no dedicated raw-header accessor needed.
+            t.expect(Buffer.from(latin1!, 'latin1').toString('utf8')).toBe(routes.utf8Header.headerValue);
+        });
+
         test('.json() method works', async (t) => {
         const response = await impit.fetch(getHttpBinUrl('/json'));
         const json = await response.json();
