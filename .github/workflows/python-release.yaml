@@ -32,7 +32,7 @@ jobs:
             python-version: 3.x
 
         - name: Set up uv package manager
-          uses: astral-sh/setup-uv@v8.2.0
+          uses: astral-sh/setup-uv@v8.3.2
 
         - name: Use Node.js
           uses: actions/setup-node@v6
@@ -58,7 +58,7 @@ jobs:
 
         - name: Commit new version
           id: commit_version
-          uses: apify/actions/signed-commit@v1.3.2
+          uses: apify/actions/signed-commit@v1.4.0
           with:
             message: "chore(py-release): bump `pyproject.toml` version [skip ci]"
             add: impit-python/pyproject.toml
@@ -136,7 +136,7 @@ jobs:
 
         - name: Commit new changelog
           id: commit_changelog
-          uses: apify/actions/signed-commit@v1.3.2
+          uses: apify/actions/signed-commit@v1.4.0
           with:
             message: "docs: update changelog [skip ci]"
             add: impit-python/CHANGELOG.md
