@@ -3,6 +3,15 @@
 All notable changes to this project will be documented in this file.
 
 
+## js-0.14.3 - 2026-07-14
+
+#### Bug Fixes
+
+- Decode header values per-ecosystem (Python/JS), expose httpx-style Response.headers (#492)
+
+- Bump napi-rs to fix crash on concurrent response-body read errors (#499)
+
+
 ## js-0.14.2 - 2026-06-22
 
 #### Bug Fixes
