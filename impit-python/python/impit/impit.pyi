@@ -349,6 +349,17 @@ class Response:
             print(data)  # Parsed JSON data as a Python object (dict, list, etc.)
         """
 
+    def raise_for_status(self) -> None:
+        """Raise an :class:`HTTPStatusError` exception if the response status code indicates an error (4xx or 5xx).
+
+        Does nothing for successful status codes.
+
+        .. code-block:: python
+
+            response = await client.get("https://api.example.com/data")
+            response.raise_for_status()  # Raises if status is 4xx or 5xx
+        """
+
     def close(self) -> None:
         """Close the response and release resources.
 
