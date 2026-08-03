@@ -72,6 +72,12 @@ pub enum SignatureAlgorithm {
     // EdDSA algorithms
     Ed25519,
     Ed448,
+    // ML-DSA algorithms (draft-ietf-tls-mldsa). Advertised in the ClientHello
+    // for fingerprint accuracy only: no ML-DSA verifier is available, so a
+    // server that actually selects one fails the handshake.
+    MlDsa44,
+    MlDsa65,
+    MlDsa87,
     // Legacy ECDSA with SHA-1 (for backwards compatibility)
     EcdsaSha1Legacy,
 }

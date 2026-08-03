@@ -110,6 +110,7 @@ Browser = Literal[
     'chrome131',
     'chrome136',
     'chrome142',
+    'chrome151',
     'firefox',
     'firefox128',
     'firefox133',
