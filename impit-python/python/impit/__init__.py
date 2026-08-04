@@ -97,4 +97,27 @@ __all__ = [
 ]
 
 
-Browser = Literal['chrome', 'firefox']
+Browser = Literal[
+    'chrome',
+    'chrome100',
+    'chrome101',
+    'chrome104',
+    'chrome107',
+    'chrome110',
+    'chrome116',
+    'chrome124',
+    'chrome125',
+    'chrome131',
+    'chrome136',
+    'chrome142',
+    'firefox',
+    'firefox128',
+    'firefox133',
+    'firefox135',
+    'firefox144',
+    'okhttp',
+    'okhttp3',
+    'okhttp4',
+    'okhttp5',
+    'ios18',
+]
