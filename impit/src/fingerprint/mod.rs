@@ -346,6 +346,9 @@ impl TlsFingerprint {
                 SignatureAlgorithm::RsaPkcs1Sha1 => FingerprintSignatureAlgorithm::RsaPkcs1Sha1,
                 SignatureAlgorithm::Ed25519 => FingerprintSignatureAlgorithm::Ed25519,
                 SignatureAlgorithm::Ed448 => FingerprintSignatureAlgorithm::Ed448,
+                SignatureAlgorithm::MlDsa44 => FingerprintSignatureAlgorithm::MlDsa44,
+                SignatureAlgorithm::MlDsa65 => FingerprintSignatureAlgorithm::MlDsa65,
+                SignatureAlgorithm::MlDsa87 => FingerprintSignatureAlgorithm::MlDsa87,
                 SignatureAlgorithm::EcdsaSha1Legacy => {
                     FingerprintSignatureAlgorithm::EcdsaSha1Legacy
                 }
