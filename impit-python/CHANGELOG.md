@@ -3,6 +3,23 @@
 All notable changes to this project will be documented in this file.
 
 
+## py-0.13.2 - 2026-08-05
+
+#### Bug Fixes
+
+- Fix panic on a malformed server cookie (#491)
+  - Malformed cookies are silently ignored like in JS version.
+
+
+- Decode header values per-ecosystem (Python/JS), expose httpx-style Response.headers (#492)
+
+- Add `raise_for_status` to type stub (#501)
+  - The method is implemented and works at runtime, but was missing from the type stub, so type checkers were complaining.
+
+
+- Align `Browser` literal with the fingerprints actually supported at runtime (#509)
+
+
 ## py-0.13.1 - 2026-06-25
 
 #### Bug Fixes
