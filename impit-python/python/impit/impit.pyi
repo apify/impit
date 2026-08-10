@@ -859,7 +859,7 @@ class AsyncClient:
     async def get(
         self,
         url: str,
-        content: bytes | bytearray | list[int] | Iterator[bytes] | None = None,
+        content: bytes | bytearray | list[int] | Iterator[bytes] | AsyncIterator[bytes] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
         timeout: float | str | None = USE_CLIENT_DEFAULT,
@@ -879,7 +879,7 @@ class AsyncClient:
     async def post(
         self,
         url: str,
-        content: bytes | bytearray | list[int] | Iterator[bytes] | None = None,
+        content: bytes | bytearray | list[int] | Iterator[bytes] | AsyncIterator[bytes] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
         timeout: float | str | None = USE_CLIENT_DEFAULT,
@@ -900,7 +900,7 @@ class AsyncClient:
     async def put(
         self,
         url: str,
-        content: bytes | bytearray | list[int] | Iterator[bytes] | None = None,
+        content: bytes | bytearray | list[int] | Iterator[bytes] | AsyncIterator[bytes] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
         timeout: float | str | None = USE_CLIENT_DEFAULT,
@@ -920,7 +920,7 @@ class AsyncClient:
     async def patch(
         self,
         url: str,
-        content: bytes | bytearray | list[int] | Iterator[bytes] | None = None,
+        content: bytes | bytearray | list[int] | Iterator[bytes] | AsyncIterator[bytes] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
         timeout: float | str | None = USE_CLIENT_DEFAULT,
@@ -940,7 +940,7 @@ class AsyncClient:
     async def delete(
         self,
         url: str,
-        content: bytes | bytearray | list[int] | Iterator[bytes] | None = None,
+        content: bytes | bytearray | list[int] | Iterator[bytes] | AsyncIterator[bytes] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
         timeout: float | str | None = USE_CLIENT_DEFAULT,
@@ -960,7 +960,7 @@ class AsyncClient:
     async def head(
         self,
         url: str,
-        content: bytes | bytearray | list[int] | Iterator[bytes] | None = None,
+        content: bytes | bytearray | list[int] | Iterator[bytes] | AsyncIterator[bytes] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
         timeout: float | str | None = USE_CLIENT_DEFAULT,
@@ -980,7 +980,7 @@ class AsyncClient:
     async def options(
         self,
         url: str,
-        content: bytes | bytearray | list[int] | Iterator[bytes] | None = None,
+        content: bytes | bytearray | list[int] | Iterator[bytes] | AsyncIterator[bytes] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
         timeout: float | str | None = USE_CLIENT_DEFAULT,
@@ -1000,7 +1000,7 @@ class AsyncClient:
     async def trace(
         self,
         url: str,
-        content: bytes | bytearray | list[int] | Iterator[bytes] | None = None,
+        content: bytes | bytearray | list[int] | Iterator[bytes] | AsyncIterator[bytes] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
         timeout: float | str | None = USE_CLIENT_DEFAULT,
@@ -1021,7 +1021,7 @@ class AsyncClient:
         self,
         method: str,
         url: str,
-        content: bytes | bytearray | list[int] | Iterator[bytes] | None = None,
+        content: bytes | bytearray | list[int] | Iterator[bytes] | AsyncIterator[bytes] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
         timeout: float | str | None = USE_CLIENT_DEFAULT,
@@ -1045,7 +1045,7 @@ class AsyncClient:
         self,
         method: str,
         url: str,
-        content: bytes | bytearray | list[int] | Iterator[bytes] | None = None,
+        content: bytes | bytearray | list[int] | Iterator[bytes] | AsyncIterator[bytes] | None = None,
         data: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
         timeout: float | str | None = USE_CLIENT_DEFAULT,

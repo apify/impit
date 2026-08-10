@@ -12,7 +12,8 @@ use crate::{
     cookies::PythonCookieJar,
     errors::ImpitPyError,
     request::{
-        form_to_bytes, iterator_to_bytes, parse_timeout, RequestBody, USE_CLIENT_DEFAULT_SENTINEL,
+        async_iterator_to_bytes, form_to_bytes, iterator_to_bytes, parse_timeout, RequestBody,
+        USE_CLIENT_DEFAULT_SENTINEL,
     },
     response::ImpitPyResponse,
 };
@@ -386,23 +387,24 @@ impl AsyncClient {
         let mut headers = headers.clone();
         let data = content.or(data);
 
-        let body: Vec<u8> = match data {
-            Some(data) => match data {
-                RequestBody::Bytes(bytes) => Ok(bytes),
-                RequestBody::Iterator(iter) => iterator_to_bytes(iter),
-                RequestBody::Form(form) => {
-                    headers.get_or_insert_with(HashMap::new).insert(
-                        "Content-Type".to_string(),
-                        "application/x-www-form-urlencoded".to_string(),
-                    );
-                    Ok(form_to_bytes(form))
-                }
-                RequestBody::CatchAll(e) => Err(PyErr::new::<PyTypeError, _>(format!(
+        let (async_body, body): (Option<Py<PyAny>>, Vec<u8>) = match data {
+            Some(RequestBody::AsyncIterator(iter)) => (Some(iter.0), Vec::new()),
+            Some(RequestBody::Bytes(bytes)) => (None, bytes),
+            Some(RequestBody::Iterator(iter)) => (None, iterator_to_bytes(iter)?),
+            Some(RequestBody::Form(form)) => {
+                headers.get_or_insert_with(HashMap::new).insert(
+                    "Content-Type".to_string(),
+                    "application/x-www-form-urlencoded".to_string(),
+                );
+                (None, form_to_bytes(form))
+            }
+            Some(RequestBody::CatchAll(e)) => {
+                return Err(PyErr::new::<PyTypeError, _>(format!(
                     "Unsupported data type in request body: {e:#?}"
-                ))),
-            },
-            None => Ok(Vec::new()),
-        }?;
+                )));
+            }
+            None => (None, Vec::new()),
+        };
 
         let timeout = parse_timeout(timeout)?;
 
@@ -422,6 +424,11 @@ impl AsyncClient {
         let impit = Arc::clone(&self.impit);
 
         pyo3_async_runtimes::tokio::future_into_py::<_, ImpitPyResponse>(py, async move {
+            let body = match async_body {
+                Some(iter) => async_iterator_to_bytes(iter).await?,
+                None => body,
+            };
+
             let response = match method_str.to_lowercase().as_str() {
                 "get" => impit.get(url, Some(body), Some(options)).await,
                 "post" => impit.post(url, Some(body), Some(options)).await,

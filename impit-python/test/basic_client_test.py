@@ -2,7 +2,7 @@ import json
 import socket
 import threading
 import time
-from collections.abc import Iterator
+from collections.abc import AsyncIterator, Iterator
 from http.cookiejar import Cookie, CookieJar
 from typing import Literal
 
@@ -14,6 +14,7 @@ from impit import (
     Client,
     ConnectTimeout,
     Cookies,
+    HTTPError,
     ReadTimeout,
     RemoteProtocolError,
     StreamClosed,
@@ -518,6 +519,15 @@ class TestRequestBody:
         response = impit.post(get_httpbin_url('/post'), content=gen())
         assert response.status_code == 200
         assert response.json()['data'] == 'Impit-Test'
+
+    def test_passing_async_generator_body_raises(self, browser: Browser) -> None:
+        impit = Client(browser=browser)
+
+        async def agen() -> AsyncIterator[bytes]:
+            yield b'foo'
+
+        with pytest.raises(HTTPError):
+            impit.post(get_httpbin_url('/post'), content=agen())
 
     @pytest.mark.parametrize(
         ('method'),

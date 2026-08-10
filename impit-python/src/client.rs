@@ -385,6 +385,10 @@ impl Client {
 
         let body: Vec<u8> = match data {
             Some(data) => match data {
+                RequestBody::AsyncIterator(_) => Err(ImpitPyError(ImpitError::BindingPassthroughError(
+                    "async iterators are not supported by the synchronous Client; use AsyncClient instead"
+                        .to_string(),
+                ))),
                 RequestBody::Bytes(bytes) => Ok(bytes),
                 RequestBody::Iterator(iter) => iterator_to_bytes(iter)
                     .map_err(|e| ImpitPyError(ImpitError::BindingPassthroughError(e.to_string()))),

@@ -2,6 +2,7 @@ import asyncio
 import json
 import socket
 import threading
+from collections.abc import AsyncIterator
 from http.cookiejar import Cookie, CookieJar
 from typing import Literal
 
@@ -587,6 +588,18 @@ class TestRequestBody:
         impit = AsyncClient(browser=browser)
 
         response = await impit.post(get_httpbin_url('/post'), content=(chunk for chunk in [b'foo', b'bar']))
+        assert response.status_code == 200
+        assert json.loads(response.text)['data'] == 'foobar'
+
+    @pytest.mark.asyncio
+    async def test_passing_async_generator_body(self, browser: Browser) -> None:
+        impit = AsyncClient(browser=browser)
+
+        async def agen() -> AsyncIterator[bytes]:
+            yield b'foo'
+            yield b'bar'
+
+        response = await impit.post(get_httpbin_url('/post'), content=agen())
         assert response.status_code == 200
         assert json.loads(response.text)['data'] == 'foobar'
 
