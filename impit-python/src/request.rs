@@ -33,16 +33,29 @@ pub(crate) fn parse_timeout(
     }
 }
 
+use pyo3::types::{PyAnyMethods, PyIterator};
 use pyo3::FromPyObject;
 
 #[derive(FromPyObject)]
 pub(crate) enum RequestBody<'py> {
+    // Placed before `Bytes` because `Vec<u8>` extraction would otherwise partially consume the
+    // iterator while trying (and failing) to coerce its items into bytes.
+    #[pyo3(transparent, annotation = "Iterator[bytes]")]
+    Iterator(Bound<'py, PyIterator>),
     #[pyo3(transparent, annotation = "bytes")]
     Bytes(Vec<u8>),
     #[pyo3(transparent, annotation = "dict[str, str]")]
     Form(HashMap<String, String>),
     #[pyo3(transparent)]
     CatchAll(Bound<'py, PyAny>), // This extraction never fails
+}
+
+pub fn iterator_to_bytes(iter: Bound<'_, PyIterator>) -> pyo3::PyResult<Vec<u8>> {
+    let mut body = Vec::new();
+    for chunk in iter {
+        body.extend(chunk?.extract::<Vec<u8>>()?);
+    }
+    Ok(body)
 }
 
 pub fn form_to_bytes(data: HashMap<String, String>) -> Vec<u8> {

@@ -11,7 +11,9 @@ use pyo3::{ffi::c_str, prelude::*};
 use crate::{
     cookies::PythonCookieJar,
     errors::ImpitPyError,
-    request::{form_to_bytes, parse_timeout, RequestBody, USE_CLIENT_DEFAULT_SENTINEL},
+    request::{
+        form_to_bytes, iterator_to_bytes, parse_timeout, RequestBody, USE_CLIENT_DEFAULT_SENTINEL,
+    },
     response::{self, ImpitPyResponse},
 };
 
@@ -132,7 +134,7 @@ impl Client {
         &self,
         py: Python<'_>,
         url: String,
-        content: Option<Vec<u8>>,
+        content: Option<RequestBody<'_>>,
         data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<Either<f64, &str>>,
@@ -156,7 +158,7 @@ impl Client {
         &self,
         py: Python<'_>,
         url: String,
-        content: Option<Vec<u8>>,
+        content: Option<RequestBody<'_>>,
         data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<Either<f64, &str>>,
@@ -180,7 +182,7 @@ impl Client {
         &self,
         py: Python<'_>,
         url: String,
-        content: Option<Vec<u8>>,
+        content: Option<RequestBody<'_>>,
         data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<Either<f64, &str>>,
@@ -204,7 +206,7 @@ impl Client {
         &self,
         py: Python<'_>,
         url: String,
-        content: Option<Vec<u8>>,
+        content: Option<RequestBody<'_>>,
         data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<Either<f64, &str>>,
@@ -228,7 +230,7 @@ impl Client {
         &self,
         py: Python<'_>,
         url: String,
-        content: Option<Vec<u8>>,
+        content: Option<RequestBody<'_>>,
         data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<Either<f64, &str>>,
@@ -252,7 +254,7 @@ impl Client {
         &self,
         py: Python<'_>,
         url: String,
-        content: Option<Vec<u8>>,
+        content: Option<RequestBody<'_>>,
         data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<Either<f64, &str>>,
@@ -276,7 +278,7 @@ impl Client {
         &self,
         py: Python<'_>,
         url: String,
-        content: Option<Vec<u8>>,
+        content: Option<RequestBody<'_>>,
         data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<Either<f64, &str>>,
@@ -300,7 +302,7 @@ impl Client {
         &self,
         py: Python<'_>,
         url: String,
-        content: Option<Vec<u8>>,
+        content: Option<RequestBody<'_>>,
         data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<Either<f64, &str>>,
@@ -325,7 +327,7 @@ impl Client {
         py: Python<'python>,
         method: &str,
         url: String,
-        content: Option<Vec<u8>>,
+        content: Option<RequestBody<'_>>,
         data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<Either<f64, &str>>,
@@ -371,22 +373,21 @@ impl Client {
         py: Python<'_>,
         method: &str,
         url: String,
-        content: Option<Vec<u8>>,
-        mut data: Option<RequestBody>,
+        content: Option<RequestBody<'_>>,
+        data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<Either<f64, &str>>,
         force_http3: Option<bool>,
         stream: Option<bool>,
     ) -> Result<ImpitPyResponse, ImpitPyError> {
         let mut headers = headers.clone();
-
-        if let Some(content) = content {
-            data = Some(RequestBody::Bytes(content));
-        }
+        let data = content.or(data);
 
         let body: Vec<u8> = match data {
             Some(data) => match data {
                 RequestBody::Bytes(bytes) => Ok(bytes),
+                RequestBody::Iterator(iter) => iterator_to_bytes(iter)
+                    .map_err(|e| ImpitPyError(ImpitError::BindingPassthroughError(e.to_string()))),
                 RequestBody::Form(form) => {
                     headers.get_or_insert_with(HashMap::new).insert(
                         "Content-Type".to_string(),

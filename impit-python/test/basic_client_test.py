@@ -2,6 +2,7 @@ import json
 import socket
 import threading
 import time
+from collections.abc import Iterator
 from http.cookiejar import Cookie, CookieJar
 from typing import Literal
 
@@ -507,6 +508,17 @@ class TestRequestBody:
         assert response.status_code == 200
         assert response.json()['data'] == 'Impit-Test:foořžš'
 
+    def test_passing_generator_body(self, browser: Browser) -> None:
+        impit = Client(browser=browser)
+
+        def gen() -> Iterator[bytes]:
+            yield b'Impit-'
+            yield b'Test'
+
+        response = impit.post(get_httpbin_url('/post'), content=gen())
+        assert response.status_code == 200
+        assert response.json()['data'] == 'Impit-Test'
+
     @pytest.mark.parametrize(
         ('method'),
         ['POST', 'PUT', 'PATCH'],
@@ -519,6 +531,20 @@ class TestRequestBody:
         response = m(get_httpbin_url(f'/{method.lower()}'), content=b'foo')
         assert response.status_code == 200
         assert response.json()['data'] == 'foo'
+
+    def test_methods_accept_generator_body(self, browser: Browser) -> None:
+        impit = Client(browser=browser)
+
+        response = impit.post(get_httpbin_url('/post'), content=(chunk for chunk in [b'foo', b'bar']))
+        assert response.status_code == 200
+        assert response.json()['data'] == 'foobar'
+
+    def test_passing_iterator_body(self, browser: Browser) -> None:
+        impit = Client(browser=browser)
+
+        response = impit.post(get_httpbin_url('/post'), content=iter([b'foo', b'bar']))
+        assert response.status_code == 200
+        assert response.json()['data'] == 'foobar'
 
     def test_content(self, browser: Browser) -> None:
         impit = Client(browser=browser)

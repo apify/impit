@@ -582,6 +582,14 @@ class TestRequestBody:
         assert response.status_code == 200
         assert json.loads(response.text)['data'] == 'Impit-Test:foořžš'
 
+    @pytest.mark.asyncio
+    async def test_passing_generator_body(self, browser: Browser) -> None:
+        impit = AsyncClient(browser=browser)
+
+        response = await impit.post(get_httpbin_url('/post'), content=(chunk for chunk in [b'foo', b'bar']))
+        assert response.status_code == 200
+        assert json.loads(response.text)['data'] == 'foobar'
+
     @pytest.mark.parametrize(
         ('method'),
         ['POST', 'PUT', 'PATCH'],

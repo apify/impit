@@ -365,6 +365,11 @@ class TestRequestBody:
         assert response.status_code == 200
         assert response.json()['data'] == 'Impit-Test:foořžš'
 
+    def test_passing_generator_body(self) -> None:
+        response = impit.post(get_httpbin_url('/post'), content=(chunk for chunk in [b'foo', b'bar']))
+        assert response.status_code == 200
+        assert response.json()['data'] == 'foobar'
+
     @pytest.mark.parametrize(
         ('method'),
         ['POST', 'PUT', 'PATCH'],
