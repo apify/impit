@@ -527,7 +527,7 @@ class TestRequestBody:
             yield b'foo'
 
         with pytest.raises(HTTPError):
-            impit.post(get_httpbin_url('/post'), content=agen())
+            impit.post(get_httpbin_url('/post'), content=agen())  # type: ignore[arg-type]
 
     @pytest.mark.parametrize(
         ('method'),
