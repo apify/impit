@@ -1,6 +1,10 @@
 use std::time::Duration;
 
-use impit::{errors::ImpitError, impit::Impit, request::RequestOptions};
+use impit::{
+  errors::ImpitError,
+  impit::Impit,
+  request::{ImpitBody, RequestOptions},
+};
 use napi::{bindgen_prelude::ObjectFinalize, Env};
 use napi_derive::napi;
 
@@ -136,9 +140,10 @@ impl ImpitWrapper {
       .as_ref()
       .and_then(|init| init.method.to_owned())
       .unwrap_or_default();
-    let body = request_init
-      .and_then(|init| init.body)
-      .map(|array| array.to_vec().into());
+    let body = request_init.and_then(|init| match (init.body, init.body_stream) {
+      (_, Some(stream)) => Some(ImpitBody::from_stream(stream.into_bytes())),
+      (bytes, None) => bytes.map(|array| array.to_vec().into()),
+    });
 
     let response = if matches!(method, HttpMethod::Get | HttpMethod::Head) && body.is_some() {
       Err(ImpitError::BindingPassthroughError(
