@@ -493,7 +493,9 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
             body: request.body,
         };
 
-        let primary_result = self.execute_request(client, &mut prepared, timeout, h3).await;
+        let primary_result = self
+            .execute_request(client, &mut prepared, timeout, h3)
+            .await;
 
         let response = match primary_result {
             Ok(resp) => resp,
