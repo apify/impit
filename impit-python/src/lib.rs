@@ -93,7 +93,7 @@ fn impit(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
             fn $name(
                 _py: Python,
                 url: String,
-                content: Option<Vec<u8>>,
+                content: Option<RequestBody>,
                 data: Option<RequestBody>,
                 headers: Option<HashMap<String, String>>,
                 timeout: Option<Either<f64, &str>>,
@@ -122,7 +122,7 @@ fn impit(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
         _py: Python<'python>,
         method: &str,
         url: String,
-        content: Option<Vec<u8>>,
+        content: Option<RequestBody>,
         data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<Either<f64, &str>>,
