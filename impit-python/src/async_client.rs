@@ -6,12 +6,12 @@ use impit::{
     impit::{Impit, ImpitBuilder},
     request::RequestOptions,
 };
-use pyo3::{exceptions::PyTypeError, ffi::c_str, prelude::*};
+use pyo3::{ffi::c_str, prelude::*};
 
 use crate::{
     cookies::PythonCookieJar,
     errors::ImpitPyError,
-    request::{form_to_bytes, parse_timeout, RequestBody, USE_CLIENT_DEFAULT_SENTINEL},
+    request::{parse_timeout, to_body, RequestBody, USE_CLIENT_DEFAULT_SENTINEL},
     response::ImpitPyResponse,
 };
 
@@ -135,7 +135,7 @@ impl AsyncClient {
         &self,
         py: Python<'python>,
         url: String,
-        content: Option<Vec<u8>>,
+        content: Option<RequestBody>,
         data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<Either<f64, &str>>,
@@ -159,7 +159,7 @@ impl AsyncClient {
         &self,
         py: Python<'python>,
         url: String,
-        content: Option<Vec<u8>>,
+        content: Option<RequestBody>,
         data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<Either<f64, &str>>,
@@ -183,7 +183,7 @@ impl AsyncClient {
         &self,
         py: Python<'python>,
         url: String,
-        content: Option<Vec<u8>>,
+        content: Option<RequestBody>,
         data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<Either<f64, &str>>,
@@ -207,7 +207,7 @@ impl AsyncClient {
         &self,
         py: Python<'python>,
         url: String,
-        content: Option<Vec<u8>>,
+        content: Option<RequestBody>,
         data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<Either<f64, &str>>,
@@ -231,7 +231,7 @@ impl AsyncClient {
         &self,
         py: Python<'python>,
         url: String,
-        content: Option<Vec<u8>>,
+        content: Option<RequestBody>,
         data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<Either<f64, &str>>,
@@ -255,7 +255,7 @@ impl AsyncClient {
         &self,
         py: Python<'python>,
         url: String,
-        content: Option<Vec<u8>>,
+        content: Option<RequestBody>,
         data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<Either<f64, &str>>,
@@ -279,7 +279,7 @@ impl AsyncClient {
         &self,
         py: Python<'python>,
         url: String,
-        content: Option<Vec<u8>>,
+        content: Option<RequestBody>,
         data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<Either<f64, &str>>,
@@ -303,7 +303,7 @@ impl AsyncClient {
         &self,
         py: Python<'python>,
         url: String,
-        content: Option<Vec<u8>>,
+        content: Option<RequestBody>,
         data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<Either<f64, &str>>,
@@ -328,7 +328,7 @@ impl AsyncClient {
         py: Python<'python>,
         method: &str,
         url: String,
-        content: Option<Vec<u8>>,
+        content: Option<RequestBody>,
         data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<Either<f64, &str>>,
@@ -374,7 +374,7 @@ impl AsyncClient {
         py: Python<'python>,
         method: &str,
         url: String,
-        content: Option<Vec<u8>>,
+        content: Option<RequestBody>,
         mut data: Option<RequestBody>,
         headers: Option<HashMap<String, String>>,
         timeout: Option<Either<f64, &str>>,
@@ -384,25 +384,10 @@ impl AsyncClient {
         let mut headers = headers.clone();
 
         if let Some(content) = content {
-            data = Some(RequestBody::Bytes(content));
+            data = Some(content);
         }
 
-        let body: Vec<u8> = match data {
-            Some(data) => match data {
-                RequestBody::Bytes(bytes) => Ok(bytes),
-                RequestBody::Form(form) => {
-                    headers.get_or_insert_with(HashMap::new).insert(
-                        "Content-Type".to_string(),
-                        "application/x-www-form-urlencoded".to_string(),
-                    );
-                    Ok(form_to_bytes(form))
-                }
-                RequestBody::CatchAll(e) => Err(PyErr::new::<PyTypeError, _>(format!(
-                    "Unsupported data type in request body: {e:#?}"
-                ))),
-            },
-            None => Ok(Vec::new()),
-        }?;
+        let body = to_body(data, &mut headers)?;
 
         let timeout = parse_timeout(timeout)?;
 
@@ -423,14 +408,14 @@ impl AsyncClient {
 
         pyo3_async_runtimes::tokio::future_into_py::<_, ImpitPyResponse>(py, async move {
             let response = match method_str.to_lowercase().as_str() {
-                "get" => impit.get(url, Some(body.into()), Some(options)).await,
-                "post" => impit.post(url, Some(body.into()), Some(options)).await,
-                "patch" => impit.patch(url, Some(body.into()), Some(options)).await,
-                "put" => impit.put(url, Some(body.into()), Some(options)).await,
-                "options" => impit.options(url, Some(body.into()), Some(options)).await,
-                "trace" => impit.trace(url, Some(body.into()), Some(options)).await,
-                "head" => impit.head(url, Some(body.into()), Some(options)).await,
-                "delete" => impit.delete(url, Some(body.into()), Some(options)).await,
+                "get" => impit.get(url, Some(body), Some(options)).await,
+                "post" => impit.post(url, Some(body), Some(options)).await,
+                "patch" => impit.patch(url, Some(body), Some(options)).await,
+                "put" => impit.put(url, Some(body), Some(options)).await,
+                "options" => impit.options(url, Some(body), Some(options)).await,
+                "trace" => impit.trace(url, Some(body), Some(options)).await,
+                "head" => impit.head(url, Some(body), Some(options)).await,
+                "delete" => impit.delete(url, Some(body), Some(options)).await,
                 _ => Err(ImpitError::InvalidMethod(method_str.to_string())),
             };
 

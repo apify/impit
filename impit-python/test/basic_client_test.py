@@ -2,6 +2,7 @@ import json
 import socket
 import threading
 import time
+from collections.abc import Iterator
 from http.cookiejar import Cookie, CookieJar
 from typing import Literal
 
@@ -54,6 +55,25 @@ def truncating_server(port_holder: list[int]) -> None:
     conn, _ = server.accept()
     conn.recv(1024)
     conn.send(b'HTTP/1.1 200 OK\r\nContent-Length: 100\r\n\r\n0123456789')
+    conn.close()
+    server.close()
+
+
+def echoing_server(port_holder: list[int]) -> None:
+    """Echo the raw request (request line, headers and body) back in the response body."""
+    server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    server.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
+    server.bind(('::', 0))
+    port_holder[0] = server.getsockname()[1]
+    server.listen(1)
+
+    conn, _ = server.accept()
+    conn.settimeout(5)
+    request = b''
+    while not request.endswith(b'0\r\n\r\n'):
+        request += conn.recv(1024)
+    conn.send(f'HTTP/1.1 200 OK\r\nContent-Length: {len(request)}\r\n\r\n'.encode() + request)
     conn.close()
     server.close()
 
@@ -453,6 +473,23 @@ class TestRequestBody:
         )
         assert response.status_code == 200
         assert response.json()['data'] == '{"Impit-Test":"foořžš"}'
+
+    def test_passing_iterator_body(self, browser: Browser) -> None:
+        port_holder = [0]
+        thread = threading.Thread(target=echoing_server, args=(port_holder,))
+        thread.start()
+        time.sleep(0.1)
+
+        def chunks() -> Iterator[bytes]:
+            yield b'{"Impit-Test":'
+            yield b'"foo"}'
+
+        impit = Client(browser=browser)
+
+        response = impit.post(f'http://localhost:{port_holder[0]}/', content=chunks(), timeout=5)
+        assert 'transfer-encoding: chunked' in response.text.lower()
+        assert response.text.endswith('E\r\n{"Impit-Test":\r\n6\r\n"foo"}\r\n0\r\n\r\n')
+        thread.join()
 
     def test_passing_string_body_in_data(self, browser: Browser) -> None:
         impit = Client(browser=browser)
