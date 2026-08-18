@@ -46,8 +46,11 @@ impl ImpitBody {
     /// Creates a streaming body from a stream of byte chunks.
     ///
     /// Unlike [`ImpitBody::Bytes`], the chunks are sent as they are produced, so the whole body
-    /// never has to be held in memory. The request uses `Transfer-Encoding: chunked` unless a
-    /// `Content-Length` header is set explicitly.
+    /// never has to be held in memory. On HTTP/1.1, the request uses `Transfer-Encoding: chunked`
+    /// unless a `Content-Length` header is set explicitly.
+    ///
+    /// As streamed bodies can't be replayed, `307` and `308` redirects aren't followed for such
+    /// requests - the redirect response is returned to the caller instead.
     pub fn from_stream<S>(stream: S) -> Self
     where
         S: TryStream + Send + 'static,
