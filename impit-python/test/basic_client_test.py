@@ -1,3 +1,4 @@
+import contextlib
 import json
 import socket
 import threading
@@ -59,8 +60,11 @@ def truncating_server(port_holder: list[int]) -> None:
     server.close()
 
 
-def echoing_server(port_holder: list[int]) -> None:
-    """Echo the raw request (request line, headers and body) back in the response body."""
+def echoing_server(port_holder: list[int], body_started: threading.Event | None = None) -> None:
+    """Echo the raw request (request line, headers and body) back in the response body.
+
+    `body_started` is set as soon as the first body byte arrives, before the request is complete.
+    """
     server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     server.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
@@ -71,8 +75,11 @@ def echoing_server(port_holder: list[int]) -> None:
     conn, _ = server.accept()
     conn.settimeout(5)
     request = b''
-    while not request.endswith(b'0\r\n\r\n'):
-        request += conn.recv(1024)
+    with contextlib.suppress(TimeoutError):
+        while not request.endswith(b'0\r\n\r\n'):
+            request += conn.recv(1024)
+            if body_started is not None and request.partition(b'\r\n\r\n')[2]:
+                body_started.set()
     conn.send(f'HTTP/1.1 200 OK\r\nContent-Length: {len(request)}\r\n\r\n'.encode() + request)
     conn.close()
     server.close()
@@ -489,6 +496,27 @@ class TestRequestBody:
         response = impit.post(f'http://localhost:{port_holder[0]}/', content=chunks(), timeout=5)
         assert 'transfer-encoding: chunked' in response.text.lower()
         assert response.text.endswith('E\r\n{"Impit-Test":\r\n6\r\n"foo"}\r\n0\r\n\r\n')
+        thread.join()
+
+    def test_iterator_body_is_not_buffered(self, browser: Browser) -> None:
+        port_holder = [0]
+        body_started = threading.Event()
+        thread = threading.Thread(target=echoing_server, args=(port_holder, body_started))
+        thread.start()
+        time.sleep(0.1)
+
+        sent_before_next_chunk = []
+
+        def chunks() -> Iterator[bytes]:
+            yield b'first'
+            sent_before_next_chunk.append(body_started.wait(5))
+            yield b'second'
+
+        impit = Client(browser=browser)
+
+        response = impit.post(f'http://localhost:{port_holder[0]}/', content=chunks(), timeout=10)
+        assert sent_before_next_chunk == [True], 'the whole body was read before the request was sent'
+        assert response.text.endswith('5\r\nfirst\r\n6\r\nsecond\r\n0\r\n\r\n')
         thread.join()
 
     def test_passing_string_body_in_data(self, browser: Browser) -> None:
