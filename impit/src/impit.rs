@@ -514,7 +514,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
                 let fallback_client = self
                     .vanilla_client
                     .as_ref()
-                    .filter(|_| primary_error.is_connect_error() && prepared.body.is_replayable());
+                    .filter(|_| primary_error.is_connect_error() && prepared.body.is_sendable());
                 let Some(vanilla_client) = fallback_client else {
                     return Err(primary_error);
                 };

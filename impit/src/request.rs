@@ -71,7 +71,9 @@ impl ImpitBody {
         }
     }
 
-    pub(crate) fn is_replayable(&self) -> bool {
+    /// Whether a body is still available to send - `false` only for a streamed body that has
+    /// already been consumed by a previous attempt.
+    pub(crate) fn is_sendable(&self) -> bool {
         !matches!(self, Self::Consumed)
     }
 }
