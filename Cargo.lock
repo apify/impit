@@ -1299,7 +1299,10 @@ dependencies = [
 name = "impit"
 version = "0.1.0"
 dependencies = [
+ "bytes",
  "encoding",
+ "futures-core",
+ "futures-util",
  "hickory-proto",
  "hickory-resolver",
  "hyper",

@@ -10,7 +10,7 @@ use crate::{
     fingerprint::BrowserFingerprint,
     http3::H3Engine,
     http_headers::HttpHeaders,
-    request::{ImpitRequest, RequestOptions},
+    request::{ImpitBody, ImpitRequest, RequestOptions},
     tls,
 };
 
@@ -31,7 +31,7 @@ struct PreparedRequest {
     method: Method,
     url: Url,
     headers: HeaderMap,
-    body: Option<Vec<u8>>,
+    body: ImpitBody,
 }
 
 impl<CookieStoreImpl: CookieStore + 'static> Default for Impit<CookieStoreImpl> {
@@ -401,7 +401,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
         &self,
         method: Method,
         url: Url,
-        body: Option<Vec<u8>>,
+        body: Option<ImpitBody>,
         headers: Vec<(String, String)>,
     ) -> ImpitRequest {
         let host = url.host_str().unwrap_or_default().to_string();
@@ -416,7 +416,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
 
         ImpitRequest {
             url,
-            body,
+            body: body.unwrap_or_default(),
             headers: headers.iter().collect(),
             method: method.to_string(),
         }
@@ -425,7 +425,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
     async fn execute_request(
         &self,
         client: &reqwest::Client,
-        prepared: &PreparedRequest,
+        prepared: &mut PreparedRequest,
         timeout: Option<Duration>,
         h3: bool,
     ) -> Result<Response, reqwest::Error> {
@@ -441,8 +441,8 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
             req = req.timeout(t);
         }
 
-        if let Some(b) = prepared.body.clone() {
-            req = req.body(b);
+        if let Some(body) = prepared.body.take() {
+            req = req.body(body);
         }
 
         req.send().await
@@ -486,14 +486,16 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
             RedirectBehavior::ManualRedirect => 0,
         };
 
-        let prepared = PreparedRequest {
+        let mut prepared = PreparedRequest {
             method: method.clone(),
             url: request.url.clone(),
             headers: header_map,
             body: request.body,
         };
 
-        let primary_result = self.execute_request(client, &prepared, timeout, h3).await;
+        let primary_result = self
+            .execute_request(client, &mut prepared, timeout, h3)
+            .await;
 
         let response = match primary_result {
             Ok(resp) => resp,
@@ -512,7 +514,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
                 let fallback_client = self
                     .vanilla_client
                     .as_ref()
-                    .filter(|_| primary_error.is_connect_error());
+                    .filter(|_| primary_error.is_connect_error() && prepared.body.is_sendable());
                 let Some(vanilla_client) = fallback_client else {
                     return Err(primary_error);
                 };
@@ -521,7 +523,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
                     "Primary request to {url} failed with {primary_error}, retrying with vanilla client"
                 );
                 match self
-                    .execute_request(vanilla_client, &prepared, timeout, false)
+                    .execute_request(vanilla_client, &mut prepared, timeout, false)
                     .await
                 {
                     Ok(resp) => resp,
@@ -555,7 +557,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
         &self,
         method: Method,
         url: String,
-        body: Option<Vec<u8>>,
+        body: Option<ImpitBody>,
         options: Option<RequestOptions>,
     ) -> Result<Response, ImpitError> {
         let url = self.parse_url(url)?;
@@ -585,7 +587,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
     pub async fn get(
         &self,
         url: String,
-        body: Option<Vec<u8>>,
+        body: Option<ImpitBody>,
         options: Option<RequestOptions>,
     ) -> Result<Response, ImpitError> {
         self.make_request(Method::GET, url, body, options).await
@@ -600,7 +602,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
     pub async fn head(
         &self,
         url: String,
-        body: Option<Vec<u8>>,
+        body: Option<ImpitBody>,
         options: Option<RequestOptions>,
     ) -> Result<Response, ImpitError> {
         self.make_request(Method::HEAD, url, body, options).await
@@ -615,7 +617,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
     pub async fn options(
         &self,
         url: String,
-        body: Option<Vec<u8>>,
+        body: Option<ImpitBody>,
         options: Option<RequestOptions>,
     ) -> Result<Response, ImpitError> {
         self.make_request(Method::OPTIONS, url, body, options).await
@@ -630,7 +632,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
     pub async fn trace(
         &self,
         url: String,
-        body: Option<Vec<u8>>,
+        body: Option<ImpitBody>,
         options: Option<RequestOptions>,
     ) -> Result<Response, ImpitError> {
         self.make_request(Method::TRACE, url, body, options).await
@@ -645,7 +647,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
     pub async fn delete(
         &self,
         url: String,
-        body: Option<Vec<u8>>,
+        body: Option<ImpitBody>,
         options: Option<RequestOptions>,
     ) -> Result<Response, ImpitError> {
         self.make_request(Method::DELETE, url, body, options).await
@@ -660,7 +662,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
     pub async fn post(
         &self,
         url: String,
-        body: Option<Vec<u8>>,
+        body: Option<ImpitBody>,
         options: Option<RequestOptions>,
     ) -> Result<Response, ImpitError> {
         self.make_request(Method::POST, url, body, options).await
@@ -675,7 +677,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
     pub async fn put(
         &self,
         url: String,
-        body: Option<Vec<u8>>,
+        body: Option<ImpitBody>,
         options: Option<RequestOptions>,
     ) -> Result<Response, ImpitError> {
         self.make_request(Method::PUT, url, body, options).await
@@ -690,7 +692,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
     pub async fn patch(
         &self,
         url: String,
-        body: Option<Vec<u8>>,
+        body: Option<ImpitBody>,
         options: Option<RequestOptions>,
     ) -> Result<Response, ImpitError> {
         self.make_request(Method::PATCH, url, body, options).await
