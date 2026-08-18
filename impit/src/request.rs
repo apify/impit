@@ -33,7 +33,7 @@ pub enum ImpitBody {
     #[default]
     Empty,
     /// A body that is fully buffered in memory before the request is sent.
-    Bytes(Vec<u8>),
+    Bytes(Bytes),
     /// A body that is streamed into the request as its chunks are produced.
     ///
     /// Note that streamed bodies can only be sent once, so requests using them are never retried.
@@ -78,9 +78,9 @@ impl ImpitBody {
     }
 }
 
-impl From<Vec<u8>> for ImpitBody {
-    fn from(bytes: Vec<u8>) -> Self {
-        Self::Bytes(bytes)
+impl<T: Into<Bytes>> From<T> for ImpitBody {
+    fn from(bytes: T) -> Self {
+        Self::Bytes(bytes.into())
     }
 }
 
