@@ -49,15 +49,22 @@ function toUint8Array(chunk) {
     return typeof chunk === 'string' ? new TextEncoder().encode(chunk) : new Uint8Array(chunk);
 }
 
-function concatUint8Arrays(chunks) {
-    const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
-    const result = new Uint8Array(totalLength);
-    let offset = 0;
-    for (const chunk of chunks) {
-        result.set(chunk, offset);
-        offset += chunk.length;
-    }
-    return result;
+// Streamed bodies are passed to the native layer as a ReadableStream of bytes, so that the chunks
+// reach the connection as they are produced instead of being buffered before the request starts.
+function toByteStream(source) {
+    const reader = source instanceof ReadableStream ? source.getReader() : source[Symbol.asyncIterator]();
+    const next = reader.read?.bind(reader) ?? reader.next.bind(reader);
+
+    return new ReadableStream({
+        async pull(controller) {
+            const { done, value } = await next();
+            if (done) {
+                controller.close();
+            } else {
+                controller.enqueue(toUint8Array(value));
+            }
+        },
+    });
 }
 
 function shouldRewriteRedirectToGet(httpStatus, method) {
@@ -193,23 +200,9 @@ class Impit extends native.Impit {
             return { body: new Uint8Array(await body.arrayBuffer()), type: body.type };
         } else if (body instanceof FormData) {
             return await this.#generateMultipartFormData(body);
-        } else if (body instanceof ReadableStream) {
-            const reader = body.getReader();
-            const chunks = [];
-            let done = false;
-            while (!done) {
-                const { done: streamDone, value } = await reader.read();
-                done = streamDone;
-                if (value != null) chunks.push(toUint8Array(value));
-            }
-            return { body: concatUint8Arrays(chunks), type: '' };
-        } else if (body && typeof body[Symbol.asyncIterator] === 'function') {
-            // Node.js streams (e.g. Readable.from(...)) and other async iterables.
-            const chunks = [];
-            for await (const chunk of body) {
-                chunks.push(toUint8Array(chunk));
-            }
-            return { body: concatUint8Arrays(chunks), type: '' };
+        } else if (body instanceof ReadableStream || typeof body[Symbol.asyncIterator] === 'function') {
+            // Web streams, Node.js streams (e.g. Readable.from(...)) and other async iterables.
+            return { bodyStream: toByteStream(body), type: '' };
         }
         return { body, type: '' };
     }
@@ -238,8 +231,9 @@ class Impit extends native.Impit {
         options.headers = canonicalizeHeaders(options?.headers);
 
         if (options?.body) {
-            const { body: requestBody, type } = await this.#serializeBody(options.body);
+            const { body: requestBody, bodyStream, type } = await this.#serializeBody(options.body);
             options.body = requestBody;
+            options.bodyStream = bodyStream;
             if (type && !options.headers.some(([key]) => key.toLowerCase() === 'content-type')) {
                 options.headers.push(['Content-Type', type]);
             }
@@ -252,6 +246,7 @@ class Impit extends native.Impit {
             method: options.method,
             headers: options.headers,
             body: options.body,
+            bodyStream: options.bodyStream,
             timeout: options.timeout,
             forceHttp3: options.forceHttp3,
             signal: options.signal,
@@ -316,6 +311,7 @@ class Impit extends native.Impit {
                 method,
                 headers,
                 body: method === 'GET' ? undefined : options.body,
+                bodyStream: method === 'GET' ? undefined : options.bodyStream,
             });
 
             const originalResponse = await Promise.race([
@@ -348,6 +344,10 @@ class Impit extends native.Impit {
 
                     url = new URL(location, url).toString();
                     method = shouldRewriteRedirectToGet(originalResponse.status, method) ? 'GET' : method;
+
+                    if (options.bodyStream && method !== 'GET') {
+                        throw new TypeError(`Cannot follow a redirect that resends a streaming request body: ${url}`);
+                    }
 
                     continue;
                 }

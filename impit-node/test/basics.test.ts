@@ -522,6 +522,20 @@ describe.each([
             expect(json.data).toEqual(STRING_PAYLOAD);
         });
 
+        // https://github.com/apify/impit/issues/513
+        test('streamed bodies are sent chunk by chunk', async () => {
+            const chunks = ['{"Impit-Test":', '"foořžš"}'];
+            const response = await impit.fetch(localPostUrl, {
+                method: HttpMethod.Post,
+                body: Readable.from(chunks) as any,
+            });
+            const json = await response.json();
+
+            expect(json.headers?.['transfer-encoding']).toBe('chunked');
+            expect(json.headers?.['content-length']).toBeUndefined();
+            expect(json.data).toEqual(STRING_PAYLOAD);
+        });
+
         test('Request with body preserves its Content-Type', async () => {
             const request = new Request(localPostUrl, {
                 method: 'POST',

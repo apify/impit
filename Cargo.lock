@@ -1326,6 +1326,7 @@ name = "impit-node"
 version = "0.0.0"
 dependencies = [
  "bytes",
+ "futures-util",
  "h2",
  "impit",
  "napi",
