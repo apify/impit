@@ -1302,6 +1302,7 @@ dependencies = [
  "bytes",
  "encoding",
  "futures-core",
+ "futures-util",
  "hickory-proto",
  "hickory-resolver",
  "hyper",

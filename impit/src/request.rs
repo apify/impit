@@ -93,3 +93,36 @@ pub struct ImpitRequest {
     pub headers: Vec<(String, String)>,
     pub method: String,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn buffered_bodies_can_be_sent_repeatedly() {
+        let mut body = ImpitBody::from("hello");
+
+        for _ in 0..2 {
+            assert!(body.is_sendable());
+            assert!(body.take().is_some());
+        }
+    }
+
+    #[test]
+    fn streamed_bodies_can_only_be_sent_once() {
+        let mut body =
+            ImpitBody::from_stream(futures_util::stream::empty::<Result<Bytes, std::io::Error>>());
+
+        assert!(body.take().is_some());
+        assert!(!body.is_sendable());
+        assert!(body.take().is_none());
+    }
+
+    #[test]
+    fn empty_bodies_yield_no_body() {
+        let mut body = ImpitBody::Empty;
+
+        assert!(body.take().is_none());
+        assert!(body.is_sendable());
+    }
+}
