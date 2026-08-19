@@ -2,14 +2,25 @@ import asyncio
 import json
 import socket
 import threading
+from collections.abc import AsyncIterator
 from http.cookiejar import Cookie, CookieJar
 from typing import Literal
 
 import pytest
 
-from impit import AsyncClient, Browser, Cookies, RemoteProtocolError, StreamClosed, StreamConsumed, TooManyRedirects
+from impit import (
+    AsyncClient,
+    Browser,
+    Cookies,
+    HTTPError,
+    RemoteProtocolError,
+    StreamClosed,
+    StreamConsumed,
+    TooManyRedirects,
+)
 
 from .httpbin import get_httpbin_url
+from .servers import echoing_server
 from .setup_proxy import start_proxy_server
 
 
@@ -525,6 +536,56 @@ class TestRequestBody:
         )
         assert response.status_code == 200
         assert json.loads(response.text)['data'] == '{"Impit-Test":"foořžš"}'
+
+    @pytest.mark.asyncio
+    async def test_passing_async_iterator_body(self, browser: Browser) -> None:
+        async def chunks() -> AsyncIterator[bytes]:
+            yield b'{"Impit-Test":'
+            yield b'"foo"}'
+
+        impit = AsyncClient(browser=browser)
+
+        with echoing_server() as port:
+            response = await impit.post(f'http://localhost:{port}/', content=chunks(), timeout=5)
+
+        assert 'transfer-encoding: chunked' in response.text.lower()
+        assert response.text.endswith('E\r\n{"Impit-Test":\r\n6\r\n"foo"}\r\n0\r\n\r\n')
+
+    @pytest.mark.asyncio
+    async def test_async_iterator_body_is_not_buffered(self, browser: Browser) -> None:
+        body_started = threading.Event()
+        sent_before_next_chunk = []
+
+        async def chunks() -> AsyncIterator[bytes]:
+            yield b'first'
+            sent_before_next_chunk.append(await asyncio.to_thread(body_started.wait, 5))
+            yield b'second'
+
+        impit = AsyncClient(browser=browser)
+
+        with echoing_server(body_started) as port:
+            response = await impit.post(f'http://localhost:{port}/', content=chunks(), timeout=10)
+
+        assert sent_before_next_chunk == [True], 'the whole body was read before the request was sent'
+        assert response.text.endswith('5\r\nfirst\r\n6\r\nsecond\r\n0\r\n\r\n')
+
+    @pytest.mark.asyncio
+    async def test_passing_str_body(self, browser: Browser) -> None:
+        impit = AsyncClient(browser=browser)
+
+        with echoing_server() as port:
+            response = await impit.post(f'http://localhost:{port}/', content='Impit-Test: foořžš', timeout=5)
+
+        assert 'content-length: 21' in response.text.lower()
+        assert response.text.endswith('Impit-Test: foořžš')
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('body', [{'Impit-Test': 1}, 42])
+    async def test_unsupported_body_type(self, browser: Browser, body: object) -> None:
+        impit = AsyncClient(browser=browser)
+
+        with pytest.raises((TypeError, HTTPError), match='Unsupported data type'):
+            await impit.post('http://localhost:1/', content=body, timeout=5)  # type: ignore[arg-type]
 
     @pytest.mark.asyncio
     async def test_passing_string_body_in_data(self, browser: Browser) -> None:

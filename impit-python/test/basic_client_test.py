@@ -2,6 +2,7 @@ import json
 import socket
 import threading
 import time
+from collections.abc import Iterator
 from http.cookiejar import Cookie, CookieJar
 from typing import Literal
 
@@ -13,6 +14,7 @@ from impit import (
     Client,
     ConnectTimeout,
     Cookies,
+    HTTPError,
     ReadTimeout,
     RemoteProtocolError,
     StreamClosed,
@@ -22,6 +24,7 @@ from impit import (
 )
 
 from .httpbin import get_httpbin_url
+from .servers import echoing_server
 from .setup_proxy import start_proxy_server
 
 
@@ -453,6 +456,52 @@ class TestRequestBody:
         )
         assert response.status_code == 200
         assert response.json()['data'] == '{"Impit-Test":"foořžš"}'
+
+    def test_passing_iterator_body(self, browser: Browser) -> None:
+        def chunks() -> Iterator[bytes]:
+            yield b'{"Impit-Test":'
+            yield b'"foo"}'
+
+        impit = Client(browser=browser)
+
+        with echoing_server() as port:
+            response = impit.post(f'http://localhost:{port}/', content=chunks(), timeout=5)
+
+        assert 'transfer-encoding: chunked' in response.text.lower()
+        assert response.text.endswith('E\r\n{"Impit-Test":\r\n6\r\n"foo"}\r\n0\r\n\r\n')
+
+    def test_iterator_body_is_not_buffered(self, browser: Browser) -> None:
+        body_started = threading.Event()
+        sent_before_next_chunk = []
+
+        def chunks() -> Iterator[bytes]:
+            yield b'first'
+            sent_before_next_chunk.append(body_started.wait(5))
+            yield b'second'
+
+        impit = Client(browser=browser)
+
+        with echoing_server(body_started) as port:
+            response = impit.post(f'http://localhost:{port}/', content=chunks(), timeout=10)
+
+        assert sent_before_next_chunk == [True], 'the whole body was read before the request was sent'
+        assert response.text.endswith('5\r\nfirst\r\n6\r\nsecond\r\n0\r\n\r\n')
+
+    def test_passing_str_body(self, browser: Browser) -> None:
+        impit = Client(browser=browser)
+
+        with echoing_server() as port:
+            response = impit.post(f'http://localhost:{port}/', content='Impit-Test: foořžš', timeout=5)
+
+        assert 'content-length: 21' in response.text.lower()
+        assert response.text.endswith('Impit-Test: foořžš')
+
+    @pytest.mark.parametrize('body', [{'Impit-Test': 1}, 42])
+    def test_unsupported_body_type(self, browser: Browser, body: object) -> None:
+        impit = Client(browser=browser)
+
+        with pytest.raises((TypeError, HTTPError), match='Unsupported data type'):
+            impit.post('http://localhost:1/', content=body, timeout=5)  # type: ignore[arg-type]
 
     def test_passing_string_body_in_data(self, browser: Browser) -> None:
         impit = Client(browser=browser)
