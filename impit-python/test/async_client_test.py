@@ -9,7 +9,16 @@ from typing import Literal
 
 import pytest
 
-from impit import AsyncClient, Browser, Cookies, RemoteProtocolError, StreamClosed, StreamConsumed, TooManyRedirects
+from impit import (
+    AsyncClient,
+    Browser,
+    Cookies,
+    HTTPError,
+    RemoteProtocolError,
+    StreamClosed,
+    StreamConsumed,
+    TooManyRedirects,
+)
 
 from .httpbin import get_httpbin_url
 from .setup_proxy import start_proxy_server
@@ -592,6 +601,14 @@ class TestRequestBody:
 
         assert sent_before_next_chunk == [True], 'the whole body was read before the request was sent'
         assert response.text.endswith('5\r\nfirst\r\n6\r\nsecond\r\n0\r\n\r\n')
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('body', [{'Impit-Test': 1}, 42])
+    async def test_unsupported_body_type(self, browser: Browser, body: object) -> None:
+        impit = AsyncClient(browser=browser)
+
+        with pytest.raises((TypeError, HTTPError), match='Unsupported data type'):
+            await impit.post('http://localhost:1/', content=body, timeout=5)  # type: ignore[arg-type]
 
     @pytest.mark.asyncio
     async def test_passing_string_body_in_data(self, browser: Browser) -> None:

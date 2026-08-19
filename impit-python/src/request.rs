@@ -6,7 +6,7 @@ use futures::{stream, Stream};
 use impit::request::ImpitBody;
 use pyo3::{
     exceptions::{PyStopAsyncIteration, PyStopIteration, PyTypeError},
-    types::PyAnyMethods,
+    types::{PyAnyMethods, PyMapping},
     Borrowed, Bound, Py, PyAny, PyErr, PyResult, PyTypeInfo, Python,
 };
 use pyo3_async_runtimes::TaskLocals;
@@ -65,6 +65,10 @@ impl<'py> FromPyObject<'_, 'py> for PyIterator {
     type Error = PyErr;
 
     fn extract(object: Borrowed<'_, 'py, PyAny>) -> PyResult<Self> {
+        if object.is_instance_of::<PyMapping>() {
+            return Err(PyTypeError::new_err("not an iterator over byte chunks"));
+        }
+
         match object.call_method0("__aiter__") {
             Ok(iterator) => Ok(Self::Async(
                 iterator.unbind(),

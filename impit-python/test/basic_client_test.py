@@ -15,6 +15,7 @@ from impit import (
     Client,
     ConnectTimeout,
     Cookies,
+    HTTPError,
     ReadTimeout,
     RemoteProtocolError,
     StreamClosed,
@@ -518,6 +519,13 @@ class TestRequestBody:
 
         assert sent_before_next_chunk == [True], 'the whole body was read before the request was sent'
         assert response.text.endswith('5\r\nfirst\r\n6\r\nsecond\r\n0\r\n\r\n')
+
+    @pytest.mark.parametrize('body', [{'Impit-Test': 1}, 42])
+    def test_unsupported_body_type(self, browser: Browser, body: object) -> None:
+        impit = Client(browser=browser)
+
+        with pytest.raises((TypeError, HTTPError), match='Unsupported data type'):
+            impit.post('http://localhost:1/', content=body, timeout=5)  # type: ignore[arg-type]
 
     def test_passing_string_body_in_data(self, browser: Browser) -> None:
         impit = Client(browser=browser)
