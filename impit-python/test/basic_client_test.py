@@ -487,6 +487,15 @@ class TestRequestBody:
         assert sent_before_next_chunk == [True], 'the whole body was read before the request was sent'
         assert response.text.endswith('5\r\nfirst\r\n6\r\nsecond\r\n0\r\n\r\n')
 
+    def test_passing_str_body(self, browser: Browser) -> None:
+        impit = Client(browser=browser)
+
+        with echoing_server() as port:
+            response = impit.post(f'http://localhost:{port}/', content='Impit-Test: foořžš', timeout=5)
+
+        assert 'content-length: 21' in response.text.lower()
+        assert response.text.endswith('Impit-Test: foořžš')
+
     @pytest.mark.parametrize('body', [{'Impit-Test': 1}, 42])
     def test_unsupported_body_type(self, browser: Browser, body: object) -> None:
         impit = Client(browser=browser)

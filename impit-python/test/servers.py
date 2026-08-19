@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import contextlib
+import re
 import socket
 import threading
 from typing import TYPE_CHECKING
@@ -23,12 +24,21 @@ def echoing_server(body_started: threading.Event | None = None) -> Iterator[int]
     server.bind(('::', 0))
     server.listen(1)
 
+    def received_whole_body(request: bytes) -> bool:
+        head, separator, body = request.partition(b'\r\n\r\n')
+        if not separator:
+            return False
+        content_length = re.search(rb'content-length: *(\d+)', head, re.IGNORECASE)
+        if content_length is None:
+            return request.endswith(b'0\r\n\r\n')
+        return len(body) >= int(content_length[1])
+
     def echo() -> None:
         conn, _ = server.accept()
         conn.settimeout(5)
         request = b''
         with contextlib.suppress(TimeoutError):
-            while not request.endswith(b'0\r\n\r\n'):
+            while not received_whole_body(request):
                 request += conn.recv(1024)
                 if body_started is not None and request.partition(b'\r\n\r\n')[2]:
                     body_started.set()

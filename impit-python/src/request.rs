@@ -49,6 +49,8 @@ pub(crate) enum RequestBody {
     Bytes(Vec<u8>),
     #[pyo3(transparent, annotation = "dict[str, str]")]
     Form(HashMap<String, String>),
+    #[pyo3(transparent, annotation = "str")]
+    Text(String),
     #[pyo3(transparent, annotation = "Iterable[bytes] | AsyncIterable[bytes]")]
     Iterator(PyIterator),
     #[pyo3(transparent)]
@@ -141,6 +143,7 @@ pub(crate) fn to_body(
             );
             form_to_bytes(form).into()
         }
+        Some(RequestBody::Text(text)) => text.into_bytes().into(),
         Some(RequestBody::Iterator(iterator)) => ImpitBody::from_stream(to_stream(iterator)),
         Some(RequestBody::CatchAll(object)) => {
             return Err(Python::attach(|py| {

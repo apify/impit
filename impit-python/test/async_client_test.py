@@ -570,6 +570,16 @@ class TestRequestBody:
         assert response.text.endswith('5\r\nfirst\r\n6\r\nsecond\r\n0\r\n\r\n')
 
     @pytest.mark.asyncio
+    async def test_passing_str_body(self, browser: Browser) -> None:
+        impit = AsyncClient(browser=browser)
+
+        with echoing_server() as port:
+            response = await impit.post(f'http://localhost:{port}/', content='Impit-Test: foořžš', timeout=5)
+
+        assert 'content-length: 21' in response.text.lower()
+        assert response.text.endswith('Impit-Test: foořžš')
+
+    @pytest.mark.asyncio
     @pytest.mark.parametrize('body', [{'Impit-Test': 1}, 42])
     async def test_unsupported_body_type(self, browser: Browser, body: object) -> None:
         impit = AsyncClient(browser=browser)
