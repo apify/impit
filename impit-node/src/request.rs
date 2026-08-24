@@ -15,7 +15,7 @@ impl FromNapiValue for BodyStream {
 }
 
 impl BodyStream {
-  pub fn into_bytes(self) -> impl Stream<Item = napi::Result<Bytes>> {
+  pub fn into_byte_stream(self) -> impl Stream<Item = napi::Result<Bytes>> {
     self.0.map_ok(|chunk| Bytes::copy_from_slice(&chunk))
   }
 }

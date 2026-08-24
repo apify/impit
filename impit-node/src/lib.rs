@@ -141,7 +141,7 @@ impl ImpitWrapper {
       .and_then(|init| init.method.to_owned())
       .unwrap_or_default();
     let body = request_init.and_then(|init| match (init.body, init.body_stream) {
-      (_, Some(stream)) => Some(ImpitBody::from_stream(stream.into_bytes())),
+      (_, Some(stream)) => Some(ImpitBody::from_stream(stream.into_byte_stream())),
       (bytes, None) => bytes.map(|array| array.to_vec().into()),
     });
 
