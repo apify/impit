@@ -523,17 +523,46 @@ describe.each([
         });
 
         // https://github.com/apify/impit/issues/513
-        test('streamed bodies are sent chunk by chunk', async () => {
-            const chunks = ['{"Impit-Test":', '"foořžš"}'];
-            const response = await impit.fetch(localPostUrl, {
-                method: HttpMethod.Post,
-                body: Readable.from(chunks) as any,
-            });
-            const json = await response.json();
+        test('streamed bodies are not buffered before the request is sent', async () => {
+            let bodyStarted: (started: boolean) => void = () => {};
+            const firstChunkArrived = new Promise<boolean>((resolve) => { bodyStarted = resolve; });
+            const giveUp = setTimeout(() => bodyStarted(false), 5e3);
 
-            expect(json.headers?.['transfer-encoding']).toBe('chunked');
-            expect(json.headers?.['content-length']).toBeUndefined();
-            expect(json.data).toEqual(STRING_PAYLOAD);
+            // Echoes back how the body was framed and what arrived, and reports the first body byte
+            // while the request is still in flight.
+            const server = http.createServer((req, res) => {
+                const received: Buffer[] = [];
+                req.on('data', (chunk) => { received.push(chunk); bodyStarted(true); });
+                req.on('end', () => res.end(JSON.stringify({
+                    transferEncoding: req.headers['transfer-encoding'] ?? null,
+                    contentLength: req.headers['content-length'] ?? null,
+                    data: Buffer.concat(received).toString('utf8'),
+                })));
+            }).listen(0);
+
+            const sentBeforeNextChunk: boolean[] = [];
+            async function* chunks() {
+                yield '{"Impit-Test":';
+                sentBeforeNextChunk.push(await firstChunkArrived);
+                yield '"foořžš"}';
+            }
+
+            try {
+                const response = await impit.fetch(`http://localhost:${(server.address() as AddressInfo).port}/`, {
+                    method: HttpMethod.Post,
+                    body: chunks() as any,
+                });
+
+                expect(sentBeforeNextChunk).toEqual([true]);
+                expect(await response.json()).toEqual({
+                    transferEncoding: 'chunked',
+                    contentLength: null,
+                    data: STRING_PAYLOAD,
+                });
+            } finally {
+                clearTimeout(giveUp);
+                server.close();
+            }
         });
 
         test('Request with body preserves its Content-Type', async () => {
