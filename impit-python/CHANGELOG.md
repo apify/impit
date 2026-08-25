@@ -3,6 +3,23 @@
 All notable changes to this project will be documented in this file.
 
 
+## py-0.14.0 - 2026-08-25
+
+#### Features
+
+- Add `chrome151` browser fingerprint (#510)
+  - Adds a `chrome151` fingerprint. Closes #508.  Relative to `chrome142` the only wire-level TLS difference is that Chrome now leads its `signature_algorithms` list with the three ML-DSA codepoints `0x0904`/`0x0905`/`0x0906`, which is the entire reason `chrome142` produces a different JA4 from current Chrome. Ciphers, extensions, key exchange groups, ALPN, ALPS, ECH and the HTTP/2 settings are unchanged.
+
+
+- Support streaming request bodies (#514)
+  - Adds `ImpitBody`, letting the core crate stream request bodies into reqwest instead of always buffering them; bindings support comes in follow-ups.
+
+
+- Stream iterator request bodies (#515)
+  - Lets `content=` take a sync or async iterable of byte chunks and streams it into the request instead of buffering it; stacked on #514.
+
+
+
 ## py-0.13.2 - 2026-08-05
 
 #### Bug Fixes
