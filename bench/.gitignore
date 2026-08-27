@@ -1,0 +1,5 @@
+bench/*.pem
+bench/*.node
+bench/wheels-*/
+bench/bench.py
+bench/bench.mjs
