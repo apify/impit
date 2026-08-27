@@ -63,6 +63,6 @@
     "impit-linux-x64-gnu": "0.14.3",
     "impit-linux-x64-musl": "0.14.3",
     "impit-linux-arm64-gnu": "0.14.4",
-    "impit-linux-arm64-musl": "0.14.3"
+    "impit-linux-arm64-musl": "0.14.4"
   }
 }
