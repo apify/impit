@@ -19,7 +19,7 @@
 		{
 			"matchUpdateTypes": ["patch", "minor"],
 			"matchCurrentVersion": "!/^0/",
-			"groupName": "patch/minor dependencies",
+			"groupName": "non-major dependencies",
 			"groupSlug": "all-non-major",
 			"automerge": true,
 			"automergeType": "branch"
@@ -27,7 +27,7 @@
 		{
 			"matchUpdateTypes": ["patch"],
 			"matchCurrentVersion": "/^0/",
-			"groupName": "patch/minor dependencies",
+			"groupName": "non-major dependencies",
 			"groupSlug": "all-non-major",
 			"automerge": true,
 			"automergeType": "branch"
