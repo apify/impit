@@ -61,8 +61,8 @@ importers:
         specifier: 0.14.3
         version: 0.14.3
       impit-linux-x64-musl:
-        specifier: 0.14.3
-        version: 0.14.3
+        specifier: 0.14.4
+        version: 0.14.4
       impit-win32-arm64-msvc:
         specifier: 0.14.3
         version: 0.14.3
@@ -1089,8 +1089,8 @@ packages:
     os: [linux]
     libc: [glibc]
 
-  impit-linux-x64-musl@0.14.3:
-    resolution: {integrity: sha512-wXBeHiqCjuyqxg4u5eY4OBNVzsS4Karz/ms/0mjB8aqVZLNER1NaUTeE4J3eZCdytFaJRaAeQvKTH8HfjpPsQg==}
+  impit-linux-x64-musl@0.14.4:
+    resolution: {integrity: sha512-dS9wj2phkB+o8OFdWBIFYx23ExH+pcsFMiXmoOwRVdDfUX9reZTmZL4KaiPuhSEBysN/wd46dxB/OzNbnn5hnQ==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
@@ -2472,7 +2472,7 @@ snapshots:
   impit-linux-x64-gnu@0.14.3:
     optional: true
 
-  impit-linux-x64-musl@0.14.3:
+  impit-linux-x64-musl@0.14.4:
     optional: true
 
   impit-win32-arm64-msvc@0.14.3:
