@@ -19,10 +19,22 @@
 		{
 			"matchUpdateTypes": ["patch", "minor"],
 			"matchCurrentVersion": "!/^0/",
-			"groupName": "patch/minor dependencies",
+			"groupName": "non-major dependencies",
 			"groupSlug": "all-non-major",
 			"automerge": true,
 			"automergeType": "branch"
+		},
+		{
+			"matchUpdateTypes": ["patch"],
+			"matchCurrentVersion": "/^0/",
+			"groupName": "non-major dependencies",
+			"groupSlug": "all-non-major",
+			"automerge": true,
+			"automergeType": "branch"
+		},
+		{
+			"matchPackageNames": ["impit-*"],
+			"enabled": false
 		},
 		{
 			"matchPackageNames": ["@apify/*", "@crawlee/*", "apify-client", "apify", "crawlee", "got-scraping"],
