@@ -33,6 +33,10 @@
 			"automergeType": "branch"
 		},
 		{
+			"matchPackageNames": ["impit-*"],
+			"enabled": false
+		},
+		{
 			"matchPackageNames": ["@apify/*", "@crawlee/*", "apify-client", "apify", "crawlee", "got-scraping"],
 			"minimumReleaseAge": "0 days"
 		}

@@ -46,14 +46,14 @@ importers:
         version: 4.1.4(@types/node@24.12.2)(vite@8.0.16(@types/node@24.12.2)(yaml@2.8.3))
     optionalDependencies:
       impit-darwin-arm64:
-        specifier: 0.14.4
-        version: 0.14.4
+        specifier: 0.14.3
+        version: 0.14.3
       impit-darwin-x64:
         specifier: 0.14.3
         version: 0.14.3
       impit-linux-arm64-gnu:
-        specifier: 0.14.4
-        version: 0.14.4
+        specifier: 0.14.3
+        version: 0.14.3
       impit-linux-arm64-musl:
         specifier: 0.14.3
         version: 0.14.3
@@ -1056,8 +1056,8 @@ packages:
     resolution: {integrity: sha512-im9DjEDQ55s9fL4EYzOAv0yMqmMBSZp6G0VvFyTMPKWxiSBHUj9NW/qqLmXUwXrrM7AvqSlTCfvqRb0cM8yYqw==}
     engines: {node: '>=0.10.0'}
 
-  impit-darwin-arm64@0.14.4:
-    resolution: {integrity: sha512-i9fkPXXCB/1qBTGIlS26Z2krmE0wk/1UUlDUFeE1bMtihoUIe8TbeslSnx6pgaSY5ai9H0seUAgS9D4i66Kscg==}
+  impit-darwin-arm64@0.14.3:
+    resolution: {integrity: sha512-kMoQB+CR+a954pnhe4kf1O2RyJCsqGRE95jIXfgqNOiIMS5O1z0cOMzG/sohJk/nodZVSJ5VdWEV4BKhRWPFSA==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [darwin]
@@ -1068,8 +1068,8 @@ packages:
     cpu: [x64]
     os: [darwin]
 
-  impit-linux-arm64-gnu@0.14.4:
-    resolution: {integrity: sha512-9VVb905sNSPh0dF2sDFbbjSz5JqXCoMPxTery77PyqMCEuxybtW+Yv3U1tCM+CFKSuC39wXmueW+FLwOCS+zIw==}
+  impit-linux-arm64-gnu@0.14.3:
+    resolution: {integrity: sha512-+mwta93S6Ndfpca3DDblvrqV1g8Bg6gZFOlEiJHfGJZpiUIQE+A/Pjg2e+inV+WrTtlnLsvff8lgwFvkIGnRug==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
@@ -2457,13 +2457,13 @@ snapshots:
     dependencies:
       safer-buffer: 2.1.2
 
-  impit-darwin-arm64@0.14.4:
+  impit-darwin-arm64@0.14.3:
     optional: true
 
   impit-darwin-x64@0.14.3:
     optional: true
 
-  impit-linux-arm64-gnu@0.14.4:
+  impit-linux-arm64-gnu@0.14.3:
     optional: true
 
   impit-linux-arm64-musl@0.14.3:
