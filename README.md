@@ -31,6 +31,35 @@ async fn main() {
 }
 ```
 
+### Comparison
+
+Sequential requests from a single client against a local Node.js HTTP/2 server (1 KiB JSON body, keep-alive), best of 11 runs of 2000 requests, pinned to one core. Profile counts are the distinct versioned impersonation targets exposed by the public API. Numbers are indicative — rerun them on your own hardware before drawing conclusions.
+
+**Python**
+
+| Package | req/s | Wheel | Profiles | Backend |
+| --- | --- | --- | --- | --- |
+| [`rnet`](https://github.com/0x676e67/rnet) | 3808 | 3.7 MB | 75 | Rust |
+| [`primp`](https://github.com/deedy5/primp) | 3547 | 5.3 MB | n/a[^1] | Rust |
+| **`impit`** | 2885 | 4.3 MB | 20 | Rust |
+| [`tls-client`](https://github.com/FlorianREGAZ/Python-Tls-Client) | 1831 | 41.3 MB | 51 | Go |
+| [`curl_cffi`](https://github.com/lexiforest/curl_cffi) | 1548 | 13.5 MB | 38 | C (libcurl) |
+| `httpx` (no impersonation) | 759 | 0.1 MB | — | Python |
+
+**Node.js**
+
+| Package | req/s | Install | Profiles | Backend |
+| --- | --- | --- | --- | --- |
+| **`impit`** | 1353 | 8.7 MB | 20 | Rust |
+| [`got-scraping`](https://github.com/apify/got-scraping) | 1149[^2] | 5.2 MB | 3[^3] | Node.js TLS |
+| [`node-tls-client`](https://github.com/Sahil1337/node-tls-client) | 901 | 31.1 MB | 63 | Go |
+| [`cycletls`](https://github.com/Danny-Dasilva/CycleTLS) | 287 | 133.3 MB | raw JA3 | Go subprocess |
+| `undici` (no impersonation) | 2030 | 2.0 MB | — | Node.js |
+
+[^1]: `primp` accepts arbitrary version strings and snaps to the nearest shipped profile, so the set is not enumerable through the public API.
+[^2]: Over HTTP/1.1 — with HTTP/2 enabled the server closes the session with `GOAWAY` after roughly a thousand requests.
+[^3]: Cipher suite and signature algorithm order only; no control over extension order, GREASE, or HTTP/2 `SETTINGS`.
+
 ### Other projects
 
 If you'd prefer to use `impit` from a Node.js application, check out the [`impit-node`](https://github.com/apify/impit/tree/master/impit-node) folder, or download the package from npm:
