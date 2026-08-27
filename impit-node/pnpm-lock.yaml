@@ -67,8 +67,8 @@ importers:
         specifier: 0.14.3
         version: 0.14.3
       impit-win32-x64-msvc:
-        specifier: 0.14.3
-        version: 0.14.3
+        specifier: 0.14.4
+        version: 0.14.4
 
 packages:
 
@@ -1102,8 +1102,8 @@ packages:
     cpu: [arm64]
     os: [win32]
 
-  impit-win32-x64-msvc@0.14.3:
-    resolution: {integrity: sha512-HIaLSpU5SGVx3UDH/R3ZaGMURVgyRVjmalqXj65ABxVUqfXiBo1t5ZObDPPjqvLT3klPnrya1+xF1DQ4dfT+og==}
+  impit-win32-x64-msvc@0.14.4:
+    resolution: {integrity: sha512-v15fn/kcjLEzALB4z+VWTeG1UrtqZQq9n2HNsRUfUgfcgzM1i+KKtKP2RCJ1Fg1YeojQ7B6XGhRtpVVTjh8u+A==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [win32]
@@ -2478,7 +2478,7 @@ snapshots:
   impit-win32-arm64-msvc@0.14.3:
     optional: true
 
-  impit-win32-x64-msvc@0.14.3:
+  impit-win32-x64-msvc@0.14.4:
     optional: true
 
   inherits@2.0.4: {}
