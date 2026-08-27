@@ -15,6 +15,6 @@ hyper-util = { git = "https://github.com/apify/hyper-util", rev="9b7795dfd7158fc
 
 [profile.release]
 strip = true  # Automatically strip symbols from the binary.
-opt-level = "z"  # Optimize for size.
+opt-level = 3
 lto = true
 codegen-units = 1
