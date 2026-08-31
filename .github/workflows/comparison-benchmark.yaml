@@ -1,0 +1,101 @@
+name: Refresh comparison benchmark
+
+on:
+  schedule:
+    # First of the month; the table tracks other projects' releases, not ours.
+    - cron: '0 4 1 * *'
+  workflow_dispatch:
+    inputs:
+      requests:
+        description: Requests per run
+        default: '2000'
+      runs:
+        description: Runs per client, best one wins
+        default: '11'
+  # Exercise the harness whenever it changes, without proposing anything.
+  pull_request:
+    paths:
+      - benchmarks/**
+      - .github/workflows/comparison-benchmark.yaml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: comparison-benchmark
+  cancel-in-progress: false
+
+env:
+  BRANCH: benchmarks/comparison-refresh
+  REQUESTS: ${{ inputs.requests || '2000' }}
+  RUNS: ${{ inputs.runs || '11' }}
+
+jobs:
+  benchmark:
+    name: Measure and open a PR
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.sha || 'master' }}
+          token: ${{ secrets.APIFY_SERVICE_ACCOUNT_GITHUB_TOKEN || github.token }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 24
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+
+      # No lockfiles anywhere here on purpose: the point is to compare whatever
+      # each project publishes today.
+      - name: Install the Node.js clients
+        run: npm install --prefix benchmarks/node --no-audit --no-fund --no-package-lock
+
+      - name: Install the Python clients
+        run: |
+          uv venv --seed --python 3.12 benchmarks/python/.venv
+          uv pip install --python benchmarks/python/.venv/bin/python -r benchmarks/python/requirements.txt
+
+      - name: Benchmark the Node.js clients
+        run: node benchmarks/node/bench.mjs --requests "$REQUESTS" --runs "$RUNS"
+
+      - name: Benchmark the Python clients
+        run: benchmarks/python/.venv/bin/python benchmarks/python/bench.py --requests "$REQUESTS" --runs "$RUNS"
+
+      - name: Rewrite the README table
+        run: node benchmarks/update-readme.mjs
+
+      - name: Upload the raw measurements
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: always()
+        with:
+          name: comparison-results
+          path: benchmarks/results-*.json
+
+      - name: Open a pull request
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.APIFY_SERVICE_ACCOUNT_GITHUB_TOKEN }}
+        run: |
+          if git diff --quiet -- README.md; then
+            echo "The measurements did not move the table; nothing to propose."
+            exit 0
+          fi
+
+          git config user.name 'apify-service-account'
+          git config user.email 'apify-service-account@users.noreply.github.com'
+          git checkout -B "$BRANCH"
+          git commit -m 'docs: refresh the client comparison benchmark' -- README.md
+          git push --force origin "$BRANCH"
+
+          if [ -z "$(gh pr list --head "$BRANCH" --state open --json number --jq '.[].number')" ]; then
+            gh pr create --base master --head "$BRANCH" \
+              --title 'docs: refresh the client comparison benchmark' \
+              --body "Measured by \`.github/workflows/comparison-benchmark.yaml\` against the local origin in \`benchmarks/\`, $RUNS runs of $REQUESTS requests per client. Raw numbers are attached to [the run](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}) as an artifact."
+          else
+            echo "The existing pull request now points at the new measurements."
+          fi

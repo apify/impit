@@ -31,34 +31,39 @@ async fn main() {
 }
 ```
 
+<!-- comparison:start -->
 ### Comparison
 
-Sequential requests from a single client against a local Node.js HTTP/2 server (1 KiB JSON body, keep-alive), best of 11 runs of 2000 requests, pinned to one core. Profile counts are the distinct versioned impersonation targets exposed by the public API. Numbers are indicative — rerun them on your own hardware before drawing conclusions.
+Sequential requests from a single client against the local HTTP/2 origin in [`benchmarks/`](benchmarks), 1 KiB JSON response, best of 11 runs of 2000 requests. Every client negotiated h2. Each one keeps a single connection warm for the whole run unless a footnote says otherwise. `Profiles` counts the distinct impersonation targets each public API accepts, ignoring aliases that resolve to another target. Python sizes are the platform wheel; Node.js sizes are what `npm install <package>` leaves on disk, transitive dependencies included.
 
 **Python**
 
 | Package | req/s | Wheel | Profiles | Backend |
 | --- | --- | --- | --- | --- |
-| [`rnet`](https://github.com/0x676e67/rnet) | 3808 | 3.7 MB | 75 | Rust |
-| [`primp`](https://github.com/deedy5/primp) | 3547 | 5.3 MB | n/a[^1] | Rust |
-| **`impit`** | 2885 | 4.3 MB | 20 | Rust |
-| [`tls-client`](https://github.com/FlorianREGAZ/Python-Tls-Client) | 1831 | 41.3 MB | 51 | Go |
-| [`curl_cffi`](https://github.com/lexiforest/curl_cffi) | 1548 | 13.5 MB | 38 | C (libcurl) |
-| `httpx` (no impersonation) | 759 | 0.1 MB | — | Python |
+| [`primp`](https://github.com/deedy5/primp) | 2750 | 5.9 MB | —[^1] | Rust |
+| [`rnet`](https://github.com/0x676e67/rnet) | 2735 | 3.7 MB | 75 | Rust |
+| **`impit`** | 2000 | 4.2 MB | 20 | Rust |
+| [`tls-client`](https://github.com/FlorianREGAZ/Python-Tls-Client) | 1338 | 41.3 MB | 51 | Go |
+| [`curl_cffi`](https://github.com/lexiforest/curl_cffi) | 1116 | 13.5 MB | 38 | C (libcurl) |
+| `httpx` (no impersonation) | 797 | 0.1 MB | — | Python |
 
 **Node.js**
 
 | Package | req/s | Install | Profiles | Backend |
 | --- | --- | --- | --- | --- |
-| **`impit`** | 1353 | 8.7 MB | 20 | Rust |
-| [`got-scraping`](https://github.com/apify/got-scraping) | 1149[^2] | 5.2 MB | 3[^3] | Node.js TLS |
-| [`node-tls-client`](https://github.com/Sahil1337/node-tls-client) | 901 | 31.1 MB | 63 | Go |
-| [`cycletls`](https://github.com/Danny-Dasilva/CycleTLS) | 287 | 133.3 MB | raw JA3 | Go subprocess |
-| `undici` (no impersonation) | 2030 | 2.0 MB | — | Node.js |
+| [`node-tls-client`](https://github.com/Sahil1337/node-tls-client) | 1566 | 30.7 MB | 63 | Go |
+| **`impit`** | 997 | 8.7 MB | 20 | Rust |
+| [`got-scraping`](https://github.com/apify/got-scraping) | 896 | 4.7 MB | 3[^2] | Node.js TLS |
+| [`cycletls`](https://github.com/Danny-Dasilva/CycleTLS) | 201[^3] | 133.0 MB | —[^4] | Go subprocess |
+| `undici` (no impersonation) | 2010 | 1.9 MB | — | Node.js |
 
-[^1]: `primp` accepts arbitrary version strings and snaps to the nearest shipped profile, so the set is not enumerable through the public API.
-[^2]: Over HTTP/1.1 — with HTTP/2 enabled the server closes the session with `GOAWAY` after roughly a thousand requests.
-[^3]: Cipher suite and signature algorithm order only; no control over extension order, GREASE, or HTTP/2 `SETTINGS`.
+Measured on linux-x64 with CPython 3.12.13 and Node.js v24.16.0 on 2026-08-31. Hardware moves these numbers around, so rerun `benchmarks/` yourself before drawing conclusions.
+
+[^1]: `primp` does not expose its profile list, and an unknown name silently falls back to a random profile rather than erroring, so the set cannot be counted.
+[^2]: `got-scraping` matches cipher suite and signature algorithm order only; it has no control over extension order, GREASE, or HTTP/2 `SETTINGS`. Its three profiles are not enumerable through the public API, so this count is hard-coded from its bundled cipher table.
+[^3]: `cycletls` opens a new connection for every request, so its figure includes a TLS handshake each time instead of reusing a warm one.
+[^4]: `cycletls` is configured with a raw JA3 string instead of named profiles, so it has no fixed set to count.
+<!-- comparison:end -->
 
 ### Other projects
 

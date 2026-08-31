@@ -1,0 +1,16 @@
+{
+  "name": "impit-comparison-benchmark",
+  "private": true,
+  "type": "module",
+  "description": "Throughput comparison of Node.js browser-impersonation HTTP clients. Deliberately unpinned so every run resolves the latest published versions.",
+  "scripts": {
+    "bench": "node bench.mjs"
+  },
+  "dependencies": {
+    "cycletls": "latest",
+    "got-scraping": "latest",
+    "impit": "latest",
+    "node-tls-client": "latest",
+    "undici": "latest"
+  }
+}

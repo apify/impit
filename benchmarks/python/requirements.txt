@@ -1,0 +1,7 @@
+# Deliberately unpinned: every run resolves the latest published versions.
+curl_cffi
+httpx[http2]
+impit
+primp
+rnet
+tls-client
