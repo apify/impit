@@ -10,7 +10,7 @@ on:
         description: Requests per run
         default: '2000'
       runs:
-        description: Runs per client, best one wins
+        description: Runs per client, the median is reported
         default: '11'
   # Exercise the harness whenever it changes, without proposing anything.
   pull_request:
