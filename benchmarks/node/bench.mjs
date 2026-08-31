@@ -24,8 +24,8 @@ async function packageVersion(pkg) {
 
 /**
  * Number of distinct impersonation targets the public API accepts, with aliases
- * that merely resolve to another target left out. `null` means the set is not
- * enumerable through the public API and `note` has to explain why.
+ * that merely resolve to another target left out. `null` means there is no set to
+ * count, and the client supplies a `profilesLabel` for the cell instead.
  */
 const profileCounts = {
   // The browser list is a TS union, so the shipped declaration file is the only
@@ -68,11 +68,10 @@ const CLIENTS = [
     repo: 'https://github.com/apify/got-scraping',
     backend: 'Node.js TLS',
     // `knownCiphers` in got-scraping's bundle is module-private: chrome, firefox
-    // and safari. Nothing exposes it at runtime, so it cannot be derived.
+    // and safari. Nothing exposes it at runtime, so it cannot be derived. They
+    // cover cipher and signature algorithm order only, not extension order,
+    // GREASE or HTTP/2 SETTINGS.
     profiles: () => 3,
-    note: '`got-scraping` matches cipher suite and signature algorithm order only; it has no control '
-      + 'over extension order, GREASE, or HTTP/2 `SETTINGS`. Its three profiles are not enumerable '
-      + 'through the public API, so this count is hard-coded from its bundled cipher table.',
     async setup(url) {
       const { gotScraping } = await import('got-scraping');
       const client = gotScraping.extend({
@@ -118,10 +117,9 @@ const CLIENTS = [
     label: 'cycletls',
     repo: 'https://github.com/Danny-Dasilva/CycleTLS',
     backend: 'Go subprocess',
-    // CycleTLS takes a raw JA3 string rather than named profiles.
+    // Configured with a raw JA3 string, so there is no fixed set to count.
     profiles: () => null,
-    note: '`cycletls` is configured with a raw JA3 string instead of named profiles, so it has no '
-      + 'fixed set to count.',
+    profilesLabel: 'raw JA3',
     async setup(url) {
       const initCycleTLS = (await import('cycletls')).default;
       const client = await initCycleTLS();
@@ -230,7 +228,7 @@ try {
         version,
         alpn: probe.alpn ?? null,
         profiles: await client.profiles(),
-        note: client.note ?? null,
+        profilesLabel: client.profilesLabel ?? null,
         sizeBytes: await installSize(client.key, version),
         connections: after.connections - before.connections,
         ...timings,

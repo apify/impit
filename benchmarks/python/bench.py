@@ -48,7 +48,8 @@ class Client:
     profiles: Callable[[], int | None]
     repo: str | None = None
     baseline: bool = False
-    note: str | None = None
+    profiles_label: str | None = None
+    """Shown in the Profiles cell when there is no set to count."""
 
 
 def _versioned(names: Iterable[str]) -> list[str]:
@@ -183,9 +184,10 @@ CLIENTS = [
         repo='https://github.com/deedy5/primp',
         backend='Rust',
         setup=setup_primp,
+        # primp does not expose its profile list, and an unknown name falls back to
+        # a random profile rather than erroring, so there is nothing to count.
         profiles=lambda: None,
-        note='`primp` does not expose its profile list, and an unknown name silently falls back to a '
-        'random profile rather than erroring, so the set cannot be counted.',
+        profiles_label='n/a',
     ),
     Client(
         key='impit',
@@ -315,7 +317,7 @@ def main() -> int:
                     'version': version,
                     'alpn': alpn,
                     'profiles': client.profiles(),
-                    'note': client.note,
+                    'profilesLabel': client.profiles_label,
                     'sizeBytes': wheel_size(client.key, version),
                     'connections': after['connections'] - before['connections'],
                     **timings,

@@ -19,11 +19,9 @@ export function parseArgs(argv, defaults) {
 }
 
 /**
- * Runs `requests` sequential requests `runs` times over one warm connection,
- * which isolates per-request client overhead — the thing that differs between
- * these libraries. The median is what the table quotes; the best and worst runs
- * come along because some clients swing by 3x between runs, and a best-of-N
- * figure would quietly reward them for one lucky pass.
+ * `runs` batches of `requests` sequential requests over one warm connection. The
+ * median is what the table quotes; best and worst come along because some clients
+ * swing 3x between runs, which a best-of-N figure would flatter.
  */
 export async function measure(request, { requests, runs, warmup }) {
   for (let i = 0; i < warmup; i += 1) await request();

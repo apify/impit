@@ -18,49 +18,17 @@ const options = parseArgs(process.argv.slice(2), {
 async function load(path) {
   const report = JSON.parse(await readFile(path, 'utf8'));
   if (report.results.length === 0) throw new Error(`${path} contains no results`);
+  // The caption speaks for every row, so a client that fell back to HTTP/1.1 has
+  // to stop the run rather than end up mislabelled.
+  const odd = report.results.find((result) => result.alpn !== 'h2');
+  if (odd) throw new Error(`${odd.key} negotiated ${odd.alpn}, not h2`);
   return report;
 }
 
 const [python, node] = await Promise.all([load(options.python), load(options.node)]);
 
-// The caption speaks for both tables at once, so it may only be written when
-// the two reports really are comparable.
 if (JSON.stringify(python.options) !== JSON.stringify(node.options)) {
   throw new Error('the two reports were taken with different parameters; rerun both');
-}
-
-/** Footnote markers are assigned in the order the tables reference them. */
-const footnotes = [];
-function footnote(text) {
-  const existing = footnotes.indexOf(text);
-  return `[^${(existing === -1 ? footnotes.push(text) : existing + 1)}]`;
-}
-
-const dominantAlpn = [...python.results, ...node.results]
-  .map((result) => result.alpn)
-  .reduce((agreed, alpn) => (agreed === alpn ? agreed : null));
-
-/** Above this best-to-worst ratio a client's throughput is too unsteady to quote as one number. */
-const UNSTABLE_RATIO = 1.5;
-
-/** Notes about how the throughput figure was reached, rendered next to it. */
-function throughputNotes(result, report) {
-  const notes = [];
-  if (result.alpn !== dominantAlpn) {
-    notes.push(footnote(`\`${result.label}\` negotiated ${result.alpn} rather than ${dominantAlpn}.`));
-  }
-  if (result.rps > result.rpsWorst * UNSTABLE_RATIO) {
-    notes.push(footnote(`\`${result.label}\` was erratic across runs — ${result.rpsWorst.toFixed(0)} to `
-      + `${result.rps.toFixed(0)} req/s — so its median says less than the others'.`));
-  }
-  const total = report.options.runs * report.options.requests;
-  if (result.connections >= total / 2) {
-    notes.push(footnote(`\`${result.label}\` opens a new connection for every request, so its figure `
-      + 'includes a TLS handshake each time instead of reusing a warm one.'));
-  } else if (result.connections > report.options.runs) {
-    notes.push(footnote(`\`${result.label}\` reconnected ${result.connections} times mid-run.`));
-  }
-  return notes.join('');
 }
 
 function table(report, sizeHeading) {
@@ -70,9 +38,9 @@ function table(report, sizeHeading) {
     const name = result.repo ? `[\`${result.label}\`](${result.repo})` : `\`${result.label}\``;
     return [
       result.baseline ? `${name} (no impersonation)` : (result.repo ? name : `**${name}**`),
-      `${result.rpsMedian.toFixed(0)}${throughputNotes(result, report)}`,
+      result.rpsMedian.toFixed(0),
       formatMB(result.sizeBytes),
-      `${result.profiles ?? '—'}${result.note ? footnote(result.note) : ''}`,
+      result.profiles ?? result.profilesLabel ?? '—',
       result.backend,
     ];
   });
@@ -84,25 +52,13 @@ function table(report, sizeHeading) {
 }
 
 const { requests, runs, bodyBytes } = python.options;
-const caption = [
-  `Sequential requests from a single client against the local HTTP/2 origin in [\`benchmarks/\`](benchmarks),`,
-  `${bodyBytes / 1024} KiB JSON response, median of ${runs} runs of ${requests} requests.`,
-  dominantAlpn ? `Every client negotiated ${dominantAlpn}.` : '',
-  'Each one keeps a single connection warm for the whole run unless a footnote says otherwise.',
-  '`Profiles` counts the distinct impersonation targets each public API accepts, ignoring aliases that',
-  'resolve to another target. Python sizes are the platform wheel; Node.js sizes are what',
-  '`npm install <package>` leaves on disk, transitive dependencies included.',
-].filter(Boolean).join(' ');
-
-const platforms = [...new Set([python.platform, node.platform])].join(' / ');
-const provenance = `Measured on ${platforms} with ${python.runtime} and ${node.runtime}`
-  + ` on ${python.measuredAt.slice(0, 10)}. Hardware moves these numbers around, so rerun`
-  + ' `benchmarks/` yourself before drawing conclusions.';
 
 const body = [
   '### Comparison',
   '',
-  caption,
+  `Median of ${runs} runs of ${requests} sequential requests to a local HTTP/2 server, `
+    + `${bodyBytes / 1024} KiB JSON responses over one warm connection. \`Profiles\` counts the `
+    + 'impersonation targets each API exposes.',
   '',
   '**Python**',
   '',
@@ -112,10 +68,8 @@ const body = [
   '',
   table(node, 'Install'),
   '',
-  provenance,
-  ...(footnotes.length > 0
-    ? ['', ...footnotes.map((text, index) => `[^${index + 1}]: ${text}`)]
-    : []),
+  `Measured by [\`benchmarks/\`](benchmarks) on ${node.platform}, ${python.measuredAt.slice(0, 10)}.`
+    + ' Rerun it on your own hardware.',
 ].join('\n');
 
 const readme = await readFile(options.readme, 'utf8');
