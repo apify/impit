@@ -23,14 +23,13 @@ async function packageVersion(pkg) {
 }
 
 /**
- * Number of distinct impersonation targets the public API accepts, with aliases
- * that merely resolve to another target left out. `null` means there is no set to
- * count, and the client supplies a `profilesLabel` for the cell instead.
+ * Impersonation targets the public API accepts, minus aliases that resolve to
+ * another target. `null` means there is no set to count and the client gives a
+ * `profilesLabel` instead.
  */
 const profileCounts = {
-  // The browser list is a TS union, so the shipped declaration file is the only
-  // machine-readable form of it. `chrome`/`firefox`/`okhttp` are aliases for the
-  // newest version of their family.
+  // The browser list is a TS union, so the .d.ts is its only machine-readable
+  // form. `chrome`/`firefox`/`okhttp` alias the newest of their family.
   async impit() {
     const dts = await readFile(join(here, 'node_modules/impit/index.d.ts'), 'utf8');
     const union = /export type Browser =([^;]+);/.exec(dts);
@@ -67,10 +66,8 @@ const CLIENTS = [
     label: 'got-scraping',
     repo: 'https://github.com/apify/got-scraping',
     backend: 'Node.js TLS',
-    // `knownCiphers` in got-scraping's bundle is module-private: chrome, firefox
-    // and safari. Nothing exposes it at runtime, so it cannot be derived. They
-    // cover cipher and signature algorithm order only, not extension order,
-    // GREASE or HTTP/2 SETTINGS.
+    // chrome, firefox and safari, from the module-private `knownCiphers` in
+    // got-scraping's bundle. Nothing exposes it at runtime.
     profiles: () => 3,
     async setup(url) {
       const { gotScraping } = await import('got-scraping');
@@ -191,8 +188,7 @@ const { child, url } = await startServer();
 const results = [];
 const failures = [];
 
-// One long-lived dispatcher, so the stats connection is opened once and does not
-// show up in any client's connection count.
+// One long-lived dispatcher keeps the stats connection out of every client's count.
 const { Agent, request } = await import('undici');
 const statsDispatcher = new Agent({ connect: { rejectUnauthorized: false } });
 const readStats = async () => {

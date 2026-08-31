@@ -38,19 +38,14 @@ export function startServer({ port = 0, bodyBytes = BODY_BYTES } = {}) {
     cert: readFileSync(certPath),
     allowHTTP1: true,
     ALPNProtocols: ['h2', 'http/1.1'],
-    // Clients that RST_STREAM every response once they have read it (got's
-    // http2-wrapper does) exhaust Node's Rapid-Reset budget after ~1000
-    // requests and get a GOAWAY mid-run. The mitigation is right for a public
-    // origin and wrong for a throughput benchmark, where the server must never
-    // be the thing that rate-limits the client.
+    // Clients that RST_STREAM every response (got's http2-wrapper does) burn
+    // Node's Rapid-Reset budget after ~1000 requests and take a GOAWAY mid-run.
     streamResetBurst: Number.MAX_SAFE_INTEGER,
     streamResetRate: Number.MAX_SAFE_INTEGER,
   });
 
-  // `GET /__stats` lets the benchmark check that a client really did keep one
-  // connection warm for a whole run instead of reconnecting per request. Only
-  // connections that carried benchmark traffic are counted, so the benchmark's
-  // own polling of this endpoint never shows up in a client's total.
+  // Only connections that carried benchmark traffic count, so the benchmark's own
+  // polling of /__stats stays out of a client's total.
   const stats = { connections: 0, requests: 0 };
   const counted = new WeakSet();
 
@@ -77,8 +72,7 @@ export function startServer({ port = 0, bodyBytes = BODY_BYTES } = {}) {
     res.end(body);
   });
 
-  // A client tearing its connection down at the end of a run is normal here and
-  // must not take the server with it.
+  // Clients drop their connection at the end of a run; that must not kill the server.
   server.on('session', (session) => session.on('error', () => {}));
   server.on('clientError', () => {});
   server.on('sessionError', () => {});
