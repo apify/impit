@@ -40,11 +40,18 @@ const dominantAlpn = [...python.results, ...node.results]
   .map((result) => result.alpn)
   .reduce((agreed, alpn) => (agreed === alpn ? agreed : null));
 
+/** Above this best-to-worst ratio a client's throughput is too unsteady to quote as one number. */
+const UNSTABLE_RATIO = 1.5;
+
 /** Notes about how the throughput figure was reached, rendered next to it. */
 function throughputNotes(result, report) {
   const notes = [];
   if (result.alpn !== dominantAlpn) {
     notes.push(footnote(`\`${result.label}\` negotiated ${result.alpn} rather than ${dominantAlpn}.`));
+  }
+  if (result.rps > result.rpsWorst * UNSTABLE_RATIO) {
+    notes.push(footnote(`\`${result.label}\` was erratic across runs — ${result.rpsWorst.toFixed(0)} to `
+      + `${result.rps.toFixed(0)} req/s — so its median says less than the others'.`));
   }
   const total = report.options.runs * report.options.requests;
   if (result.connections >= total / 2) {
@@ -57,12 +64,13 @@ function throughputNotes(result, report) {
 }
 
 function table(report, sizeHeading) {
-  const ordered = [...report.results].sort((a, b) => (a.baseline - b.baseline) || (b.rps - a.rps));
+  const ordered = [...report.results]
+    .sort((a, b) => (a.baseline - b.baseline) || (b.rpsMedian - a.rpsMedian));
   const rows = ordered.map((result) => {
     const name = result.repo ? `[\`${result.label}\`](${result.repo})` : `\`${result.label}\``;
     return [
       result.baseline ? `${name} (no impersonation)` : (result.repo ? name : `**${name}**`),
-      `${result.rps.toFixed(0)}${throughputNotes(result, report)}`,
+      `${result.rpsMedian.toFixed(0)}${throughputNotes(result, report)}`,
       formatMB(result.sizeBytes),
       `${result.profiles ?? '—'}${result.note ? footnote(result.note) : ''}`,
       result.backend,
@@ -78,7 +86,7 @@ function table(report, sizeHeading) {
 const { requests, runs, bodyBytes } = python.options;
 const caption = [
   `Sequential requests from a single client against the local HTTP/2 origin in [\`benchmarks/\`](benchmarks),`,
-  `${bodyBytes / 1024} KiB JSON response, best of ${runs} runs of ${requests} requests.`,
+  `${bodyBytes / 1024} KiB JSON response, median of ${runs} runs of ${requests} requests.`,
   dominantAlpn ? `Every client negotiated ${dominantAlpn}.` : '',
   'Each one keeps a single connection warm for the whole run unless a footnote says otherwise.',
   '`Profiles` counts the distinct impersonation targets each public API accepts, ignoring aliases that',

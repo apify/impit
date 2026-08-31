@@ -19,10 +19,11 @@ export function parseArgs(argv, defaults) {
 }
 
 /**
- * Runs `requests` sequential requests `runs` times and keeps the best run.
- * Sequential traffic over one warm connection isolates per-request client
- * overhead, which is what the comparison is about; best-of-N absorbs scheduler
- * noise without hiding a client that is genuinely slow.
+ * Runs `requests` sequential requests `runs` times over one warm connection,
+ * which isolates per-request client overhead — the thing that differs between
+ * these libraries. The median is what the table quotes; the best and worst runs
+ * come along because some clients swing by 3x between runs, and a best-of-N
+ * figure would quietly reward them for one lucky pass.
  */
 export async function measure(request, { requests, runs, warmup }) {
   for (let i = 0; i < warmup; i += 1) await request();

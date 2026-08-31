@@ -25,10 +25,12 @@ download` to size each wheel.
 
 [`server.mjs`](server.mjs) is the origin: a Node.js `http2` server on a self-signed certificate,
 serving a fixed 1 KiB JSON body over `h2` or `http/1.1`, whichever the client negotiates. Each
-client then issues sequential requests over one connection; the best of N runs is reported, which
-absorbs scheduler noise without flattering a client that is genuinely slow. Sequential single-client
-traffic is deliberate — it isolates per-request client overhead, which is what differs between these
-libraries, rather than measuring how well each one saturates a socket.
+client then issues sequential requests over one connection, N runs of it, and the **median** run is
+what the table quotes. Best and worst go into the result file too: some clients swing by 3x between
+runs on the same machine, and quoting the best would reward them for one lucky pass — where that
+spread is wide, `update-readme.mjs` footnotes it instead of pretending one number describes them.
+Sequential single-client traffic is deliberate: it isolates per-request client overhead, which is
+what differs between these libraries, rather than measuring how well each one saturates a socket.
 
 The server also reports its connection count at `/__stats`, and both scripts record how many
 connections a client opened while being measured. That is what surfaces `cycletls` handshaking on
