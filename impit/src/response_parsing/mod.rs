@@ -10,19 +10,12 @@ fn bom_sniffing(bytes: &[u8]) -> Option<encoding::EncodingRef> {
         return None;
     }
 
-    if [0xEF, 0xBB, 0xBF].to_vec() == bytes[0..3].to_vec() {
-        return Some(encoding::all::UTF_8);
+    match bytes {
+        [0xEF, 0xBB, 0xBF, ..] => Some(encoding::all::UTF_8),
+        [0xFE, 0xFF, ..] => Some(encoding::all::UTF_16BE),
+        [0xFF, 0xFE, ..] => Some(encoding::all::UTF_16LE),
+        _ => None,
     }
-
-    if [0xFE, 0xFF].to_vec() == bytes[0..2].to_vec() {
-        return Some(encoding::all::UTF_16BE);
-    }
-
-    if [0xFF, 0xFE].to_vec() == bytes[0..2].to_vec() {
-        return Some(encoding::all::UTF_16LE);
-    }
-
-    None
 }
 
 /// A lazy implementation of the prescan algorithm, using `lol_html` to parse the HTML and extract the encoding.
