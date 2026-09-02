@@ -1,4 +1,4 @@
-name: Fire Claude Code routine
+name: PR autotriage
 
 on:
   pull_request:
@@ -21,8 +21,7 @@ jobs:
     # `opened` fires for draft PRs too, but those get their own `ready_for_review` event later
     if: github.event_name == 'workflow_dispatch' || github.event.pull_request.draft == false
     steps:
-      - name: Fire routine
-        env:
+      - env:
           TOKEN: ${{ secrets.AUTOREVIEW_CLAUDE_CODE_TOKEN }}
           PR_URL: ${{ github.event.pull_request.html_url || inputs.pr_url }}
         run: |
