@@ -376,13 +376,11 @@ impl AsyncClient {
         url: String,
         content: Option<RequestBody>,
         mut data: Option<RequestBody>,
-        headers: Option<HashMap<String, String>>,
+        mut headers: Option<HashMap<String, String>>,
         timeout: Option<Either<f64, &str>>,
         force_http3: Option<bool>,
         stream: Option<bool>,
     ) -> Result<pyo3::Bound<'python, PyAny>, PyErr> {
-        let mut headers = headers.clone();
-
         if let Some(content) = content {
             data = Some(content);
         }
@@ -392,11 +390,7 @@ impl AsyncClient {
         let timeout = parse_timeout(timeout)?;
 
         let options = RequestOptions {
-            headers: headers
-                .unwrap_or_default()
-                .iter()
-                .map(|(k, v)| (k.clone(), v.clone()))
-                .collect(),
+            headers: headers.unwrap_or_default().into_iter().collect(),
             timeout,
             http3_prior_knowledge: force_http3.unwrap_or(false),
         };
