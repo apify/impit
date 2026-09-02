@@ -23,7 +23,7 @@ jobs:
     steps:
       - name: Fire routine
         env:
-          TOKEN: ${{ secrets.CLAUDE_CODE_ROUTINE_TOKEN }}
+          TOKEN: ${{ secrets.AUTOREVIEW_CLAUDE_CODE_TOKEN }}
           PR_URL: ${{ github.event.pull_request.html_url || inputs.pr_url }}
         run: |
           curl --fail-with-body -X POST https://api.anthropic.com/v1/claude_code/routines/trig_01DYGd61hv2gZAmR2NFPETof/fire \
