@@ -1,0 +1,30 @@
+name: Issue autotriage
+
+on:
+  issues:
+    types:
+      - opened
+  workflow_dispatch:
+    inputs:
+      issue_url:
+        description: URL of the issue to triage
+        required: true
+        type: string
+
+permissions: {}
+
+jobs:
+  fire:
+    name: Fire routine
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          TOKEN: ${{ secrets.AUTOREVIEW_CLAUDE_CODE_TOKEN }}
+          ISSUE_URL: ${{ github.event.issue.html_url || inputs.issue_url }}
+        run: |
+          curl --fail-with-body -X POST https://api.anthropic.com/v1/claude_code/routines/trig_01TJhdrdtda5PkYBb7NDnX6K/fire \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "anthropic-version: 2023-06-01" \
+            -H "anthropic-beta: experimental-cc-routine-2026-04-01" \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n --arg url "$ISSUE_URL" '{ text: "Triage the issue at \($url)" }')"
