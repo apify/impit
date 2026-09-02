@@ -9,7 +9,7 @@ use crate::{
     errors::{ErrorContext, ImpitError},
     fingerprint::BrowserFingerprint,
     http3::H3Engine,
-    http_headers::HttpHeaders,
+    http_headers::HttpHeadersBuilder,
     request::{ImpitBody, ImpitRequest, RequestOptions},
     tls,
 };
@@ -402,24 +402,20 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
         method: Method,
         url: Url,
         body: Option<ImpitBody>,
-        headers: Vec<(String, String)>,
-    ) -> ImpitRequest {
-        let host = url.host_str().unwrap_or_default().to_string();
+        headers: &[(String, String)],
+    ) -> Result<ImpitRequest, ImpitError> {
+        let headers = HttpHeadersBuilder::default()
+            .with_fingerprint(self.config.fingerprint.as_ref())
+            .with_custom_headers(self.config.headers.as_deref().unwrap_or_default())
+            .with_custom_headers(headers)
+            .build()?;
 
-        let headers = HttpHeaders::get_builder()
-            .with_fingerprint(&self.config.fingerprint)
-            .with_host(&host)
-            .with_https(url.scheme() == "https")
-            .with_custom_headers(self.config.headers.to_owned())
-            .with_custom_headers(Some(headers))
-            .build();
-
-        ImpitRequest {
+        Ok(ImpitRequest {
             url,
             body: body.unwrap_or_default(),
-            headers: headers.iter().collect(),
+            headers,
             method: method.to_string(),
-        }
+        })
     }
 
     async fn execute_request(
@@ -473,10 +469,6 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
             &self.base_client
         };
 
-        let header_map_result: Result<HeaderMap, ImpitError> =
-            HttpHeaders::from(request.headers).into();
-        let header_map = header_map_result?;
-
         let method = Method::from_str(&request.method).map_err(|_| {
             ImpitError::InvalidMethod(format!("Invalid HTTP method: {}", request.method))
         })?;
@@ -489,7 +481,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
         let mut prepared = PreparedRequest {
             method: method.clone(),
             url: request.url.clone(),
-            headers: header_map,
+            headers: request.headers,
             body: request.body,
         };
 
@@ -563,8 +555,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
         let url = self.parse_url(url)?;
         let request_options = options.unwrap_or_default();
 
-        let headers = request_options.headers;
-        let request = self.build_request(method, url, body, headers);
+        let request = self.build_request(method, url, body, &request_options.headers)?;
 
         let timeout = match request_options.timeout {
             None => None,

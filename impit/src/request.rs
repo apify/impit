@@ -2,6 +2,7 @@ use std::time::Duration;
 
 use bytes::Bytes;
 use futures_core::TryStream;
+use reqwest::header::HeaderMap;
 use url::Url;
 
 /// A struct that holds the request options.
@@ -90,7 +91,7 @@ impl<T: Into<Bytes>> From<T> for ImpitBody {
 pub struct ImpitRequest {
     pub url: Url,
     pub body: ImpitBody,
-    pub headers: Vec<(String, String)>,
+    pub headers: HeaderMap,
     pub method: String,
 }
 
