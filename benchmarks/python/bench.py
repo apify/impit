@@ -256,7 +256,7 @@ def wheel_size(pkg: str, version: str) -> int:
 
 
 def measure(request, *, requests: int, runs: int, warmup: int) -> dict[str, float]:
-    """Best of `runs` batches of `requests` sequential calls; see ../harness.mjs for the rationale."""
+    """`runs` batches of `requests` sequential calls; see ../harness.mjs for the rationale."""
     for _ in range(warmup):
         request()
 
