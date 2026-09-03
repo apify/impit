@@ -40,22 +40,21 @@ Median of 11 runs of 2000 sequential requests to a local HTTP/2 server, 1 KiB JS
 
 | Package | req/s | Wheel | Profiles | Backend |
 | --- | --- | --- | --- | --- |
-| [`primp`](https://github.com/deedy5/primp) | 6214 | 5.9 MB | n/a | Rust |
-| [`rnet`](https://github.com/0x676e67/rnet) | 5104 | 3.7 MB | 75 | Rust |
-| **`impit`** | 3780 | 4.2 MB | 20 | Rust |
-| [`curl_cffi`](https://github.com/lexiforest/curl_cffi) | 3420 | 13.5 MB | 38 | C (libcurl) |
-| [`tls-client`](https://github.com/FlorianREGAZ/Python-Tls-Client) | 3211 | 41.3 MB | 51 | Go |
-| `httpx` (no impersonation) | 2323 | 0.1 MB | — | Python |
+| [`primp`](https://github.com/deedy5/primp) | 4013 | 5.9 MB | n/a | Rust |
+| [`rnet`](https://github.com/0x676e67/rnet) | 3481 | 3.7 MB | 75 | Rust |
+| **`impit`** | 2786 | 4.2 MB | 20 | Rust |
+| [`curl_cffi`](https://github.com/lexiforest/curl_cffi) | 2453 | 13.5 MB | 38 | C (libcurl) |
+| [`tls-client`](https://github.com/FlorianREGAZ/Python-Tls-Client) | 2398 | 41.3 MB | 51 | Go |
+| `httpx` (no impersonation) | 1607 | 0.1 MB | — | Python |
 
 **Node.js**
 
 | Package | req/s | Install | Profiles | Backend |
 | --- | --- | --- | --- | --- |
-| **`impit`** | 2289 | 8.7 MB | 20 | Rust |
-| [`got-scraping`](https://github.com/apify/got-scraping) | 2234 | 4.7 MB | 3 | Node.js TLS |
-| [`node-tls-client`](https://github.com/Sahil1337/node-tls-client) | 1659 | 30.7 MB | 63 | Go |
-| [`cycletls`](https://github.com/Danny-Dasilva/CycleTLS) | 626 | 133.0 MB | raw JA3 | Go subprocess |
-| `undici` (no impersonation) | 5064 | 1.9 MB | — | Node.js |
+| [`got-scraping`](https://github.com/apify/got-scraping) | 1727 | 4.7 MB | 3 | Node.js TLS |
+| **`impit`** | 1692 | 8.7 MB | 20 | Rust |
+| [`cycletls`](https://github.com/Danny-Dasilva/CycleTLS) | 420 | 133.0 MB | raw JA3 | Go subprocess |
+| `undici` (no impersonation) | 3258 | 1.9 MB | — | Node.js |
 
 Measured by [`benchmarks/`](benchmarks) on linux-x64, 2026-08-31. Rerun it on your own hardware.
 <!-- comparison:end -->

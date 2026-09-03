@@ -1,6 +1,5 @@
 import { spawn } from 'node:child_process';
 import { readFile, writeFile } from 'node:fs/promises';
-import { createRequire } from 'node:module';
 import { arch, platform } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -8,7 +7,6 @@ import { fileURLToPath } from 'node:url';
 import { installSize, measure, parseArgs } from '../harness.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const require = createRequire(import.meta.url);
 
 const CHROME_JA3 = '771,4865-4866-4867-49195-49199-49196-49200-52393-52392-49171-49172-156-157-47-53,'
   + '0-23-65281-10-11-35-16-5-13-18-51-45-43-27-17513,29-23-24,0';
@@ -37,9 +35,6 @@ const profileCounts = {
     const names = [...union[1].matchAll(/'([^']+)'/g)].map((m) => m[1]);
     if (names.length === 0) throw new Error('impit Browser union parsed as empty');
     return names.filter((name) => /\d/.test(name)).length;
-  },
-  nodeTlsClient() {
-    return Object.keys(require('node-tls-client').ClientIdentifier).length;
   },
 };
 
@@ -80,31 +75,6 @@ const CLIENTS = [
         request: async () => {
           const response = await client(url);
           return { body: response.body, alpn: response.headers['x-alpn'] };
-        },
-      };
-    },
-  },
-  {
-    key: 'node-tls-client',
-    label: 'node-tls-client',
-    repo: 'https://github.com/Sahil1337/node-tls-client',
-    backend: 'Go',
-    profiles: profileCounts.nodeTlsClient,
-    async setup(url) {
-      const { ClientIdentifier, Session, destroyTLS, initTLS } = await import('node-tls-client');
-      await initTLS();
-      const session = new Session({
-        clientIdentifier: ClientIdentifier.chrome_131,
-        insecureSkipVerify: true,
-      });
-      return {
-        request: async () => {
-          const response = await session.get(url);
-          return { body: await response.text(), alpn: response.headers['X-Alpn']?.[0] };
-        },
-        teardown: async () => {
-          await session.close();
-          await destroyTLS();
         },
       };
     },

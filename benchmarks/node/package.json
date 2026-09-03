@@ -10,7 +10,6 @@
     "cycletls": "latest",
     "got-scraping": "latest",
     "impit": "latest",
-    "node-tls-client": "latest",
     "undici": "latest"
   }
 }
