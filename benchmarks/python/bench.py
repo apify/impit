@@ -223,13 +223,13 @@ CLIENTS = [
 ]
 
 
-def start_server() -> tuple[subprocess.Popen, str]:
+def start_server(body_bytes: int) -> tuple[subprocess.Popen, str]:
     node = shutil.which('node')
     if node is None:
         raise RuntimeError('node is needed to run the benchmark origin server')
     process = subprocess.Popen(
         [node, str(SERVER)],
-        env={**os.environ, 'PORT': '0'},
+        env={**os.environ, 'PORT': '0', 'BODY_BYTES': str(body_bytes)},
         stdout=subprocess.PIPE,
         text=True,
     )
@@ -286,7 +286,7 @@ def main() -> int:
 
     import httpx
 
-    process, url = start_server()
+    process, url = start_server(args.body_bytes)
     stats_client = httpx.Client(verify=False)
     read_stats = lambda: stats_client.get(f'{url}__stats').json()  # noqa: E731
     read_stats()

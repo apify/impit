@@ -85,6 +85,9 @@ export function startServer({ port = 0, bodyBytes = BODY_BYTES } = {}) {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const { url } = await startServer({ port: Number(process.env.PORT ?? 8443) });
+  const { url } = await startServer({
+    port: Number(process.env.PORT ?? 8443),
+    bodyBytes: Number(process.env.BODY_BYTES ?? BODY_BYTES),
+  });
   process.stdout.write(`${url}\n`);
 }

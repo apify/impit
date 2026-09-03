@@ -16,10 +16,10 @@ python/.venv/bin/python python/bench.py   # writes results-python.json
 node update-readme.mjs                    # rewrites the table in ../README.md
 ```
 
-`--requests`, `--runs` and `--warmup` shrink a run while iterating; `--only impit,undici` limits it
-to a few clients. Pass the same values to both scripts — `update-readme.mjs` rejects reports taken
-with different parameters. `uv venv --seed` matters, because `bench.py` shells out to `pip download`
-to size each wheel.
+`--requests`, `--runs` and `--warmup` shrink a run while iterating, `--body-bytes` changes the
+response size, and `--only impit,undici` limits it to a few clients. Pass the same values to both
+scripts — `update-readme.mjs` rejects reports taken with different parameters. `uv venv --seed`
+matters, because `bench.py` shells out to `pip download` to size each wheel.
 
 Run the two scripts one after the other, never in parallel: they compete for the same cores and both
 sets of numbers come out low.
@@ -27,7 +27,7 @@ sets of numbers come out low.
 ## What is measured
 
 [`server.mjs`](server.mjs) is the origin — a Node.js `http2` server on a self-signed certificate
-serving a fixed 1 KiB JSON body. Each client then issues sequential requests over one connection, N
+serving a 1 KiB JSON body. Each client then issues sequential requests over one connection, N
 times, and the median run is reported. Sequential single-client traffic isolates per-request client
 overhead, which is what differs between these libraries.
 

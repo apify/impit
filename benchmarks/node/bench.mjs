@@ -154,9 +154,9 @@ const CLIENTS = [
   },
 ];
 
-function startServer() {
+function startServer(bodyBytes) {
   const child = spawn(process.execPath, [join(here, '..', 'server.mjs')], {
-    env: { ...process.env, PORT: '0' },
+    env: { ...process.env, PORT: '0', BODY_BYTES: String(bodyBytes) },
     stdio: ['ignore', 'pipe', 'inherit'],
   });
   return new Promise((resolve, reject) => {
@@ -184,7 +184,7 @@ const selected = options.only
   : CLIENTS;
 if (selected.length === 0) throw new Error(`--only matched no client: ${options.only}`);
 
-const { child, url } = await startServer();
+const { child, url } = await startServer(options.bodyBytes);
 const results = [];
 const failures = [];
 
