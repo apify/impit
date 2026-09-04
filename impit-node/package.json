@@ -35,7 +35,7 @@
     "typedoc-plugin-mdn-links": "^5.0.9",
     "typescript": "^6.0.0",
     "vite": "^8.0.16",
-    "vitest": "^4.0.0"
+    "vitest": "^5.0.0"
   },
   "ava": {
     "timeout": "3m"
