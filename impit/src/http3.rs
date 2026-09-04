@@ -78,10 +78,25 @@ impl H3Engine {
 
     pub async fn set_h3_support(&self, host: &str, supports_h3: bool) {
         let mut cache = self.h3_alt_svc.write().await;
-        if cache.contains_key(host) {
-            return;
-        }
-
         cache.insert(host.to_owned(), supports_h3);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn alt_svc_discovery_updates_cached_h3_support() {
+        let engine = H3Engine::init().await;
+        let host = "example.com".to_string();
+        let other_host = "other.example.com".to_string();
+
+        engine.set_h3_support(&host, false).await;
+        engine.set_h3_support(&other_host, false).await;
+        engine.set_h3_support(&host, true).await;
+
+        assert!(engine.host_supports_h3(&host).await);
+        assert!(!engine.host_supports_h3(&other_host).await);
     }
 }
