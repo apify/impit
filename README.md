@@ -40,23 +40,23 @@ Median of 11 runs of 2000 sequential requests to a local HTTP/2 server, 1 KiB JS
 
 | Package | req/s | Wheel | Profiles | Backend |
 | --- | --- | --- | --- | --- |
-| [`primp`](https://github.com/deedy5/primp) | 6312 | 5.9 MB | n/a | Rust |
-| [`rnet`](https://github.com/0x676e67/rnet) | 5093 | 3.7 MB | 75 | Rust |
-| **`impit`** | 3808 | 4.2 MB | 20 | Rust |
-| [`curl_cffi`](https://github.com/lexiforest/curl_cffi) | 3428 | 13.5 MB | 38 | C (libcurl) |
-| [`tls-client`](https://github.com/FlorianREGAZ/Python-Tls-Client) | 3223 | 41.3 MB | 51 | Go |
-| `httpx` (no impersonation) | 2311 | 0.1 MB | — | Python |
+| [`primp`](https://github.com/deedy5/primp) | 5857 | 5.9 MB | n/a | Rust |
+| [`rnet`](https://github.com/0x676e67/rnet) | 4967 | 3.7 MB | 75 | Rust |
+| **`impit`** | 3716 | 4.2 MB | 20 | Rust |
+| [`curl_cffi`](https://github.com/lexiforest/curl_cffi) | 3377 | 13.5 MB | 38 | C (libcurl) |
+| [`tls-client`](https://github.com/FlorianREGAZ/Python-Tls-Client) | 3137 | 41.3 MB | 51 | Go |
+| `httpx` (no impersonation) | 2280 | 0.1 MB | — | Python |
 
 **Node.js**
 
 | Package | req/s | Install | Profiles | Backend |
 | --- | --- | --- | --- | --- |
-| [`got-scraping`](https://github.com/apify/got-scraping) | 2332 | 4.7 MB | 3 | Node.js TLS |
-| **`impit`** | 2260 | 8.7 MB | 20 | Rust |
-| [`cycletls`](https://github.com/Danny-Dasilva/CycleTLS) | 610 | 133.0 MB | raw JA3 | Go subprocess |
-| `undici` (no impersonation) | 4661 | 1.9 MB | — | Node.js |
+| [`got-scraping`](https://github.com/apify/got-scraping) | 2213 | 4.7 MB | 3 | Node.js TLS |
+| **`impit`** | 2137 | 8.7 MB | 20 | Rust |
+| [`cycletls`](https://github.com/Danny-Dasilva/CycleTLS) | 613 | 133.0 MB | raw JA3 | Go subprocess |
+| `undici` (no impersonation) | 4555 | 1.9 MB | — | Node.js |
 
-Measured by [`benchmarks/`](benchmarks) on linux-x64, 2026-09-03. Rerun it on your own hardware.
+Measured by [`benchmarks/`](benchmarks) on linux-x64, 2026-09-04. Rerun it on your own hardware.
 <!-- comparison:end -->
 
 ### Other projects
