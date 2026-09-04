@@ -1,5 +1,7 @@
 use encoding::Encoding;
+use lol_html::{ElementContentHandlers, HandlerResult, Selector};
 use mime::{Mime, TEXT_PLAIN};
+use std::{borrow::Cow, sync::LazyLock};
 
 /// Implements the BOM sniffing algorithm to detect the encoding of the response.
 /// If the BOM sniffing algorithm fails, the function returns `None`.
@@ -10,19 +12,29 @@ fn bom_sniffing(bytes: &[u8]) -> Option<encoding::EncodingRef> {
         return None;
     }
 
-    if [0xEF, 0xBB, 0xBF].to_vec() == bytes[0..3].to_vec() {
-        return Some(encoding::all::UTF_8);
+    match bytes {
+        [0xEF, 0xBB, 0xBF, ..] => Some(encoding::all::UTF_8),
+        [0xFE, 0xFF, ..] => Some(encoding::all::UTF_16BE),
+        [0xFF, 0xFE, ..] => Some(encoding::all::UTF_16LE),
+        _ => None,
     }
+}
 
-    if [0xFE, 0xFF].to_vec() == bytes[0..2].to_vec() {
-        return Some(encoding::all::UTF_16BE);
-    }
+const META_TAG_START: &[u8] = b"<meta";
 
-    if [0xFF, 0xFE].to_vec() == bytes[0..2].to_vec() {
-        return Some(encoding::all::UTF_16LE);
-    }
+/// The prescan selectors are parsed once - `lol_html::element!` re-parses them on every call.
+static CHARSET_SELECTOR: LazyLock<Selector> = LazyLock::new(|| "meta[charset]".parse().unwrap());
+static HTTP_EQUIV_SELECTOR: LazyLock<Selector> =
+    LazyLock::new(|| "meta[http-equiv]".parse().unwrap());
 
-    None
+fn on_element<'h>(
+    selector: &'static Selector,
+    handler: impl FnMut(&mut lol_html::html_content::Element<'_, '_>) -> HandlerResult + 'h,
+) -> (Cow<'static, Selector>, ElementContentHandlers<'h>) {
+    (
+        Cow::Borrowed(selector),
+        ElementContentHandlers::default().element(handler),
+    )
 }
 
 /// A lazy implementation of the prescan algorithm, using `lol_html` to parse the HTML and extract the encoding.
@@ -35,6 +47,15 @@ fn prescan_bytestream(bytes: &[u8]) -> Option<encoding::EncodingRef> {
 
     let limit = std::cmp::min(1024, bytes.len());
 
+    // Both handlers below can only fire on a `<meta` start tag, so responses without one in the
+    // prescanned prefix (JSON, plain text, binaries, ...) don't need the HTML parser at all.
+    if !bytes[0..limit]
+        .windows(META_TAG_START.len())
+        .any(|window| window.eq_ignore_ascii_case(META_TAG_START))
+    {
+        return None;
+    }
+
     let ascii_body = encoding::all::ASCII
         .decode(&bytes[0..limit], encoding::DecoderTrap::Replace)
         .unwrap();
@@ -46,7 +67,7 @@ fn prescan_bytestream(bytes: &[u8]) -> Option<encoding::EncodingRef> {
     let mut rewriter = lol_html::HtmlRewriter::new(
         lol_html::Settings {
             element_content_handlers: vec![
-                lol_html::element!("meta[charset]", move |el| {
+                on_element(&CHARSET_SELECTOR, move |el| {
                     if found_charset.borrow().is_none() {
                         if let Some(charset) = el.get_attribute("charset") {
                             *found_charset.borrow_mut() =
@@ -55,7 +76,7 @@ fn prescan_bytestream(bytes: &[u8]) -> Option<encoding::EncodingRef> {
                     }
                     Ok(())
                 }),
-                lol_html::element!("meta[http-equiv]", move |el| {
+                on_element(&HTTP_EQUIV_SELECTOR, move |el| {
                     if found_http_equiv.borrow().is_none() {
                         let is_content_type = el
                             .get_attribute("http-equiv")
@@ -171,5 +192,53 @@ impl ContentType {
 impl From<ContentType> for Option<encoding::EncodingRef> {
     fn from(val: ContentType) -> Self {
         encoding::label::encoding_from_whatwg_label(val.charset.as_str())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn prescan_finds_the_meta_charset() {
+        let html = br#"<!doctype html><html><head><meta charset="windows-1250"></head></html>"#;
+
+        assert_eq!(
+            prescan_bytestream(html).map(|encoding| encoding.name()),
+            Some("windows-1250")
+        );
+    }
+
+    #[test]
+    fn prescan_matches_the_meta_tag_case_insensitively() {
+        let html = br#"<!DOCTYPE HTML><HTML><HEAD><META CHARSET="windows-1250"></HEAD></HTML>"#;
+
+        assert_eq!(
+            prescan_bytestream(html).map(|encoding| encoding.name()),
+            Some("windows-1250")
+        );
+    }
+
+    #[test]
+    fn prescan_reads_the_charset_from_the_content_type_meta() {
+        let html = br#"<meta http-equiv="Content-Type" content="text/html; charset=windows-1250">"#;
+
+        assert_eq!(
+            prescan_bytestream(html).map(|encoding| encoding.name()),
+            Some("windows-1250")
+        );
+    }
+
+    #[test]
+    fn prescan_ignores_meta_tags_past_the_first_kilobyte() {
+        let mut html = vec![b' '; 1024];
+        html.extend_from_slice(br#"<meta charset="windows-1250">"#);
+
+        assert!(prescan_bytestream(&html).is_none());
+    }
+
+    #[test]
+    fn prescan_skips_documents_without_a_meta_tag() {
+        assert!(prescan_bytestream(br#"{"hello":"world"}"#).is_none());
     }
 }

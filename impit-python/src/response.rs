@@ -7,7 +7,7 @@ use encoding::label::encoding_from_whatwg_label;
 use futures::{Stream, StreamExt};
 use impit::{errors::ImpitError, utils::ContentType};
 use pyo3::prelude::*;
-use pyo3::types::PyBytes;
+use pyo3::types::{PyBytes, PyString};
 use reqwest::{Response, StatusCode, Version};
 use std::pin::Pin;
 
@@ -18,7 +18,7 @@ type SharedStream =
 
 #[pyclass]
 pub struct PyResponseBytesIterator {
-    ready_content: Option<Vec<u8>>,
+    ready_content: Option<Bytes>,
     stream: Option<Pin<Box<dyn Stream<Item = reqwest::Result<Bytes>> + Send + Sync>>>,
     runtime: tokio::runtime::Handle,
     content_returned: bool,
@@ -31,10 +31,11 @@ impl PyResponseBytesIterator {
         slf
     }
 
-    fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<Vec<u8>>> {
+    fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<Py<PyBytes>>> {
         if let Some(content) = slf.ready_content.take() {
             slf.content_returned = true;
-            return Ok(Some(content));
+            let py = slf.py();
+            return Ok(Some(PyBytes::new(py, &content).unbind()));
         }
 
         if slf.content_returned {
@@ -58,7 +59,7 @@ impl PyResponseBytesIterator {
             let result = py.detach(|| runtime.block_on(stream.next()));
 
             match result {
-                Some(Ok(chunk)) => Ok(Some(chunk.to_vec())),
+                Some(Ok(chunk)) => Ok(Some(PyBytes::new(py, &chunk).unbind())),
                 Some(Err(e)) => {
                     slf.content_returned = true;
                     if let Some(parent) = &slf.parent_response {
@@ -91,7 +92,7 @@ impl PyResponseBytesIterator {
 
 #[pyclass]
 pub struct PyResponseAsyncBytesIterator {
-    ready_content: Option<Vec<u8>>,
+    ready_content: Option<Bytes>,
     stream: Option<SharedStream>,
     content_returned: bool,
     parent_response: Option<Py<ImpitPyResponse>>,
@@ -106,8 +107,9 @@ impl PyResponseAsyncBytesIterator {
     fn __anext__<'py>(&mut self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
         if let Some(content) = self.ready_content.take() {
             self.content_returned = true;
+            let content = PyBytes::new(py, &content).unbind();
             let future =
-                pyo3_async_runtimes::tokio::future_into_py::<_, Vec<u8>>(py, async move {
+                pyo3_async_runtimes::tokio::future_into_py::<_, Py<PyBytes>>(py, async move {
                     Ok(content)
                 })?;
             return Ok(future);
@@ -139,43 +141,44 @@ impl PyResponseAsyncBytesIterator {
 
         let parent_response = self.parent_response.as_ref().map(|p| p.clone_ref(py));
 
-        let future = pyo3_async_runtimes::tokio::future_into_py::<_, Vec<u8>>(py, async move {
-            let chunk_result = {
-                let mut stream_guard = stream_arc.lock().await;
-                if let Some(stream) = stream_guard.as_mut() {
-                    stream.next().await
-                } else {
-                    None
-                }
-            };
-            match chunk_result {
-                Some(Ok(chunk)) => Ok(chunk.to_vec()),
-                Some(Err(e)) => {
-                    if let Some(parent) = parent_response {
-                        Python::attach(|py| {
-                            if let Ok(mut parent_ref) = parent.try_borrow_mut(py) {
-                                parent_ref.inner_state = InnerResponseState::StreamingClosed;
-                                parent_ref.is_stream_consumed = true;
-                                parent_ref.is_closed = true;
-                            }
-                        });
+        let future =
+            pyo3_async_runtimes::tokio::future_into_py::<_, Py<PyBytes>>(py, async move {
+                let chunk_result = {
+                    let mut stream_guard = stream_arc.lock().await;
+                    if let Some(stream) = stream_guard.as_mut() {
+                        stream.next().await
+                    } else {
+                        None
                     }
-                    Err(ImpitPyError(ImpitError::from(e, None)).into())
-                }
-                None => {
-                    if let Some(parent) = parent_response {
-                        Python::attach(|py| {
-                            if let Ok(mut parent_ref) = parent.try_borrow_mut(py) {
-                                parent_ref.inner_state = InnerResponseState::StreamingClosed;
-                                parent_ref.is_stream_consumed = true;
-                                parent_ref.is_closed = true;
-                            }
-                        });
+                };
+                match chunk_result {
+                    Some(Ok(chunk)) => Ok(Python::attach(|py| PyBytes::new(py, &chunk).unbind())),
+                    Some(Err(e)) => {
+                        if let Some(parent) = parent_response {
+                            Python::attach(|py| {
+                                if let Ok(mut parent_ref) = parent.try_borrow_mut(py) {
+                                    parent_ref.inner_state = InnerResponseState::StreamingClosed;
+                                    parent_ref.is_stream_consumed = true;
+                                    parent_ref.is_closed = true;
+                                }
+                            });
+                        }
+                        Err(ImpitPyError(ImpitError::from(e, None)).into())
                     }
-                    Err(pyo3::exceptions::PyStopAsyncIteration::new_err(""))
+                    None => {
+                        if let Some(parent) = parent_response {
+                            Python::attach(|py| {
+                                if let Ok(mut parent_ref) = parent.try_borrow_mut(py) {
+                                    parent_ref.inner_state = InnerResponseState::StreamingClosed;
+                                    parent_ref.is_stream_consumed = true;
+                                    parent_ref.is_closed = true;
+                                }
+                            });
+                        }
+                        Err(pyo3::exceptions::PyStopAsyncIteration::new_err(""))
+                    }
                 }
-            }
-        })?;
+            })?;
 
         Ok(future)
     }
@@ -219,7 +222,7 @@ pub struct ImpitPyResponse {
     // #[pyo3(get)]
     // elapsed: Duration,
     text: Option<String>,
-    content: Option<Vec<u8>>,
+    content: Option<Bytes>,
     inner: Option<Response>,
     inner_state: InnerResponseState,
     // Raw, undecoded header name/value byte pairs. The `headers` getter builds the Python-side
@@ -271,7 +274,7 @@ impl ImpitPyResponse {
             is_closed: true,
             is_stream_consumed: true,
             text: None,
-            content: Some(content.unwrap_or_default()),
+            content: Some(content.map(Bytes::from).unwrap_or_default()),
             inner: None,
             inner_state: InnerResponseState::Read,
             raw_headers,
@@ -400,23 +403,26 @@ impl ImpitPyResponse {
                 });
 
             match state {
-                InnerResponseState::Read => Ok(content_option.unwrap_or_default()),
+                InnerResponseState::Read => Ok(Python::attach(|py| {
+                    PyBytes::new(py, &content_option.unwrap_or_default()).unbind()
+                })),
                 InnerResponseState::Unread => {
                     if let Some(response) = response_option {
-                        let content =
-                            response.bytes().await.map(|b| b.to_vec()).map_err(|_| {
-                                ImpitPyError(impit::errors::ImpitError::NetworkError)
-                            })?;
+                        let content = response
+                            .bytes()
+                            .await
+                            .map_err(|_| ImpitPyError(impit::errors::ImpitError::NetworkError))?;
 
-                        Python::attach(|py| {
+                        Ok(Python::attach(|py| {
                             let mut slf_ref = slf.borrow_mut(py);
                             slf_ref.content = Some(content.clone());
                             slf_ref.inner_state = InnerResponseState::Read;
                             slf_ref.is_stream_consumed = true;
                             slf_ref.is_closed = true;
-                        });
+                            drop(slf_ref);
 
-                        Ok(content)
+                            PyBytes::new(py, &content).unbind()
+                        }))
                     } else {
                         Err(ImpitPyError(impit::errors::ImpitError::StreamClosed).into())
                     }
@@ -466,22 +472,20 @@ impl ImpitPyResponse {
     }
 
     #[getter]
-    fn content(&mut self, py: Python<'_>) -> PyResult<Vec<u8>> {
+    fn content<'py>(&mut self, py: Python<'py>) -> PyResult<Bound<'py, PyBytes>> {
         self.read(py)
     }
 
     #[getter]
-    fn text(&mut self, py: Python<'_>) -> PyResult<String> {
-        if let Some(cached_text) = &self.text {
-            return Ok(cached_text.clone());
+    fn text<'py>(&mut self, py: Python<'py>) -> PyResult<Bound<'py, PyString>> {
+        if self.text.is_none() {
+            let decoder = encoding_from_whatwg_label(&self.encoding);
+            let decoded_text = impit::utils::decode(self.read_bytes(py)?, decoder);
+
+            self.text = Some(decoded_text);
         }
 
-        let content_bytes = self.read(py)?;
-        let decoder = encoding_from_whatwg_label(&self.encoding);
-        let decoded_text = impit::utils::decode(&content_bytes, decoder);
-
-        self.text = Some(decoded_text.clone());
-        Ok(decoded_text)
+        Ok(PyString::new(py, self.text.as_deref().unwrap_or_default()))
     }
 
     fn json(&mut self, py: Python<'_>) -> PyResult<Py<PyAny>> {
@@ -491,12 +495,19 @@ impl ImpitPyResponse {
         Ok(parsed.into())
     }
 
-    fn read(&mut self, py: Python<'_>) -> PyResult<Vec<u8>> {
+    fn read<'py>(&mut self, py: Python<'py>) -> PyResult<Bound<'py, PyBytes>> {
+        Ok(PyBytes::new(py, self.read_bytes(py)?))
+    }
+}
+
+impl ImpitPyResponse {
+    /// Buffers the response body if it hasn't been read yet and borrows it, so that the callers
+    /// that only need to look at the bytes don't have to copy the whole body first.
+    fn read_bytes(&mut self, py: Python<'_>) -> PyResult<&[u8]> {
         match self.inner_state {
             InnerResponseState::Read => self
                 .content
-                .as_ref()
-                .cloned()
+                .as_deref()
                 .ok_or_else(|| ImpitPyError(impit::errors::ImpitError::ResponseNotRead).into()),
             InnerResponseState::Streaming | InnerResponseState::StreamingClosed => {
                 if self.is_stream_consumed {
@@ -517,23 +528,19 @@ impl ImpitPyResponse {
                         response
                             .bytes()
                             .await
-                            .map(|b| b.to_vec())
                             .map_err(|_| ImpitPyError(impit::errors::ImpitError::NetworkError))
                     })
                 })?;
 
-                self.content = Some(content.clone());
                 self.inner_state = InnerResponseState::Read;
                 self.is_stream_consumed = true;
                 self.is_closed = true;
 
-                Ok(content)
+                Ok(self.content.insert(content))
             }
         }
     }
-}
 
-impl ImpitPyResponse {
     fn close_async_impl(slf: Py<Self>) -> PyResult<()> {
         Python::attach(|py| {
             let mut slf_ref = slf.borrow_mut(py);
@@ -580,15 +587,11 @@ impl ImpitPyResponse {
             .and_then(|ct| ct.into());
 
         let (content, inner_state, encoding, inner, is_closed, is_stream_consumed) = if !stream {
-            let content = val
-                .bytes()
-                .await
-                .map(|b| b.to_vec())
-                .map_err(|e| ImpitError::from(e, None))?;
+            let content = val.bytes().await.map_err(|e| ImpitError::from(e, None))?;
             let encoding = preferred_encoding
                 .and_then(|e| encoding_from_whatwg_label(&e))
                 .or(content_type_charset)
-                .or(impit::utils::determine_encoding(content.as_slice()))
+                .or(impit::utils::determine_encoding(&content))
                 .unwrap_or(impit::utils::encodings::UTF_8);
 
             (

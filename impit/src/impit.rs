@@ -2,14 +2,14 @@ use tokio::sync::RwLock;
 
 use log::debug;
 use reqwest::{cookie::CookieStore, header::HeaderMap, Method, Response, Version};
-use std::{fmt::Debug, net::IpAddr, str::FromStr, sync::Arc, time::Duration};
+use std::{fmt::Debug, net::IpAddr, sync::Arc, time::Duration};
 use url::Url;
 
 use crate::{
     errors::{ErrorContext, ImpitError},
     fingerprint::BrowserFingerprint,
     http3::H3Engine,
-    http_headers::HttpHeaders,
+    http_headers::HttpHeadersBuilder,
     request::{ImpitBody, ImpitRequest, RequestOptions},
     tls,
 };
@@ -371,7 +371,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
         }
     }
 
-    async fn should_use_h3(&self, host: &String) -> bool {
+    async fn should_use_h3(&self, host: &str) -> bool {
         if self.config.max_http_version < Version::HTTP_3 {
             debug!("HTTP/3 is disabled, falling back to TCP-based requests.");
             return false;
@@ -402,24 +402,20 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
         method: Method,
         url: Url,
         body: Option<ImpitBody>,
-        headers: Vec<(String, String)>,
-    ) -> ImpitRequest {
-        let host = url.host_str().unwrap_or_default().to_string();
+        headers: &[(String, String)],
+    ) -> Result<ImpitRequest, ImpitError> {
+        let headers = HttpHeadersBuilder::default()
+            .with_fingerprint(self.config.fingerprint.as_ref())
+            .with_custom_headers(self.config.headers.as_deref().unwrap_or_default())
+            .with_custom_headers(headers)
+            .build()?;
 
-        let headers = HttpHeaders::get_builder()
-            .with_fingerprint(&self.config.fingerprint)
-            .with_host(&host)
-            .with_https(url.scheme() == "https")
-            .with_custom_headers(self.config.headers.to_owned())
-            .with_custom_headers(Some(headers))
-            .build();
-
-        ImpitRequest {
+        Ok(ImpitRequest {
             url,
             body: body.unwrap_or_default(),
-            headers: headers.iter().collect(),
-            method: method.to_string(),
-        }
+            headers,
+            method,
+        })
     }
 
     async fn execute_request(
@@ -459,27 +455,17 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
             return Err(ImpitError::Http3Disabled);
         }
 
-        let url = request.url.to_string();
-        let host = request.url.host_str().unwrap_or_default().to_string();
         let h3 = http3_prior_knowledge
             || self
-                .should_use_h3(&request.url.host_str().unwrap_or_default().to_string())
+                .should_use_h3(request.url.host_str().unwrap_or_default())
                 .await;
         let client = if h3 {
-            debug!("Using QUIC for request to {url}");
+            debug!("Using QUIC for request to {}", request.url);
             self.h3_client.as_ref().unwrap_or(&self.base_client)
         } else {
-            debug!("{url} doesn't seem to have HTTP3 support");
+            debug!("{} doesn't seem to have HTTP3 support", request.url);
             &self.base_client
         };
-
-        let header_map_result: Result<HeaderMap, ImpitError> =
-            HttpHeaders::from(request.headers).into();
-        let header_map = header_map_result?;
-
-        let method = Method::from_str(&request.method).map_err(|_| {
-            ImpitError::InvalidMethod(format!("Invalid HTTP method: {}", request.method))
-        })?;
 
         let max_redirects = match self.config.redirect {
             RedirectBehavior::FollowRedirect(max) => max,
@@ -487,9 +473,9 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
         };
 
         let mut prepared = PreparedRequest {
-            method: method.clone(),
-            url: request.url.clone(),
-            headers: header_map,
+            method: request.method,
+            url: request.url,
+            headers: request.headers,
             body: request.body,
         };
 
@@ -505,9 +491,9 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
                     Some(ErrorContext {
                         timeout: Some(timeout.unwrap_or(self.config.request_timeout)),
                         max_redirects: Some(max_redirects),
-                        method: Some(method.to_string()),
-                        protocol: Some(request.url.scheme().to_string()),
-                        url: Some(url.clone()),
+                        method: Some(prepared.method.to_string()),
+                        protocol: Some(prepared.url.scheme().to_string()),
+                        url: Some(prepared.url.to_string()),
                     }),
                 );
 
@@ -520,7 +506,8 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
                 };
 
                 debug!(
-                    "Primary request to {url} failed with {primary_error}, retrying with vanilla client"
+                    "Primary request to {} failed with {primary_error}, retrying with vanilla client",
+                    prepared.url
                 );
                 match self
                     .execute_request(vanilla_client, &mut prepared, timeout, false)
@@ -535,7 +522,8 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
         if !h3 {
             let engine_guard = self.h3_engine.read().await;
             if let Some(h3_engine) = engine_guard.as_ref() {
-                h3_engine.set_h3_support(&host, false).await;
+                let host = prepared.url.host_str().unwrap_or_default();
+                h3_engine.set_h3_support(host, false).await;
 
                 if let Some(alt_svc) = response.headers().get("Alt-Svc") {
                     if let Ok(alt_svc_str) = alt_svc.to_str() {
@@ -543,7 +531,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
                             debug!(
                                 "{host} supports HTTP/3 (alt-svc header), adding to Alt-Svc cache"
                             );
-                            h3_engine.set_h3_support(&host, true).await;
+                            h3_engine.set_h3_support(host, true).await;
                         }
                     }
                 }
@@ -563,8 +551,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
         let url = self.parse_url(url)?;
         let request_options = options.unwrap_or_default();
 
-        let headers = request_options.headers;
-        let request = self.build_request(method, url, body, headers);
+        let request = self.build_request(method, url, body, &request_options.headers)?;
 
         let timeout = match request_options.timeout {
             None => None,

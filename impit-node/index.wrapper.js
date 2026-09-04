@@ -23,8 +23,8 @@ Run your script with IMPIT_VERBOSE=1 environment variable to get more informatio
 
 class ResponsePatches {
     static async text() {
-        const buffer = await this.bytes();
-        return this.decodeBuffer(buffer);
+        const buffer = await this.arrayBuffer();
+        return this.decodeBuffer(Buffer.from(buffer));
     }
 }
 
@@ -39,14 +39,18 @@ function canonicalizeHeaders(headers) {
     return [];
 }
 
+const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
+
 function isRedirectStatus(status) {
-    return [301, 302, 303, 307, 308].includes(status);
+    return REDIRECT_STATUSES.has(status);
 }
+
+const textEncoder = new TextEncoder();
 
 // Stream chunks may be strings (e.g. a ReadableStream or Node stream that wasn't
 // fed bytes); encode them so they aren't coerced to zero bytes by Uint8Array.set.
 function toUint8Array(chunk) {
-    return typeof chunk === 'string' ? new TextEncoder().encode(chunk) : new Uint8Array(chunk);
+    return typeof chunk === 'string' ? textEncoder.encode(chunk) : new Uint8Array(chunk);
 }
 
 // Streamed bodies are passed to the native layer as a ReadableStream of bytes, so that the chunks
@@ -69,7 +73,7 @@ function toByteStream(source) {
 
 function shouldRewriteRedirectToGet(httpStatus, method) {
     // See https://github.com/mozilla-firefox/firefox/blob/911b3eec6c5e58a9a49e23aa105e49aa76e00f9c/netwerk/protocol/http/HttpBaseChannel.cpp#L4801
-    if ([301, 302].includes(httpStatus)) {
+    if (httpStatus === 301 || httpStatus === 302) {
         return method === 'POST';
     }
 
@@ -261,9 +265,9 @@ class Impit extends native.Impit {
         signal?.throwIfAborted();
 
         let abortHandler;
-        const waitForAbort = new Promise((_, reject) => {
+        const waitForAbort = signal && new Promise((_, reject) => {
             abortHandler = () => reject(signal.reason);
-            signal?.addEventListener?.("abort", abortHandler, { once: true });
+            signal.addEventListener?.("abort", abortHandler, { once: true });
         });
 
         try {
@@ -296,13 +300,12 @@ class Impit extends native.Impit {
         while (true) {
             signal?.throwIfAborted();
 
-            const headers = [...(options.headers || [])];
-            const hasUserCookie = headers.some(([k]) => k.toLowerCase() === 'cookie');
+            let headers = options.headers || [];
 
-            if (this.#cookieJar && !hasUserCookie) {
+            if (this.#cookieJar && !headers.some(([k]) => k.toLowerCase() === 'cookie')) {
                 const cookieHeader = await this.#getCookies(url);
                 if (cookieHeader) {
-                    headers.push(['Cookie', cookieHeader]);
+                    headers = [...headers, ['Cookie', cookieHeader]];
                 }
             }
 
@@ -314,10 +317,9 @@ class Impit extends native.Impit {
                 bodyStream: method === 'GET' ? undefined : options.bodyStream,
             });
 
-            const originalResponse = await Promise.race([
-                response,
-                waitForAbort
-            ]);
+            const originalResponse = waitForAbort
+                ? await Promise.race([response, waitForAbort])
+                : await response;
 
             const responseHeaders = new Headers(originalResponse.headers);
 
@@ -334,7 +336,7 @@ class Impit extends native.Impit {
                     const location = responseHeaders.get('location');
 
                     if (!location) {
-                        return this.#wrapResponse(originalResponse, signal);
+                        return this.#wrapResponse(originalResponse, signal, responseHeaders);
                     }
 
                     redirectCount++;
@@ -353,7 +355,7 @@ class Impit extends native.Impit {
                 }
             }
 
-            return this.#wrapResponse(originalResponse, signal);
+            return this.#wrapResponse(originalResponse, signal, responseHeaders);
         }
     }
 
@@ -361,9 +363,10 @@ class Impit extends native.Impit {
      * Wrap a native response with JS enhancements
      * @param {object} originalResponse
      * @param {AbortSignal} signal
+     * @param {Headers} headers Response headers, already parsed by the caller
      * @returns {object}
      */
-    #wrapResponse(originalResponse, signal) {
+    #wrapResponse(originalResponse, signal, headers) {
         signal?.throwIfAborted();
 
         let abortHandler;
@@ -411,7 +414,7 @@ class Impit extends native.Impit {
         });
 
         Object.defineProperty(originalResponse, 'headers', {
-            value: new Headers(originalResponse.headers)
+            value: headers
         });
 
         Object.defineProperty(originalResponse, 'clone', {
