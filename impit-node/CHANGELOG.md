@@ -3,6 +3,21 @@
 All notable changes to this project will be documented in this file.
 
 
+## js-0.14.5 - 2026-09-07
+
+#### Bug Fixes
+
+- Update cached Alt-Svc support (#536)
+  - ## Why  Alt-Svc `h3` discovery first records a host as not h3-capable, then needs to upgrade that cached value when the response advertises HTTP/3.  ## Verification  - Before: `cargo test -p impit http3::tests::alt_svc_discovery_updates_cached_h3_support -- --exact` failed because the cached `false` value was retained. - After: `cargo test -p impit` passes, including the cache-upgrade regression test. - `cargo fmt --check` - `cargo clippy -p impit --all-targets -- -D warnings`
+
+
+#### Performance
+
+- Remove redundant allocations and copies from the request and response hot paths (#538)
+  - Cuts per-request work across the Rust core and both bindings: the browser fingerprint is no longer cloned twice per request during header assembly, response bodies are no longer copied repeatedly in the Python bindings, the HTML prescan is skipped for responses that cannot contain a meta tag, and the Node JS wrapper stops marshalling the response headers across the napi boundary twice.
+
+
+
 ## js-0.14.4 - 2026-08-24
 
 #### Features
