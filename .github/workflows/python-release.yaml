@@ -115,7 +115,7 @@ jobs:
       needs: [publish, get_version]
       runs-on: ubuntu-latest
       outputs:
-        release_body: ${{ steps.git-cliff.outputs.content }}
+        release_body: ${{ steps.git-cliff-latest.outputs.content }}
       steps:
         - name: Checkout
           uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -143,11 +143,20 @@ jobs:
             pull: '--rebase --autostash'
             github-token: ${{ secrets.APIFY_SERVICE_ACCOUNT_GITHUB_TOKEN }}
 
+        - name: Generate release notes
+          uses: orhun/git-cliff-action@3d96a18cc4ec17e9dc69ddcc424ccafaf1f78ce2 # v4
+          id: git-cliff-latest
+          with:
+            config: cliff.toml
+            args: --latest --strip all --ignore-tags="(js|cli)-*" --include-path="./impit-python/**" --include-path="./impit/**"
+          env:
+            GITHUB_REPO: ${{ github.repository }}
+
         - name: Create release
           uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3
           with:
             tag_name: "py-${{ needs.get_version.outputs.new_version }}"
             name: "impit-python@${{ needs.get_version.outputs.new_version }}"
             target_commitish: ${{ needs.get_version.outputs.bumped-version-commit-sha }}
-            body: ${{ steps.git-cliff.outputs.content }}
+            body: ${{ steps.git-cliff-latest.outputs.content }}
 
