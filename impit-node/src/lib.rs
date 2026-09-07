@@ -120,30 +120,27 @@ impl ImpitWrapper {
     url: String,
     request_init: Option<RequestInit>,
   ) -> Result<ImpitResponse, napi::Error> {
+    let RequestInit {
+      method,
+      headers,
+      body,
+      body_stream,
+      timeout,
+      force_http3,
+      ..
+    } = request_init.unwrap_or_default();
+
     let request_options = Some(RequestOptions {
-      headers: request_init
-        .as_ref()
-        .and_then(|init| init.headers.as_ref())
-        .cloned()
-        .unwrap_or_default(),
-      timeout: request_init
-        .as_ref()
-        .and_then(|init| init.timeout)
-        .map(|timeout| Some(Duration::from_millis(timeout.into()))),
-      http3_prior_knowledge: request_init
-        .as_ref()
-        .and_then(|init| init.force_http3)
-        .unwrap_or_default(),
+      headers: headers.unwrap_or_default(),
+      timeout: timeout.map(|timeout| Some(Duration::from_millis(timeout.into()))),
+      http3_prior_knowledge: force_http3.unwrap_or_default(),
     });
 
-    let method = request_init
-      .as_ref()
-      .and_then(|init| init.method.to_owned())
-      .unwrap_or_default();
-    let body = request_init.and_then(|init| match (init.body, init.body_stream) {
+    let method = method.unwrap_or_default();
+    let body = match (body, body_stream) {
       (_, Some(stream)) => Some(ImpitBody::from_stream(stream.into_byte_stream())),
       (bytes, None) => bytes.map(|array| array.to_vec().into()),
-    });
+    };
 
     let response = if matches!(method, HttpMethod::Get | HttpMethod::Head) && body.is_some() {
       Err(ImpitError::BindingPassthroughError(

@@ -373,13 +373,11 @@ impl Client {
         url: String,
         content: Option<RequestBody>,
         mut data: Option<RequestBody>,
-        headers: Option<HashMap<String, String>>,
+        mut headers: Option<HashMap<String, String>>,
         timeout: Option<Either<f64, &str>>,
         force_http3: Option<bool>,
         stream: Option<bool>,
     ) -> Result<ImpitPyResponse, ImpitPyError> {
-        let mut headers = headers.clone();
-
         if let Some(content) = content {
             data = Some(content);
         }
@@ -391,11 +389,7 @@ impl Client {
             .map_err(|e| ImpitPyError(ImpitError::BindingPassthroughError(e.to_string())))?;
 
         let options = RequestOptions {
-            headers: headers
-                .unwrap_or_default()
-                .iter()
-                .map(|(k, v)| (k.clone(), v.clone()))
-                .collect(),
+            headers: headers.unwrap_or_default().into_iter().collect(),
             timeout,
             http3_prior_knowledge: force_http3.unwrap_or(false),
         };
