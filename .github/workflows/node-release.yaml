@@ -135,10 +135,19 @@ jobs:
             pull: '--rebase --autostash'
             github-token: ${{ secrets.APIFY_SERVICE_ACCOUNT_GITHUB_TOKEN }}
 
+        - name: Generate release notes
+          uses: orhun/git-cliff-action@3d96a18cc4ec17e9dc69ddcc424ccafaf1f78ce2 # v4
+          id: git-cliff-latest
+          with:
+            config: cliff.toml
+            args: --latest --strip all --ignore-tags="(py|cli)-*" --include-path="./impit-node/**" --include-path="./impit/**"
+          env:
+            GITHUB_REPO: ${{ github.repository }}
+
         - name: Create release
           uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3
           with:
             tag_name: "js-${{ needs.publish.outputs.new_version }}"
             name: "impit-node@${{ needs.publish.outputs.new_version }}"
             target_commitish: ${{ needs.publish.outputs.bumped-version-commit-sha }}
-            body: ${{ steps.git-cliff.outputs.content }}
+            body: ${{ steps.git-cliff-latest.outputs.content }}
