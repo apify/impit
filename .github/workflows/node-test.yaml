@@ -186,9 +186,23 @@ jobs:
           architecture: x64
 
       - name: Install pnpm and dependencies
+        if: runner.os != 'Windows'
         uses: apify/actions/pnpm-install@v1.4.1
         with:
           working-directory: impit-node
+
+      - name: Install pnpm and dependencies (Windows)
+        # pnpm/action-setup bootstraps its own bundled pnpm version, then pnpm's
+        # self-management switches it to the packageManager-pinned version. That
+        # switch computes the new binary's location relative to wherever the
+        # bootstrap installed it, which differs by Node version on Windows and
+        # produces a broken path on Node 22/24. corepack installs the pinned
+        # version directly, skipping the switch entirely.
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          corepack enable
+          cd impit-node && pnpm install --frozen-lockfile
 
       - name: Download artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
