@@ -92,7 +92,7 @@ impl<'env> ImpitResponse {
     // JS Fetch semantics: header values are decoded as ISO-8859-1 (each byte 0x00..=0xFF maps to
     // the code point U+0000..=U+00FF). Since that mapping is a bijection, the string stays
     // byte-recoverable via `Buffer.from(value, 'latin1')`.
-    let mut headers_vec: Vec<(String, String)> = Vec::new();
+    let mut headers_vec: Vec<(String, String)> = Vec::with_capacity(response.headers().len());
     for (k, v) in response.headers().iter() {
       headers_vec.push((
         k.as_str().to_string(),
