@@ -157,8 +157,6 @@ jobs:
       - build
     strategy:
       fail-fast: false
-      # Serialized: all binding test jobs share one httpbin instance capped at 70 req/s.
-      max-parallel: 1
       matrix:
         settings:
           - host: macos-latest
@@ -211,8 +209,6 @@ jobs:
       - build
     strategy:
       fail-fast: false
-      # Serialized: all binding test jobs share one httpbin instance capped at 70 req/s.
-      max-parallel: 1
       matrix:
         node:
           - '20'
@@ -248,8 +244,6 @@ jobs:
       - build
     strategy:
       fail-fast: false
-      # Serialized: all binding test jobs share one httpbin instance capped at 70 req/s.
-      max-parallel: 1
       matrix:
         node:
           - '20'
@@ -288,8 +282,6 @@ jobs:
       - build
     strategy:
       fail-fast: false
-      # Serialized: all binding test jobs share one httpbin instance capped at 70 req/s.
-      max-parallel: 1
       matrix:
         node:
           - '20'
@@ -321,8 +313,6 @@ jobs:
       - build
     strategy:
       fail-fast: false
-      # Serialized: all binding test jobs share one httpbin instance capped at 70 req/s.
-      max-parallel: 1
       matrix:
         node:
           - '20'
