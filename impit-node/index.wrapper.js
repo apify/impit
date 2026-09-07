@@ -142,7 +142,6 @@ class Impit extends native.Impit {
 
         const blobParts = [];
         const rn = new Uint8Array([13, 10]);
-        const textEncoder = new TextEncoder();
 
         for (const [name, value] of formData) {
             if (typeof value === 'string') {
@@ -193,9 +192,9 @@ class Impit extends native.Impit {
     // Based on https://github.com/nodejs/undici/blob/14e62db0d0cff4bea27357aa5bd14881459b27c7/lib/web/fetch/body.js#L90
     async #serializeBody(body) {
         if (typeof body === 'string') {
-            return { body: new TextEncoder().encode(body), type: 'text/plain;charset=UTF-8' };
+            return { body: textEncoder.encode(body), type: 'text/plain;charset=UTF-8' };
         } else if (body instanceof URLSearchParams) {
-            return { body: new TextEncoder().encode(body.toString()), type: 'application/x-www-form-urlencoded;charset=UTF-8' };
+            return { body: textEncoder.encode(body.toString()), type: 'application/x-www-form-urlencoded;charset=UTF-8' };
         } else if (body instanceof ArrayBuffer) {
             return { body: new Uint8Array(body.slice()), type: '' };
         } else if (ArrayBuffer.isView(body)) {
