@@ -15,7 +15,9 @@ on:
       runs:
         description: Runs per version, the median is reported
         default: '11'
-  # Exercise the harness whenever it changes, commenting the chart on the PR that changed it.
+  # Exercise the harness whenever it changes. version-benchmark-comment.yaml posts the
+  # resulting chart as a pull request comment - see that file for why it's a separate
+  # workflow rather than a second job here.
   pull_request:
     paths:
       - benchmarks/**
@@ -80,63 +82,3 @@ jobs:
             benchmarks/version-chart.png
             benchmarks/results-node-versions.json
             benchmarks/results-python-versions.json
-
-  # Separate runner, so the token never shares an environment with the unpinned
-  # releases installed above. Only meaningful on a pull request: there is nowhere
-  # to comment on a schedule or a manual run.
-  comment:
-    name: Comment on the pull request
-    needs: benchmark
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          ref: master
-          token: ${{ secrets.APIFY_SERVICE_ACCOUNT_GITHUB_TOKEN }}
-
-      - name: Download the chart
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
-        with:
-          name: version-chart
-          path: downloaded
-
-      - name: Publish the chart and comment on the pull request
-        env:
-          GH_TOKEN: ${{ secrets.APIFY_SERVICE_ACCOUNT_GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: |
-          test -f downloaded/version-chart.png || { echo 'the artifact did not unpack where expected'; exit 1; }
-
-          # The chart is published to its own branch instead of the pull request,
-          # so a raw.githubusercontent.com URL can be embedded in a comment -
-          # GitHub strips data: URIs from comment markdown, and the pull request
-          # itself should not carry a generated PNG as one of its files.
-          git config user.name 'apify-service-account'
-          git config user.email 'apify-service-account@users.noreply.github.com'
-          git fetch origin benchmarks/version-chart-assets || true
-          if git show-ref --verify --quiet refs/remotes/origin/benchmarks/version-chart-assets; then
-            git checkout -B benchmarks/version-chart-assets origin/benchmarks/version-chart-assets
-          else
-            git checkout --orphan benchmarks/version-chart-assets
-            git rm -rf . > /dev/null
-          fi
-
-          filename="pr-${PR_NUMBER}.png"
-          mv downloaded/version-chart.png "$filename"
-          git add "$filename"
-          git commit -m "chore: publish version benchmark chart for #${PR_NUMBER}"
-          git push origin benchmarks/version-chart-assets
-
-          url="https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/benchmarks/version-chart-assets/${filename}?run=${GITHUB_RUN_ID}"
-          {
-            echo '### impit version comparison'
-            echo
-            echo "Median throughput of the last $VERSIONS npm and PyPI releases of impit."
-            echo
-            echo "![impit version comparison]($url)"
-          } > comment.md
-
-          gh pr comment "$PR_NUMBER" --body-file comment.md --edit-last --create-if-none \
-            || gh pr comment "$PR_NUMBER" --body-file comment.md
