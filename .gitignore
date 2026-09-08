@@ -17,5 +17,6 @@ _build/
 # Benchmarks
 /benchmarks/.cert
 /benchmarks/results-*.json
+/benchmarks/version-chart.png
 /benchmarks/node/node_modules
 /benchmarks/node/package-lock.json

@@ -53,3 +53,21 @@ resets and take a `GOAWAY` mid-run. Right for a public origin, wrong for a bench
 
 Add an entry to `CLIENTS`: how to build it, how to issue one request, and how to count its profiles.
 `update-readme.mjs` takes care of ordering and the caption.
+
+## Comparing impit's own releases
+
+[`node/bench-versions.mjs`](node/bench-versions.mjs) and
+[`python/bench_versions.py`](python/bench_versions.py) run the same measurement across the last N
+published releases of impit itself (from npm and PyPI respectively), to track throughput across
+versions rather than against other clients:
+
+```bash
+node node/bench-versions.mjs                                 # writes results-node-versions.json
+python/.venv/bin/python python/bench_versions.py              # writes results-python-versions.json
+python/.venv/bin/python chart-versions.py                     # writes version-chart.png
+```
+
+`--versions` picks how many releases to compare (default 5); `--requests`, `--runs` and `--warmup`
+work as above. `chart-versions.py` needs `matplotlib` (`uv pip install matplotlib`); its output is a
+CI artifact posted as a comment on the pull request that triggered it, not a file committed to the
+repository.
