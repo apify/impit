@@ -1,10 +1,9 @@
-import { spawn } from 'node:child_process';
 import { readFile, writeFile } from 'node:fs/promises';
 import { arch, platform } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { installSize, measure, parseArgs } from '../harness.mjs';
+import { installSize, measure, parseArgs, spawnOrigin } from '../harness.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -124,22 +123,6 @@ const CLIENTS = [
   },
 ];
 
-function startServer(bodyBytes) {
-  const child = spawn(process.execPath, [join(here, '..', 'server.mjs')], {
-    env: { ...process.env, PORT: '0', BODY_BYTES: String(bodyBytes) },
-    stdio: ['ignore', 'pipe', 'inherit'],
-  });
-  return new Promise((resolve, reject) => {
-    let buffered = '';
-    child.stdout.on('data', (chunk) => {
-      buffered += chunk;
-      const newline = buffered.indexOf('\n');
-      if (newline !== -1) resolve({ child, url: buffered.slice(0, newline) });
-    });
-    child.on('exit', (code) => reject(new Error(`server exited with ${code} before listening`)));
-  });
-}
-
 const options = parseArgs(process.argv.slice(2), {
   requests: 2000,
   runs: 11,
@@ -154,7 +137,7 @@ const selected = options.only
   : CLIENTS;
 if (selected.length === 0) throw new Error(`--only matched no client: ${options.only}`);
 
-const { child, url } = await startServer(options.bodyBytes);
+const { child, url } = await spawnOrigin(options.bodyBytes);
 const results = [];
 const failures = [];
 
