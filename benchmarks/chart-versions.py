@@ -1,8 +1,11 @@
 """Renders the version-history throughput chart from bench-versions.mjs / bench_versions.py.
 
-Reads results-node-versions.json and results-python-versions.json and plots median
-req/s against release date, one line per ecosystem. The PNG is a CI artifact, not a
-committed file - see ../.github/workflows/version-benchmark.yaml.
+Reads results-node-versions.json, results-python-versions.json (the sync `Client`) and
+results-python-async-versions.json (the async `AsyncClient`), and plots median req/s
+against release date, one line per client. Node's `fetch()` and Python's `AsyncClient`
+both bridge each call through an event loop; the sync `Client` doesn't - splitting
+Python's two clients out shows how much of the npm/PyPI gap that bridge accounts for.
+The PNG is a CI artifact, not a committed file - see ../.github/workflows/version-benchmark.yaml.
 """
 
 from __future__ import annotations
@@ -28,8 +31,9 @@ MUTED = '#898781'
 GRIDLINE = '#e1e0d9'
 SURFACE = '#fcfcfb'
 SERIES = {
-    'node': {'label': 'npm (Node.js)', 'color': '#2a78d6'},
-    'python': {'label': 'PyPI (Python)', 'color': '#eb6834'},
+    ('node', None): {'label': 'npm (Node.js)', 'color': '#2a78d6'},
+    ('python', 'sync'): {'label': 'PyPI (Python, sync)', 'color': '#eb6834'},
+    ('python', 'async'): {'label': 'PyPI (Python, async)', 'color': '#1baf7a'},
 }
 
 
@@ -49,7 +53,7 @@ def plot(reports: list[dict], out: Path) -> None:
     max_rate = max(point['rpsMedian'] for report in reports for point in report['results'])
 
     for report in reports:
-        series = SERIES[report['ecosystem']]
+        series = SERIES[(report['ecosystem'], report.get('variant'))]
         points = sorted(report['results'], key=lambda r: r['publishedAt'])
         dates = [datetime.fromisoformat(p['publishedAt'].replace('Z', '+00:00')) for p in points]
         rates = [p['rpsMedian'] for p in points]
@@ -95,10 +99,13 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--node', type=Path, default=HERE / 'results-node-versions.json')
     parser.add_argument('--python', type=Path, default=HERE / 'results-python-versions.json')
+    parser.add_argument('--python-async', type=Path,
+                         default=HERE / 'results-python-async-versions.json')
     parser.add_argument('--out', type=Path, default=HERE / 'version-chart.png')
     args = parser.parse_args()
 
-    reports = [report for report in (load(args.node), load(args.python)) if report is not None]
+    reports = [report for report in (load(args.node), load(args.python), load(args.python_async))
+               if report is not None]
     if not reports:
         raise SystemExit('neither results file has any results; nothing to chart')
 

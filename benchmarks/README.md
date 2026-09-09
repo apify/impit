@@ -59,12 +59,16 @@ Add an entry to `CLIENTS`: how to build it, how to issue one request, and how to
 [`node/bench-versions.mjs`](node/bench-versions.mjs) and
 [`python/bench_versions.py`](python/bench_versions.py) run the same measurement across the last N
 published releases of impit itself (from npm and PyPI respectively), to track throughput across
-versions rather than against other clients:
+versions rather than against other clients. The Python script measures both the sync `Client` and
+the async `AsyncClient`, since `AsyncClient` bridges each call through an asyncio event loop the way
+Node's Promise-returning `fetch()` does - separating the two shows how much of the npm/PyPI gap is
+that bridge rather than the underlying Rust client:
 
 ```bash
-node node/bench-versions.mjs                                 # writes results-node-versions.json
-python/.venv/bin/python python/bench_versions.py              # writes results-python-versions.json
-python/.venv/bin/python chart-versions.py                     # writes version-chart.png
+node node/bench-versions.mjs   # writes results-node-versions.json
+python/.venv/bin/python python/bench_versions.py   # writes results-python-versions.json (sync) and
+                                                    # results-python-async-versions.json (async)
+python/.venv/bin/python chart-versions.py          # writes version-chart.png
 ```
 
 `--versions` picks how many releases to compare (default 5); `--requests`, `--runs` and `--warmup`

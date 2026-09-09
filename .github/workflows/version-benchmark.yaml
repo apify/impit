@@ -82,3 +82,4 @@ jobs:
             benchmarks/version-chart.png
             benchmarks/results-node-versions.json
             benchmarks/results-python-versions.json
+            benchmarks/results-python-async-versions.json
