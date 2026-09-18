@@ -1,7 +1,10 @@
 import { spawn } from 'node:child_process';
 import { mkdtemp, readdir, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const here = dirname(fileURLToPath(import.meta.url));
 
 export function parseArgs(argv, defaults) {
   const out = { ...defaults };
@@ -64,15 +67,21 @@ function run(command, args, options = {}) {
   });
 }
 
+/** `npm install`s `pkg@version` into a fresh temp dir and returns its path. */
+export async function installPackage(pkg, version) {
+  const dir = await mkdtemp(join(tmpdir(), 'impit-bench-install-'));
+  await run('npm', [
+    'install', `${pkg}@${version}`,
+    '--prefix', dir,
+    '--no-save', '--no-audit', '--no-fund', '--loglevel', 'error',
+  ]);
+  return dir;
+}
+
 /** Bytes a fresh `npm install <pkg>` drops on disk, transitive dependencies included. */
 export async function installSize(pkg, version) {
-  const dir = await mkdtemp(join(tmpdir(), 'impit-bench-size-'));
+  const dir = await installPackage(pkg, version);
   try {
-    await run('npm', [
-      'install', `${pkg}@${version}`,
-      '--prefix', dir,
-      '--no-save', '--no-audit', '--no-fund', '--loglevel', 'error',
-    ]);
     return await treeSize(join(dir, 'node_modules'));
   } finally {
     await rm(dir, { recursive: true, force: true });
@@ -81,4 +90,21 @@ export async function installSize(pkg, version) {
 
 export function formatMB(bytes) {
   return `${(bytes / 1e6).toFixed(1)} MB`;
+}
+
+/** Spawns the shared HTTP/2 origin (../server.mjs) in its own process and resolves once it prints its URL. */
+export function spawnOrigin(bodyBytes) {
+  const child = spawn(process.execPath, [join(here, 'server.mjs')], {
+    env: { ...process.env, PORT: '0', BODY_BYTES: String(bodyBytes) },
+    stdio: ['ignore', 'pipe', 'inherit'],
+  });
+  return new Promise((resolve, reject) => {
+    let buffered = '';
+    child.stdout.on('data', (chunk) => {
+      buffered += chunk;
+      const newline = buffered.indexOf('\n');
+      if (newline !== -1) resolve({ child, url: buffered.slice(0, newline) });
+    });
+    child.on('exit', (code) => reject(new Error(`server exited with ${code} before listening`)));
+  });
 }

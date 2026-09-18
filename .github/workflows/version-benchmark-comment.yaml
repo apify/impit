@@ -1,0 +1,90 @@
+name: Comment the impit version chart
+
+on:
+  workflow_run:
+    workflows: [Compare impit versions]
+    types: [completed]
+
+permissions:
+  contents: read
+  actions: read # to download the artifact from the triggering workflow_run
+
+jobs:
+  comment:
+    name: Comment on the pull request
+    # A workflow_run job always runs the copy of this file from the default branch,
+    # never from the triggering run's head ref - unlike a second job gated by
+    # `if: github.event_name == 'pull_request'` directly in version-benchmark.yaml,
+    # which pull_request runs the workflow file from the pull request's own branch.
+    # Since that workflow's `paths` filter includes its own file, a pull request
+    # editing it would otherwise control the steps that see this job's push token.
+    # See https://securitylab.github.com/resources/github-actions-preventing-pwn-requests/
+    if: github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: master
+          token: ${{ secrets.APIFY_SERVICE_ACCOUNT_GITHUB_TOKEN }}
+
+      - name: Download the chart
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: version-chart
+          path: downloaded
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Find the pull request
+        id: pr
+        env:
+          GH_TOKEN: ${{ secrets.APIFY_SERVICE_ACCOUNT_GITHUB_TOKEN }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          number=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${HEAD_SHA}/pulls" \
+            --jq '[.[] | select(.state == "open")][0].number')
+          echo "number=$number" >> "$GITHUB_OUTPUT"
+
+      - name: Publish the chart and comment on the pull request
+        if: steps.pr.outputs.number
+        env:
+          GH_TOKEN: ${{ secrets.APIFY_SERVICE_ACCOUNT_GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          test -f downloaded/version-chart.png || { echo 'the artifact did not unpack where expected'; exit 1; }
+
+          versions=$(jq '.results | length' downloaded/results-node-versions.json)
+
+          # The chart is published to its own branch instead of the pull request,
+          # so a raw.githubusercontent.com URL can be embedded in a comment -
+          # GitHub strips data: URIs from comment markdown, and the pull request
+          # itself should not carry a generated PNG as one of its files.
+          git config user.name 'apify-service-account'
+          git config user.email 'apify-service-account@users.noreply.github.com'
+          git fetch origin benchmarks/version-chart-assets || true
+          if git show-ref --verify --quiet refs/remotes/origin/benchmarks/version-chart-assets; then
+            git checkout -B benchmarks/version-chart-assets origin/benchmarks/version-chart-assets
+          else
+            git checkout --orphan benchmarks/version-chart-assets
+            git rm -rf . > /dev/null
+          fi
+
+          filename="pr-${PR_NUMBER}.png"
+          mv downloaded/version-chart.png "$filename"
+          git add "$filename"
+          git commit -m "chore: publish version benchmark chart for #${PR_NUMBER}"
+          git push origin benchmarks/version-chart-assets
+
+          url="https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/benchmarks/version-chart-assets/${filename}?run=${RUN_ID}"
+          {
+            echo '### impit version comparison'
+            echo
+            echo "Median throughput of the last $versions npm and PyPI releases of impit."
+            echo
+            echo "![impit version comparison]($url)"
+          } > comment.md
+
+          gh pr comment "$PR_NUMBER" --body-file comment.md --edit-last --create-if-none \
+            || gh pr comment "$PR_NUMBER" --body-file comment.md
