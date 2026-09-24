@@ -53,7 +53,7 @@ jobs:
           node-version: 24
 
       - name: Install pnpm and dependencies
-        uses: apify/actions/pnpm-install@v1.5.0
+        uses: apify/actions/pnpm-install@v1.6.1
         with:
           working-directory: impit-node
 
@@ -79,7 +79,7 @@ jobs:
           python-version: 3.x
 
       - name: Set up uv package manager
-        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
 
       - name: Disable automatic `uv` builds
         run: sed -i '/^\[tool\.uv\]$/a package = false' pyproject.toml
