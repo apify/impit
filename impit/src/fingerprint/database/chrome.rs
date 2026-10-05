@@ -137,6 +137,7 @@ pub mod chrome_151 {
             // 15663105, which is what the capture shows on the wire.
             initial_connection_window_size: Some(15_728_640),
             max_header_list_size: Some(262_144),
+            header_table_size: Some(65_536),
         }
     }
 
@@ -278,6 +279,7 @@ pub mod chrome_142 {
             initial_stream_window_size: Some(6_291_456),
             initial_connection_window_size: Some(15_663_105),
             max_header_list_size: Some(262_144),
+            header_table_size: Some(65_536),
         }
     }
 
@@ -419,6 +421,7 @@ pub mod chrome_136 {
             initial_stream_window_size: Some(6_291_456),
             initial_connection_window_size: Some(15_663_105),
             max_header_list_size: Some(262_144),
+            header_table_size: Some(65_536),
         }
     }
 
@@ -554,6 +557,7 @@ pub mod chrome_133 {
             initial_stream_window_size: Some(6_291_456),
             initial_connection_window_size: Some(15_663_105),
             max_header_list_size: Some(262_144),
+            header_table_size: Some(65_536),
         }
     }
 
@@ -689,6 +693,7 @@ pub mod chrome_124 {
             initial_stream_window_size: Some(6_291_456),
             initial_connection_window_size: Some(15_663_105),
             max_header_list_size: Some(262_144),
+            header_table_size: Some(65_536),
         }
     }
 
@@ -827,6 +832,7 @@ pub mod chrome_131 {
             initial_stream_window_size: Some(6_291_456),
             initial_connection_window_size: Some(15_663_105),
             max_header_list_size: Some(262_144),
+            header_table_size: Some(65_536),
         }
     }
 
@@ -959,6 +965,7 @@ pub mod chrome_100 {
             initial_stream_window_size: Some(6_291_456),
             initial_connection_window_size: Some(15_663_105),
             max_header_list_size: Some(262_144),
+            header_table_size: Some(65_536),
         }
     }
 
@@ -1260,6 +1267,7 @@ pub mod chrome_125 {
             initial_stream_window_size: Some(6_291_456),
             initial_connection_window_size: Some(15_663_105),
             max_header_list_size: Some(262_144),
+            header_table_size: Some(65_536),
         }
     }
 
