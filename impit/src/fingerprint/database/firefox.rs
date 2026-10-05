@@ -121,7 +121,7 @@ pub mod firefox_128 {
                 ":status".to_string(),
             ],
             initial_stream_window_size: Some(131_072),
-            initial_connection_window_size: Some(12_517_377),
+            initial_connection_window_size: Some(12_582_912),
             max_header_list_size: None,
             header_table_size: Some(65_536),
         }
@@ -263,7 +263,7 @@ pub mod firefox_133 {
                 ":status".to_string(),
             ],
             initial_stream_window_size: Some(131_072),
-            initial_connection_window_size: Some(12_517_377),
+            initial_connection_window_size: Some(12_582_912),
             max_header_list_size: None,
             header_table_size: Some(65_536),
         }
@@ -410,7 +410,7 @@ pub mod firefox_135 {
                 ":status".to_string(),
             ],
             initial_stream_window_size: Some(131_072),
-            initial_connection_window_size: Some(12_517_377),
+            initial_connection_window_size: Some(12_582_912),
             max_header_list_size: None,
             header_table_size: Some(65_536),
         }

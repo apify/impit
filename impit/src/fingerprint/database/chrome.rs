@@ -277,7 +277,7 @@ pub mod chrome_142 {
                 ":status".to_string(),
             ],
             initial_stream_window_size: Some(6_291_456),
-            initial_connection_window_size: Some(15_663_105),
+            initial_connection_window_size: Some(15_728_640),
             max_header_list_size: Some(262_144),
             header_table_size: Some(65_536),
         }
@@ -419,7 +419,7 @@ pub mod chrome_136 {
                 ":status".to_string(),
             ],
             initial_stream_window_size: Some(6_291_456),
-            initial_connection_window_size: Some(15_663_105),
+            initial_connection_window_size: Some(15_728_640),
             max_header_list_size: Some(262_144),
             header_table_size: Some(65_536),
         }
@@ -555,7 +555,7 @@ pub mod chrome_133 {
                 ":status".to_string(),
             ],
             initial_stream_window_size: Some(6_291_456),
-            initial_connection_window_size: Some(15_663_105),
+            initial_connection_window_size: Some(15_728_640),
             max_header_list_size: Some(262_144),
             header_table_size: Some(65_536),
         }
@@ -691,7 +691,7 @@ pub mod chrome_124 {
                 ":status".to_string(),
             ],
             initial_stream_window_size: Some(6_291_456),
-            initial_connection_window_size: Some(15_663_105),
+            initial_connection_window_size: Some(15_728_640),
             max_header_list_size: Some(262_144),
             header_table_size: Some(65_536),
         }
@@ -830,7 +830,7 @@ pub mod chrome_131 {
                 ":status".to_string(),
             ],
             initial_stream_window_size: Some(6_291_456),
-            initial_connection_window_size: Some(15_663_105),
+            initial_connection_window_size: Some(15_728_640),
             max_header_list_size: Some(262_144),
             header_table_size: Some(65_536),
         }
@@ -963,7 +963,7 @@ pub mod chrome_100 {
                 ":status".to_string(),
             ],
             initial_stream_window_size: Some(6_291_456),
-            initial_connection_window_size: Some(15_663_105),
+            initial_connection_window_size: Some(15_728_640),
             max_header_list_size: Some(262_144),
             header_table_size: Some(65_536),
         }
@@ -1265,7 +1265,7 @@ pub mod chrome_125 {
                 ":status".to_string(),
             ],
             initial_stream_window_size: Some(6_291_456),
-            initial_connection_window_size: Some(15_663_105),
+            initial_connection_window_size: Some(15_728_640),
             max_header_list_size: Some(262_144),
             header_table_size: Some(65_536),
         }
