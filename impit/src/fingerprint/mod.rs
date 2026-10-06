@@ -106,6 +106,7 @@ pub struct Http2Fingerprint {
     pub initial_connection_window_size: Option<u32>,
     pub max_header_list_size: Option<u32>,
     pub header_table_size: Option<u32>,
+    pub max_concurrent_streams: Option<u32>,
 }
 
 /// TLS extensions configuration.

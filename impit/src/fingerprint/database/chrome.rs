@@ -138,6 +138,7 @@ pub mod chrome_151 {
             initial_connection_window_size: Some(15_728_640),
             max_header_list_size: Some(262_144),
             header_table_size: Some(65_536),
+            max_concurrent_streams: None,
         }
     }
 
@@ -280,6 +281,7 @@ pub mod chrome_142 {
             initial_connection_window_size: Some(15_728_640),
             max_header_list_size: Some(262_144),
             header_table_size: Some(65_536),
+            max_concurrent_streams: None,
         }
     }
 
@@ -422,6 +424,7 @@ pub mod chrome_136 {
             initial_connection_window_size: Some(15_728_640),
             max_header_list_size: Some(262_144),
             header_table_size: Some(65_536),
+            max_concurrent_streams: None,
         }
     }
 
@@ -558,6 +561,7 @@ pub mod chrome_133 {
             initial_connection_window_size: Some(15_728_640),
             max_header_list_size: Some(262_144),
             header_table_size: Some(65_536),
+            max_concurrent_streams: None,
         }
     }
 
@@ -694,6 +698,7 @@ pub mod chrome_124 {
             initial_connection_window_size: Some(15_728_640),
             max_header_list_size: Some(262_144),
             header_table_size: Some(65_536),
+            max_concurrent_streams: None,
         }
     }
 
@@ -833,6 +838,7 @@ pub mod chrome_131 {
             initial_connection_window_size: Some(15_728_640),
             max_header_list_size: Some(262_144),
             header_table_size: Some(65_536),
+            max_concurrent_streams: None,
         }
     }
 
@@ -966,6 +972,7 @@ pub mod chrome_100 {
             initial_connection_window_size: Some(15_728_640),
             max_header_list_size: Some(262_144),
             header_table_size: Some(65_536),
+            max_concurrent_streams: Some(1_000),
         }
     }
 
@@ -1064,7 +1071,7 @@ pub mod chrome_107 {
             "Chrome",
             "107",
             chrome_100::tls_fingerprint(),
-            chrome_100::http2_fingerprint(), // TODO Chrome 107 uses different HTTP/2 settings
+            chrome_100::http2_fingerprint(),
             headers(),
         )
     }
@@ -1097,7 +1104,7 @@ pub mod chrome_110 {
             "Chrome",
             "110",
             chrome_100::tls_fingerprint(),
-            chrome_100::http2_fingerprint(), // TODO Chrome 110 uses different HTTP/2 settings
+            chrome_100::http2_fingerprint(),
             headers(),
         )
     }
@@ -1130,7 +1137,7 @@ pub mod chrome_116 {
             "Chrome",
             "116",
             chrome_100::tls_fingerprint(),
-            chrome_100::http2_fingerprint(), // TODO Chrome 116 uses different HTTP/2 settings
+            chrome_100::http2_fingerprint(),
             headers(),
         )
     }
@@ -1268,6 +1275,7 @@ pub mod chrome_125 {
             initial_connection_window_size: Some(15_728_640),
             max_header_list_size: Some(262_144),
             header_table_size: Some(65_536),
+            max_concurrent_streams: None,
         }
     }
 

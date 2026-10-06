@@ -133,6 +133,7 @@ pub mod ios_18 {
             initial_connection_window_size: Some(10_485_760),
             max_header_list_size: None,
             header_table_size: None,
+            max_concurrent_streams: Some(100),
         }
     }
 

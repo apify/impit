@@ -124,6 +124,7 @@ pub mod firefox_128 {
             initial_connection_window_size: Some(12_582_912),
             max_header_list_size: None,
             header_table_size: Some(65_536),
+            max_concurrent_streams: None,
         }
     }
 
@@ -266,6 +267,7 @@ pub mod firefox_133 {
             initial_connection_window_size: Some(12_582_912),
             max_header_list_size: None,
             header_table_size: Some(65_536),
+            max_concurrent_streams: None,
         }
     }
 
@@ -413,6 +415,7 @@ pub mod firefox_135 {
             initial_connection_window_size: Some(12_582_912),
             max_header_list_size: None,
             header_table_size: Some(65_536),
+            max_concurrent_streams: None,
         }
     }
 
