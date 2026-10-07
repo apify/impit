@@ -176,7 +176,7 @@ jobs:
 
       - name: pytest
         if: ${{ !startsWith(matrix.platform.target, 'x86') }}
-        uses: uraimo/run-on-arch-action@40b42d17c62e10fdf2ddf38bd8734352ecef4b2f # v3
+        uses: uraimo/run-on-arch-action@1e2c619f81e6d8609845ea1d2f443a778df1ac68 # v3
         with:
           arch: ${{ matrix.platform.target }}
           distro: alpine_latest
