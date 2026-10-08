@@ -32,7 +32,7 @@ jobs:
       - name: Copy redirect
         run: cp impit/docs/index.html target/doc/index.html
       - name: Upload artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           path: target/doc/
           name: rustdoc
@@ -61,7 +61,7 @@ jobs:
         run: cd impit-node && pnpm run docs
 
       - name: Upload artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           path: impit-node/docs/
           name: typedoc
@@ -105,7 +105,7 @@ jobs:
           uv run make html
 
       - name: Upload artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           path: impit-python/docs/_build/html
           name: sphinx-doc
