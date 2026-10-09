@@ -37,6 +37,8 @@ fn shared_http2_fingerprint() -> Http2Fingerprint {
         // Connection window is also increased to 16 MiB via WINDOW_UPDATE
         initial_connection_window_size: Some(16_777_216),
         max_header_list_size: None,
+        header_table_size: None,
+        max_concurrent_streams: None,
     }
 }
 

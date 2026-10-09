@@ -258,6 +258,14 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
             if let Some(max_size) = fingerprint.http2.max_header_list_size {
                 client = client.http2_max_header_list_size(max_size);
             }
+
+            if let Some(size) = fingerprint.http2.header_table_size {
+                client = client.http2_header_table_size(size);
+            }
+
+            if let Some(max) = fingerprint.http2.max_concurrent_streams {
+                client = client.http2_max_concurrent_streams(max);
+            }
         }
 
         if config.max_http_version == Version::HTTP_3 {

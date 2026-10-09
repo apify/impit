@@ -10,8 +10,9 @@ members = [
 [patch.crates-io]
 h2 = { git = "https://github.com/apify/h2", rev = "7f393a728a8db07cabb1b78d2094772b33943b9a" }
 rustls = { git = "https://github.com/apify/rustls", rev="b158c57cf02dcae81c11a73389c599269bb74621" }
-tower-http = { git = "https://github.com/apify/tower-http", rev="f9efc0d9193e774d33aedc1022b922efefc22052" }
-hyper-util = { git = "https://github.com/apify/hyper-util", rev="9b7795dfd7158fc55e7c84b65bf1dae1d2dea67d" }
+tower-http = { git = "https://github.com/apify/tower-http", rev="4d96dbd81f86559c38cf76b8ce671089544a26e3" }
+hyper-util = { git = "https://github.com/apify/hyper-util", rev="401e6fb99bb6bd4956a0fafca39f4b7b37be8a0a" }
+reqwest = { git = "https://github.com/seanmonstar/reqwest", rev="2230ed3945fb2908692b88dad1dcd06db9fb2ca6" }
 
 [profile.release]
 strip = true  # Automatically strip symbols from the binary.

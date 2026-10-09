@@ -132,6 +132,8 @@ pub mod ios_18 {
             // 65_535 (h2 default) + 10_420_225 WINDOW_UPDATE = 10_485_760.
             initial_connection_window_size: Some(10_485_760),
             max_header_list_size: None,
+            header_table_size: None,
+            max_concurrent_streams: Some(100),
         }
     }
 
