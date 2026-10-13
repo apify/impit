@@ -1,0 +1,5 @@
+# Copy of the workspace-level `.cargo/config.toml`. Maturin ships it at the root of the sdist (see `include`
+# in `pyproject.toml`), so builds from the sdist get the `reqwest_unstable` cfg that reqwest's `http3`
+# feature requires.
+[build]
+rustflags = "--cfg reqwest_unstable"
