@@ -3,6 +3,25 @@
 All notable changes to this project will be documented in this file.
 
 
+## py-0.15.0 - 2026-10-13
+
+#### Features
+
+- Send HTTP/2 `HEADER_TABLE_SIZE` and `MAX_CONCURRENT_STREAMS` from browser fingerprints (#560)
+  - Uses the new reqwest HTTP/2 settings (pinned to git until released) and fixes the WINDOW_UPDATE of older Chrome and Firefox profiles.
+
+
+- Add support for Python 3.15 (#569)
+  - Builds `impit-python` wheels for CPython 3.15 and 3.15t, runs the Python code checks on 3.15, and adds the 3.15 classifier.
+
+
+#### Security
+
+- Security bump — urllib3 2.8.0 (impit-python) (#558)
+  - ## Summary Dependency sweep — security bumps (within existing ranges): - `urllib3` 2.7.0 → 2.8.0 (high) — fixes [alert #124](https://github.com/apify/impit/security/dependabot/124), [alert #125](https://github.com/apify/impit/security/dependabot/125), [alert #126](https://github.com/apify/impit/security/dependabot/126)  🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+
+
 ## py-0.14.1 - 2026-09-07
 
 #### Bug Fixes
