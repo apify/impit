@@ -5,7 +5,7 @@ use impit::{
   impit::{ImpitBuilder, RedirectBehavior},
 };
 
-use napi::bindgen_prelude::Object;
+use napi::bindgen_prelude::{Either, Null, Object};
 use napi_derive::napi;
 
 use crate::cookies::NodeCookieJar;
@@ -71,8 +71,8 @@ pub struct ImpitOptions<'a> {
   ///
   /// @default `undefined` (no proxy)
   pub proxy_url: Option<String>,
-  /// Default timeout for this Impit instance in milliseconds.
-  pub timeout: Option<u32>,
+  /// Default timeout for this Impit instance in milliseconds, or `null` to disable the timeout.
+  pub timeout: Option<Either<u32, Null>>,
   /// Enable HTTP/3 support.
   ///
   /// **Warning:** Proxies are not supported when HTTP/3 is enabled.
@@ -168,7 +168,10 @@ impl ImpitOptions<'_> {
       config = config.with_proxy(proxy_url);
     }
     if let Some(timeout) = self.timeout {
-      config = config.with_default_timeout(Duration::from_millis(timeout.into()));
+      config = config.with_default_timeout(match timeout {
+        Either::A(millis) => Duration::from_millis(millis.into()),
+        Either::B(_) => Duration::MAX,
+      });
     }
     if let Some(http3) = self.http3 {
       if http3 {

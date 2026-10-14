@@ -323,8 +323,8 @@ export interface ImpitOptions {
    * @default `undefined` (no proxy)
    */
   proxyUrl?: string
-  /** Default timeout for this Impit instance in milliseconds. */
-  timeout?: number
+  /** Default timeout for this Impit instance in milliseconds, or `null` to disable the timeout. */
+  timeout?: number | null
   /**
    * Enable HTTP/3 support.
    *
