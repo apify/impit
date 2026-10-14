@@ -1,6 +1,6 @@
 use bytes::Bytes;
 use futures_util::{Stream, TryStreamExt};
-use napi::bindgen_prelude::{sys, FromNapiValue, ReadableStream, Reader, Uint8Array};
+use napi::bindgen_prelude::{sys, Either, FromNapiValue, Null, ReadableStream, Reader, Uint8Array};
 
 use napi_derive::napi;
 
@@ -68,8 +68,8 @@ pub struct RequestInit {
   /// Set by the JS wrapper instead of `body` when the body is a stream. Takes precedence over `body`.
   #[napi(skip_typescript)]
   pub body_stream: Option<BodyStream>,
-  /// Request timeout in milliseconds. Overrides the Impit-wide timeout option from {@link ImpitOptions.timeout}.
-  pub timeout: Option<u32>,
+  /// Request timeout in milliseconds, or `null` to disable the timeout. Overrides the Impit-wide timeout option from {@link ImpitOptions.timeout}.
+  pub timeout: Option<Either<u32, Null>>,
   /// Force the request to use HTTP/3. If the server doesn't expect HTTP/3 or the Impit instance doesn't have HTTP/3 enabled (via the {@link ImpitOptions.http3} option), the request will fail.
   pub force_http3: Option<bool>,
   /// Abort signal to cancel the request.

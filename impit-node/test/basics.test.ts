@@ -669,6 +669,27 @@ describe.each([
         });
     });
 
+    describe('timeout', () => {
+        test('`null` disables the client timeout for a request', async () => {
+            const server = await getServer();
+            const url = `http://127.0.0.1:${(server?.address() as AddressInfo).port}/delay/500`;
+            const shortTimeoutImpit = new Impit({ browser, timeout: 100 });
+
+            await expect(shortTimeoutImpit.fetch(url).then((x) => x.text())).rejects.toThrow();
+
+            const response = await shortTimeoutImpit.fetch(url, { timeout: null });
+            await expect(response.text()).resolves.toContain('Body sent after delay.');
+        });
+
+        test('`null` disables the client-wide timeout', async () => {
+            const server = await getServer();
+            const url = `http://127.0.0.1:${(server?.address() as AddressInfo).port}/delay/500`;
+
+            const response = await new Impit({ browser, timeout: null }).fetch(url);
+            await expect(response.text()).resolves.toContain('Body sent after delay.');
+        });
+    });
+
     describe('AbortSignal', () => {
         test('aborts immediately if signal is already aborted', async () => {
             const controller = new AbortController();

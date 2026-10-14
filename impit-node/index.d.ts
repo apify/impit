@@ -323,8 +323,8 @@ export interface ImpitOptions {
    * @default `undefined` (no proxy)
    */
   proxyUrl?: string
-  /** Default timeout for this Impit instance in milliseconds. */
-  timeout?: number
+  /** Default timeout for this Impit instance in milliseconds, or `null` to disable the timeout. */
+  timeout?: number | null
   /**
    * Enable HTTP/3 support.
    *
@@ -411,8 +411,8 @@ export interface RequestInit {
   headers?: Headers | Record<string, string> | [string, string][]
   /** Request body. Can be a string, Buffer, ArrayBuffer, TypedArray, DataView, Blob, File, URLSearchParams, FormData or ReadableStream. */
   body?: string | ArrayBuffer | Uint8Array | DataView | Blob | File | URLSearchParams | FormData | ReadableStream
-  /** Request timeout in milliseconds. Overrides the Impit-wide timeout option from {@link ImpitOptions.timeout}. */
-  timeout?: number
+  /** Request timeout in milliseconds, or `null` to disable the timeout. Overrides the Impit-wide timeout option from {@link ImpitOptions.timeout}. */
+  timeout?: number | null
   /** Force the request to use HTTP/3. If the server doesn't expect HTTP/3 or the Impit instance doesn't have HTTP/3 enabled (via the {@link ImpitOptions.http3} option), the request will fail. */
   forceHttp3?: boolean
   /** Abort signal to cancel the request. */

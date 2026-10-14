@@ -5,7 +5,10 @@ use impit::{
   impit::Impit,
   request::{ImpitBody, RequestOptions},
 };
-use napi::{bindgen_prelude::ObjectFinalize, Env};
+use napi::{
+  bindgen_prelude::{Either, ObjectFinalize},
+  Env,
+};
 use napi_derive::napi;
 
 mod abortable_stream;
@@ -132,7 +135,10 @@ impl ImpitWrapper {
 
     let request_options = Some(RequestOptions {
       headers: headers.unwrap_or_default(),
-      timeout: timeout.map(|timeout| Some(Duration::from_millis(timeout.into()))),
+      timeout: timeout.map(|timeout| match timeout {
+        Either::A(millis) => Some(Duration::from_millis(millis.into())),
+        Either::B(_) => None,
+      }),
       http3_prior_knowledge: force_http3.unwrap_or_default(),
     });
 
