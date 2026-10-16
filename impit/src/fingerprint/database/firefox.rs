@@ -20,14 +20,17 @@ pub mod firefox_128 {
     /// Firefox 128 TLS fingerprint
     fn tls_fingerprint() -> TlsFingerprint {
         TlsFingerprint::new(
-            // Cipher suites in Firefox 128 preference order (17 suites)
-            // TLS 1.3 cipher suites first (including fake ones for fingerprinting), then TLS 1.2
+            // Cipher suites in real Firefox 128's order (17 suites)
             vec![
-                // Real TLS 1.3 cipher suites
                 CipherSuite::TLS13_AES_128_GCM_SHA256,
                 CipherSuite::TLS13_CHACHA20_POLY1305_SHA256,
                 CipherSuite::TLS13_AES_256_GCM_SHA384,
-                // Fake cipher suites for TLS 1.3 fingerprinting (advertised but not used)
+                CipherSuite::TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+                CipherSuite::TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+                CipherSuite::TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
+                CipherSuite::TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
+                CipherSuite::TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+                CipherSuite::TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
                 CipherSuite::TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
                 CipherSuite::TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
                 CipherSuite::TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
@@ -36,19 +39,13 @@ pub mod firefox_128 {
                 CipherSuite::TLS_RSA_WITH_AES_256_GCM_SHA384,
                 CipherSuite::TLS_RSA_WITH_AES_128_CBC_SHA,
                 CipherSuite::TLS_RSA_WITH_AES_256_CBC_SHA,
-                // Real TLS 1.2 cipher suites
-                CipherSuite::TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-                CipherSuite::TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-                CipherSuite::TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
-                CipherSuite::TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
-                CipherSuite::TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
-                CipherSuite::TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
             ],
             // Key exchange groups (Firefox includes FFDHE groups)
             vec![
                 KeyExchangeGroup::X25519,
                 KeyExchangeGroup::Secp256r1,
                 KeyExchangeGroup::Secp384r1,
+                KeyExchangeGroup::Secp521r1,
                 KeyExchangeGroup::Ffdhe2048,
                 KeyExchangeGroup::Ffdhe3072,
             ],
@@ -87,14 +84,18 @@ pub mod firefox_128 {
                 vec![
                     ExtensionType::ServerName,
                     ExtensionType::ExtendedMasterSecret,
-                    ExtensionType::SessionTicket,
-                    ExtensionType::SignatureAlgorithms,
-                    ExtensionType::StatusRequest,
+                    ExtensionType::RenegotiationInfo,
                     ExtensionType::SupportedGroups,
+                    ExtensionType::EcPointFormats,
+                    ExtensionType::SessionTicket,
                     ExtensionType::ApplicationLayerProtocolNegotiation,
+                    ExtensionType::StatusRequest,
+                    ExtensionType::DelegatedCredentials,
                     ExtensionType::KeyShare,
-                    ExtensionType::PskKeyExchangeModes,
                     ExtensionType::SupportedVersions,
+                    ExtensionType::SignatureAlgorithms,
+                    ExtensionType::PskKeyExchangeModes,
+                    ExtensionType::RecordSizeLimit,
                 ],
             ),
             // ECH configuration (GREASE mode)
@@ -225,19 +226,24 @@ pub mod firefox_133 {
                 ]), // compress_certificate (all three algorithms)
                 false, // application_settings
                 true,  // delegated_credentials (Firefox uses this)
-                Some(4001), // record_size_limit (Firefox 133 uses 4001)
+                Some(16385), // record_size_limit (0x4001)
                 // Extension order (critical for fingerprinting)
                 vec![
                     ExtensionType::ServerName,
                     ExtensionType::ExtendedMasterSecret,
-                    ExtensionType::SessionTicket,
+                    ExtensionType::RenegotiationInfo,
                     ExtensionType::SupportedGroups,
+                    ExtensionType::EcPointFormats,
+                    ExtensionType::SessionTicket,
                     ExtensionType::ApplicationLayerProtocolNegotiation,
                     ExtensionType::StatusRequest,
+                    ExtensionType::DelegatedCredentials,
                     ExtensionType::KeyShare,
                     ExtensionType::SupportedVersions,
                     ExtensionType::SignatureAlgorithms,
                     ExtensionType::PskKeyExchangeModes,
+                    ExtensionType::RecordSizeLimit,
+                    ExtensionType::CompressCertificate,
                 ],
             ),
             // ECH configuration (GREASE mode)
@@ -372,20 +378,25 @@ pub mod firefox_135 {
                 ]), // compress_certificate (all three algorithms)
                 false, // application_settings
                 true, // delegated_credentials (Firefox uses this)
-                Some(4001), // record_size_limit (Firefox 135 uses 4001)
+                Some(16385), // record_size_limit (0x4001)
                 // Extension order (critical for fingerprinting)
                 vec![
                     ExtensionType::ServerName,
                     ExtensionType::ExtendedMasterSecret,
-                    ExtensionType::SessionTicket,
+                    ExtensionType::RenegotiationInfo,
                     ExtensionType::SupportedGroups,
+                    ExtensionType::EcPointFormats,
+                    ExtensionType::SessionTicket,
                     ExtensionType::ApplicationLayerProtocolNegotiation,
                     ExtensionType::StatusRequest,
+                    ExtensionType::DelegatedCredentials,
                     ExtensionType::SignedCertificateTimestamp,
                     ExtensionType::KeyShare,
                     ExtensionType::SupportedVersions,
                     ExtensionType::SignatureAlgorithms,
                     ExtensionType::PskKeyExchangeModes,
+                    ExtensionType::RecordSizeLimit,
+                    ExtensionType::CompressCertificate,
                 ],
             ),
             // ECH configuration (GREASE mode)
@@ -468,5 +479,143 @@ pub mod firefox_144 {
             ("priority".to_string(), "u=0, i".to_string()),
             ("te".to_string(), "trailers".to_string()),
         ]
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::tls::TlsConfig;
+    use std::sync::Arc;
+
+    // JA3 strings (before hashing) of real Firefox's cold TCP ClientHello, from decrypted Wireshark captures of
+    // Firefox 128, 133, 135 and 144 on Windows (October 2026). Firefox 144's is the same as 135's.
+    const JA3_128: &str = "771,4865-4867-4866-49195-49199-52393-52392-49196-49200-49162-49161-49171-49172-156-157-47-53,0-23-65281-10-11-35-16-5-34-51-43-13-45-28-65037,29-23-24-25-256-257,0";
+    const JA3_133: &str = "771,4865-4867-4866-49195-49199-52393-52392-49196-49200-49162-49161-49171-49172-156-157-47-53,0-23-65281-10-11-35-16-5-34-51-43-13-45-28-27-65037,4588-29-23-24-25-256-257,0";
+    const JA3_135: &str = "771,4865-4867-4866-49195-49199-52393-52392-49196-49200-49162-49161-49171-49172-156-157-47-53,0-23-65281-10-11-35-16-5-34-18-51-43-13-45-28-27-65037,4588-29-23-24-25-256-257,0";
+
+    /// The ClientHello that impit sends for `fingerprint`: legacy version, cipher suites, and each extension's type
+    /// and body in wire order.
+    fn client_hello(fingerprint: BrowserFingerprint) -> (u16, Vec<u16>, Vec<(u16, Vec<u8>)>) {
+        let mut builder = TlsConfig::builder();
+        builder.with_tls_fingerprint(fingerprint.tls);
+        let server_name = rustls::pki_types::ServerName::try_from("example.com").unwrap();
+        let mut conn =
+            rustls::ClientConnection::new(Arc::new(builder.build()), server_name).unwrap();
+        let mut record = Vec::new();
+        conn.write_tls(&mut record).unwrap();
+
+        // Skip the record (5) and handshake (4) headers.
+        let hello = &record[9..];
+        let u16_at = |i: usize| u16::from_be_bytes([hello[i], hello[i + 1]]);
+        let version = u16_at(0);
+        let mut i = 2 + 32; // legacy_version, random
+        i += 1 + usize::from(hello[i]); // legacy_session_id
+        let ciphers_end = i + 2 + usize::from(u16_at(i));
+        let ciphers = (i + 2..ciphers_end).step_by(2).map(u16_at).collect();
+        i = ciphers_end;
+        i += 1 + usize::from(hello[i]); // legacy_compression_methods
+        let end = i + 2 + usize::from(u16_at(i));
+        i += 2;
+        let mut extensions = Vec::new();
+        while i < end {
+            let body_end = i + 4 + usize::from(u16_at(i + 2));
+            extensions.push((u16_at(i), hello[i + 4..body_end].to_vec()));
+            i = body_end;
+        }
+        assert_eq!(i, end, "ClientHello extensions not parsed");
+        assert!(
+            extensions.iter().any(|(typ, _)| *typ == 0x0000),
+            "no server_name, ClientHello not parsed"
+        );
+        (version, ciphers, extensions)
+    }
+
+    /// The JA3 string (before hashing). Firefox sends no GREASE, so no value is skipped.
+    fn ja3(version: u16, ciphers: &[u16], extensions: &[(u16, Vec<u8>)]) -> String {
+        fn join(values: impl IntoIterator<Item = u16>) -> String {
+            values
+                .into_iter()
+                .map(|v| v.to_string())
+                .collect::<Vec<_>>()
+                .join("-")
+        }
+        let body = |typ: u16| {
+            extensions
+                .iter()
+                .find(|(t, _)| *t == typ)
+                .map_or(&[][..], |(_, body)| body.as_slice())
+        };
+        let groups = body(0x000a)
+            .get(2..)
+            .unwrap_or_default()
+            .chunks(2)
+            .map(|c| u16::from_be_bytes([c[0], c[1]]));
+        let point_formats = body(0x000b)
+            .get(1..)
+            .unwrap_or_default()
+            .iter()
+            .map(|&f| u16::from(f));
+        format!(
+            "{version},{},{},{},{}",
+            join(ciphers.iter().copied()),
+            join(extensions.iter().map(|(typ, _)| *typ)),
+            join(groups),
+            join(point_formats)
+        )
+    }
+
+    // Real Firefox sends its extensions in one fixed order (over TCP), so its JA3 is the same on every cold
+    // connection.
+    #[test]
+    fn firefox_profiles_send_real_firefox_ja3() {
+        let profiles = [
+            ("firefox_128", firefox_128::fingerprint(), JA3_128),
+            ("firefox_133", firefox_133::fingerprint(), JA3_133),
+            ("firefox_135", firefox_135::fingerprint(), JA3_135),
+            ("firefox_144", firefox_144::fingerprint(), JA3_135),
+        ];
+
+        let mut mismatches = Vec::new();
+        for (name, fingerprint, expected) in profiles {
+            for _ in 0..8 {
+                let (version, ciphers, extensions) = client_hello(fingerprint.clone());
+                let got = ja3(version, &ciphers, &extensions);
+                if got != expected {
+                    mismatches.push(format!("{name}: {got}"));
+                }
+            }
+        }
+        assert!(
+            mismatches.is_empty(),
+            "ClientHellos whose JA3 differs from real Firefox's:\n{}",
+            mismatches.join("\n")
+        );
+    }
+
+    #[test]
+    fn firefox_profiles_send_record_size_limit_16385() {
+        let profiles = [
+            ("firefox_128", firefox_128::fingerprint()),
+            ("firefox_133", firefox_133::fingerprint()),
+            ("firefox_135", firefox_135::fingerprint()),
+            ("firefox_144", firefox_144::fingerprint()),
+        ];
+
+        let mut wrong = Vec::new();
+        for (name, fingerprint) in profiles {
+            let (_, _, extensions) = client_hello(fingerprint);
+            let body = extensions
+                .into_iter()
+                .find(|(typ, _)| *typ == 0x001c)
+                .map(|(_, body)| body);
+            if body.as_deref() != Some(&[0x40, 0x01][..]) {
+                wrong.push(format!("{name}: {body:02x?}"));
+            }
+        }
+        assert!(
+            wrong.is_empty(),
+            "record_size_limit is not 16385 (0x4001): {wrong:?}"
+        );
     }
 }
