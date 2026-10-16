@@ -945,7 +945,8 @@ pub mod chrome_100 {
                     ExtensionType::SupportedVersions,
                     ExtensionType::CompressCertificate,
                     ExtensionType::ApplicationSettings,
-                    ExtensionType::Grease,
+                    // No trailing GREASE: rustls has one GREASE extension type, and repeating it
+                    // makes BoringSSL servers reject the ClientHello (#575).
                     ExtensionType::Padding,
                 ],
             )

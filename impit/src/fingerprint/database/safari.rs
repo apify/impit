@@ -105,7 +105,8 @@ pub mod ios_18 {
                     ExtensionType::PskKeyExchangeModes,
                     ExtensionType::SupportedVersions,
                     ExtensionType::CompressCertificate,
-                    ExtensionType::Grease,
+                    // No trailing GREASE: rustls has one GREASE extension type, and repeating it
+                    // makes BoringSSL servers reject the ClientHello (#575).
                 ],
             )
             .with_session_ticket(false),
