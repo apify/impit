@@ -269,6 +269,7 @@ export type Browser =  'chrome'|
 'firefox133'|
 'firefox135'|
 'firefox144'|
+'firefox158'|
 'okhttp'|
 'okhttp3'|
 'okhttp4'|
