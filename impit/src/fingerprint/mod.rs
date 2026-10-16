@@ -385,6 +385,10 @@ impl TlsFingerprint {
                     ExtensionType::PskKeyExchangeModes => Some(RustlsExtType::PSKKeyExchangeModes),
                     ExtensionType::SupportedVersions => Some(RustlsExtType::SupportedVersions),
                     ExtensionType::CompressCertificate => Some(RustlsExtType::CompressCertificate),
+                    ExtensionType::DelegatedCredentials => {
+                        Some(RustlsExtType::DelegatedCredentials)
+                    }
+                    ExtensionType::RecordSizeLimit => Some(RustlsExtType::RecordSizeLimit),
                     ExtensionType::ApplicationSettings => Some(RustlsExtType::ApplicationSettings),
                     ExtensionType::ExtendedMasterSecret => {
                         Some(RustlsExtType::ExtendedMasterSecret)

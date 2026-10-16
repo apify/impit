@@ -110,6 +110,8 @@ pub enum ExtensionType {
     RenegotiationInfo,
     SessionTicket,
     CompressCertificate,
+    DelegatedCredentials,
+    RecordSizeLimit,
     ApplicationSettings,
     EarlyDataExtension,
     Grease,
