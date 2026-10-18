@@ -411,7 +411,7 @@ impl ImpitPyResponse {
                         let content = response
                             .bytes()
                             .await
-                            .map_err(|_| ImpitPyError(impit::errors::ImpitError::NetworkError))?;
+                            .map_err(|error| ImpitPyError(ImpitError::from(error, None)))?;
 
                         Ok(Python::attach(|py| {
                             let mut slf_ref = slf.borrow_mut(py);
@@ -528,7 +528,7 @@ impl ImpitPyResponse {
                         response
                             .bytes()
                             .await
-                            .map_err(|_| ImpitPyError(impit::errors::ImpitError::NetworkError))
+                            .map_err(|error| ImpitPyError(ImpitError::from(error, None)))
                     })
                 })?;
 

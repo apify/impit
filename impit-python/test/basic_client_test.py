@@ -721,6 +721,21 @@ class TestStreamRequest:
 
         thread.join()
 
+    def test_read_truncated_body_raises_remote_protocol_error(self, browser: Browser) -> None:
+        port_holder = [0]
+        thread = threading.Thread(target=truncating_server, args=(port_holder,))
+        thread.start()
+        time.sleep(0.1)
+
+        impit = Client(browser=browser)
+
+        with impit.stream('GET', f'http://localhost:{port_holder[0]}/', timeout=5) as response:
+            assert response.status_code == 200
+            with pytest.raises(RemoteProtocolError):
+                response.read()
+
+        thread.join()
+
 
 def make_slow_server(port_holder: list[int], delay: float = 2.0) -> None:
     """Start a server in a daemon thread that waits `delay` seconds before responding."""
