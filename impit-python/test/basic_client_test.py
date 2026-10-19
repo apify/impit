@@ -524,6 +524,20 @@ class TestRequestBody:
         assert response.status_code == 200
         assert response.json()['form']['Impit-Test'] == '👾🕵🏻‍♂️🧑‍💻'
 
+    def test_form_keeps_custom_content_type(self, browser: Browser) -> None:
+        impit = Client(browser=browser)
+
+        with echoing_server() as port:
+            response = impit.post(
+                f'http://localhost:{port}/',
+                data={'Impit-Test': 'foo'},
+                headers={'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'},
+                timeout=5,
+            )
+
+        assert 'content-type: application/x-www-form-urlencoded; charset=utf-8\r\n' in response.text.lower()
+        assert response.text.endswith('Impit-Test=foo')
+
     def test_passing_binary_body(self, browser: Browser) -> None:
         impit = Client(browser=browser)
 
