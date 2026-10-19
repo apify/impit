@@ -611,6 +611,21 @@ class TestRequestBody:
         assert json.loads(response.text)['form']['Impit-Test'] == '👾🕵🏻‍♂️🧑‍💻'
 
     @pytest.mark.asyncio
+    async def test_form_keeps_custom_content_type(self, browser: Browser) -> None:
+        impit = AsyncClient(browser=browser)
+
+        with echoing_server() as port:
+            response = await impit.post(
+                f'http://localhost:{port}/',
+                data={'Impit-Test': 'foo'},
+                headers={'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'},
+                timeout=5,
+            )
+
+        assert 'content-type: application/x-www-form-urlencoded; charset=utf-8\r\n' in response.text.lower()
+        assert response.text.endswith('Impit-Test=foo')
+
+    @pytest.mark.asyncio
     async def test_passing_binary_body(self, browser: Browser) -> None:
         impit = AsyncClient(browser=browser)
 

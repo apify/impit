@@ -137,10 +137,16 @@ pub(crate) fn to_body(
         None => ImpitBody::Empty,
         Some(RequestBody::Bytes(bytes)) => bytes.into(),
         Some(RequestBody::Form(form)) => {
-            headers.get_or_insert_default().insert(
-                "Content-Type".to_string(),
-                "application/x-www-form-urlencoded".to_string(),
-            );
+            let headers = headers.get_or_insert_default();
+            if !headers
+                .keys()
+                .any(|name| name.eq_ignore_ascii_case("content-type"))
+            {
+                headers.insert(
+                    "Content-Type".to_string(),
+                    "application/x-www-form-urlencoded".to_string(),
+                );
+            }
             form_to_bytes(form).into()
         }
         Some(RequestBody::Text(text)) => text.into_bytes().into(),
