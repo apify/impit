@@ -9,7 +9,7 @@ mod safari;
 
 pub use chrome::{
     chrome_100, chrome_101, chrome_104, chrome_107, chrome_110, chrome_116, chrome_124, chrome_125,
-    chrome_131, chrome_133, chrome_136, chrome_142, chrome_151,
+    chrome_131, chrome_133, chrome_136, chrome_142, chrome_151, chrome_155,
 };
 pub use firefox::{firefox_128, firefox_133, firefox_135, firefox_144, firefox_158};
 pub use okhttp::{okhttp3, okhttp4, okhttp5};
@@ -22,8 +22,11 @@ mod tests {
     use crate::tls::TlsConfig;
     use std::sync::Arc;
 
-    /// Extension types of the ClientHello that impit sends for `fingerprint`, in wire order.
-    fn client_hello_extension_types(fingerprint: BrowserFingerprint) -> Vec<u16> {
+    /// The ClientHello that impit sends for `fingerprint`: legacy version, cipher suites, and each extension's type
+    /// and body in wire order.
+    pub(super) fn client_hello(
+        fingerprint: BrowserFingerprint,
+    ) -> (u16, Vec<u16>, Vec<(u16, Vec<u8>)>) {
         let mut builder = TlsConfig::builder();
         builder.with_tls_fingerprint(fingerprint.tls);
         let server_name = rustls::pki_types::ServerName::try_from("example.com").unwrap();
@@ -32,21 +35,36 @@ mod tests {
         let mut record = Vec::new();
         conn.write_tls(&mut record).unwrap();
 
-        // Skip the record (5) and handshake (4) headers, legacy_version (2) and random (32).
+        // Skip the record (5) and handshake (4) headers.
         let hello = &record[9..];
-        let u16_at = |i: usize| usize::from(u16::from_be_bytes([hello[i], hello[i + 1]]));
-        let mut i = 2 + 32;
+        let u16_at = |i: usize| u16::from_be_bytes([hello[i], hello[i + 1]]);
+        let version = u16_at(0);
+        let mut i = 2 + 32; // legacy_version, random
         i += 1 + usize::from(hello[i]); // legacy_session_id
-        i += 2 + u16_at(i); // cipher_suites
+        let ciphers_end = i + 2 + usize::from(u16_at(i));
+        let ciphers = (i + 2..ciphers_end).step_by(2).map(u16_at).collect();
+        i = ciphers_end;
         i += 1 + usize::from(hello[i]); // legacy_compression_methods
-        let end = i + 2 + u16_at(i);
+        let end = i + 2 + usize::from(u16_at(i));
         i += 2;
-        let mut types = Vec::new();
+        let mut extensions = Vec::new();
         while i < end {
-            types.push(u16_at(i) as u16);
-            i += 4 + u16_at(i + 2);
+            let body_end = i + 4 + usize::from(u16_at(i + 2));
+            extensions.push((u16_at(i), hello[i + 4..body_end].to_vec()));
+            i = body_end;
         }
-        types
+        assert_eq!(i, end, "ClientHello extensions not parsed");
+        assert!(
+            extensions.iter().any(|(typ, _)| *typ == 0x0000),
+            "no server_name, ClientHello not parsed"
+        );
+        (version, ciphers, extensions)
+    }
+
+    /// Extension types of the ClientHello that impit sends for `fingerprint`, in wire order.
+    fn client_hello_extension_types(fingerprint: BrowserFingerprint) -> Vec<u16> {
+        let (_, _, extensions) = client_hello(fingerprint);
+        extensions.into_iter().map(|(typ, _)| typ).collect()
     }
 
     // TLS 1.3 forbids repeating an extension type, and BoringSSL-based servers (Google, Cloudflare)
@@ -67,6 +85,7 @@ mod tests {
             ("chrome_136", chrome_136::fingerprint()),
             ("chrome_142", chrome_142::fingerprint()),
             ("chrome_151", chrome_151::fingerprint()),
+            ("chrome_155", chrome_155::fingerprint()),
             ("firefox_128", firefox_128::fingerprint()),
             ("firefox_133", firefox_133::fingerprint()),
             ("firefox_135", firefox_135::fingerprint()),
