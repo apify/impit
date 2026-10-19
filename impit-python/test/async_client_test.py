@@ -795,6 +795,21 @@ class TestStreamRequest:
         with pytest.raises(StreamClosed):
             _ = response.content
 
+    async def test_read_truncated_body_raises_remote_protocol_error(self, browser: Browser) -> None:
+        port_holder = [0]
+        thread = threading.Thread(target=truncating_server, args=(port_holder,))
+        thread.start()
+        await asyncio.sleep(0.1)
+
+        impit = AsyncClient(browser=browser)
+
+        async with impit.stream('GET', f'http://localhost:{port_holder[0]}/', timeout=5) as response:
+            assert response.status_code == 200
+            with pytest.raises(RemoteProtocolError):
+                await response.aread()
+
+        thread.join()
+
     async def test_truncated_stream_raises(self, browser: Browser) -> None:
         port_holder = [0]
         thread = threading.Thread(target=truncating_server, args=(port_holder,))
