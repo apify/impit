@@ -290,6 +290,7 @@ class Impit extends native.Impit {
         let url = initialUrl;
         let method = options.method || 'GET';
         let redirectCount = 0;
+        let hasCrossedOrigin = false;
         const maxRedirects = this.#maxRedirects;
         const followRedirects = redirect
             ? redirect === 'follow'
@@ -300,11 +301,25 @@ class Impit extends native.Impit {
             signal?.throwIfAborted();
 
             let headers = options.headers || [];
+            if (hasCrossedOrigin) {
+                headers = headers.filter(([k]) => {
+                    const name = k.toLowerCase();
+                    return name !== 'authorization' && name !== 'cookie';
+                });
+            }
 
             if (this.#cookieJar && !headers.some(([k]) => k.toLowerCase() === 'cookie')) {
                 const cookieHeader = await this.#getCookies(url);
                 if (cookieHeader) {
                     headers = [...headers, ['Cookie', cookieHeader]];
+                }
+            }
+
+            if (hasCrossedOrigin) {
+                // Empty request values suppress constructor defaults without sending empty headers.
+                headers.push(['Authorization', '']);
+                if (!headers.some(([k]) => k.toLowerCase() === 'cookie')) {
+                    headers.push(['Cookie', '']);
                 }
             }
 
@@ -343,7 +358,9 @@ class Impit extends native.Impit {
                         throw new Error(`Maximum redirect limit (${maxRedirects}) exceeded`);
                     }
 
-                    url = new URL(location, url).toString();
+                    const nextUrl = new URL(location, url);
+                    hasCrossedOrigin ||= nextUrl.origin !== new URL(url).origin;
+                    url = nextUrl.toString();
                     method = shouldRewriteRedirectToGet(originalResponse.status, method) ? 'GET' : method;
 
                     if (options.bodyStream && method !== 'GET') {
