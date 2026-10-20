@@ -33,10 +33,13 @@ const CHROME_TRUST_ANCHOR_ROOTS: &[&[u8]] = &[
 /// <https://tls.peet.ws> and in a decrypted Wireshark capture (October 2026).
 ///
 /// Relative to Chrome 151 there are two TLS differences, both in every ClientHello
-/// since Chrome 152: the Trust Anchor IDs extension (`0xca34`), and a GREASE value
-/// leading the signature_algorithms list. The extension lists only Chrome's roots,
-/// not its intermediates (see `CHROME_TRUST_ANCHOR_ROOTS`). In the headers,
-/// `sec-ch-ua` and the user agent carry 155, and `accept` gains `image/jxl`.
+/// since Chrome 152: the Trust Anchor IDs extension (`0xca34`) carries IDs (Chrome
+/// for Testing 151 sends it empty, and only with the field-trial testing config),
+/// and a GREASE value leads the signature_algorithms list. The extension lists only
+/// Chrome's roots, not its intermediates (see `CHROME_TRUST_ANCHOR_ROOTS`). Like
+/// chrome_151, the profile sends Chrome's two GREASE extensions, an empty one first
+/// and a 1-byte one last. In the headers, `sec-ch-ua` and the user agent carry 155,
+/// and `accept` gains `image/jxl`.
 pub mod chrome_155 {
     use super::*;
 
@@ -141,7 +144,8 @@ pub mod chrome_155 {
                     .iter()
                     .map(|id| id.to_vec())
                     .collect(),
-            ),
+            )
+            .with_grease_first_and_last(true),
             // ECH configuration (GREASE mode)
             Some(EchConfig::new(
                 EchMode::Grease {
@@ -204,8 +208,17 @@ pub mod chrome_155 {
 /// `sec-ch-ua`, which Chrome for Testing cannot supply because it is unbranded;
 /// that header is taken from the consumer build and is stable across launches.
 ///
-/// Relative to Chrome 142 the only wire-level TLS difference is that Chrome now
-/// leads its signature_algorithms list with the three ML-DSA codepoints.
+/// Every Chrome 151 ClientHello carries Chrome's two GREASE extensions (an
+/// empty one first, a 1-byte one last). The empty Trust Anchor IDs extension
+/// (`0xca34`) comes from Chrome for Testing 151.0.7922.71 with Chromium's
+/// field-trial testing config (raw ClientHello, October 2026), as requested on
+/// apify/impit#588; that config's `0x12e0` (server padding) is left out. Chrome
+/// for Testing 151 without that config sends the GREASE extensions but not
+/// `0xca34`.
+///
+/// Relative to the chrome_142 profile, Chrome 151 leads its signature_algorithms
+/// list with the three ML-DSA codepoints, and this profile also sends the
+/// extensions above.
 pub mod chrome_151 {
     use super::*;
 
@@ -301,7 +314,9 @@ pub mod chrome_151 {
                     ExtensionType::ApplicationSettings,
                 ],
             )
-            .with_new_alps_codepoint(true),
+            .with_new_alps_codepoint(true)
+            .with_trust_anchors(Vec::new())
+            .with_grease_first_and_last(true),
             // ECH configuration (GREASE mode)
             Some(EchConfig::new(
                 EchMode::Grease {
@@ -1580,15 +1595,54 @@ mod tests {
 
     #[test]
     fn chrome_profiles_send_real_chrome_ja4_r() {
-        for (name, fp, expected) in [("chrome_155", chrome_155::fingerprint(), JA4_R_155)] {
+        // (profile, JA4_r, trust_anchors body, GREASE first in signature_algorithms)
+        for (name, fp, expected, trust_anchors, sigalg_grease) in [
+            (
+                "chrome_155",
+                chrome_155::fingerprint(),
+                JA4_R_155,
+                CHROME_ROOTS_PAYLOAD,
+                true,
+            ),
+            // Chrome for Testing 151.0.7922.71 with the field-trial testing config, minus `0x12e0`, has the same
+            // JA4_r as Chrome 155.
+            (
+                "chrome_151",
+                chrome_151::fingerprint(),
+                JA4_R_155,
+                "0000",
+                false,
+            ),
+        ] {
             let (version, ciphers, exts) = client_hello(fp);
             assert_eq!(ja4_r(version, &ciphers, &exts), expected, "{name}");
             let body = |t| exts.iter().find(|(typ, _)| *typ == t).unwrap().1.clone();
-            assert_eq!(body(0xca34), hex(CHROME_ROOTS_PAYLOAD), "{name}"); // the 105-byte encoding
+            assert_eq!(body(0xca34), hex(trust_anchors), "{name}");
+            let sigalgs = body(0x000d);
+            let first_sigalg = u16::from_be_bytes([sigalgs[2], sigalgs[3]]);
+            if sigalg_grease {
+                assert_eq!(first_sigalg, 0x1a1a, "{name}: GREASE first in sigalgs");
+            } else {
+                assert!(!is_grease(first_sigalg), "{name}: GREASE in sigalgs");
+            }
+        }
+    }
+
+    // Chrome's two GREASE extensions: an empty one first and a 1-byte one last. impit's hello carries GREASE ECH and
+    // no pre_shared_key, so last also means after ECH.
+    #[test]
+    fn chrome_profiles_send_grease_extensions_first_and_last() {
+        for (name, fp) in [
+            ("chrome_155", chrome_155::fingerprint()),
+            ("chrome_151", chrome_151::fingerprint()),
+        ] {
+            let (_, _, exts) = client_hello(fp);
+            assert!(exts.iter().any(|(t, _)| *t == 0xfe0d), "{name}: no ECH");
+            assert_eq!(exts[0], (0xbaba, vec![]), "{name}: first extension");
             assert_eq!(
-                body(0x000d)[2..4],
-                [0x1a, 0x1a],
-                "{name}: GREASE first in sigalgs"
+                *exts.last().unwrap(),
+                (0xaaaa, vec![0]),
+                "{name}: last extension"
             );
         }
     }
