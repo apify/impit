@@ -193,9 +193,14 @@ impl TlsConfigBuilder {
             }
 
             if ignore_tls_errors {
+                // The ClientHello advertises the verifier's signature schemes, so keep the fingerprint's.
+                let schemes = config
+                    .crypto_provider()
+                    .signature_verification_algorithms
+                    .supported_schemes();
                 config
                     .dangerous()
-                    .set_certificate_verifier(Arc::new(NoVerifier::with_default_schemes()));
+                    .set_certificate_verifier(Arc::new(NoVerifier::new(schemes)));
             }
 
             config
@@ -225,5 +230,42 @@ impl TlsConfigBuilder {
         };
 
         config
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::fingerprint::database::firefox_144;
+
+    /// Body of the `signature_algorithms` extension in the ClientHello that impit sends.
+    fn signature_algorithms(ignore_tls_errors: bool) -> Vec<u8> {
+        let mut builder = TlsConfig::builder();
+        builder
+            .with_tls_fingerprint(firefox_144::fingerprint().tls)
+            .with_ignore_tls_errors(ignore_tls_errors);
+        let server_name = rustls::pki_types::ServerName::try_from("example.com").unwrap();
+        let mut conn =
+            rustls::ClientConnection::new(Arc::new(builder.build()), server_name).unwrap();
+        let mut record = Vec::new();
+        conn.write_tls(&mut record).unwrap();
+
+        // Skip the record (5) and handshake (4) headers, legacy_version (2) and random (32).
+        let hello = &record[9..];
+        let u16_at = |i: usize| usize::from(u16::from_be_bytes([hello[i], hello[i + 1]]));
+        let mut i = 2 + 32;
+        i += 1 + usize::from(hello[i]); // legacy_session_id
+        i += 2 + u16_at(i); // cipher_suites
+        i += 1 + usize::from(hello[i]); // legacy_compression_methods
+        i += 2; // extensions length
+        while u16_at(i) != 0x000d {
+            i += 4 + u16_at(i + 2);
+        }
+        hello[i + 4..i + 4 + u16_at(i + 2)].to_vec()
+    }
+
+    #[test]
+    fn ignore_tls_errors_keeps_the_fingerprint_signature_algorithms() {
+        assert_eq!(signature_algorithms(true), signature_algorithms(false));
     }
 }
