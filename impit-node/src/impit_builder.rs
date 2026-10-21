@@ -28,6 +28,8 @@ pub enum Browser {
   Chrome136,
   Chrome142,
   Chrome151,
+  Chrome155,
+  Chrome156,
   Firefox,
   Firefox128,
   Firefox133,
@@ -138,6 +140,8 @@ impl From<Browser> for BrowserFingerprint {
       Browser::Chrome136 => impit::fingerprint::database::chrome_136::fingerprint(),
       Browser::Chrome142 => impit::fingerprint::database::chrome_142::fingerprint(),
       Browser::Chrome151 => impit::fingerprint::database::chrome_151::fingerprint(),
+      Browser::Chrome155 => impit::fingerprint::database::chrome_155::fingerprint(),
+      Browser::Chrome156 => impit::fingerprint::database::chrome_156::fingerprint(),
       Browser::Firefox | Browser::Firefox128 => {
         impit::fingerprint::database::firefox_128::fingerprint()
       }
