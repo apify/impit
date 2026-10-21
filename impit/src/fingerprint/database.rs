@@ -9,7 +9,7 @@ mod safari;
 
 pub use chrome::{
     chrome_100, chrome_101, chrome_104, chrome_107, chrome_110, chrome_116, chrome_124, chrome_125,
-    chrome_131, chrome_133, chrome_136, chrome_142, chrome_151, chrome_155,
+    chrome_131, chrome_133, chrome_136, chrome_142, chrome_151, chrome_155, chrome_156,
 };
 pub use firefox::{firefox_128, firefox_133, firefox_135, firefox_144, firefox_158};
 pub use okhttp::{okhttp3, okhttp4, okhttp5};
@@ -86,6 +86,7 @@ mod tests {
             ("chrome_142", chrome_142::fingerprint()),
             ("chrome_151", chrome_151::fingerprint()),
             ("chrome_155", chrome_155::fingerprint()),
+            ("chrome_156", chrome_156::fingerprint()),
             ("firefox_128", firefox_128::fingerprint()),
             ("firefox_133", firefox_133::fingerprint()),
             ("firefox_135", firefox_135::fingerprint()),
