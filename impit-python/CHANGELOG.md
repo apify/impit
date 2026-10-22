@@ -3,6 +3,37 @@
 All notable changes to this project will be documented in this file.
 
 
+## py-0.15.1 - 2026-10-22
+
+#### Bug Fixes
+
+- Bump apify/rustls to verify ML-DSA signatures (#574)
+  - Bumps apify/rustls to `5ce0417` (apify/rustls#26), which checks ML-DSA signatures with rustls-webpki's real verifiers instead of an Ed25519 placeholder. Servers with ML-DSA certificates now connect, as they do in Chrome, and the ClientHello is unchanged.  Also updates the `types.rs` comment that said these handshakes fail.  fmt, clippy and `cargo test -p impit` pass locally.
+
+
+- Send the GREASE extension once in chrome100–116 and ios18 (#577)
+
+- Match real Firefox's ClientHello in the firefox profiles (#578)
+  - Part of #576.  - The Firefox profiles' `extension_order` left out five extensions, so they were shuffled on every connection and JA3 changed per request. This adds `DelegatedCredentials` and `RecordSizeLimit` to `ExtensionType` and completes the lists from real Firefox 128/133/135/144 captures. The order is now fixed and JA3 matches real Firefox; JA4 is unchanged. - `record_size_limit` is 16385 in firefox133/135/144 (was 4001). - firefox128: real Firefox 128's cipher order, and P-521 in `supported_groups`.  A new test builds each Firefox profile's ClientHello and checks it against real Firefox's JA3.
+
+
+- Preserve response read error types (#580)
+  - ## Summary  - Preserve the `reqwest` error classification when sync and async Python response reads buffer a body, matching the existing classifier used by other read paths. - Add regression tests for truncated responses in both `read()` and `aread()`.
+
+
+- Keep a custom `Content-Type` when sending form data (#583)
+  - When you pass a `dict` to `data=`, the Python client sets `Content-Type: application/x-www-form-urlencoded` on the request. It does this unconditionally, so a `Content-Type` header you pass in `headers=` gets replaced, for example `application/x-www-form-urlencoded; charset=utf-8`. If your header key uses a different case, such as `content-type`, both entries end up in the request header map, and which one is sent depends on the hash map iteration order.  This change adds the default `Content-Type` only when the request headers don't already contain one (compared case-insensitively). This matches `httpx`, where an explicit `Content-Type` takes precedence over the one derived from `data=`.  ### Changes  - `impit-python/src/request.rs`: in `to_body`, skip the default form `Content-Type` if the caller already set the header. - `impit-python/test/basic_client_test.py`, `impit-python/test/async_client_test.py`: add `test_form_keeps_custom_content_type`. The tests send a form with a custom `Content-Type` to the local echoing server and check the header that arrives.  ### Testing  - Without the fix, both new tests fail: the echoed request contains `content-type: application/x-www-form-urlencoded` without the `charset` parameter. - With the fix, both new tests pass.
+
+
+- Keep the browser's signature algorithms when ignoring TLS errors (#589)
+  - With `ignoreTlsErrors` / `ignore_tls_errors` on, the ClientHello advertised `NoVerifier`'s default signature algorithms instead of the browser profile's, so its JA4 no longer matched the impersonated browser.
+
+
+- Bump rustls-webpki and webpki-root-certs after emSign CA incident (#591)
+  - - Bump `rustls-webpki` 0.103.15 → 0.103.16 (rejects the compromised emSign intermediates) - Bump `webpki-root-certs` 1.0.6 → 1.0.10 (drops the emSign ECC Root CA - G3 root)
+
+
+
 ## py-0.15.0 - 2026-10-13
 
 #### Features
