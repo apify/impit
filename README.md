@@ -12,7 +12,6 @@ use impit::{impit::Impit, fingerprint::database as fingerprints};
 async fn main() {
     let impit = Impit::<Jar>::builder()
         .with_fingerprint(fingerprints::firefox_144::fingerprint())
-        .with_http3()
         .build()
         .unwrap();
 
@@ -106,5 +105,5 @@ h2 = { git="https://github.com/apify/h2.git" }
 
 Without the patched dependencies, the project won't build.
 
-Note that you also have to build your project with `rustflags = "--cfg reqwest_unstable"`, otherwise, the build will also fail.
-This is because `impit` uses unstable features of `reqwest` (namely `http3` support), which are not available in the stable version of the library.
+HTTP/3 support is behind the `http3` feature (`impit = { ..., features = ["http3"] }`). With it, you also have to build your project with `rustflags = "--cfg reqwest_unstable"`, otherwise, the build will fail.
+This is because HTTP/3 support in `reqwest` is unstable, so it's not available in the stable version of the library.
