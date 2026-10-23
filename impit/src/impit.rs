@@ -1,6 +1,6 @@
 use tokio::sync::RwLock;
 
-use log::debug;
+use log::{debug, warn};
 use reqwest::{cookie::CookieStore, header::HeaderMap, Method, Response, Version};
 use std::{fmt::Debug, net::IpAddr, sync::Arc, time::Duration};
 use url::Url;
@@ -72,7 +72,6 @@ pub enum RedirectBehavior {
 ///   .with_ignore_tls_errors(true)
 ///   .with_proxy("http://localhost:8080".to_string())
 ///   .with_default_timeout(Duration::from_secs(10))
-///   .with_http3()
 ///   .build()
 ///   .unwrap();
 ///
@@ -175,6 +174,10 @@ impl<CookieStoreImpl: CookieStore + 'static> ImpitBuilder<CookieStoreImpl> {
     /// To enforce HTTP/3 usage, use the `http3_prior_knowledge` option in the `RequestOptions` struct when
     /// making the request.
     ///
+    /// HTTP/3 is never used with a proxy, set either with [`with_proxy`](Self::with_proxy) or in the
+    /// `HTTPS_PROXY` or `ALL_PROXY` environment variables: proxies only carry TCP, so QUIC requests would
+    /// skip the proxy and go out from this machine's IP address. With a proxy, the client uses HTTP/2.
+    ///
     /// Note that this feature is experimental and may not work as expected with all servers.
     pub fn with_http3(mut self) -> Self {
         self.max_http_version = Version::HTTP_3;
@@ -224,6 +227,15 @@ impl<CookieStoreImpl: CookieStore + 'static> ImpitBuilder<CookieStoreImpl> {
     pub fn with_headers(mut self, headers: Vec<(String, String)>) -> Self {
         self.headers = Some(headers);
         self
+    }
+
+    /// Whether requests go through a proxy: the one set with [`with_proxy`](Self::with_proxy), or one
+    /// that `reqwest` reads from the environment for HTTPS URLs.
+    fn uses_proxy(&self) -> bool {
+        !self.proxy_url.is_empty()
+            || ["HTTPS_PROXY", "https_proxy", "ALL_PROXY", "all_proxy"]
+                .iter()
+                .any(|name| std::env::var_os(name).is_some_and(|value| !value.is_empty()))
     }
 
     /// Builds the [`Impit`] instance.
@@ -316,7 +328,12 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
     }
 
     /// Creates a new [`Impit`] instance based on the options stored in the [`ImpitBuilder`] instance.
-    fn new(config: ImpitBuilder<CookieStoreImpl>) -> Result<Self, ImpitError> {
+    fn new(mut config: ImpitBuilder<CookieStoreImpl>) -> Result<Self, ImpitError> {
+        if config.max_http_version == Version::HTTP_3 && config.uses_proxy() {
+            warn!("HTTP/3 is disabled because a proxy is set: QUIC requests would skip the proxy");
+            config.max_http_version = Version::HTTP_2;
+        }
+
         let mut h3_client: Option<reqwest::Client> = None;
         let mut base_client = Self::new_reqwest_client(&config)?;
 
@@ -698,5 +715,32 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
             Some(fp) => fp.generate_multipart_boundary(),
             None => crate::fingerprint::default_multipart_boundary(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use reqwest::cookie::Jar;
+
+    use super::Impit;
+    use crate::{errors::ImpitError, request::RequestOptions};
+
+    #[tokio::test]
+    async fn http3_is_disabled_with_a_proxy() {
+        let impit = Impit::<Jar>::builder()
+            .with_http3()
+            .with_proxy("http://127.0.0.1:9".to_string())
+            .build()
+            .unwrap();
+        assert!(impit.h3_client.is_none());
+
+        let options = RequestOptions {
+            http3_prior_knowledge: true,
+            ..Default::default()
+        };
+        let response = impit
+            .get("https://example.com".to_string(), None, Some(options))
+            .await;
+        assert!(matches!(response, Err(ImpitError::Http3Disabled)));
     }
 }

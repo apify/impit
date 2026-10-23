@@ -84,7 +84,7 @@ pub enum ImpitError {
     UrlMissingHostnameError(String),
     #[error("The URL uses an unsupported protocol (`{0}`). Currently, only HTTP and HTTPS are supported.")]
     UrlProtocolError(String),
-    #[error("The request was made with http3_prior_knowledge, but HTTP/3 usage wasn't enabled.")]
+    #[error("The request was made with http3_prior_knowledge, but HTTP/3 usage wasn't enabled (or was disabled because a proxy is set).")]
     Http3Disabled,
     #[error("The request method `{0}` is invalid. Only GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS and TRACE are supported.")]
     InvalidMethod(String),
