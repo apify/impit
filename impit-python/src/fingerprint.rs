@@ -23,6 +23,7 @@ pub(crate) fn fingerprint_by_name(browser: &str) -> PyResult<BrowserFingerprint>
         "firefox133" => database::firefox_133::fingerprint(),
         "firefox135" => database::firefox_135::fingerprint(),
         "firefox144" => database::firefox_144::fingerprint(),
+        "firefox158" => database::firefox_158::fingerprint(),
         "okhttp3" => database::okhttp3::fingerprint(),
         "okhttp" | "okhttp4" => database::okhttp4::fingerprint(),
         "okhttp5" => database::okhttp5::fingerprint(),
