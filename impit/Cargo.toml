@@ -21,6 +21,8 @@ log = "0.4.22"
 mime = "0.3.17"
 reqwest = { version="0.13.1", features = ["json", "gzip", "brotli", "zstd", "deflate", "cookies", "stream", "socks"] }
 rustls = { version="0.23.36", features=["impit"] }
+# SHA-256 for the certificate verification cache keys; already a dependency of rustls.
+aws-lc-rs = { version = "1", default-features = false, features = ["aws-lc-sys"] }
 lol_html = "2.7.2"
 thiserror = "2.0.12"
 tokio = { version="1.40.0", features = ["full"], optional = true }

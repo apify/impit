@@ -1,3 +1,4 @@
+mod cert_cache;
 mod statics;
 
 use std::collections::HashMap;
@@ -5,16 +6,48 @@ use std::sync::{Arc, Mutex, OnceLock};
 
 use crate::fingerprint::TlsFingerprint;
 use reqwest::Version;
-use rustls::client::danger::NoVerifier;
+use rustls::client::danger::{NoVerifier, ServerCertVerifier};
 use rustls::client::{EchGreaseConfig, Resumption, Tls12Resumption};
 use rustls::crypto::CryptoProvider;
 use rustls_platform_verifier::Verifier;
 
-static VANILLA_CRYPTO_PROVIDER: OnceLock<Arc<CryptoProvider>> = OnceLock::new();
-static VANILLA_VERIFIER: OnceLock<Arc<Verifier>> = OnceLock::new();
+pub use cert_cache::CachingServerCertVerifier;
 
-type BrowserCacheValue = (Arc<CryptoProvider>, Arc<Verifier>);
+static VANILLA_CRYPTO_PROVIDER: OnceLock<Arc<CryptoProvider>> = OnceLock::new();
+static VANILLA_VERIFIER: OnceLock<Verifiers> = OnceLock::new();
+
+type BrowserCacheValue = (Arc<CryptoProvider>, Verifiers);
 static BROWSER_CACHE: OnceLock<Mutex<HashMap<TlsFingerprint, BrowserCacheValue>>> = OnceLock::new();
+
+/// The platform verifier, alone and wrapped in the chain verification cache. They live as long
+/// as the process (see the statics above), so all clients share the cache.
+#[derive(Clone)]
+struct Verifiers {
+    plain: Arc<Verifier>,
+    cached: Arc<CachingServerCertVerifier>,
+}
+
+impl Verifiers {
+    fn new(provider: Arc<CryptoProvider>) -> Self {
+        let plain = Arc::new(
+            Verifier::new_with_extra_roots(
+                webpki_root_certs::TLS_SERVER_ROOT_CERTS.iter().cloned(),
+                provider,
+            )
+            .expect("Failed to create certificate verifier with embedded CA roots"),
+        );
+        let cached = Arc::new(CachingServerCertVerifier::new(plain.clone()));
+        Verifiers { plain, cached }
+    }
+
+    fn get(&self, cert_verification_cache: bool) -> Arc<dyn ServerCertVerifier> {
+        if cert_verification_cache {
+            self.cached.clone()
+        } else {
+            self.plain.clone()
+        }
+    }
+}
 
 fn get_browser_cache() -> &'static Mutex<HashMap<TlsFingerprint, BrowserCacheValue>> {
     BROWSER_CACHE.get_or_init(|| Mutex::new(HashMap::new()))
@@ -26,18 +59,10 @@ fn get_vanilla_provider() -> Arc<CryptoProvider> {
         .clone()
 }
 
-fn get_vanilla_verifier() -> Arc<Verifier> {
+fn get_vanilla_verifier() -> Verifiers {
     let provider = get_vanilla_provider();
     VANILLA_VERIFIER
-        .get_or_init(|| {
-            Arc::new(
-                Verifier::new_with_extra_roots(
-                    webpki_root_certs::TLS_SERVER_ROOT_CERTS.iter().cloned(),
-                    provider,
-                )
-                .expect("Failed to create certificate verifier with embedded CA roots"),
-            )
-        })
+        .get_or_init(|| Verifiers::new(provider))
         .clone()
 }
 
@@ -58,13 +83,7 @@ fn get_or_create_browser_provider_and_verifier(
         .build()
         .into();
 
-    let verifier = Arc::new(
-        Verifier::new_with_extra_roots(
-            webpki_root_certs::TLS_SERVER_ROOT_CERTS.iter().cloned(),
-            provider.clone(),
-        )
-        .expect("Failed to create certificate verifier with embedded CA roots"),
-    );
+    let verifier = Verifiers::new(provider.clone());
 
     {
         let mut cache = get_browser_cache().lock().unwrap();
@@ -87,6 +106,7 @@ pub struct TlsConfigBuilder {
     tls_fingerprint: Option<TlsFingerprint>,
     max_http_version: Version,
     ignore_tls_errors: bool,
+    cert_verification_cache: bool,
 }
 
 impl Default for TlsConfigBuilder {
@@ -95,6 +115,7 @@ impl Default for TlsConfigBuilder {
             tls_fingerprint: None,
             max_http_version: Version::HTTP_2,
             ignore_tls_errors: false,
+            cert_verification_cache: true,
         }
     }
 }
@@ -120,8 +141,16 @@ impl TlsConfigBuilder {
         self
     }
 
+    /// Whether to reuse successful certificate-chain verifications, see
+    /// [`CachingServerCertVerifier`]. On by default.
+    pub fn with_cert_verification_cache(&mut self, cert_verification_cache: bool) -> &mut Self {
+        self.cert_verification_cache = cert_verification_cache;
+        self
+    }
+
     pub fn build(self) -> rustls::ClientConfig {
         let ignore_tls_errors = self.ignore_tls_errors;
+        let cert_verification_cache = self.cert_verification_cache;
         let max_http_version = self.max_http_version;
 
         let (fingerprint, cache_browser) = if let Some(fp) = self.tls_fingerprint {
@@ -145,16 +174,11 @@ impl TlsConfigBuilder {
                     .build()
                     .into();
 
-                let verifier = Arc::new(
-                    Verifier::new_with_extra_roots(
-                        webpki_root_certs::TLS_SERVER_ROOT_CERTS.iter().cloned(),
-                        provider.clone(),
-                    )
-                    .expect("Failed to create certificate verifier with embedded CA roots"),
-                );
+                let verifier = Verifiers::new(provider.clone());
 
                 (provider, verifier)
             };
+            let verifier = verifier.get(cert_verification_cache);
 
             // Select protocol versions based on fingerprint
             let protocol_versions: &[&rustls::SupportedProtocolVersion] =
@@ -201,7 +225,7 @@ impl TlsConfigBuilder {
             config
         } else {
             let crypto_provider = get_vanilla_provider();
-            let verifier = get_vanilla_verifier();
+            let verifier = get_vanilla_verifier().get(cert_verification_cache);
 
             let mut config: rustls::ClientConfig =
                 rustls::ClientConfig::builder_with_provider(crypto_provider)

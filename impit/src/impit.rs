@@ -85,6 +85,7 @@ pub enum RedirectBehavior {
 pub struct ImpitBuilder<CookieStoreImpl: CookieStore + 'static> {
     fingerprint: Option<BrowserFingerprint>,
     ignore_tls_errors: bool,
+    cert_verification_cache: bool,
     vanilla_fallback: bool,
     proxy_url: String,
     request_timeout: Duration,
@@ -100,6 +101,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Clone for ImpitBuilder<CookieStoreI
         ImpitBuilder {
             fingerprint: self.fingerprint.clone(),
             ignore_tls_errors: self.ignore_tls_errors,
+            cert_verification_cache: self.cert_verification_cache,
             vanilla_fallback: self.vanilla_fallback,
             proxy_url: self.proxy_url.clone(),
             request_timeout: self.request_timeout,
@@ -117,6 +119,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Default for ImpitBuilder<CookieStor
         ImpitBuilder {
             fingerprint: None,
             ignore_tls_errors: false,
+            cert_verification_cache: true,
             vanilla_fallback: false,
             proxy_url: String::new(),
             request_timeout: Duration::from_secs(30),
@@ -144,6 +147,18 @@ impl<CookieStoreImpl: CookieStore + 'static> ImpitBuilder<CookieStoreImpl> {
     /// If set to true, the client will ignore TLS-related errors.
     pub fn with_ignore_tls_errors(mut self, ignore_tls_errors: bool) -> Self {
         self.ignore_tls_errors = ignore_tls_errors;
+        self
+    }
+
+    /// Whether to reuse a successful certificate-chain verification for later connections to
+    /// the same server name that present the same certificates (default `true`).
+    ///
+    /// Saves the CPU of re-verifying the chain's signatures on every new connection. Results are
+    /// kept in a process-wide cache shared by all clients, for at most 10 minutes and never past a
+    /// certificate's expiry. Nothing changes on the wire, and the server's handshake signature is
+    /// still verified on every connection.
+    pub fn with_cert_verification_cache(mut self, cert_verification_cache: bool) -> Self {
+        self.cert_verification_cache = cert_verification_cache;
         self
     }
 
@@ -270,6 +285,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
         }
 
         tls_config_builder.with_ignore_tls_errors(config.ignore_tls_errors);
+        tls_config_builder.with_cert_verification_cache(config.cert_verification_cache);
 
         let tls_config = tls_config_builder.build();
 
@@ -723,6 +739,15 @@ mod tests {
             .get("https://example.com".to_string(), None, Some(options))
             .await
             .map(|_| ())
+    }
+
+    #[test]
+    fn cert_verification_cache_is_on_by_default() {
+        let builder = Impit::<Jar>::builder();
+        assert!(builder.cert_verification_cache);
+        let builder = builder.with_cert_verification_cache(false);
+        assert!(!builder.clone().cert_verification_cache);
+        builder.build().unwrap();
     }
 
     #[tokio::test]

@@ -1299,6 +1299,7 @@ dependencies = [
 name = "impit"
 version = "0.1.0"
 dependencies = [
+ "aws-lc-rs",
  "bytes",
  "encoding",
  "futures-core",
