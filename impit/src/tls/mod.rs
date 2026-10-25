@@ -1,6 +1,9 @@
 mod cert_cache;
 mod statics;
 
+#[cfg(test)]
+mod handshake_tests;
+
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex, OnceLock};
 
