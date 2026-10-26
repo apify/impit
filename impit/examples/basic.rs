@@ -5,7 +5,6 @@ use impit::{fingerprint::database as fingerprints, impit::Impit};
 async fn main() {
     let impit = Impit::<Jar>::builder()
         .with_fingerprint(fingerprints::firefox_144::fingerprint())
-        .with_http3()
         .build()
         .unwrap();
 

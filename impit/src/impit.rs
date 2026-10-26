@@ -1,3 +1,4 @@
+#[cfg(feature = "http3")]
 use tokio::sync::RwLock;
 
 use log::{debug, warn};
@@ -5,10 +6,11 @@ use reqwest::{cookie::CookieStore, header::HeaderMap, Method, Response, Version}
 use std::{fmt::Debug, net::IpAddr, sync::Arc, time::Duration};
 use url::Url;
 
+#[cfg(feature = "http3")]
+use crate::http3::H3Engine;
 use crate::{
     errors::{ErrorContext, ImpitError},
     fingerprint::BrowserFingerprint,
-    http3::H3Engine,
     http_headers::HttpHeadersBuilder,
     request::{ImpitBody, ImpitRequest, RequestOptions},
     tls,
@@ -23,6 +25,7 @@ pub struct Impit<CookieStoreImpl: CookieStore + 'static> {
     pub(self) base_client: reqwest::Client,
     pub(self) h3_client: Option<reqwest::Client>,
     pub(self) vanilla_client: Option<reqwest::Client>,
+    #[cfg(feature = "http3")]
     h3_engine: Arc<RwLock<Option<H3Engine>>>,
     config: ImpitBuilder<CookieStoreImpl>,
 }
@@ -174,11 +177,14 @@ impl<CookieStoreImpl: CookieStore + 'static> ImpitBuilder<CookieStoreImpl> {
     /// To enforce HTTP/3 usage, use the `http3_prior_knowledge` option in the `RequestOptions` struct when
     /// making the request.
     ///
+    /// Requires the `http3` feature of this crate (and the `--cfg reqwest_unstable` rustflag).
+    ///
     /// HTTP/3 is never used with a proxy, set either with [`with_proxy`](Self::with_proxy) or in the
     /// `HTTPS_PROXY` or `ALL_PROXY` environment variables: proxies only carry TCP, so QUIC requests would
     /// skip the proxy and go out from this machine's IP address. With a proxy, the client uses HTTP/2.
     ///
     /// Note that this feature is experimental and may not work as expected with all servers.
+    #[cfg(feature = "http3")]
     pub fn with_http3(mut self) -> Self {
         self.max_http_version = Version::HTTP_3;
         self
@@ -298,6 +304,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
             client = client.cookie_provider(cookie_provider.clone());
         }
 
+        #[cfg(feature = "http3")]
         if config.max_http_version == Version::HTTP_3 {
             client = client.http3_prior_knowledge();
         }
@@ -376,6 +383,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
             h3_client,
             vanilla_client,
             config,
+            #[cfg(feature = "http3")]
             h3_engine: Arc::new(RwLock::new(None)),
         })
     }
@@ -396,6 +404,12 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
         }
     }
 
+    #[cfg(not(feature = "http3"))]
+    async fn should_use_h3(&self, _host: &str) -> bool {
+        false
+    }
+
+    #[cfg(feature = "http3")]
     async fn should_use_h3(&self, host: &str) -> bool {
         if self.config.max_http_version < Version::HTTP_3 {
             debug!("HTTP/3 is disabled, falling back to TCP-based requests.");
@@ -544,6 +558,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
             }
         };
 
+        #[cfg(feature = "http3")]
         if !h3 {
             let engine_guard = self.h3_engine.read().await;
             if let Some(h3_engine) = engine_guard.as_ref() {
@@ -725,6 +740,28 @@ mod tests {
     use super::Impit;
     use crate::{errors::ImpitError, request::RequestOptions};
 
+    async fn get_with_http3_prior_knowledge(impit: &Impit<Jar>) -> Result<(), ImpitError> {
+        let options = RequestOptions {
+            http3_prior_knowledge: true,
+            ..Default::default()
+        };
+        impit
+            .get("https://example.com".to_string(), None, Some(options))
+            .await
+            .map(|_| ())
+    }
+
+    #[tokio::test]
+    async fn http3_is_off_by_default() {
+        let impit = Impit::<Jar>::builder().build().unwrap();
+        assert!(impit.h3_client.is_none());
+        assert!(matches!(
+            get_with_http3_prior_knowledge(&impit).await,
+            Err(ImpitError::Http3Disabled)
+        ));
+    }
+
+    #[cfg(feature = "http3")]
     #[tokio::test]
     async fn http3_is_disabled_with_a_proxy() {
         let impit = Impit::<Jar>::builder()
@@ -733,14 +770,9 @@ mod tests {
             .build()
             .unwrap();
         assert!(impit.h3_client.is_none());
-
-        let options = RequestOptions {
-            http3_prior_knowledge: true,
-            ..Default::default()
-        };
-        let response = impit
-            .get("https://example.com".to_string(), None, Some(options))
-            .await;
-        assert!(matches!(response, Err(ImpitError::Http3Disabled)));
+        assert!(matches!(
+            get_with_http3_prior_knowledge(&impit).await,
+            Err(ImpitError::Http3Disabled)
+        ));
     }
 }
