@@ -46,3 +46,6 @@ jobs:
 
       - name: Run tests
         run: cargo test -p impit
+
+      - name: Run tests with HTTP/3
+        run: cargo test -p impit --features http3

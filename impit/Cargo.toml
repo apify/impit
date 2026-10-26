@@ -5,19 +5,25 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+# HTTP/3 (QUIC) support, see `ImpitBuilder::with_http3`. Needs the `--cfg reqwest_unstable` rustflag.
+# Without it, clients don't set up the unused QUIC endpoint (a UDP socket and a receive buffer of
+# at least 2 MB per client).
+http3 = ["reqwest/http3", "dep:hickory-proto", "dep:hickory-resolver", "dep:tokio"]
+
 [dependencies]
 bytes = "1"
 encoding = "0.2.33"
 futures-core = "0.3"
-hickory-proto = "0.26.1"
-hickory-resolver = "0.26.1"
+hickory-proto = { version = "0.26.1", optional = true }
+hickory-resolver = { version = "0.26.1", optional = true }
 log = "0.4.22"
 mime = "0.3.17"
-reqwest = { version="0.13.1", features = ["json", "gzip", "brotli", "zstd", "deflate", "http3", "cookies", "stream", "socks"] }
+reqwest = { version="0.13.1", features = ["json", "gzip", "brotli", "zstd", "deflate", "cookies", "stream", "socks"] }
 rustls = { version="0.23.36", features=["impit"] }
 lol_html = "2.7.2"
 thiserror = "2.0.12"
-tokio = { version="1.40.0", features = ["full"] }
+tokio = { version="1.40.0", features = ["full"], optional = true }
 url = "2.5.2"
 rustls-platform-verifier = "0.6"
 webpki-root-certs = "1.0.10"
@@ -27,4 +33,5 @@ rand = "0.9"
 uuid = { version = "1", features = ["v4"] }
 
 [dev-dependencies]
+tokio = { version="1.40.0", features = ["full"] }
 futures-util = "0.3"
