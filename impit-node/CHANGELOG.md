@@ -3,6 +3,29 @@
 All notable changes to this project will be documented in this file.
 
 
+## js-0.14.7 - 2026-10-22
+
+#### Bug Fixes
+
+- Bump apify/rustls to verify ML-DSA signatures (#574)
+  - Bumps apify/rustls to `5ce0417` (apify/rustls#26), which checks ML-DSA signatures with rustls-webpki's real verifiers instead of an Ed25519 placeholder. Servers with ML-DSA certificates now connect, as they do in Chrome, and the ClientHello is unchanged.  Also updates the `types.rs` comment that said these handshakes fail.  fmt, clippy and `cargo test -p impit` pass locally.
+
+
+- Send the GREASE extension once in chrome100–116 and ios18 (#577)
+
+- Match real Firefox's ClientHello in the firefox profiles (#578)
+  - Part of #576.  - The Firefox profiles' `extension_order` left out five extensions, so they were shuffled on every connection and JA3 changed per request. This adds `DelegatedCredentials` and `RecordSizeLimit` to `ExtensionType` and completes the lists from real Firefox 128/133/135/144 captures. The order is now fixed and JA3 matches real Firefox; JA4 is unchanged. - `record_size_limit` is 16385 in firefox133/135/144 (was 4001). - firefox128: real Firefox 128's cipher order, and P-521 in `supported_groups`.  A new test builds each Firefox profile's ClientHello and checks it against real Firefox's JA3.
+
+
+- Keep the browser's signature algorithms when ignoring TLS errors (#589)
+  - With `ignoreTlsErrors` / `ignore_tls_errors` on, the ClientHello advertised `NoVerifier`'s default signature algorithms instead of the browser profile's, so its JA4 no longer matched the impersonated browser.
+
+
+- Bump rustls-webpki and webpki-root-certs after emSign CA incident (#591)
+  - - Bump `rustls-webpki` 0.103.15 → 0.103.16 (rejects the compromised emSign intermediates) - Bump `webpki-root-certs` 1.0.6 → 1.0.10 (drops the emSign ECC Root CA - G3 root)
+
+
+
 ## js-0.14.6 - 2026-10-15
 
 #### Features

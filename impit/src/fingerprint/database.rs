@@ -11,7 +11,7 @@ pub use chrome::{
     chrome_100, chrome_101, chrome_104, chrome_107, chrome_110, chrome_116, chrome_124, chrome_125,
     chrome_131, chrome_133, chrome_136, chrome_142, chrome_151,
 };
-pub use firefox::{firefox_128, firefox_133, firefox_135, firefox_144};
+pub use firefox::{firefox_128, firefox_133, firefox_135, firefox_144, firefox_158};
 pub use okhttp::{okhttp3, okhttp4, okhttp5};
 pub use safari::ios_18;
 
@@ -71,6 +71,7 @@ mod tests {
             ("firefox_133", firefox_133::fingerprint()),
             ("firefox_135", firefox_135::fingerprint()),
             ("firefox_144", firefox_144::fingerprint()),
+            ("firefox_158", firefox_158::fingerprint()),
             ("okhttp3", okhttp3::fingerprint()),
             ("okhttp4", okhttp4::fingerprint()),
             ("okhttp5", okhttp5::fingerprint()),
