@@ -3,6 +3,27 @@
 All notable changes to this project will be documented in this file.
 
 
+## js-0.14.8 - 2026-10-29
+
+#### Bug Fixes
+
+- Never send HTTP/3 requests past the proxy (#598)
+  - My agent got freaked by the weird http3 + proxy behavior. This is an attempt to clean it up so it returns an error and doesn't silently change behavior.  ## AI Summary  HTTP/3 through a proxy isn't supported, and the docs say so. That was decided in #246 and #364, documented in #373, and reqwest tracks it upstream as seanmonstar/reqwest#2833. This PR doesn't try to add that support. It makes the unsupported combination fail safe instead of quietly sending traffic from the machine's own IP address.  The change only matters when **HTTP/3 is enabled and a proxy is set**, whether through `with_proxy` / `proxyUrl` or through `HTTPS_PROXY` / `ALL_PROXY`. Everything else behaves as before, including the default, where HTTP/3 is off.  ## What `master` does with HTTP/3 and a proxy  | Request | On `master` | |---|---| | `http3_prior_knowledge` | Every request goes straight to the target over QUIC from the real IP. The proxy is never used. | | Not forced, and the host advertises h3 in its DNS HTTPS record | `H3Engine` looks the record up directly at `8.8.8.8`, which already exposes the hostname from the real IP. The request then goes out over QUIC from the real IP too. | | Not forced, and the host advertises h3 only through `Alt-Svc` | The first request goes through the proxy. impit then caches the host as h3-capable, and every later request to it leaks. A quick one-request test looks fine. |  None of these cases logs anything or returns an error.  I reproduced this on `master` with a local logging CONNECT proxy and `https://www.google.com/`. The forced request never reached the proxy. strace showed QUIC packets going directly to `142.251.153.119:443`, and the DNS lookups going to `8.8.8.8` / `8.8.4.4`.  ## With this PR  - When the client is built with a proxy, HTTP/3 is disabled and a warning is logged. All traffic goes through the proxy over TCP (HTTP/2 or HTTP/1.1), and no lookups go directly to `8.8.8.8`. - A request with `http3_prior_knowledge` fails with `Http3Disabled`, whose message now mentions the proxy. It no longer goes out directly. - A proxy that comes only from `HTTPS_PROXY` / `ALL_PROXY` is covered too. On `master` it leaks the same way, and the docs don't mention it.  The PR also removes `.with_http3()` from the `ImpitBuilder` doc example, which combined it with a proxy.  ## Not changed  - HTTP/3 still can't go through a proxy. That's blocked in reqwest. - `NO_PROXY` isn't considered. If any proxy is set, HTTP/3 is off for all hosts. That's a deliberately conservative choice. - I disable HTTP/3 rather than fail at build time, so existing `http3: true` + proxy setups keep working over HTTP/2. That's easy to flip to an error if you'd prefer. - The unused QUIC endpoint that reqwest sets up whenever the `http3` feature is compiled in is handled separately in #595.  🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+
+- Close the connection when the abort signal fires during the body read (#602)
+  - Drop the response body stream once the AbortSignal fires so the connection closes right away instead of on garbage collection, closes #597.
+
+
+#### Features
+
+- Make HTTP/3 opt-in in the Rust crate (#595)
+  - Found out about this during profiling my Rust Actors based on [crawlee-rs](https://github.com/apify/crawlee-rs). The feature in cargo.toml is [causing this in reqwest](https://github.com/seanmonstar/reqwest/blob/8e1c8061e5dd936762dcef08a64ef2cff584b295/src/async_impl/client.rs#L653)  ``` TlsBackend::BuiltRustls(conn) => {     #[cfg(feature = "http3")]     {         let mut h3_tls = conn.clone();         h3_tls.alpn_protocols = vec!["h3".into()];         h3_connector = build_h3_connector(resolver.clone(), h3_tls, ...)?;     } ```  ## AI Summary  reqwest's `http3` feature makes every client that uses `use_preconfigured_tls` build an HTTP/3 connector, even when HTTP/3 is never used. That means a quinn endpoint per client: a UDP socket, a driver task, and a zeroed receive buffer of at least 2 MB.  In a CPU profile of a Rust Instagram scraper that builds one impit client per proxy session, this endpoint setup took **~6% of all CPU**, for a protocol it never uses.  HTTP/3 support is now behind a new `http3` feature of the `impit` crate: - With the feature off, clients skip the QUIC setup, and `hickory-*` and `tokio` aren't needed. - The crate builds without `--cfg reqwest_unstable`. - `impit-node` and `impit-python` enable the feature, so their `http3` option behaves as before. - For Rust users, `with_http3()` now needs `features = ["http3"]`. It's removed from the README and doc examples.  CI now also runs `cargo test -p impit --features http3`, and the docs are built with the feature on.  The proxy fix that used to be part of this PR is now #598. Whichever of the two lands second needs `#[cfg(feature = "http3")]` on #598's test, which calls `with_http3()`.  🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+
+- Add firefox158 browser fingerprint (#587)
+
+
 ## js-0.14.7 - 2026-10-22
 
 #### Bug Fixes
