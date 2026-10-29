@@ -767,6 +767,33 @@ describe.each([
 
             expect(getEventListeners(signal, 'abort').length).toBe(0);
         });
+
+        // https://github.com/apify/impit/issues/597
+        test('closes the connection when aborted during the body read', async () => {
+            let socketClosed: () => void = () => {};
+            const closed = new Promise<boolean>((resolve) => { socketClosed = () => resolve(true); });
+
+            const server = http.createServer((req, res) => {
+                const interval = setInterval(() => res.write('x'.repeat(1024)), 10);
+                res.on('close', () => { clearInterval(interval); socketClosed(); });
+            }).listen(0);
+
+            try {
+                const controller = new AbortController();
+                const response = await impit.fetch(`http://127.0.0.1:${(server.address() as AddressInfo).port}/`, { signal: controller.signal });
+                const reading = response.text();
+
+                await new Promise((resolve) => setTimeout(resolve, 100));
+                controller.abort();
+                await expect(reading).rejects.toThrow(/abort/i);
+
+                const timeout = new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 500));
+                expect(await Promise.race([closed, timeout])).toBe(true);
+            } finally {
+                server.closeAllConnections();
+                server.close();
+            }
+        });
     });
 
     describe('Response.clone()', () => {
