@@ -39,23 +39,23 @@ Median of 11 runs of 2000 sequential requests to a local HTTP/2 server, 1 KiB JS
 
 | Package | req/s | Wheel | Profiles | Backend |
 | --- | --- | --- | --- | --- |
-| [`primp`](https://github.com/deedy5/primp) | 3972 | 6.6 MB | n/a | Rust |
-| [`rnet`](https://github.com/0x676e67/rnet) | 3400 | 3.7 MB | 75 | Rust |
-| **`impit`** | 3047 | 5.2 MB | 20 | Rust |
-| [`curl_cffi`](https://github.com/lexiforest/curl_cffi) | 2450 | 13.5 MB | 38 | C (libcurl) |
-| [`tls-client`](https://github.com/FlorianREGAZ/Python-Tls-Client) | 2331 | 41.3 MB | 51 | Go |
-| `httpx` (no impersonation) | 1554 | 0.1 MB | — | Python |
+| [`primp`](https://github.com/deedy5/primp) | 7546 | 6.6 MB | n/a | Rust |
+| [`rnet`](https://github.com/0x676e67/rnet) | 6801 | 3.7 MB | 75 | Rust |
+| **`impit`** | 5898 | 5.2 MB | 20 | Rust |
+| [`curl_cffi`](https://github.com/lexiforest/curl_cffi) | 3259 | 14.1 MB | 47 | C (libcurl) |
+| [`tls-client`](https://github.com/FlorianREGAZ/Python-Tls-Client) | 2271 | 8.5 MB | 83 | Go |
+| `httpx` (no impersonation) | 1976 | 0.1 MB | — | Python |
 
 **Node.js**
 
 | Package | req/s | Install | Profiles | Backend |
 | --- | --- | --- | --- | --- |
-| **`impit`** | 1978 | 10.7 MB | 20 | Rust |
-| [`got-scraping`](https://github.com/apify/got-scraping) | 1690 | 4.8 MB | 3 | Node.js TLS |
-| [`cycletls`](https://github.com/Danny-Dasilva/CycleTLS) | 396 | 133.0 MB | raw JA3 | Go subprocess |
-| `undici` (no impersonation) | 3157 | 1.9 MB | — | Node.js |
+| **`impit`** | 2280 | 10.8 MB | 21 | Rust |
+| [`got-scraping`](https://github.com/apify/got-scraping) | 1956 | 4.9 MB | 3 | Node.js TLS |
+| [`cycletls`](https://github.com/Danny-Dasilva/CycleTLS) | 471 | 133.0 MB | raw JA3 | Go subprocess |
+| `undici` (no impersonation) | 7022 | 2.2 MB | — | Node.js |
 
-Measured by [`benchmarks/`](benchmarks) on linux-x64, 2026-10-01. Rerun it on your own hardware.
+Measured by [`benchmarks/`](benchmarks) on linux-x64, 2026-11-01. Rerun it on your own hardware.
 <!-- comparison:end -->
 
 ### Other projects
