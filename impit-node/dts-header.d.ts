@@ -34,3 +34,4 @@ export declare class StreamConsumed extends StreamError {}
 export declare class ResponseNotRead extends StreamError {}
 export declare class RequestNotRead extends StreamError {}
 export declare class StreamClosed extends StreamError {}
+export declare class BlockedAddressError extends RequestError {}

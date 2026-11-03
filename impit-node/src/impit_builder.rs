@@ -119,6 +119,16 @@ pub struct ImpitOptions<'a> {
   ///
   /// @default `undefined` (the OS will choose the local address)
   pub local_address: Option<String>,
+  /// IP addresses and CIDR ranges this Impit instance never sends a request to, such as
+  /// `['127.0.0.0/8', '10.0.0.0/8', '169.254.169.254']`.
+  ///
+  /// Every request is checked before it is sent, including each redirect hop. A request whose host is a
+  /// blocked IP literal, or a hostname resolving to a blocked address, is rejected with a `BlockedAddressError`.
+  ///
+  /// Requests sent through a proxy are not checked, because the proxy resolves and connects to the target.
+  ///
+  /// @default `undefined` (no blocked addresses)
+  pub blocked_addresses: Option<Vec<String>>,
 }
 
 impl From<Browser> for BrowserFingerprint {
@@ -190,6 +200,12 @@ impl ImpitOptions<'_> {
     if let Some(local_address) = self.local_address {
       config = config
         .with_local_address(local_address)
+        .map_err(|e| napi::Error::from_reason(e.to_string()))?;
+    }
+
+    if let Some(blocked_addresses) = self.blocked_addresses {
+      config = config
+        .with_blocked_addresses(blocked_addresses)
         .map_err(|e| napi::Error::from_reason(e.to_string()))?;
     }
 

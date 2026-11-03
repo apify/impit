@@ -30,6 +30,7 @@ create_exception!(impit, StreamConsumed, StreamError);
 create_exception!(impit, ResponseNotRead, StreamError);
 create_exception!(impit, RequestNotRead, StreamError);
 create_exception!(impit, StreamClosed, StreamError);
+create_exception!(impit, BlockedAddressError, RequestError);
 
 pub(crate) struct ImpitPyError(pub ImpitError);
 
@@ -111,6 +112,12 @@ impl From<ImpitPyError> for pyo3::PyErr {
             }
             ImpitPyError(ImpitError::InvalidHeaderValue(_)) => {
                 LocalProtocolError::new_err(format!("{}", err.0))
+            }
+            ImpitPyError(ImpitError::BlockedAddress(_, _)) => {
+                BlockedAddressError::new_err(format!("{}", err.0))
+            }
+            ImpitPyError(ImpitError::InvalidBlockedAddress(_)) => {
+                pyo3::exceptions::PyValueError::new_err(format!("{}", err.0))
             }
             _ => HTTPError::new_err(format!("{}", err.0)),
         }

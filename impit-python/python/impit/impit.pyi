@@ -93,6 +93,9 @@ class DecodingError(RequestError):
     """Represents an error during response decoding."""
 
 
+class BlockedAddressError(RequestError):
+    """Raised when a request would be sent to an address listed in the client's `blocked_addresses`."""
+
 class TooManyRedirects(RequestError):
     """Represents an error due to excessive redirects."""
 
@@ -471,6 +474,14 @@ class Client:
 
                 Useful for testing purposes or when you want to bind the client to a specific network interface.
                 Can be an IP address in the format `xxx.xxx.xxx.xxx` (for IPv4) or `ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff` (for IPv6).
+            blocked_addresses:
+
+                IP addresses and CIDR ranges the client never sends a request to, such as
+                `['127.0.0.0/8', '10.0.0.0/8', '169.254.169.254']`.
+
+                Every request is checked before it is sent, including each redirect hop. A request whose host is a
+                blocked IP literal, or a hostname resolving to a blocked address, raises `BlockedAddressError`.
+                Requests sent through a proxy are not checked, because the proxy resolves and connects to the target.
         """
 
     def __enter__(self) -> Client:
@@ -494,6 +505,7 @@ class Client:
         cookies: Cookies | None = None,
         headers: dict[str, str] | None = None,
         local_address: str | None = None,
+        blocked_addresses: list[str] | None = None,
     ) -> None:
         """Initialize a synchronous HTTP client.
 
@@ -513,6 +525,9 @@ class Client:
                 headers and are overridden by per-request headers. Matching is case-insensitive. To remove an impersonated header, pass an empty string as the value.
             local_address: Local address to bind the client to. Useful for testing purposes or when you want to bind the client to a specific network interface.
                 Can be an IP address in the format "xxx.xxx.xxx.xxx" (for IPv4) or "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff" (for IPv6).
+            blocked_addresses: IP addresses and CIDR ranges the client never sends a request to, checked before every
+                request including each redirect hop. A blocked target raises `BlockedAddressError`. Not applied to
+                requests sent through a proxy.
         """
 
     def get(
@@ -813,6 +828,14 @@ class AsyncClient:
 
                 Useful for testing purposes or when you want to bind the client to a specific network interface.
                 Can be an IP address in the format `xxx.xxx.xxx.xxx` (for IPv4) or `ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff` (for IPv6).
+            blocked_addresses:
+
+                IP addresses and CIDR ranges the client never sends a request to, such as
+                `['127.0.0.0/8', '10.0.0.0/8', '169.254.169.254']`.
+
+                Every request is checked before it is sent, including each redirect hop. A request whose host is a
+                blocked IP literal, or a hostname resolving to a blocked address, raises `BlockedAddressError`.
+                Requests sent through a proxy are not checked, because the proxy resolves and connects to the target.
         """
 
     async def __aenter__(self) -> AsyncClient:
@@ -835,6 +858,7 @@ class AsyncClient:
         cookies: Cookies | None = None,
         headers: dict[str, str] | None = None,
         local_address: str | None = None,
+        blocked_addresses: list[str] | None = None,
     ) -> None:
         """Initialize an asynchronous HTTP client.
 
@@ -854,6 +878,9 @@ class AsyncClient:
                 headers and are overridden by per-request headers. Matching is case-insensitive. To remove an impersonated header, pass an empty string as the value.
             local_address: Local address to bind the client to. Useful for testing purposes or when you want to bind the client to a specific network interface.
                 Can be an IP address in the format "xxx.xxx.xxx.xxx" (for IPv4) or "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff" (for IPv6).
+            blocked_addresses: IP addresses and CIDR ranges the client never sends a request to, checked before every
+                request including each redirect hop. A blocked target raises `BlockedAddressError`. Not applied to
+                requests sent through a proxy.
         """
 
     async def get(

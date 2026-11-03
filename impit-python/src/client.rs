@@ -36,7 +36,7 @@ impl Client {
     }
 
     #[new]
-    #[pyo3(signature = (browser=None, http3=None, proxy=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), verify=None, default_encoding=None, follow_redirects=None, max_redirects=Some(20), cookie_jar=None, cookies=None, headers=None, local_address=None))]
+    #[pyo3(signature = (browser=None, http3=None, proxy=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), verify=None, default_encoding=None, follow_redirects=None, max_redirects=Some(20), cookie_jar=None, cookies=None, headers=None, local_address=None, blocked_addresses=None))]
     pub fn new(
         py: Python<'_>,
         browser: Option<String>,
@@ -51,6 +51,7 @@ impl Client {
         cookies: Option<crate::Bound<'_, crate::PyAny>>,
         headers: Option<HashMap<String, String>>,
         local_address: Option<String>,
+        blocked_addresses: Option<Vec<String>>,
     ) -> PyResult<Self> {
         let builder = ImpitBuilder::default();
 
@@ -113,6 +114,13 @@ impl Client {
         let builder = match local_address {
             Some(local_address) => builder
                 .with_local_address(local_address)
+                .map_err(ImpitPyError)?,
+            None => builder,
+        };
+
+        let builder = match blocked_addresses {
+            Some(blocked_addresses) => builder
+                .with_blocked_addresses(blocked_addresses)
                 .map_err(ImpitPyError)?,
             None => builder,
         };

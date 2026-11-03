@@ -174,6 +174,7 @@ impl ImpitWrapper {
           ImpitError::UrlProtocolError(_) => napi::Status::InvalidArg,
           ImpitError::UrlParsingError(_) => napi::Status::InvalidArg,
           ImpitError::InvalidMethod(_) => napi::Status::InvalidArg,
+          ImpitError::InvalidBlockedAddress(_) => napi::Status::InvalidArg,
           _ => napi::Status::GenericFailure,
         };
 
@@ -211,6 +212,7 @@ impl ImpitWrapper {
           ImpitError::ResponseNotRead => "ResponseNotRead",
           ImpitError::RequestNotRead => "RequestNotRead",
           ImpitError::StreamClosed => "StreamClosed",
+          ImpitError::BlockedAddress(_, _) => "BlockedAddressError",
           ImpitError::InvalidHeaderName(_) | ImpitError::InvalidHeaderValue(_) => {
             "LocalProtocolError"
           }

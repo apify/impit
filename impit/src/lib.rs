@@ -67,6 +67,9 @@ pub(crate) mod http3;
 /// Main module that contains the `Impit` struct and its methods.
 pub mod impit;
 
+/// Address blocklist, see [`ImpitBuilder::with_blocked_addresses`](crate::impit::ImpitBuilder::with_blocked_addresses).
+pub mod blocked_addresses;
+
 /// Customizing request options.
 pub mod request;
 

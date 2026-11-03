@@ -52,3 +52,28 @@ def echoing_server(body_started: threading.Event | None = None) -> Iterator[int]
     finally:
         thread.join(5)
         server.close()
+
+
+@contextlib.contextmanager
+def redirecting_server(location: str) -> Iterator[int]:
+    """Serve a single request on `127.0.0.1` with a `302` redirect to `location`, and yield the port to call."""
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    server.bind(('127.0.0.1', 0))
+    server.listen(1)
+
+    def redirect() -> None:
+        conn, _ = server.accept()
+        conn.settimeout(5)
+        with contextlib.suppress(TimeoutError):
+            conn.recv(1024)
+        conn.send(f'HTTP/1.1 302 Found\r\nLocation: {location}\r\nContent-Length: 0\r\n\r\n'.encode())
+        conn.close()
+
+    thread = threading.Thread(target=redirect, daemon=True)
+    thread.start()
+    try:
+        yield server.getsockname()[1]
+    finally:
+        thread.join(5)
+        server.close()

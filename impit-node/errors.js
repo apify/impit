@@ -35,6 +35,7 @@ class StreamConsumed extends StreamError {}
 class ResponseNotRead extends StreamError {}
 class RequestNotRead extends StreamError {}
 class StreamClosed extends StreamError {}
+class BlockedAddressError extends RequestError {}
 
 const errorClassMap = {
     HTTPError,
@@ -67,6 +68,7 @@ const errorClassMap = {
     ResponseNotRead,
     RequestNotRead,
     StreamClosed,
+    BlockedAddressError,
 };
 
 function rethrowNativeError(err) {
@@ -114,4 +116,5 @@ module.exports = {
     ResponseNotRead,
     RequestNotRead,
     StreamClosed,
+    BlockedAddressError,
 };

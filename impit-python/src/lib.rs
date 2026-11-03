@@ -84,6 +84,10 @@ fn impit(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
         m.py().get_type::<errors::RequestNotRead>(),
     )?;
     m.add("StreamClosed", m.py().get_type::<errors::StreamClosed>())?;
+    m.add(
+        "BlockedAddressError",
+        m.py().get_type::<errors::BlockedAddressError>(),
+    )?;
 
     macro_rules! http_no_client {
     ($($name:ident),*) => {
@@ -104,7 +108,7 @@ fn impit(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
                 max_redirects: Option<u16>,
                 proxy: Option<String>,
             ) -> PyResult<response::ImpitPyResponse> {
-                let client = Client::new(_py, None, None, proxy, Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), None, None, follow_redirects, max_redirects, cookie_jar, cookies, None, None);
+                let client = Client::new(_py, None, None, proxy, Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), None, None, follow_redirects, max_redirects, cookie_jar, cookies, None, None, None);
 
                 Ok(client?.$name(_py, url, content, data, headers, timeout, force_http3)?)
             }
@@ -145,6 +149,7 @@ fn impit(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
             max_redirects,
             cookie_jar,
             cookies,
+            None,
             None,
             None,
         );

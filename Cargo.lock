@@ -1308,6 +1308,7 @@ dependencies = [
  "hickory-resolver",
  "hyper",
  "hyper-util",
+ "ipnet",
  "log",
  "lol_html",
  "mime",

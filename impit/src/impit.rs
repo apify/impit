@@ -9,6 +9,7 @@ use url::Url;
 #[cfg(feature = "http3")]
 use crate::http3::H3Engine;
 use crate::{
+    blocked_addresses::{BlockedAddresses, BlockingResolver, SystemResolver},
     errors::{ErrorContext, ImpitError},
     fingerprint::BrowserFingerprint,
     http_headers::HttpHeadersBuilder,
@@ -93,6 +94,7 @@ pub struct ImpitBuilder<CookieStoreImpl: CookieStore + 'static> {
     cookie_store: Option<Arc<CookieStoreImpl>>,
     headers: Option<Vec<(String, String)>>,
     local_address: Option<IpAddr>,
+    blocked_addresses: BlockedAddresses,
 }
 
 impl<CookieStoreImpl: CookieStore + 'static> Clone for ImpitBuilder<CookieStoreImpl> {
@@ -108,6 +110,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Clone for ImpitBuilder<CookieStoreI
             cookie_store: self.cookie_store.clone(),
             headers: self.headers.clone(),
             local_address: self.local_address,
+            blocked_addresses: self.blocked_addresses.clone(),
         }
     }
 }
@@ -125,6 +128,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Default for ImpitBuilder<CookieStor
             cookie_store: None,
             headers: None,
             local_address: None,
+            blocked_addresses: BlockedAddresses::default(),
         }
     }
 }
@@ -224,6 +228,26 @@ impl<CookieStoreImpl: CookieStore + 'static> ImpitBuilder<CookieStoreImpl> {
         Ok(self)
     }
 
+    /// Sets IP addresses and CIDR ranges the built [`Impit`] instance never sends a request to.
+    ///
+    /// Entries are IP addresses or CIDR ranges, such as `127.0.0.0/8`, `10.0.0.0/8`, `169.254.169.254` or
+    /// `fc00::/7`. Every request is checked before it is sent, including each redirect hop. A request whose host is a
+    /// blocked IP literal fails with [`ImpitError::BlockedAddress`] before anything is sent. A hostname is checked
+    /// when it is resolved: the lookup fails if any address it resolves to is blocked, and the connection can only
+    /// go to an address that passed, so a DNS record changing between the check and the connection cannot bypass
+    /// the policy.
+    ///
+    /// Requests sent through a proxy are not checked, because the proxy resolves and connects to the target, so
+    /// limiting what it can reach is the proxy's job.
+    pub fn with_blocked_addresses<I, S>(mut self, entries: I) -> Result<Self, ImpitError>
+    where
+        I: IntoIterator<Item = S>,
+        S: AsRef<str>,
+    {
+        self.blocked_addresses = BlockedAddresses::parse(entries)?;
+        Ok(self)
+    }
+
     /// Sets additional headers to include in every request made by the built [`Impit`] instance.
     ///
     /// This can be used to add e.g. custom user-agent or authorization headers that should be included in every request.
@@ -320,7 +344,33 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
             client = client.local_address(ip_addr);
         }
 
+        let blocked_addresses = if config.uses_proxy() {
+            BlockedAddresses::default()
+        } else {
+            config.blocked_addresses.clone()
+        };
+
+        if !blocked_addresses.is_empty() {
+            client = client.dns_resolver(BlockingResolver::new(
+                Arc::new(SystemResolver),
+                blocked_addresses.clone(),
+            ));
+        }
+
         match config.redirect {
+            RedirectBehavior::FollowRedirect(max) if !blocked_addresses.is_empty() => {
+                // The same limit as `Policy::limited(max)`, plus the blocklist check on every hop. Hostname hops
+                // are checked by the resolver; this catches IP literals, which are never resolved.
+                client = client.redirect(reqwest::redirect::Policy::custom(move |attempt| {
+                    if attempt.previous().len() > max {
+                        return attempt.error("too many redirects");
+                    }
+                    match blocked_addresses.check_url(attempt.url()) {
+                        Ok(()) => attempt.follow(),
+                        Err(error) => attempt.error(error),
+                    }
+                }));
+            }
             RedirectBehavior::FollowRedirect(max) => {
                 client = client.redirect(reqwest::redirect::Policy::limited(max));
             }
@@ -510,6 +560,10 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
             RedirectBehavior::FollowRedirect(max) => max,
             RedirectBehavior::ManualRedirect => 0,
         };
+
+        if !self.config.uses_proxy() {
+            self.config.blocked_addresses.check_url(&request.url)?;
+        }
 
         let mut prepared = PreparedRequest {
             method: request.method,
@@ -774,5 +828,100 @@ mod tests {
             get_with_http3_prior_knowledge(&impit).await,
             Err(ImpitError::Http3Disabled)
         ));
+    }
+
+    async fn redirecting_server(location: &str) -> String {
+        use tokio::io::{AsyncReadExt, AsyncWriteExt};
+
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let port = listener.local_addr().unwrap().port();
+        let response =
+            format!("HTTP/1.1 302 Found\r\nLocation: {location}\r\nContent-Length: 0\r\n\r\n");
+        tokio::spawn(async move {
+            let (mut stream, _) = listener.accept().await.unwrap();
+            let mut buffer = [0u8; 1024];
+            let _ = stream.read(&mut buffer).await;
+            stream.write_all(response.as_bytes()).await.unwrap();
+        });
+        format!("http://127.0.0.1:{port}/")
+    }
+
+    fn blocking_private_ranges() -> Impit<Jar> {
+        Impit::<Jar>::builder()
+            .with_blocked_addresses(["10.0.0.0/8", "127.0.0.0/8", "::1/128"])
+            .unwrap()
+            .with_default_timeout(std::time::Duration::from_secs(5))
+            .build()
+            .unwrap()
+    }
+
+    #[tokio::test]
+    async fn blocked_ip_literal_is_refused_before_sending() {
+        let impit = blocking_private_ranges();
+        let result = impit
+            .get("http://10.255.255.1/internal".to_string(), None, None)
+            .await;
+        assert!(matches!(
+            result,
+            Err(ImpitError::BlockedAddress(host, address)) if host == "10.255.255.1" && address == "10.255.255.1"
+        ));
+    }
+
+    #[tokio::test]
+    async fn blocked_hostname_is_refused_when_resolved() {
+        let impit = blocking_private_ranges();
+        let result = impit
+            .get("http://localhost:1/".to_string(), None, None)
+            .await;
+        assert!(matches!(
+            result,
+            Err(ImpitError::BlockedAddress(host, _)) if host == "localhost"
+        ));
+    }
+
+    #[tokio::test]
+    async fn blocked_redirect_target_is_refused_before_sending() {
+        let impit = Impit::<Jar>::builder()
+            .with_blocked_addresses(["10.0.0.0/8"])
+            .unwrap()
+            .with_default_timeout(std::time::Duration::from_secs(5))
+            .build()
+            .unwrap();
+        let url = redirecting_server("http://10.255.255.1/internal").await;
+        let result = impit.get(url, None, None).await;
+        assert!(matches!(
+            result,
+            Err(ImpitError::BlockedAddress(host, _)) if host == "10.255.255.1"
+        ));
+    }
+
+    #[tokio::test]
+    async fn manual_redirect_returns_the_redirect_response() {
+        let impit = Impit::<Jar>::builder()
+            .with_blocked_addresses(["10.0.0.0/8"])
+            .unwrap()
+            .with_redirect(super::RedirectBehavior::ManualRedirect)
+            .with_default_timeout(std::time::Duration::from_secs(5))
+            .build()
+            .unwrap();
+        let url = redirecting_server("http://10.255.255.1/internal").await;
+        let response = impit.get(url, None, None).await.unwrap();
+        assert_eq!(response.status(), 302);
+    }
+
+    #[tokio::test]
+    async fn blocked_addresses_do_not_apply_behind_a_proxy() {
+        let impit = Impit::<Jar>::builder()
+            .with_blocked_addresses(["10.0.0.0/8"])
+            .unwrap()
+            .with_proxy("http://127.0.0.1:9".to_string())
+            .with_default_timeout(std::time::Duration::from_secs(5))
+            .build()
+            .unwrap();
+        let result = impit
+            .get("http://10.255.255.1/internal".to_string(), None, None)
+            .await;
+        // The request reaches the (dead) proxy instead of being refused by the blocklist.
+        assert!(!matches!(result, Err(ImpitError::BlockedAddress(..))));
     }
 }

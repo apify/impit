@@ -96,6 +96,10 @@ pub enum ImpitError {
     InvalidHeaderValue(String),
     #[error("The internal HTTP library has thrown an error:\n{0}")]
     ReqwestError(String),
+    #[error("Refusing to connect to `{0}`: the address {1} is blocked.")]
+    BlockedAddress(String, String),
+    #[error("Invalid blocked address `{0}`: expected an IP address or a CIDR range.")]
+    InvalidBlockedAddress(String),
 }
 
 impl From<reqwest::Error> for ImpitError {
@@ -111,6 +115,9 @@ impl ImpitError {
 
     pub fn from(error: reqwest::Error, context: Option<ErrorContext>) -> Self {
         let context = context.unwrap_or_default();
+        if let Some(blocked) = crate::blocked_addresses::find_blocked_address_error(&error) {
+            return blocked.into();
+        }
         if error.is_timeout() {
             if (format!("{:?}", error).to_lowercase()).contains("connection timed out") {
                 return ImpitError::ConnectTimeout;

@@ -379,6 +379,18 @@ headers?: Headers | Record<string, string> | [string, string][]
  * @default `undefined` (the OS will choose the local address)
  */
 localAddress?: string
+/**
+ * IP addresses and CIDR ranges this Impit instance never sends a request to, such as
+ * `['127.0.0.0/8', '10.0.0.0/8', '169.254.169.254']`.
+ *
+ * Every request is checked before it is sent, including each redirect hop. A request whose host is a
+ * blocked IP literal, or a hostname resolving to a blocked address, is rejected with a `BlockedAddressError`.
+ *
+ * Requests sent through a proxy are not checked, because the proxy resolves and connects to the target.
+ *
+ * @default `undefined` (no blocked addresses)
+ */
+blockedAddresses?: Array<string>
 }
 
 /**

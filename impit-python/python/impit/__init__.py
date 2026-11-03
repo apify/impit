@@ -6,6 +6,7 @@ from .headers import Headers
 from .impit import (
     USE_CLIENT_DEFAULT,
     AsyncClient,
+    BlockedAddressError,
     Client,
     CloseError,
     ConnectError,
@@ -52,6 +53,7 @@ __version__ = metadata.version('impit')
 __all__ = [
     'USE_CLIENT_DEFAULT',
     'AsyncClient',
+    'BlockedAddressError',
     'Browser',
     'Client',
     'CloseError',
