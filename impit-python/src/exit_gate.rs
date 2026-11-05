@@ -64,6 +64,10 @@ fn close(py: Python<'_>) {
 }
 
 pub fn register(m: &Bound<'_, PyModule>) -> PyResult<()> {
+    // Newer versions hang such threads instead of killing them.
+    if m.py().version_info() >= (3, 13, 8) {
+        return Ok(());
+    }
     let close = wrap_pyfunction!(close, m)?;
     m.py()
         .import("atexit")?
@@ -127,5 +131,8 @@ where
     F: Future<Output = PyResult<T>> + Send + 'static,
     T: for<'py> IntoPyObject<'py> + Send + 'static,
 {
+    // Python code is still running, so the interpreter isn't finalizing yet. This reopens the gate
+    // for atexit hooks that run after ours, whose results would never arrive otherwise.
+    STATE.lock().unwrap().closed = false;
     pyo3_async_runtimes::generic::future_into_py::<GatedTokio, _, T>(py, fut)
 }

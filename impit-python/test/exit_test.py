@@ -50,3 +50,25 @@ SCRIPT = textwrap.dedent("""
 def test_exit_right_after_await_does_not_crash() -> None:
     result = subprocess.run([sys.executable, '-c', SCRIPT], capture_output=True, timeout=30, check=False)  # noqa: S603
     assert result.returncode == 0, result.stderr.decode()
+
+
+# atexit hooks run in reverse order, so this one runs after the hook impit registers on import.
+LATE_ATEXIT_SCRIPT = textwrap.dedent("""
+    import asyncio
+    import atexit
+
+
+    async def main():
+        async with impit.AsyncClient():
+            pass
+
+
+    atexit.register(lambda: asyncio.run(main()))
+
+    import impit
+""")
+
+
+def test_async_client_works_in_atexit_hook_registered_before_import() -> None:
+    result = subprocess.run([sys.executable, '-c', LATE_ATEXIT_SCRIPT], capture_output=True, timeout=10, check=False)  # noqa: S603
+    assert result.returncode == 0, result.stderr.decode()
