@@ -27,7 +27,7 @@ impl AsyncClient {
         slf: Py<Self>,
         py: Python<'_>,
     ) -> Result<pyo3::Bound<'_, pyo3::PyAny>, pyo3::PyErr> {
-        pyo3_async_runtimes::tokio::future_into_py::<_, Py<AsyncClient>>(py, async { Ok(slf) })
+        crate::exit_gate::future_into_py::<_, Py<AsyncClient>>(py, async { Ok(slf) })
     }
 
     pub fn __aexit__<'python>(
@@ -37,7 +37,7 @@ impl AsyncClient {
         _traceback: &crate::Bound<'_, crate::PyAny>,
         py: Python<'python>,
     ) -> Result<pyo3::Bound<'python, pyo3::PyAny>, pyo3::PyErr> {
-        pyo3_async_runtimes::tokio::future_into_py::<_, ()>(py, async { Ok(()) })
+        crate::exit_gate::future_into_py::<_, ()>(py, async { Ok(()) })
     }
 
     #[new]
@@ -400,7 +400,7 @@ impl AsyncClient {
         let stream_value = stream.unwrap_or(false);
         let impit = Arc::clone(&self.impit);
 
-        pyo3_async_runtimes::tokio::future_into_py::<_, ImpitPyResponse>(py, async move {
+        crate::exit_gate::future_into_py::<_, ImpitPyResponse>(py, async move {
             let response = match method_str.to_lowercase().as_str() {
                 "get" => impit.get(url, Some(body), Some(options)).await,
                 "post" => impit.post(url, Some(body), Some(options)).await,
