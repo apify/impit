@@ -53,7 +53,7 @@
     "universal": "napi universal",
     "copy-version": "napi version"
   },
-  "packageManager": "pnpm@12.16.1",
+  "packageManager": "pnpm@12.17.0",
   "description": "Impit for JavaScript",
   "optionalDependencies": {
     "impit-darwin-arm64": "0.14.8",
