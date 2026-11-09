@@ -109,9 +109,7 @@ impl PyResponseAsyncBytesIterator {
             self.content_returned = true;
             let content = PyBytes::new(py, &content).unbind();
             let future =
-                pyo3_async_runtimes::tokio::future_into_py::<_, Py<PyBytes>>(py, async move {
-                    Ok(content)
-                })?;
+                crate::exit_gate::future_into_py::<_, Py<PyBytes>>(py, async move { Ok(content) })?;
             return Ok(future);
         }
 
@@ -141,44 +139,43 @@ impl PyResponseAsyncBytesIterator {
 
         let parent_response = self.parent_response.as_ref().map(|p| p.clone_ref(py));
 
-        let future =
-            pyo3_async_runtimes::tokio::future_into_py::<_, Py<PyBytes>>(py, async move {
-                let chunk_result = {
-                    let mut stream_guard = stream_arc.lock().await;
-                    if let Some(stream) = stream_guard.as_mut() {
-                        stream.next().await
-                    } else {
-                        None
-                    }
-                };
-                match chunk_result {
-                    Some(Ok(chunk)) => Ok(Python::attach(|py| PyBytes::new(py, &chunk).unbind())),
-                    Some(Err(e)) => {
-                        if let Some(parent) = parent_response {
-                            Python::attach(|py| {
-                                if let Ok(mut parent_ref) = parent.try_borrow_mut(py) {
-                                    parent_ref.inner_state = InnerResponseState::StreamingClosed;
-                                    parent_ref.is_stream_consumed = true;
-                                    parent_ref.is_closed = true;
-                                }
-                            });
-                        }
-                        Err(ImpitPyError(ImpitError::from(e, None)).into())
-                    }
-                    None => {
-                        if let Some(parent) = parent_response {
-                            Python::attach(|py| {
-                                if let Ok(mut parent_ref) = parent.try_borrow_mut(py) {
-                                    parent_ref.inner_state = InnerResponseState::StreamingClosed;
-                                    parent_ref.is_stream_consumed = true;
-                                    parent_ref.is_closed = true;
-                                }
-                            });
-                        }
-                        Err(pyo3::exceptions::PyStopAsyncIteration::new_err(""))
-                    }
+        let future = crate::exit_gate::future_into_py::<_, Py<PyBytes>>(py, async move {
+            let chunk_result = {
+                let mut stream_guard = stream_arc.lock().await;
+                if let Some(stream) = stream_guard.as_mut() {
+                    stream.next().await
+                } else {
+                    None
                 }
-            })?;
+            };
+            match chunk_result {
+                Some(Ok(chunk)) => Ok(Python::attach(|py| PyBytes::new(py, &chunk).unbind())),
+                Some(Err(e)) => {
+                    if let Some(parent) = parent_response {
+                        Python::attach(|py| {
+                            if let Ok(mut parent_ref) = parent.try_borrow_mut(py) {
+                                parent_ref.inner_state = InnerResponseState::StreamingClosed;
+                                parent_ref.is_stream_consumed = true;
+                                parent_ref.is_closed = true;
+                            }
+                        });
+                    }
+                    Err(ImpitPyError(ImpitError::from(e, None)).into())
+                }
+                None => {
+                    if let Some(parent) = parent_response {
+                        Python::attach(|py| {
+                            if let Ok(mut parent_ref) = parent.try_borrow_mut(py) {
+                                parent_ref.inner_state = InnerResponseState::StreamingClosed;
+                                parent_ref.is_stream_consumed = true;
+                                parent_ref.is_closed = true;
+                            }
+                        });
+                    }
+                    Err(pyo3::exceptions::PyStopAsyncIteration::new_err(""))
+                }
+            }
+        })?;
 
         Ok(future)
     }
@@ -295,7 +292,7 @@ impl ImpitPyResponse {
     }
 
     fn aclose(slf: Py<Self>, py: Python<'_>) -> PyResult<Bound<'_, PyAny>> {
-        pyo3_async_runtimes::tokio::future_into_py(py, async move {
+        crate::exit_gate::future_into_py(py, async move {
             Self::close_async_impl(slf)?;
             Ok(())
         })
@@ -390,7 +387,7 @@ impl ImpitPyResponse {
     }
 
     fn aread(slf: Py<Self>, py: Python<'_>) -> PyResult<Bound<'_, PyAny>> {
-        pyo3_async_runtimes::tokio::future_into_py(py, async move {
+        crate::exit_gate::future_into_py(py, async move {
             let (state, response_option, content_option, is_stream_consumed) =
                 Python::attach(|py| {
                     let mut slf_ref = slf.borrow_mut(py);
