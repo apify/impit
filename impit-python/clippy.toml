@@ -1,1 +1,5 @@
 too-many-arguments-threshold = 20
+
+disallowed-methods = [
+    { path = "pyo3_async_runtimes::tokio::future_into_py", reason = "use crate::exit_gate::future_into_py, it keeps result deliveries from racing interpreter shutdown" },
+]
