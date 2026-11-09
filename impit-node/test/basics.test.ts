@@ -13,14 +13,7 @@ import { Server as ProxyServer } from 'proxy-chain';
 function getHttpBinUrl(path: string, https?: boolean): string {
     https ??= true;
 
-    let url: URL;
-    if (process.env.APIFY_HTTPBIN_TOKEN) {
-        url = new URL(path, 'https://httpbin.apify.actor');
-        url.searchParams.set('token', process.env.APIFY_HTTPBIN_TOKEN);
-    } else {
-        url = new URL(path, 'https://httpbin.org');
-    }
-
+    const url = new URL(path, 'https://httpbin.apify.actor');
     url.protocol = https ? 'https:' : 'http:';
     return url.href;
 }
