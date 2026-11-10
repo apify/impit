@@ -6,11 +6,15 @@ class AsyncClient:
 class Client:
     pass
 
+class Request:
+    pass
+
 class Response:
     pass
 
 __all__ = [
     "AsyncClient",
     "Client",
+    "Request",
     "Response",
 ]

@@ -6,7 +6,6 @@ use thiserror::Error;
 #[derive(Default)]
 pub struct ErrorContext {
     pub timeout: Option<Duration>,
-    pub max_redirects: Option<usize>,
     pub method: Option<String>,
     pub protocol: Option<String>,
     pub url: Option<String>,
@@ -96,6 +95,8 @@ pub enum ImpitError {
     InvalidHeaderValue(String),
     #[error("The internal HTTP library has thrown an error:\n{0}")]
     ReqwestError(String),
+    #[error("{0}")]
+    HookError(Box<dyn Error + Send + Sync>),
 }
 
 impl From<reqwest::Error> for ImpitError {
@@ -116,10 +117,6 @@ impl ImpitError {
                 return ImpitError::ConnectTimeout;
             }
             return ImpitError::TimeoutException(context.timeout.map(|x| x.as_millis()));
-        }
-
-        if error.is_redirect() {
-            return ImpitError::TooManyRedirects(context.max_redirects);
         }
 
         if (error.is_body() || error.is_decode())

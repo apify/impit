@@ -13,7 +13,10 @@ from impit import (
     Browser,
     Cookies,
     HTTPError,
+    HTTPStatusError,
     RemoteProtocolError,
+    Request,
+    Response,
     StreamClosed,
     StreamConsumed,
     TooManyRedirects,
@@ -464,6 +467,66 @@ class TestBasicRequests:
 
         with pytest.raises(TooManyRedirects):
             await impit.get(redirect_url)
+
+    @pytest.mark.asyncio
+    async def test_per_request_redirect_options(self, browser: Browser) -> None:
+        redirect_url = get_httpbin_url('/absolute-redirect/3')
+
+        impit = AsyncClient(browser=browser)
+        assert (await impit.get(redirect_url)).status_code == 302
+        assert (await impit.get(redirect_url, follow_redirects=True)).status_code == 200
+        async with impit.stream('GET', redirect_url, follow_redirects=True) as response:
+            assert response.status_code == 200
+        with pytest.raises(TooManyRedirects):
+            await impit.request('GET', redirect_url, follow_redirects=True, max_redirects=2)
+
+        impit = AsyncClient(browser=browser, follow_redirects=True)
+        assert (await impit.get(redirect_url, follow_redirects=False)).status_code == 302
+
+    @pytest.mark.asyncio
+    async def test_event_hooks(self, browser: Browser) -> None:
+        target_url = get_httpbin_url('/headers')
+        redirect_url = get_httpbin_url('/redirect-to', query={'url': target_url})
+        urls: list[str] = []
+        status_codes: list[int] = []
+
+        async def on_request(request: Request) -> None:
+            urls.append(request.url)
+            request.headers['x-hop'] = str(len(urls))
+
+        async def on_response(response: Response) -> None:
+            status_codes.append(response.status_code)
+
+        impit = AsyncClient(
+            browser=browser,
+            follow_redirects=True,
+            event_hooks={'request': [on_request], 'response': [on_response]},
+        )
+        response = await impit.get(redirect_url)
+
+        assert urls == [redirect_url, target_url]
+        assert status_codes == [302, 200]
+        assert response.json()['headers']['X-Hop'] == '2'
+
+    @pytest.mark.asyncio
+    async def test_event_hook_errors_propagate(self, browser: Browser) -> None:
+        async def fail_on_get(request: Request) -> None:
+            if request.url.endswith('/get'):
+                raise ValueError(request.url)
+
+        async def raise_for_status(response: Response) -> None:
+            response.raise_for_status()
+
+        impit = AsyncClient(
+            browser=browser,
+            follow_redirects=True,
+            event_hooks={'request': [fail_on_get], 'response': [raise_for_status]},
+        )
+
+        with pytest.raises(ValueError, match='/get'):
+            await impit.get(get_httpbin_url('/redirect-to', query={'url': get_httpbin_url('/get')}))
+        with pytest.raises(HTTPStatusError):
+            await impit.get(get_httpbin_url('/redirect-to', query={'url': get_httpbin_url('/status/404')}))
 
     @pytest.mark.asyncio
     async def test_async_socket_server(self, browser: Browser) -> None:

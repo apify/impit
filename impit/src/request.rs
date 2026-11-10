@@ -1,9 +1,11 @@
-use std::time::Duration;
+use std::{fmt::Debug, sync::Arc, time::Duration};
 
 use bytes::Bytes;
-use futures_core::TryStream;
-use reqwest::{header::HeaderMap, Method};
+use futures_core::{future::BoxFuture, TryStream};
+use reqwest::{header::HeaderMap, Method, Response};
 use url::Url;
+
+use crate::{errors::ImpitError, impit::RedirectBehavior};
 
 /// A struct that holds the request options.
 ///
@@ -25,6 +27,23 @@ pub struct RequestOptions {
     ///
     /// If [`ImpitBuilder::with_http3`](crate::impit::ImpitBuilder::with_http3) wasn't called, this option will cause [`ErrorType::Http3Disabled`](crate::impit::ErrorType::Http3Disabled) errors.
     pub http3_prior_knowledge: bool,
+    /// Overrides the redirect behavior set with [`ImpitBuilder::with_redirect`](crate::impit::ImpitBuilder::with_redirect) for this request.
+    pub redirect: Option<RedirectBehavior>,
+    /// Callbacks invoked for every request and redirect response of the redirect chain.
+    pub hooks: Option<Arc<dyn RequestHooks>>,
+}
+
+/// Callbacks invoked by [`Impit`](crate::impit::Impit) while sending a request and following its redirects.
+pub trait RequestHooks: Debug + Send + Sync {
+    /// Called before each request of the redirect chain is sent. Changes made to `request` apply to the sent request
+    /// and are carried over to the following redirects.
+    fn on_request<'a>(
+        &'a self,
+        request: &'a mut ImpitRequest,
+    ) -> BoxFuture<'a, Result<(), ImpitError>>;
+
+    /// Called with each redirect response that is followed. The last response of the chain is returned to the caller instead.
+    fn on_redirect(&self, response: Response) -> BoxFuture<'_, Result<(), ImpitError>>;
 }
 
 /// The body of a request.
