@@ -112,10 +112,6 @@ impl From<ImpitPyError> for pyo3::PyErr {
             ImpitPyError(ImpitError::InvalidHeaderValue(_)) => {
                 LocalProtocolError::new_err(format!("{}", err.0))
             }
-            ImpitPyError(ImpitError::HookError(err)) => match err.downcast::<pyo3::PyErr>() {
-                Ok(err) => *err,
-                Err(err) => HTTPError::new_err(err.to_string()),
-            },
             _ => HTTPError::new_err(format!("{}", err.0)),
         }
     }

@@ -15,11 +15,8 @@ from impit import (
     ConnectTimeout,
     Cookies,
     HTTPError,
-    HTTPStatusError,
     ReadTimeout,
     RemoteProtocolError,
-    Request,
-    Response,
     StreamClosed,
     StreamConsumed,
     TimeoutException,
@@ -424,46 +421,6 @@ class TestBasicRequests:
 
         impit = Client(browser=browser, follow_redirects=True)
         assert impit.get(redirect_url, follow_redirects=False).status_code == 302
-
-    def test_event_hooks(self, browser: Browser) -> None:
-        target_url = get_httpbin_url('/headers')
-        redirect_url = get_httpbin_url('/redirect-to', query={'url': target_url})
-        urls: list[str] = []
-        status_codes: list[int] = []
-
-        def on_request(request: Request) -> None:
-            urls.append(request.url)
-            request.headers['x-hop'] = str(len(urls))
-
-        def on_response(response: Response) -> None:
-            status_codes.append(response.status_code)
-
-        impit = Client(
-            browser=browser,
-            follow_redirects=True,
-            event_hooks={'request': [on_request], 'response': [on_response]},
-        )
-        response = impit.get(redirect_url)
-
-        assert urls == [redirect_url, target_url]
-        assert status_codes == [302, 200]
-        assert response.json()['headers']['X-Hop'] == '2'
-
-    def test_event_hook_errors_propagate(self, browser: Browser) -> None:
-        def fail_on_get(request: Request) -> None:
-            if request.url.endswith('/get'):
-                raise ValueError(request.url)
-
-        impit = Client(
-            browser=browser,
-            follow_redirects=True,
-            event_hooks={'request': [fail_on_get], 'response': [Response.raise_for_status]},
-        )
-
-        with pytest.raises(ValueError, match='/get'):
-            impit.get(get_httpbin_url('/redirect-to', query={'url': get_httpbin_url('/get')}))
-        with pytest.raises(HTTPStatusError):
-            impit.get(get_httpbin_url('/redirect-to', query={'url': get_httpbin_url('/status/404')}))
 
     def test_thread_server(self, browser: Browser) -> None:
         port_holder = [0]

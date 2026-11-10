@@ -95,8 +95,6 @@ pub enum ImpitError {
     InvalidHeaderValue(String),
     #[error("The internal HTTP library has thrown an error:\n{0}")]
     ReqwestError(String),
-    #[error("{0}")]
-    HookError(Box<dyn Error + Send + Sync>),
 }
 
 impl From<reqwest::Error> for ImpitError {

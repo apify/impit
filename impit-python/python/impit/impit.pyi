@@ -6,7 +6,7 @@ from .headers import Headers
 from . import Browser
 
 from typing import Any
-from collections.abc import AsyncIterable, AsyncIterator, Awaitable, Callable, Iterable, Iterator
+from collections.abc import AsyncIterable, AsyncIterator, Iterable, Iterator
 from contextlib import AbstractAsyncContextManager, AbstractContextManager
 
 
@@ -392,27 +392,6 @@ class Response:
                 assert response.is_closed is True
         """
 
-class Request:
-    """Request passed to the ``request`` event hooks (see the ``event_hooks`` parameter of :class:`Client` and :class:`AsyncClient`).
-
-    .. code-block:: python
-
-        def log_request(request: Request) -> None:
-            print(f'{request.method} {request.url}')
-
-        client = Client(event_hooks={'request': [log_request]})
-    """
-
-    method: str
-    """HTTP method of the request (e.g., 'GET')."""
-
-    url: str
-    """URL of the request."""
-
-    headers: Headers
-    """Headers of the request. Changes made to them apply to the sent request and the requests of the following redirects."""
-
-
 class Client:
     """Synchronous HTTP client with browser impersonation capabilities.
 
@@ -492,12 +471,6 @@ class Client:
 
                 Useful for testing purposes or when you want to bind the client to a specific network interface.
                 Can be an IP address in the format `xxx.xxx.xxx.xxx` (for IPv4) or `ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff` (for IPv6).
-            event_hooks:
-
-                Functions to call for every request and response, including the ones of followed redirects, as in httpx.
-
-                A dictionary with the ``"request"`` and ``"response"`` keys, each with a list of functions. Request hooks receive
-                a :class:`Request` and can modify its headers, response hooks receive a :class:`Response`.
         """
 
     def __enter__(self) -> Client:
@@ -521,7 +494,6 @@ class Client:
         cookies: Cookies | None = None,
         headers: dict[str, str] | None = None,
         local_address: str | None = None,
-        event_hooks: dict[str, list[Callable[..., Any]]] | None = None,
     ) -> None:
         """Initialize a synchronous HTTP client.
 
@@ -541,7 +513,6 @@ class Client:
                 headers and are overridden by per-request headers. Matching is case-insensitive. To remove an impersonated header, pass an empty string as the value.
             local_address: Local address to bind the client to. Useful for testing purposes or when you want to bind the client to a specific network interface.
                 Can be an IP address in the format "xxx.xxx.xxx.xxx" (for IPv4) or "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff" (for IPv6).
-            event_hooks: Functions to call for every request and response, including the ones of followed redirects.
         """
 
     def get(
@@ -882,14 +853,6 @@ class AsyncClient:
 
                 Useful for testing purposes or when you want to bind the client to a specific network interface.
                 Can be an IP address in the format `xxx.xxx.xxx.xxx` (for IPv4) or `ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff` (for IPv6).
-            event_hooks:
-
-                Functions to call for every request and response, including the ones of followed redirects, as in httpx.
-
-                A dictionary with the ``"request"`` and ``"response"`` keys, each with a list of functions. Request hooks receive
-                a :class:`Request` and can modify its headers, response hooks receive a :class:`Response`.
-
-                The functions have to be coroutine functions (``async def``).
         """
 
     async def __aenter__(self) -> AsyncClient:
@@ -912,7 +875,6 @@ class AsyncClient:
         cookies: Cookies | None = None,
         headers: dict[str, str] | None = None,
         local_address: str | None = None,
-        event_hooks: dict[str, list[Callable[..., Awaitable[Any]]]] | None = None,
     ) -> None:
         """Initialize an asynchronous HTTP client.
 
@@ -932,7 +894,6 @@ class AsyncClient:
                 headers and are overridden by per-request headers. Matching is case-insensitive. To remove an impersonated header, pass an empty string as the value.
             local_address: Local address to bind the client to. Useful for testing purposes or when you want to bind the client to a specific network interface.
                 Can be an IP address in the format "xxx.xxx.xxx.xxx" (for IPv4) or "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff" (for IPv6).
-            event_hooks: Functions to call for every request and response, including the ones of followed redirects.
         """
 
     async def get(

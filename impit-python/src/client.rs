@@ -1,21 +1,20 @@
-use std::{collections::HashMap, sync::Arc, time::Duration};
+use std::{collections::HashMap, time::Duration};
 
 use either::{Either, Right};
 use impit::{
     errors::ImpitError,
     impit::{Impit, ImpitBuilder},
-    request::{RequestHooks, RequestOptions},
+    request::RequestOptions,
 };
 use pyo3::{ffi::c_str, prelude::*};
 
 use crate::{
     cookies::PythonCookieJar,
     errors::ImpitPyError,
-    hooks::EventHooks,
     request::{
         parse_timeout, redirect_behavior, to_body, RequestBody, USE_CLIENT_DEFAULT_SENTINEL,
     },
-    response::ImpitPyResponse,
+    response::{self, ImpitPyResponse},
 };
 
 #[pyclass]
@@ -24,7 +23,6 @@ pub(crate) struct Client {
     default_encoding: Option<String>,
     follow_redirects: bool,
     max_redirects: u16,
-    event_hooks: EventHooks,
 }
 
 #[pymethods]
@@ -42,7 +40,7 @@ impl Client {
     }
 
     #[new]
-    #[pyo3(signature = (browser=None, http3=None, proxy=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), verify=None, default_encoding=None, follow_redirects=None, max_redirects=Some(20), cookie_jar=None, cookies=None, headers=None, local_address=None, event_hooks=None))]
+    #[pyo3(signature = (browser=None, http3=None, proxy=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), verify=None, default_encoding=None, follow_redirects=None, max_redirects=Some(20), cookie_jar=None, cookies=None, headers=None, local_address=None))]
     pub fn new(
         py: Python<'_>,
         browser: Option<String>,
@@ -57,7 +55,6 @@ impl Client {
         cookies: Option<crate::Bound<'_, crate::PyAny>>,
         headers: Option<HashMap<String, String>>,
         local_address: Option<String>,
-        event_hooks: Option<HashMap<String, Vec<Py<PyAny>>>>,
     ) -> PyResult<Self> {
         let builder = ImpitBuilder::default();
 
@@ -126,7 +123,6 @@ impl Client {
 
             Ok(Self {
                 impit,
-                event_hooks: EventHooks::new(event_hooks, default_encoding.clone()),
                 default_encoding,
                 follow_redirects,
                 max_redirects,
@@ -146,7 +142,7 @@ impl Client {
         force_http3: Option<bool>,
         follow_redirects: Option<bool>,
         max_redirects: Option<u16>,
-    ) -> PyResult<Py<ImpitPyResponse>> {
+    ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request(
             py,
             "get",
@@ -174,7 +170,7 @@ impl Client {
         force_http3: Option<bool>,
         follow_redirects: Option<bool>,
         max_redirects: Option<u16>,
-    ) -> PyResult<Py<ImpitPyResponse>> {
+    ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request(
             py,
             "head",
@@ -202,7 +198,7 @@ impl Client {
         force_http3: Option<bool>,
         follow_redirects: Option<bool>,
         max_redirects: Option<u16>,
-    ) -> PyResult<Py<ImpitPyResponse>> {
+    ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request(
             py,
             "post",
@@ -230,7 +226,7 @@ impl Client {
         force_http3: Option<bool>,
         follow_redirects: Option<bool>,
         max_redirects: Option<u16>,
-    ) -> PyResult<Py<ImpitPyResponse>> {
+    ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request(
             py,
             "patch",
@@ -258,7 +254,7 @@ impl Client {
         force_http3: Option<bool>,
         follow_redirects: Option<bool>,
         max_redirects: Option<u16>,
-    ) -> PyResult<Py<ImpitPyResponse>> {
+    ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request(
             py,
             "put",
@@ -286,7 +282,7 @@ impl Client {
         force_http3: Option<bool>,
         follow_redirects: Option<bool>,
         max_redirects: Option<u16>,
-    ) -> PyResult<Py<ImpitPyResponse>> {
+    ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request(
             py,
             "delete",
@@ -314,7 +310,7 @@ impl Client {
         force_http3: Option<bool>,
         follow_redirects: Option<bool>,
         max_redirects: Option<u16>,
-    ) -> PyResult<Py<ImpitPyResponse>> {
+    ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request(
             py,
             "options",
@@ -342,7 +338,7 @@ impl Client {
         force_http3: Option<bool>,
         follow_redirects: Option<bool>,
         max_redirects: Option<u16>,
-    ) -> PyResult<Py<ImpitPyResponse>> {
+    ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request(
             py,
             "trace",
@@ -422,15 +418,13 @@ impl Client {
         stream: Option<bool>,
         follow_redirects: Option<bool>,
         max_redirects: Option<u16>,
-    ) -> PyResult<Py<ImpitPyResponse>> {
+    ) -> Result<ImpitPyResponse, ImpitPyError> {
         if let Some(content) = content {
             data = Some(content);
         }
 
         let body = to_body(data, &mut headers)
             .map_err(|e| ImpitPyError(ImpitError::BindingPassthroughError(e.to_string())))?;
-
-        let hooks = self.event_hooks.for_request(py, false)?;
 
         let timeout = parse_timeout(timeout)
             .map_err(|e| ImpitPyError(ImpitError::BindingPassthroughError(e.to_string())))?;
@@ -443,10 +437,9 @@ impl Client {
                 follow_redirects.unwrap_or(self.follow_redirects),
                 max_redirects.unwrap_or(self.max_redirects),
             )),
-            hooks: hooks.clone().map(|hooks| hooks as Arc<dyn RequestHooks>),
         };
 
-        let response = py.detach(|| {
+        py.detach(|| {
             pyo3_async_runtimes::tokio::get_runtime().block_on(async {
                 let response = match method.to_lowercase().as_str() {
                     "get" => self.impit.get(url, Some(body), Some(options)).await,
@@ -471,12 +464,6 @@ impl Client {
                     Err(err) => Err(ImpitPyError(err)),
                 }
             })
-        })?;
-
-        let response = Py::new(py, response)?;
-        if let Some(hooks) = hooks {
-            hooks.on_response_sync(py, &response)?;
-        }
-        Ok(response)
+        })
     }
 }

@@ -7,7 +7,6 @@ mod cookies;
 mod errors;
 mod exit_gate;
 mod fingerprint;
-mod hooks;
 mod request;
 mod response;
 
@@ -21,7 +20,6 @@ fn impit(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<Client>()?;
     m.add_class::<AsyncClient>()?;
     m.add_class::<response::ImpitPyResponse>()?;
-    m.add_class::<hooks::Request>()?;
 
     exit_gate::register(m)?;
 
@@ -108,10 +106,10 @@ fn impit(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
                 follow_redirects: Option<bool>,
                 max_redirects: Option<u16>,
                 proxy: Option<String>,
-            ) -> PyResult<Py<response::ImpitPyResponse>> {
-                let client = Client::new(_py, None, None, proxy, Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), None, None, follow_redirects, max_redirects, cookie_jar, cookies, None, None, None);
+            ) -> PyResult<response::ImpitPyResponse> {
+                let client = Client::new(_py, None, None, proxy, Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), None, None, follow_redirects, max_redirects, cookie_jar, cookies, None, None);
 
-                client?.$name(_py, url, content, data, headers, timeout, force_http3, None, None)
+                Ok(client?.$name(_py, url, content, data, headers, timeout, force_http3, None, None)?)
             }
 
             m.add_function(wrap_pyfunction!($name, m)?)?;
@@ -150,7 +148,6 @@ fn impit(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
             max_redirects,
             cookie_jar,
             cookies,
-            None,
             None,
             None,
         );

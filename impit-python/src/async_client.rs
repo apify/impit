@@ -1,17 +1,16 @@
 use std::{collections::HashMap, sync::Arc, time::Duration};
 
-use either::{Either, Left, Right};
+use either::{Either, Right};
 use impit::{
     errors::ImpitError,
     impit::{Impit, ImpitBuilder},
-    request::{RequestHooks, RequestOptions},
+    request::RequestOptions,
 };
 use pyo3::{ffi::c_str, prelude::*};
 
 use crate::{
     cookies::PythonCookieJar,
     errors::ImpitPyError,
-    hooks::EventHooks,
     request::{
         parse_timeout, redirect_behavior, to_body, RequestBody, USE_CLIENT_DEFAULT_SENTINEL,
     },
@@ -24,7 +23,6 @@ pub(crate) struct AsyncClient {
     default_encoding: Option<String>,
     follow_redirects: bool,
     max_redirects: u16,
-    event_hooks: EventHooks,
 }
 
 #[pymethods]
@@ -47,7 +45,7 @@ impl AsyncClient {
     }
 
     #[new]
-    #[pyo3(signature = (browser=None, http3=None, proxy=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), verify=None, default_encoding=None, follow_redirects=None, max_redirects=Some(20), cookie_jar=None, cookies=None, headers=None, local_address=None, event_hooks=None))]
+    #[pyo3(signature = (browser=None, http3=None, proxy=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), verify=None, default_encoding=None, follow_redirects=None, max_redirects=Some(20), cookie_jar=None, cookies=None, headers=None, local_address=None))]
     pub fn new(
         py: Python<'_>,
         browser: Option<String>,
@@ -62,7 +60,6 @@ impl AsyncClient {
         cookies: Option<crate::Bound<'_, crate::PyAny>>,
         headers: Option<HashMap<String, String>>,
         local_address: Option<String>,
-        event_hooks: Option<HashMap<String, Vec<Py<PyAny>>>>,
     ) -> PyResult<Self> {
         let builder = ImpitBuilder::default();
 
@@ -130,7 +127,6 @@ impl AsyncClient {
 
         Ok(Self {
             impit: Arc::new(impit),
-            event_hooks: EventHooks::new(event_hooks, default_encoding.clone()),
             default_encoding,
             follow_redirects,
             max_redirects,
@@ -432,8 +428,6 @@ impl AsyncClient {
 
         let body = to_body(data, &mut headers)?;
 
-        let hooks = self.event_hooks.for_request(py, true)?;
-
         let timeout = parse_timeout(timeout)?;
 
         let options = RequestOptions {
@@ -444,7 +438,6 @@ impl AsyncClient {
                 follow_redirects.unwrap_or(self.follow_redirects),
                 max_redirects.unwrap_or(self.max_redirects),
             )),
-            hooks: hooks.clone().map(|hooks| hooks as Arc<dyn RequestHooks>),
         };
 
         let method_str = method.to_string();
@@ -452,7 +445,7 @@ impl AsyncClient {
         let stream_value = stream.unwrap_or(false);
         let impit = Arc::clone(&self.impit);
 
-        crate::exit_gate::future_into_py(py, async move {
+        crate::exit_gate::future_into_py::<_, ImpitPyResponse>(py, async move {
             let response = match method_str.to_lowercase().as_str() {
                 "get" => impit.get(url, Some(body), Some(options)).await,
                 "post" => impit.post(url, Some(body), Some(options)).await,
@@ -465,18 +458,14 @@ impl AsyncClient {
                 _ => Err(ImpitError::InvalidMethod(method_str.to_string())),
             };
 
-            let response = ImpitPyResponse::from_async(
-                response.map_err(ImpitPyError)?,
-                default_encoding,
-                stream_value,
-            )
-            .await
-            .map_err(ImpitPyError)?;
-
-            Ok(match hooks {
-                Some(hooks) => Right(hooks.on_response(response).await?),
-                None => Left(response),
-            })
+            match response {
+                Ok(response) => {
+                    ImpitPyResponse::from_async(response, default_encoding, stream_value)
+                        .await
+                        .map_err(|e| ImpitPyError(e).into())
+                }
+                Err(err) => Err(ImpitPyError(err).into()),
+            }
         })
     }
 }
