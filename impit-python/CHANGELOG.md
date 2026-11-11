@@ -3,6 +3,15 @@
 All notable changes to this project will be documented in this file.
 
 
+## py-0.15.3 - 2026-11-11
+
+#### Features
+
+- Add per-request redirect options (#614)
+  - Redirects are now followed by impit instead of reqwest, so every request method takes `follow_redirects` and `max_redirects` (closes #603).
+
+
+
 ## py-0.15.2 - 2026-11-09
 
 #### Bug Fixes
