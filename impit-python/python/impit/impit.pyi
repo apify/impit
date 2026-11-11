@@ -536,7 +536,7 @@ class Client:
             timeout: Per-request timeout in seconds. Pass ``None`` to disable the timeout entirely. Defaults to ``USE_CLIENT_DEFAULT`` (inherits the client-level timeout).
             force_http3: Force HTTP/3 protocol
             follow_redirects: Whether to follow redirects. Defaults to the client's ``follow_redirects``.
-            max_redirects: Maximum number of redirects to follow. Defaults to the client's ``max_redirects``.
+            max_redirects: Maximum number of redirects to follow. Only used when redirects are followed. Defaults to the client's ``max_redirects``.
         """
 
     def post(
