@@ -21,6 +21,7 @@ pub(crate) fn fingerprint_by_name(browser: &str) -> PyResult<BrowserFingerprint>
         "chrome151" => database::chrome_151::fingerprint(),
         "chrome155" => database::chrome_155::fingerprint(),
         "chrome156" => database::chrome_156::fingerprint(),
+        "chrome157" => database::chrome_157::fingerprint(),
         "firefox" | "firefox128" => database::firefox_128::fingerprint(),
         "firefox133" => database::firefox_133::fingerprint(),
         "firefox135" => database::firefox_135::fingerprint(),

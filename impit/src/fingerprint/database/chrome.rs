@@ -27,6 +27,175 @@ const CHROME_TRUST_ANCHOR_ROOTS: &[&[u8]] = &[
     &[0xd6, 0x79, 0x09, 0x04],                         // GTS Root R4
 ];
 
+/// Chrome 157 fingerprint module
+///
+/// Source: consumer Chrome stable 157.0.8103.51 on Windows 11, captured against
+/// <https://tls.peet.ws> and in a decrypted Wireshark capture (November 2026).
+///
+/// TLS and HTTP/2 are the same as Chrome 156, including the same Trust Anchor IDs
+/// (`0xca34`) bytes, so this profile uses chrome_156's (roots only, see
+/// `CHROME_TRUST_ANCHOR_ROOTS`). Only the headers change: `sec-ch-ua` and the user
+/// agent carry 157, and `sec-ch-ua` has a new GREASE brand and brand order.
+pub mod chrome_157 {
+    use super::*;
+
+    /// Returns the complete Chrome 157 fingerprint
+    pub fn fingerprint() -> BrowserFingerprint {
+        BrowserFingerprint::new(
+            "Chrome",
+            "157",
+            tls_fingerprint(),
+            http2_fingerprint(),
+            headers(),
+        )
+    }
+
+    /// Chrome 157 TLS fingerprint, same as Chrome 156
+    fn tls_fingerprint() -> TlsFingerprint {
+        TlsFingerprint::new(
+            // Cipher suites in Chrome 157 preference order
+            // GREASE cipher at position 1 (first) - same as Chrome 156
+            vec![
+                CipherSuite::Grease,
+                CipherSuite::TLS13_AES_128_GCM_SHA256,
+                CipherSuite::TLS13_AES_256_GCM_SHA384,
+                CipherSuite::TLS13_CHACHA20_POLY1305_SHA256,
+                CipherSuite::TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+                CipherSuite::TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+                CipherSuite::TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+                CipherSuite::TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+                CipherSuite::TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
+                CipherSuite::TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
+                CipherSuite::TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
+                CipherSuite::TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
+                CipherSuite::TLS_RSA_WITH_AES_128_GCM_SHA256,
+                CipherSuite::TLS_RSA_WITH_AES_256_GCM_SHA384,
+                CipherSuite::TLS_RSA_WITH_AES_128_CBC_SHA,
+                CipherSuite::TLS_RSA_WITH_AES_256_CBC_SHA,
+            ],
+            // Key exchange groups (includes post-quantum hybrid X25519MLKEM768)
+            // GREASE at position 1 (first) - same as Chrome 156
+            vec![
+                KeyExchangeGroup::Grease,
+                KeyExchangeGroup::X25519MLKEM768,
+                KeyExchangeGroup::X25519,
+                KeyExchangeGroup::Secp256r1,
+                KeyExchangeGroup::Secp384r1,
+            ],
+            // Signature algorithms, same as Chrome 156
+            // Chrome leads with a GREASE value (real Chrome picks a new one per
+            // connection; this one is fixed), then exactly Chrome 151's list.
+            vec![
+                SignatureAlgorithm::Grease,
+                SignatureAlgorithm::MlDsa44,
+                SignatureAlgorithm::MlDsa65,
+                SignatureAlgorithm::MlDsa87,
+                SignatureAlgorithm::EcdsaSecp256r1Sha256,
+                SignatureAlgorithm::RsaPssRsaSha256,
+                SignatureAlgorithm::RsaPkcs1Sha256,
+                SignatureAlgorithm::EcdsaSecp384r1Sha384,
+                SignatureAlgorithm::RsaPssRsaSha384,
+                SignatureAlgorithm::RsaPkcs1Sha384,
+                SignatureAlgorithm::RsaPssRsaSha512,
+                SignatureAlgorithm::RsaPkcs1Sha512,
+            ],
+            // TLS extensions configuration
+            // Chrome 157 uses new ALPS codepoint (17613)
+            TlsExtensions::new(
+                true,                                                // server_name
+                true,                                                // status_request
+                true,                                                // supported_groups
+                true,                                                // signature_algorithms
+                true, // application_layer_protocol_negotiation
+                true, // signed_certificate_timestamp
+                true, // key_share
+                true, // psk_key_exchange_modes
+                true, // supported_versions
+                Some(vec![CertificateCompressionAlgorithm::Brotli]), // compress_certificate
+                true, // application_settings
+                false, // delegated_credentials (Chrome doesn't use)
+                None, // record_size_limit (Chrome doesn't use)
+                // Extension order (critical for fingerprinting), same as Chrome 156.
+                // TrustAnchors isn't listed: like the other unlisted extensions, it
+                // goes before these, in random order.
+                vec![
+                    ExtensionType::ServerName,
+                    ExtensionType::ExtendedMasterSecret,
+                    ExtensionType::SessionTicket,
+                    ExtensionType::SignatureAlgorithms,
+                    ExtensionType::StatusRequest,
+                    ExtensionType::SupportedGroups,
+                    ExtensionType::ApplicationLayerProtocolNegotiation,
+                    ExtensionType::SignedCertificateTimestamp,
+                    ExtensionType::KeyShare,
+                    ExtensionType::PskKeyExchangeModes,
+                    ExtensionType::SupportedVersions,
+                    ExtensionType::CompressCertificate,
+                    ExtensionType::ApplicationSettings,
+                ],
+            )
+            .with_new_alps_codepoint(true)
+            .with_trust_anchors(
+                CHROME_TRUST_ANCHOR_ROOTS
+                    .iter()
+                    .map(|id| id.to_vec())
+                    .collect(),
+            )
+            .with_grease_first_and_last(true),
+            // ECH configuration (GREASE mode)
+            Some(EchConfig::new(
+                EchMode::Grease {
+                    hpke_suite: HpkeKemId::DhKemX25519HkdfSha256,
+                },
+                None,
+            )),
+            // ALPN protocols
+            vec![b"h2".to_vec(), b"http/1.1".to_vec()],
+        )
+    }
+
+    /// Chrome 157 HTTP/2 fingerprint, same as Chrome 156
+    fn http2_fingerprint() -> Http2Fingerprint {
+        Http2Fingerprint {
+            pseudo_header_order: vec![
+                ":method".to_string(),
+                ":authority".to_string(),
+                ":scheme".to_string(),
+                ":path".to_string(),
+                ":protocol".to_string(),
+                ":status".to_string(),
+            ],
+            initial_stream_window_size: Some(6_291_456),
+            // Chrome's connection window is 15 MiB. This field is the window size,
+            // not the increment, so the emitted WINDOW_UPDATE is 15728640 - 65535 =
+            // 15663105, which is what the capture shows on the wire.
+            initial_connection_window_size: Some(15_728_640),
+            max_header_list_size: Some(262_144),
+            header_table_size: Some(65_536),
+            max_concurrent_streams: None,
+        }
+    }
+
+    /// Chrome 157 HTTP headers
+    fn headers() -> Vec<(String, String)> {
+        vec![
+            ("sec-ch-ua".to_string(), "\"Not-A.Brand\";v=\"99\", \"Google Chrome\";v=\"157\", \"Chromium\";v=\"157\"".to_string()),
+            ("sec-ch-ua-mobile".to_string(), "?0".to_string()),
+            ("sec-ch-ua-platform".to_string(), "\"Windows\"".to_string()),
+            ("upgrade-insecure-requests".to_string(), "1".to_string()),
+            ("user-agent".to_string(), "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36".to_string()),
+            ("accept".to_string(), "text/html,application/xhtml+xml,application/xml;q=0.9,image/jxl,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7".to_string()),
+            ("sec-fetch-site".to_string(), "none".to_string()),
+            ("sec-fetch-mode".to_string(), "navigate".to_string()),
+            ("sec-fetch-user".to_string(), "?1".to_string()),
+            ("sec-fetch-dest".to_string(), "document".to_string()),
+            ("accept-encoding".to_string(), "gzip, deflate, br, zstd".to_string()),
+            ("accept-language".to_string(), "en-US,en;q=0.9".to_string()),
+            ("priority".to_string(), "u=0, i".to_string()),
+        ]
+    }
+}
+
 /// Chrome 156 fingerprint module
 ///
 /// Source: consumer Chrome stable 156.0.8078.48 on Windows 11, captured against
@@ -1766,6 +1935,14 @@ mod tests {
     fn chrome_profiles_send_real_chrome_ja4_r() {
         // (profile, JA4_r, trust_anchors body, GREASE first in signature_algorithms)
         for (name, fp, expected, trust_anchors, sigalg_grease) in [
+            // Real Chrome 157 (157.0.8103.51) has the same JA4_r as Chrome 155.
+            (
+                "chrome_157",
+                chrome_157::fingerprint(),
+                JA4_R_155,
+                CHROME_ROOTS_PAYLOAD,
+                true,
+            ),
             // Real Chrome 156 (156.0.8078.48) has the same JA4_r as Chrome 155.
             (
                 "chrome_156",
@@ -1810,6 +1987,7 @@ mod tests {
     #[test]
     fn chrome_profiles_send_grease_extensions_first_and_last() {
         for (name, fp) in [
+            ("chrome_157", chrome_157::fingerprint()),
             ("chrome_156", chrome_156::fingerprint()),
             ("chrome_155", chrome_155::fingerprint()),
             ("chrome_151", chrome_151::fingerprint()),
