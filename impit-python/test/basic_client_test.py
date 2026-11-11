@@ -408,6 +408,20 @@ class TestBasicRequests:
         with pytest.raises(TooManyRedirects):
             impit.get(redirect_url)
 
+    def test_per_request_redirect_options(self, browser: Browser) -> None:
+        redirect_url = get_httpbin_url('/absolute-redirect/3')
+
+        impit = Client(browser=browser)
+        assert impit.get(redirect_url).status_code == 302
+        assert impit.get(redirect_url, follow_redirects=True).status_code == 200
+        with impit.stream('GET', redirect_url, follow_redirects=True) as response:
+            assert response.status_code == 200
+        with pytest.raises(TooManyRedirects):
+            impit.request('GET', redirect_url, follow_redirects=True, max_redirects=2)
+
+        impit = Client(browser=browser, follow_redirects=True)
+        assert impit.get(redirect_url, follow_redirects=False).status_code == 302
+
     def test_thread_server(self, browser: Browser) -> None:
         port_holder = [0]
         thread = threading.Thread(target=thread_server, args=(port_holder,))

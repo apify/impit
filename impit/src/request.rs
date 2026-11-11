@@ -5,6 +5,8 @@ use futures_core::TryStream;
 use reqwest::{header::HeaderMap, Method};
 use url::Url;
 
+use crate::impit::RedirectBehavior;
+
 /// A struct that holds the request options.
 ///
 /// Unlike the [`ImpitBuilder`](crate::impit::ImpitBuilder) struct, these options are specific to a single request.
@@ -25,6 +27,8 @@ pub struct RequestOptions {
     ///
     /// If [`ImpitBuilder::with_http3`](crate::impit::ImpitBuilder::with_http3) wasn't called, this option will cause [`ErrorType::Http3Disabled`](crate::impit::ErrorType::Http3Disabled) errors.
     pub http3_prior_knowledge: bool,
+    /// Overrides the redirect behavior set with [`ImpitBuilder::with_redirect`](crate::impit::ImpitBuilder::with_redirect) for this request.
+    pub redirect: Option<RedirectBehavior>,
 }
 
 /// The body of a request.

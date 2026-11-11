@@ -3,7 +3,7 @@ use std::{collections::HashMap, io, time::Duration};
 use bytes::Bytes;
 use either::{Either, Left, Right};
 use futures::{stream, Stream};
-use impit::request::ImpitBody;
+use impit::{impit::RedirectBehavior, request::ImpitBody};
 use pyo3::{
     exceptions::{PyStopAsyncIteration, PyStopIteration, PyTypeError},
     types::{PyAnyMethods, PyMapping},
@@ -38,6 +38,13 @@ pub(crate) fn parse_timeout(
                 Ok(None)
             }
         }
+    }
+}
+
+pub(crate) fn redirect_behavior(follow_redirects: bool, max_redirects: u16) -> RedirectBehavior {
+    match follow_redirects {
+        true => RedirectBehavior::FollowRedirect(max_redirects.into()),
+        false => RedirectBehavior::ManualRedirect,
     }
 }
 

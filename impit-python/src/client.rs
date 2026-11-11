@@ -11,7 +11,9 @@ use pyo3::{ffi::c_str, prelude::*};
 use crate::{
     cookies::PythonCookieJar,
     errors::ImpitPyError,
-    request::{parse_timeout, to_body, RequestBody, USE_CLIENT_DEFAULT_SENTINEL},
+    request::{
+        parse_timeout, redirect_behavior, to_body, RequestBody, USE_CLIENT_DEFAULT_SENTINEL,
+    },
     response::{self, ImpitPyResponse},
 };
 
@@ -19,6 +21,8 @@ use crate::{
 pub(crate) struct Client {
     impit: Impit<PythonCookieJar>,
     default_encoding: Option<String>,
+    follow_redirects: bool,
+    max_redirects: u16,
 }
 
 #[pymethods]
@@ -84,12 +88,9 @@ impl Client {
             _ => builder,
         };
 
-        let builder = match follow_redirects {
-            Some(true) => builder.with_redirect(impit::impit::RedirectBehavior::FollowRedirect(
-                max_redirects.unwrap_or(20).into(),
-            )),
-            _ => builder.with_redirect(impit::impit::RedirectBehavior::ManualRedirect),
-        };
+        let follow_redirects = follow_redirects.unwrap_or(false);
+        let max_redirects = max_redirects.unwrap_or(20);
+        let builder = builder.with_redirect(redirect_behavior(follow_redirects, max_redirects));
 
         let builder = match headers {
             Some(headers) => builder.with_headers(headers.into_iter().collect::<Vec<_>>()),
@@ -123,11 +124,13 @@ impl Client {
             Ok(Self {
                 impit,
                 default_encoding,
+                follow_redirects,
+                max_redirects,
             })
         })
     }
 
-    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false))]
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false, follow_redirects=None, max_redirects=None))]
     pub fn get(
         &self,
         py: Python<'_>,
@@ -137,6 +140,8 @@ impl Client {
         headers: Option<HashMap<String, String>>,
         timeout: Option<Either<f64, &str>>,
         force_http3: Option<bool>,
+        follow_redirects: Option<bool>,
+        max_redirects: Option<u16>,
     ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request(
             py,
@@ -148,10 +153,12 @@ impl Client {
             timeout,
             force_http3,
             Some(false),
+            follow_redirects,
+            max_redirects,
         )
     }
 
-    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false))]
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false, follow_redirects=None, max_redirects=None))]
     pub fn head(
         &self,
         py: Python<'_>,
@@ -161,6 +168,8 @@ impl Client {
         headers: Option<HashMap<String, String>>,
         timeout: Option<Either<f64, &str>>,
         force_http3: Option<bool>,
+        follow_redirects: Option<bool>,
+        max_redirects: Option<u16>,
     ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request(
             py,
@@ -172,10 +181,12 @@ impl Client {
             timeout,
             force_http3,
             Some(false),
+            follow_redirects,
+            max_redirects,
         )
     }
 
-    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false))]
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false, follow_redirects=None, max_redirects=None))]
     pub fn post(
         &self,
         py: Python<'_>,
@@ -185,6 +196,8 @@ impl Client {
         headers: Option<HashMap<String, String>>,
         timeout: Option<Either<f64, &str>>,
         force_http3: Option<bool>,
+        follow_redirects: Option<bool>,
+        max_redirects: Option<u16>,
     ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request(
             py,
@@ -196,10 +209,12 @@ impl Client {
             timeout,
             force_http3,
             Some(false),
+            follow_redirects,
+            max_redirects,
         )
     }
 
-    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false))]
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false, follow_redirects=None, max_redirects=None))]
     pub fn patch(
         &self,
         py: Python<'_>,
@@ -209,6 +224,8 @@ impl Client {
         headers: Option<HashMap<String, String>>,
         timeout: Option<Either<f64, &str>>,
         force_http3: Option<bool>,
+        follow_redirects: Option<bool>,
+        max_redirects: Option<u16>,
     ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request(
             py,
@@ -220,10 +237,12 @@ impl Client {
             timeout,
             force_http3,
             Some(false),
+            follow_redirects,
+            max_redirects,
         )
     }
 
-    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false))]
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false, follow_redirects=None, max_redirects=None))]
     pub fn put(
         &self,
         py: Python<'_>,
@@ -233,6 +252,8 @@ impl Client {
         headers: Option<HashMap<String, String>>,
         timeout: Option<Either<f64, &str>>,
         force_http3: Option<bool>,
+        follow_redirects: Option<bool>,
+        max_redirects: Option<u16>,
     ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request(
             py,
@@ -244,10 +265,12 @@ impl Client {
             timeout,
             force_http3,
             Some(false),
+            follow_redirects,
+            max_redirects,
         )
     }
 
-    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false))]
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false, follow_redirects=None, max_redirects=None))]
     pub fn delete(
         &self,
         py: Python<'_>,
@@ -257,6 +280,8 @@ impl Client {
         headers: Option<HashMap<String, String>>,
         timeout: Option<Either<f64, &str>>,
         force_http3: Option<bool>,
+        follow_redirects: Option<bool>,
+        max_redirects: Option<u16>,
     ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request(
             py,
@@ -268,10 +293,12 @@ impl Client {
             timeout,
             force_http3,
             Some(false),
+            follow_redirects,
+            max_redirects,
         )
     }
 
-    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false))]
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false, follow_redirects=None, max_redirects=None))]
     pub fn options(
         &self,
         py: Python<'_>,
@@ -281,6 +308,8 @@ impl Client {
         headers: Option<HashMap<String, String>>,
         timeout: Option<Either<f64, &str>>,
         force_http3: Option<bool>,
+        follow_redirects: Option<bool>,
+        max_redirects: Option<u16>,
     ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request(
             py,
@@ -292,10 +321,12 @@ impl Client {
             timeout,
             force_http3,
             Some(false),
+            follow_redirects,
+            max_redirects,
         )
     }
 
-    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false))]
+    #[pyo3(signature = (url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false, follow_redirects=None, max_redirects=None))]
     pub fn trace(
         &self,
         py: Python<'_>,
@@ -305,6 +336,8 @@ impl Client {
         headers: Option<HashMap<String, String>>,
         timeout: Option<Either<f64, &str>>,
         force_http3: Option<bool>,
+        follow_redirects: Option<bool>,
+        max_redirects: Option<u16>,
     ) -> Result<response::ImpitPyResponse, ImpitPyError> {
         self.request(
             py,
@@ -316,10 +349,12 @@ impl Client {
             timeout,
             force_http3,
             Some(false),
+            follow_redirects,
+            max_redirects,
         )
     }
 
-    #[pyo3(signature = (method, url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false))]
+    #[pyo3(signature = (method, url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false, follow_redirects=None, max_redirects=None))]
     pub fn stream<'python>(
         &self,
         py: Python<'python>,
@@ -330,6 +365,8 @@ impl Client {
         headers: Option<HashMap<String, String>>,
         timeout: Option<Either<f64, &str>>,
         force_http3: Option<bool>,
+        follow_redirects: Option<bool>,
+        max_redirects: Option<u16>,
     ) -> Result<Bound<'python, PyAny>, PyErr> {
         let response = self.request(
             py,
@@ -341,6 +378,8 @@ impl Client {
             timeout,
             force_http3,
             Some(true),
+            follow_redirects,
+            max_redirects,
         )?;
 
         let fun: Py<PyAny> = PyModule::from_code(
@@ -365,7 +404,7 @@ impl Client {
         Ok(wrapped_response.into_bound(py))
     }
 
-    #[pyo3(signature = (method, url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false, stream=false))]
+    #[pyo3(signature = (method, url, content=None, data=None, headers=None, timeout=Some(Right(USE_CLIENT_DEFAULT_SENTINEL)), force_http3=false, stream=false, follow_redirects=None, max_redirects=None))]
     pub fn request(
         &self,
         py: Python<'_>,
@@ -377,6 +416,8 @@ impl Client {
         timeout: Option<Either<f64, &str>>,
         force_http3: Option<bool>,
         stream: Option<bool>,
+        follow_redirects: Option<bool>,
+        max_redirects: Option<u16>,
     ) -> Result<ImpitPyResponse, ImpitPyError> {
         if let Some(content) = content {
             data = Some(content);
@@ -392,6 +433,10 @@ impl Client {
             headers: headers.unwrap_or_default().into_iter().collect(),
             timeout,
             http3_prior_knowledge: force_http3.unwrap_or(false),
+            redirect: Some(redirect_behavior(
+                follow_redirects.unwrap_or(self.follow_redirects),
+                max_redirects.unwrap_or(self.max_redirects),
+            )),
         };
 
         py.detach(|| {

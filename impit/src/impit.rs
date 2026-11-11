@@ -2,8 +2,20 @@
 use tokio::sync::RwLock;
 
 use log::{debug, warn};
-use reqwest::{cookie::CookieStore, header::HeaderMap, Method, Response, Version};
-use std::{fmt::Debug, net::IpAddr, sync::Arc, time::Duration};
+use reqwest::{
+    cookie::CookieStore,
+    header::{
+        HeaderMap, HeaderValue, AUTHORIZATION, CONTENT_ENCODING, CONTENT_LENGTH, CONTENT_TYPE,
+        COOKIE, LOCATION, PROXY_AUTHORIZATION, REFERER, TRANSFER_ENCODING, WWW_AUTHENTICATE,
+    },
+    Method, Response, StatusCode, Version,
+};
+use std::{
+    fmt::Debug,
+    net::IpAddr,
+    sync::Arc,
+    time::{Duration, Instant},
+};
 use url::Url;
 
 #[cfg(feature = "http3")]
@@ -320,14 +332,8 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
             client = client.local_address(ip_addr);
         }
 
-        match config.redirect {
-            RedirectBehavior::FollowRedirect(max) => {
-                client = client.redirect(reqwest::redirect::Policy::limited(max));
-            }
-            RedirectBehavior::ManualRedirect => {
-                client = client.redirect(reqwest::redirect::Policy::none());
-            }
-        }
+        // Redirects are followed by `Impit::send`, so they can be configured per request.
+        client = client.redirect(reqwest::redirect::Policy::none());
 
         client
             .build()
@@ -483,43 +489,32 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
         req.send().await
     }
 
-    async fn send(
+    /// Sends a single request of the redirect chain. `remaining` is the time left from `timeout`.
+    async fn send_once(
         &self,
-        request: ImpitRequest,
-        timeout: Option<Duration>,
-        http3_prior_knowledge: Option<bool>,
+        prepared: &mut PreparedRequest,
+        timeout: Duration,
+        remaining: Duration,
+        http3_prior_knowledge: bool,
     ) -> Result<Response, ImpitError> {
-        let http3_prior_knowledge = http3_prior_knowledge.unwrap_or(false);
         if http3_prior_knowledge && self.config.max_http_version < Version::HTTP_3 {
             return Err(ImpitError::Http3Disabled);
         }
 
         let h3 = http3_prior_knowledge
             || self
-                .should_use_h3(request.url.host_str().unwrap_or_default())
+                .should_use_h3(prepared.url.host_str().unwrap_or_default())
                 .await;
         let client = if h3 {
-            debug!("Using QUIC for request to {}", request.url);
+            debug!("Using QUIC for request to {}", prepared.url);
             self.h3_client.as_ref().unwrap_or(&self.base_client)
         } else {
-            debug!("{} doesn't seem to have HTTP3 support", request.url);
+            debug!("{} doesn't seem to have HTTP3 support", prepared.url);
             &self.base_client
         };
 
-        let max_redirects = match self.config.redirect {
-            RedirectBehavior::FollowRedirect(max) => max,
-            RedirectBehavior::ManualRedirect => 0,
-        };
-
-        let mut prepared = PreparedRequest {
-            method: request.method,
-            url: request.url,
-            headers: request.headers,
-            body: request.body,
-        };
-
         let primary_result = self
-            .execute_request(client, &mut prepared, timeout, h3)
+            .execute_request(client, prepared, Some(remaining), h3)
             .await;
 
         let response = match primary_result {
@@ -528,8 +523,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
                 let primary_error = ImpitError::from(
                     err,
                     Some(ErrorContext {
-                        timeout: Some(timeout.unwrap_or(self.config.request_timeout)),
-                        max_redirects: Some(max_redirects),
+                        timeout: Some(timeout),
                         method: Some(prepared.method.to_string()),
                         protocol: Some(prepared.url.scheme().to_string()),
                         url: Some(prepared.url.to_string()),
@@ -549,7 +543,7 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
                     prepared.url
                 );
                 match self
-                    .execute_request(vanilla_client, &mut prepared, timeout, false)
+                    .execute_request(vanilla_client, prepared, Some(remaining), false)
                     .await
                 {
                     Ok(resp) => resp,
@@ -581,6 +575,44 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
         Ok(response)
     }
 
+    async fn send(
+        &self,
+        request: ImpitRequest,
+        timeout: Option<Duration>,
+        http3_prior_knowledge: bool,
+        redirect: &RedirectBehavior,
+    ) -> Result<Response, ImpitError> {
+        let timeout = timeout.unwrap_or(self.config.request_timeout);
+        let start = Instant::now();
+        let mut redirects = 0;
+
+        let mut prepared = PreparedRequest {
+            method: request.method,
+            url: request.url,
+            headers: request.headers,
+            body: request.body,
+        };
+
+        loop {
+            // The timeout bounds the whole redirect chain, not each request.
+            let remaining = timeout.saturating_sub(start.elapsed());
+            let response = self
+                .send_once(&mut prepared, timeout, remaining, http3_prior_knowledge)
+                .await?;
+
+            let RedirectBehavior::FollowRedirect(max_redirects) = *redirect else {
+                return Ok(response);
+            };
+            if !follow_redirect(&mut prepared, &response)? {
+                return Ok(response);
+            }
+            if redirects == max_redirects {
+                return Err(ImpitError::TooManyRedirects(Some(max_redirects)));
+            }
+            redirects += 1;
+        }
+    }
+
     async fn make_request(
         &self,
         method: Method,
@@ -600,9 +632,16 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
             Some(None) => Some(Duration::MAX),
             Some(Some(d)) => Some(d),
         };
-        let http3_prior_knowledge = request_options.http3_prior_knowledge;
-        self.send(request, timeout, Some(http3_prior_knowledge))
-            .await
+        self.send(
+            request,
+            timeout,
+            request_options.http3_prior_knowledge,
+            request_options
+                .redirect
+                .as_ref()
+                .unwrap_or(&self.config.redirect),
+        )
+        .await
     }
 
     /// Makes a `GET` request to the specified URL.
@@ -733,12 +772,151 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
     }
 }
 
+/// Turns `request` into the request following the redirect in `response`, the same way `reqwest` does.
+///
+/// Returns `false` and leaves `request` as is if `response` isn't a redirect that can be followed.
+fn follow_redirect(request: &mut PreparedRequest, response: &Response) -> Result<bool, ImpitError> {
+    let drop_body = match response.status() {
+        StatusCode::MOVED_PERMANENTLY | StatusCode::FOUND => request.method == Method::POST,
+        StatusCode::SEE_OTHER => true,
+        StatusCode::TEMPORARY_REDIRECT | StatusCode::PERMANENT_REDIRECT => false,
+        _ => return Ok(false),
+    };
+
+    if !drop_body && !request.body.is_sendable() {
+        return Ok(false);
+    }
+
+    let Some(url) = response
+        .headers()
+        .get(LOCATION)
+        .and_then(|location| std::str::from_utf8(location.as_bytes()).ok())
+        .and_then(|location| request.url.join(location).ok())
+    else {
+        return Ok(false);
+    };
+
+    if !matches!(url.scheme(), "http" | "https") {
+        return Err(ImpitError::UrlProtocolError(url.scheme().to_string()));
+    }
+
+    if drop_body {
+        if request.method != Method::HEAD {
+            request.method = Method::GET;
+        }
+        request.body = ImpitBody::Empty;
+        for header in [
+            CONTENT_TYPE,
+            CONTENT_LENGTH,
+            CONTENT_ENCODING,
+            TRANSFER_ENCODING,
+        ] {
+            request.headers.remove(header);
+        }
+    }
+
+    let previous = &request.url;
+    if url.host_str() != previous.host_str()
+        || url.port_or_known_default() != previous.port_or_known_default()
+        || url.scheme() != previous.scheme()
+    {
+        for header in [AUTHORIZATION, COOKIE, PROXY_AUTHORIZATION, WWW_AUTHENTICATE] {
+            request.headers.remove(header);
+        }
+        request.headers.remove("cookie2");
+    }
+
+    if !(url.scheme() == "http" && previous.scheme() == "https") {
+        let mut referer = previous.clone();
+        let _ = referer.set_username("");
+        let _ = referer.set_password(None);
+        referer.set_fragment(None);
+        if let Ok(referer) = HeaderValue::from_str(referer.as_str()) {
+            request.headers.insert(REFERER, referer);
+        }
+    }
+
+    request.url = url;
+    Ok(true)
+}
+
 #[cfg(test)]
 mod tests {
-    use reqwest::cookie::Jar;
+    use reqwest::{cookie::Jar, header::HeaderMap, Method, Response};
 
-    use super::Impit;
-    use crate::{errors::ImpitError, request::RequestOptions};
+    use super::{follow_redirect, Impit, PreparedRequest};
+    use crate::{
+        errors::ImpitError,
+        request::{ImpitBody, RequestOptions},
+    };
+
+    fn request(method: Method, url: &str, headers: &[(&str, &str)]) -> PreparedRequest {
+        let headers: HeaderMap = headers
+            .iter()
+            .map(|(name, value)| (name.parse().unwrap(), value.parse().unwrap()))
+            .collect();
+        PreparedRequest {
+            url: url.parse().unwrap(),
+            body: ImpitBody::from("body"),
+            headers,
+            method,
+        }
+    }
+
+    fn redirect(status: u16, location: &str) -> Response {
+        hyper::Response::builder()
+            .status(status)
+            .header("location", location)
+            .body("")
+            .unwrap()
+            .into()
+    }
+
+    #[test]
+    fn found_redirects_post_as_get() {
+        let mut request = request(
+            Method::POST,
+            "https://example.com/form",
+            &[("content-type", "text/plain")],
+        );
+
+        assert!(follow_redirect(&mut request, &redirect(302, "/done")).unwrap());
+        assert_eq!(request.method, Method::GET);
+        assert_eq!(request.url.as_str(), "https://example.com/done");
+        assert!(request.body.take().is_none());
+        assert!(request.headers.get("content-type").is_none());
+        assert_eq!(request.headers["referer"], "https://example.com/form");
+    }
+
+    #[test]
+    fn cross_origin_redirects_drop_credentials() {
+        let mut request = request(
+            Method::PUT,
+            "https://example.com/",
+            &[
+                ("authorization", "secret"),
+                ("cookie", "a=b"),
+                ("x-custom", "1"),
+            ],
+        );
+
+        assert!(follow_redirect(&mut request, &redirect(307, "https://example.org/")).unwrap());
+        assert_eq!(request.method, Method::PUT);
+        assert!(request.body.take().is_some());
+        assert!(request.headers.get("authorization").is_none());
+        assert!(request.headers.get("cookie").is_none());
+        assert_eq!(request.headers["x-custom"], "1");
+    }
+
+    #[test]
+    fn sent_streamed_bodies_are_not_replayed() {
+        let mut request = request(Method::POST, "https://example.com/", &[]);
+        request.body = ImpitBody::Consumed;
+
+        assert!(!follow_redirect(&mut request, &redirect(307, "/next")).unwrap());
+        assert_eq!(request.url.as_str(), "https://example.com/");
+        assert!(follow_redirect(&mut request, &redirect(303, "/next")).unwrap());
+    }
 
     async fn get_with_http3_prior_knowledge(impit: &Impit<Jar>) -> Result<(), ImpitError> {
         let options = RequestOptions {

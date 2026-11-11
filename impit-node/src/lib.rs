@@ -140,6 +140,7 @@ impl ImpitWrapper {
         Either::B(_) => None,
       }),
       http3_prior_knowledge: force_http3.unwrap_or_default(),
+      ..Default::default()
     });
 
     let method = method.unwrap_or_default();

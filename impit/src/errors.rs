@@ -6,7 +6,6 @@ use thiserror::Error;
 #[derive(Default)]
 pub struct ErrorContext {
     pub timeout: Option<Duration>,
-    pub max_redirects: Option<usize>,
     pub method: Option<String>,
     pub protocol: Option<String>,
     pub url: Option<String>,
@@ -116,10 +115,6 @@ impl ImpitError {
                 return ImpitError::ConnectTimeout;
             }
             return ImpitError::TimeoutException(context.timeout.map(|x| x.as_millis()));
-        }
-
-        if error.is_redirect() {
-            return ImpitError::TooManyRedirects(context.max_redirects);
         }
 
         if (error.is_body() || error.is_decode())
