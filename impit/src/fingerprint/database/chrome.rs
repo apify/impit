@@ -371,13 +371,12 @@ pub mod chrome_156 {
 /// <https://tls.peet.ws> and in a decrypted Wireshark capture (October 2026).
 ///
 /// Relative to Chrome 151 there are two TLS differences, both in every ClientHello
-/// since Chrome 152: the Trust Anchor IDs extension (`0xca34`) carries IDs (Chrome
-/// for Testing 151 sends it empty, and only with the field-trial testing config),
-/// and a GREASE value leads the signature_algorithms list. The extension lists only
-/// Chrome's roots, not its intermediates (see `CHROME_TRUST_ANCHOR_ROOTS`). Like
-/// chrome_151, the profile sends Chrome's two GREASE extensions, an empty one first
-/// and a 1-byte one last. In the headers, `sec-ch-ua` and the user agent carry 155,
-/// and `accept` gains `image/jxl`.
+/// since Chrome 152: the Trust Anchor IDs extension (`0xca34`), which Chrome 151
+/// doesn't send, and a GREASE value leading the signature_algorithms list. The
+/// extension lists only Chrome's roots, not its intermediates (see
+/// `CHROME_TRUST_ANCHOR_ROOTS`). Like chrome_151, the profile sends Chrome's two
+/// GREASE extensions, an empty one first and a 1-byte one last. In the headers,
+/// `sec-ch-ua` and the user agent carry 155, and `accept` gains `image/jxl`.
 pub mod chrome_155 {
     use super::*;
 
@@ -547,15 +546,12 @@ pub mod chrome_155 {
 /// that header is taken from the consumer build and is stable across launches.
 ///
 /// Every Chrome 151 ClientHello carries Chrome's two GREASE extensions (an
-/// empty one first, a 1-byte one last). The empty Trust Anchor IDs extension
-/// (`0xca34`) comes from Chrome for Testing 151.0.7922.71 with Chromium's
-/// field-trial testing config (raw ClientHello, October 2026), as requested on
-/// apify/impit#588; that config's `0x12e0` (server padding) is left out. Chrome
-/// for Testing 151 without that config sends the GREASE extensions but not
-/// `0xca34`.
+/// empty one first, a 1-byte one last). Chrome 151 sends the Trust Anchor IDs
+/// extension (`0xca34`) only with Chromium's field-trial testing config, so this
+/// profile leaves it out.
 ///
 /// Relative to the chrome_142 profile, Chrome 151 leads its signature_algorithms
-/// list with the three ML-DSA codepoints, and this profile also sends the
+/// list with the three ML-DSA codepoints, and this profile also sends the GREASE
 /// extensions above.
 pub mod chrome_151 {
     use super::*;
@@ -653,7 +649,6 @@ pub mod chrome_151 {
                 ],
             )
             .with_new_alps_codepoint(true)
-            .with_trust_anchors(Vec::new())
             .with_grease_first_and_last(true),
             // ECH configuration (GREASE mode)
             Some(EchConfig::new(
@@ -1855,6 +1850,9 @@ mod tests {
     // tls.peet.ws (October 2026).
     const JA4_R_155: &str = "t13d1517h2_002f,0035,009c,009d,1301,1302,1303,c013,c014,c02b,c02c,c02f,c030,cca8,cca9_0005,000a,000b,000d,0012,0017,001b,0023,002b,002d,0033,44cd,ca34,fe0d,ff01_0904,0905,0906,0403,0804,0401,0503,0805,0501,0806,0601";
 
+    // JA4_r of real Chrome 151, without Trust Anchor IDs (JA4 t13d1516h2_8daaf6152771_806a8c22fdea).
+    const JA4_R_151: &str = "t13d1516h2_002f,0035,009c,009d,1301,1302,1303,c013,c014,c02b,c02c,c02f,c030,cca8,cca9_0005,000a,000b,000d,0012,0017,001b,0023,002b,002d,0033,44cd,fe0d,ff01_0904,0905,0906,0403,0804,0401,0503,0805,0501,0806,0601";
+
     // The trust_anchors (0xca34) body for the 13 roots in CHROME_TRUST_ANCHOR_ROOTS (105 bytes): a u16 length,
     // then each ID as a u8 length and its bytes.
     const CHROME_ROOTS_PAYLOAD: &str = "00670582df1302010582df13020608839a648c9b2d010708839a648c9b2d010808839a648c9b2d010908839a648c9b2d010a08839a648c9b2d010b08839a648c9b2d010c08839a648c9b2d010d08839a648c9b2d011208839a648c9b2d011304d679090104d6790904";
@@ -1933,14 +1931,14 @@ mod tests {
 
     #[test]
     fn chrome_profiles_send_real_chrome_ja4_r() {
-        // (profile, JA4_r, trust_anchors body, GREASE first in signature_algorithms)
+        // (profile, JA4_r, trust_anchors body if sent, GREASE first in signature_algorithms)
         for (name, fp, expected, trust_anchors, sigalg_grease) in [
             // Real Chrome 157 (157.0.8103.51) has the same JA4_r as Chrome 155.
             (
                 "chrome_157",
                 chrome_157::fingerprint(),
                 JA4_R_155,
-                CHROME_ROOTS_PAYLOAD,
+                Some(CHROME_ROOTS_PAYLOAD),
                 true,
             ),
             // Real Chrome 156 (156.0.8078.48) has the same JA4_r as Chrome 155.
@@ -1948,31 +1946,33 @@ mod tests {
                 "chrome_156",
                 chrome_156::fingerprint(),
                 JA4_R_155,
-                CHROME_ROOTS_PAYLOAD,
+                Some(CHROME_ROOTS_PAYLOAD),
                 true,
             ),
             (
                 "chrome_155",
                 chrome_155::fingerprint(),
                 JA4_R_155,
-                CHROME_ROOTS_PAYLOAD,
+                Some(CHROME_ROOTS_PAYLOAD),
                 true,
             ),
-            // Chrome for Testing 151.0.7922.71 with the field-trial testing config, minus `0x12e0`, has the same
-            // JA4_r as Chrome 155.
             (
                 "chrome_151",
                 chrome_151::fingerprint(),
-                JA4_R_155,
-                "0000",
+                JA4_R_151,
+                None,
                 false,
             ),
         ] {
             let (version, ciphers, exts) = client_hello(fp);
             assert_eq!(ja4_r(version, &ciphers, &exts), expected, "{name}");
-            let body = |t| exts.iter().find(|(typ, _)| *typ == t).unwrap().1.clone();
-            assert_eq!(body(0xca34), hex(trust_anchors), "{name}");
-            let sigalgs = body(0x000d);
+            let body = |t| {
+                exts.iter()
+                    .find(|(typ, _)| *typ == t)
+                    .map(|(_, body)| body.clone())
+            };
+            assert_eq!(body(0xca34), trust_anchors.map(hex), "{name}");
+            let sigalgs = body(0x000d).unwrap();
             let first_sigalg = u16::from_be_bytes([sigalgs[2], sigalgs[3]]);
             if sigalg_grease {
                 assert_eq!(first_sigalg, 0x1a1a, "{name}: GREASE first in sigalgs");
