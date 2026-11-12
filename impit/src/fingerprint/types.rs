@@ -78,6 +78,9 @@ pub enum SignatureAlgorithm {
     MlDsa87,
     // Legacy ECDSA with SHA-1 (for backwards compatibility)
     EcdsaSha1Legacy,
+    /// GREASE signature algorithm for fingerprinting. Advertised only, never used to verify.
+    /// The value sent is fixed (`0x1a1a`), and only the first `Grease` in the list is sent.
+    Grease,
 }
 
 /// TLS extension types
@@ -114,6 +117,8 @@ pub enum ExtensionType {
     RecordSizeLimit,
     ApplicationSettings,
     EarlyDataExtension,
+    /// Trust Anchor IDs (draft-ietf-tls-trust-anchor-ids, Chrome's codepoint `0xca34`)
+    TrustAnchors,
     Grease,
 }
 

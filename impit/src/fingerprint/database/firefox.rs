@@ -629,8 +629,7 @@ pub mod firefox_158 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::tls::TlsConfig;
-    use std::sync::Arc;
+    use crate::fingerprint::database::tests::client_hello;
 
     // JA3 strings (before hashing) of real Firefox's cold TCP ClientHello, from decrypted Wireshark captures of
     // Firefox 128, 133, 135, 144 and 158 on Windows (October 2026). Firefox 144's is the same as 135's.
@@ -638,43 +637,6 @@ mod tests {
     const JA3_133: &str = "771,4865-4867-4866-49195-49199-52393-52392-49196-49200-49162-49161-49171-49172-156-157-47-53,0-23-65281-10-11-35-16-5-34-51-43-13-45-28-27-65037,4588-29-23-24-25-256-257,0";
     const JA3_135: &str = "771,4865-4867-4866-49195-49199-52393-52392-49196-49200-49162-49161-49171-49172-156-157-47-53,0-23-65281-10-11-35-16-5-34-18-51-43-13-45-28-27-65037,4588-29-23-24-25-256-257,0";
     const JA3_158: &str = "771,4865-4867-4866-49195-49199-52393-52392-49196-49200-49171-49172-156-157-47-53,0-23-65281-10-11-35-16-5-34-18-51-43-13-45-28-27-65037,4588-29-23-24-25,0";
-
-    /// The ClientHello that impit sends for `fingerprint`: legacy version, cipher suites, and each extension's type
-    /// and body in wire order.
-    fn client_hello(fingerprint: BrowserFingerprint) -> (u16, Vec<u16>, Vec<(u16, Vec<u8>)>) {
-        let mut builder = TlsConfig::builder();
-        builder.with_tls_fingerprint(fingerprint.tls);
-        let server_name = rustls::pki_types::ServerName::try_from("example.com").unwrap();
-        let mut conn =
-            rustls::ClientConnection::new(Arc::new(builder.build()), server_name).unwrap();
-        let mut record = Vec::new();
-        conn.write_tls(&mut record).unwrap();
-
-        // Skip the record (5) and handshake (4) headers.
-        let hello = &record[9..];
-        let u16_at = |i: usize| u16::from_be_bytes([hello[i], hello[i + 1]]);
-        let version = u16_at(0);
-        let mut i = 2 + 32; // legacy_version, random
-        i += 1 + usize::from(hello[i]); // legacy_session_id
-        let ciphers_end = i + 2 + usize::from(u16_at(i));
-        let ciphers = (i + 2..ciphers_end).step_by(2).map(u16_at).collect();
-        i = ciphers_end;
-        i += 1 + usize::from(hello[i]); // legacy_compression_methods
-        let end = i + 2 + usize::from(u16_at(i));
-        i += 2;
-        let mut extensions = Vec::new();
-        while i < end {
-            let body_end = i + 4 + usize::from(u16_at(i + 2));
-            extensions.push((u16_at(i), hello[i + 4..body_end].to_vec()));
-            i = body_end;
-        }
-        assert_eq!(i, end, "ClientHello extensions not parsed");
-        assert!(
-            extensions.iter().any(|(typ, _)| *typ == 0x0000),
-            "no server_name, ClientHello not parsed"
-        );
-        (version, ciphers, extensions)
-    }
 
     /// The JA3 string (before hashing). Firefox sends no GREASE, so no value is skipped.
     fn ja3(version: u16, ciphers: &[u16], extensions: &[(u16, Vec<u8>)]) -> String {

@@ -2,6 +2,180 @@
 
 use crate::fingerprint::*;
 
+/// Trust Anchor IDs (draft-ietf-tls-trust-anchor-ids) that the Chrome 155+ profiles advertise: the roots from
+/// Chrome's list, in Chrome's order.
+///
+/// Real Chrome 155 to 157 send 28 IDs (October and November 2026): these 13 roots from its Root Store, and 15
+/// intermediates that Chrome ships itself (Let's Encrypt E7-E9 and R12-R14; Google WR1-WR4, WE1-WE4 and AE1). The
+/// intermediates are left out on purpose. A server may drop a listed intermediate from its chain, and impit
+/// doesn't have them, so it couldn't verify that chain. All 13 roots are in Mozilla's set (`webpki-root-certs`),
+/// which impit trusts on every platform. JA3, JA4 and JA4_r only see that the extension is present, so the
+/// shorter list doesn't change them. If a root leaves Mozilla's set, take it out here.
+const CHROME_TRUST_ANCHOR_ROOTS: &[&[u8]] = &[
+    &[0x82, 0xdf, 0x13, 0x02, 0x01],                   // ISRG Root X1
+    &[0x82, 0xdf, 0x13, 0x02, 0x06],                   // ISRG Root X2
+    &[0x83, 0x9a, 0x64, 0x8c, 0x9b, 0x2d, 0x01, 0x07], // QuoVadis Root CA 2 G3
+    &[0x83, 0x9a, 0x64, 0x8c, 0x9b, 0x2d, 0x01, 0x08], // QuoVadis Root CA 3 G3
+    &[0x83, 0x9a, 0x64, 0x8c, 0x9b, 0x2d, 0x01, 0x09], // DigiCert Global Root G2
+    &[0x83, 0x9a, 0x64, 0x8c, 0x9b, 0x2d, 0x01, 0x0a], // DigiCert Global Root G3
+    &[0x83, 0x9a, 0x64, 0x8c, 0x9b, 0x2d, 0x01, 0x0b], // DigiCert Trusted Root G4
+    &[0x83, 0x9a, 0x64, 0x8c, 0x9b, 0x2d, 0x01, 0x0c], // DigiCert Assured ID Root G2
+    &[0x83, 0x9a, 0x64, 0x8c, 0x9b, 0x2d, 0x01, 0x0d], // DigiCert Assured ID Root G3
+    &[0x83, 0x9a, 0x64, 0x8c, 0x9b, 0x2d, 0x01, 0x12], // DigiCert TLS RSA4096 Root G5
+    &[0x83, 0x9a, 0x64, 0x8c, 0x9b, 0x2d, 0x01, 0x13], // DigiCert TLS ECC P384 Root G5
+    &[0xd6, 0x79, 0x09, 0x01],                         // GTS Root R1
+    &[0xd6, 0x79, 0x09, 0x04],                         // GTS Root R4
+];
+
+/// Chrome 157 fingerprint module
+///
+/// Source: consumer Chrome stable 157.0.8103.51 on Windows 11, captured against
+/// <https://tls.peet.ws> and in a decrypted Wireshark capture (November 2026).
+///
+/// TLS and HTTP/2 are the same as Chrome 155 and 156, including the same Trust Anchor
+/// IDs (`0xca34`) bytes, so this profile uses chrome_155's (roots only, see
+/// `CHROME_TRUST_ANCHOR_ROOTS`). Only the headers change: `sec-ch-ua` and the user
+/// agent carry 157, and `sec-ch-ua` has a new GREASE brand and brand order.
+pub mod chrome_157 {
+    use super::*;
+
+    /// Returns the complete Chrome 157 fingerprint
+    pub fn fingerprint() -> BrowserFingerprint {
+        BrowserFingerprint::new(
+            "Chrome",
+            "157",
+            chrome_155::tls_fingerprint(),
+            chrome_151::http2_fingerprint(),
+            headers(),
+        )
+    }
+
+    /// Chrome 157 HTTP headers
+    fn headers() -> Vec<(String, String)> {
+        vec![
+            ("sec-ch-ua".to_string(), "\"Not-A.Brand\";v=\"99\", \"Google Chrome\";v=\"157\", \"Chromium\";v=\"157\"".to_string()),
+            ("sec-ch-ua-mobile".to_string(), "?0".to_string()),
+            ("sec-ch-ua-platform".to_string(), "\"Windows\"".to_string()),
+            ("upgrade-insecure-requests".to_string(), "1".to_string()),
+            ("user-agent".to_string(), "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36".to_string()),
+            ("accept".to_string(), "text/html,application/xhtml+xml,application/xml;q=0.9,image/jxl,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7".to_string()),
+            ("sec-fetch-site".to_string(), "none".to_string()),
+            ("sec-fetch-mode".to_string(), "navigate".to_string()),
+            ("sec-fetch-user".to_string(), "?1".to_string()),
+            ("sec-fetch-dest".to_string(), "document".to_string()),
+            ("accept-encoding".to_string(), "gzip, deflate, br, zstd".to_string()),
+            ("accept-language".to_string(), "en-US,en;q=0.9".to_string()),
+            ("priority".to_string(), "u=0, i".to_string()),
+        ]
+    }
+}
+
+/// Chrome 156 fingerprint module
+///
+/// Source: consumer Chrome stable 156.0.8078.48 on Windows 11, captured against
+/// <https://tls.peet.ws> and in a decrypted Wireshark capture (October 2026).
+///
+/// TLS and HTTP/2 are the same as Chrome 155, including the same `0xca34` bytes,
+/// so this profile uses chrome_155's (roots only, see `CHROME_TRUST_ANCHOR_ROOTS`).
+/// Only the headers change: `sec-ch-ua` and the user agent carry 156, and
+/// `sec-ch-ua` has a new GREASE brand and brand order.
+pub mod chrome_156 {
+    use super::*;
+
+    /// Returns the complete Chrome 156 fingerprint
+    pub fn fingerprint() -> BrowserFingerprint {
+        BrowserFingerprint::new(
+            "Chrome",
+            "156",
+            chrome_155::tls_fingerprint(),
+            chrome_151::http2_fingerprint(),
+            headers(),
+        )
+    }
+
+    /// Chrome 156 HTTP headers
+    fn headers() -> Vec<(String, String)> {
+        vec![
+            ("sec-ch-ua".to_string(), "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\", \"Google Chrome\";v=\"156\"".to_string()),
+            ("sec-ch-ua-mobile".to_string(), "?0".to_string()),
+            ("sec-ch-ua-platform".to_string(), "\"Windows\"".to_string()),
+            ("upgrade-insecure-requests".to_string(), "1".to_string()),
+            ("user-agent".to_string(), "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36".to_string()),
+            ("accept".to_string(), "text/html,application/xhtml+xml,application/xml;q=0.9,image/jxl,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7".to_string()),
+            ("sec-fetch-site".to_string(), "none".to_string()),
+            ("sec-fetch-mode".to_string(), "navigate".to_string()),
+            ("sec-fetch-user".to_string(), "?1".to_string()),
+            ("sec-fetch-dest".to_string(), "document".to_string()),
+            ("accept-encoding".to_string(), "gzip, deflate, br, zstd".to_string()),
+            ("accept-language".to_string(), "en-US,en;q=0.9".to_string()),
+            ("priority".to_string(), "u=0, i".to_string()),
+        ]
+    }
+}
+
+/// Chrome 155 fingerprint module
+///
+/// Source: consumer Chrome stable 155.0.8059.80 on Windows 11, captured against
+/// <https://tls.peet.ws> and in a decrypted Wireshark capture (October 2026).
+///
+/// Relative to Chrome 151 there are two TLS differences, both in every ClientHello
+/// since Chrome 152: the Trust Anchor IDs extension (`0xca34`), which Chrome 151
+/// doesn't send, and a GREASE value leading the signature_algorithms list. The
+/// extension lists only Chrome's roots, not its intermediates (see
+/// `CHROME_TRUST_ANCHOR_ROOTS`). Like chrome_151, the profile sends Chrome's two
+/// GREASE extensions, an empty one first and a 1-byte one last. In the headers,
+/// `sec-ch-ua` and the user agent carry 155, and `accept` gains `image/jxl`.
+pub mod chrome_155 {
+    use super::*;
+
+    /// Returns the complete Chrome 155 fingerprint
+    pub fn fingerprint() -> BrowserFingerprint {
+        BrowserFingerprint::new(
+            "Chrome",
+            "155",
+            tls_fingerprint(),
+            chrome_151::http2_fingerprint(),
+            headers(),
+        )
+    }
+
+    /// Chrome 155 TLS fingerprint: Chrome 151's with the two differences above
+    pub(crate) fn tls_fingerprint() -> TlsFingerprint {
+        let mut tls = chrome_151::tls_fingerprint();
+        // Real Chrome picks a new GREASE value per connection; this one is fixed.
+        tls.signature_algorithms
+            .insert(0, SignatureAlgorithm::Grease);
+        // TrustAnchors isn't in chrome_151's extension order: like the other unlisted
+        // extensions, it goes before the listed ones, in random order.
+        tls.extensions = tls.extensions.with_trust_anchors(
+            CHROME_TRUST_ANCHOR_ROOTS
+                .iter()
+                .map(|id| id.to_vec())
+                .collect(),
+        );
+        tls
+    }
+
+    /// Chrome 155 HTTP headers
+    fn headers() -> Vec<(String, String)> {
+        vec![
+            ("sec-ch-ua".to_string(), "\"Google Chrome\";v=\"155\", \"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"".to_string()),
+            ("sec-ch-ua-mobile".to_string(), "?0".to_string()),
+            ("sec-ch-ua-platform".to_string(), "\"Windows\"".to_string()),
+            ("upgrade-insecure-requests".to_string(), "1".to_string()),
+            ("user-agent".to_string(), "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36".to_string()),
+            ("accept".to_string(), "text/html,application/xhtml+xml,application/xml;q=0.9,image/jxl,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7".to_string()),
+            ("sec-fetch-site".to_string(), "none".to_string()),
+            ("sec-fetch-mode".to_string(), "navigate".to_string()),
+            ("sec-fetch-user".to_string(), "?1".to_string()),
+            ("sec-fetch-dest".to_string(), "document".to_string()),
+            ("accept-encoding".to_string(), "gzip, deflate, br, zstd".to_string()),
+            ("accept-language".to_string(), "en-US,en;q=0.9".to_string()),
+            ("priority".to_string(), "u=0, i".to_string()),
+        ]
+    }
+}
+
 /// Chrome 151 fingerprint module
 ///
 /// Source: capture against <https://tls.peet.ws> from consumer Chrome stable
@@ -10,8 +184,14 @@ use crate::fingerprint::*;
 /// `sec-ch-ua`, which Chrome for Testing cannot supply because it is unbranded;
 /// that header is taken from the consumer build and is stable across launches.
 ///
-/// Relative to Chrome 142 the only wire-level TLS difference is that Chrome now
-/// leads its signature_algorithms list with the three ML-DSA codepoints.
+/// Every Chrome 151 ClientHello carries Chrome's two GREASE extensions (an
+/// empty one first, a 1-byte one last). Chrome 151 sends the Trust Anchor IDs
+/// extension (`0xca34`) only with Chromium's field-trial testing config, so this
+/// profile leaves it out.
+///
+/// Relative to the chrome_142 profile, Chrome 151 leads its signature_algorithms
+/// list with the three ML-DSA codepoints, and this profile also sends the GREASE
+/// extensions above.
 pub mod chrome_151 {
     use super::*;
 
@@ -27,7 +207,7 @@ pub mod chrome_151 {
     }
 
     /// Chrome 151 TLS fingerprint
-    fn tls_fingerprint() -> TlsFingerprint {
+    pub(crate) fn tls_fingerprint() -> TlsFingerprint {
         TlsFingerprint::new(
             // Cipher suites in Chrome 151 preference order
             // GREASE cipher at position 1 (first) - same as Chrome 142
@@ -107,7 +287,8 @@ pub mod chrome_151 {
                     ExtensionType::ApplicationSettings,
                 ],
             )
-            .with_new_alps_codepoint(true),
+            .with_new_alps_codepoint(true)
+            .with_grease_first_and_last(true),
             // ECH configuration (GREASE mode)
             Some(EchConfig::new(
                 EchMode::Grease {
@@ -121,7 +302,7 @@ pub mod chrome_151 {
     }
 
     /// Chrome 151 HTTP/2 fingerprint
-    fn http2_fingerprint() -> Http2Fingerprint {
+    pub(crate) fn http2_fingerprint() -> Http2Fingerprint {
         Http2Fingerprint {
             pseudo_header_order: vec![
                 ":method".to_string(),
@@ -1296,5 +1477,168 @@ pub mod chrome_125 {
             ("accept-encoding".to_string(), "gzip, deflate, br, zstd".to_string()),
             ("accept-language".to_string(), "en-US,en;q=0.9".to_string()),
         ]
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::fingerprint::database::tests::client_hello;
+
+    // JA4_r of real Chrome 155's cold TCP ClientHello: consumer Chrome 155.0.8059.80 on Windows 11 against
+    // tls.peet.ws (October 2026).
+    const JA4_R_155: &str = "t13d1517h2_002f,0035,009c,009d,1301,1302,1303,c013,c014,c02b,c02c,c02f,c030,cca8,cca9_0005,000a,000b,000d,0012,0017,001b,0023,002b,002d,0033,44cd,ca34,fe0d,ff01_0904,0905,0906,0403,0804,0401,0503,0805,0501,0806,0601";
+
+    // JA4_r of real Chrome 151, without Trust Anchor IDs (JA4 t13d1516h2_8daaf6152771_806a8c22fdea).
+    const JA4_R_151: &str = "t13d1516h2_002f,0035,009c,009d,1301,1302,1303,c013,c014,c02b,c02c,c02f,c030,cca8,cca9_0005,000a,000b,000d,0012,0017,001b,0023,002b,002d,0033,44cd,fe0d,ff01_0904,0905,0906,0403,0804,0401,0503,0805,0501,0806,0601";
+
+    // The trust_anchors (0xca34) body for the 13 roots in CHROME_TRUST_ANCHOR_ROOTS (105 bytes): a u16 length,
+    // then each ID as a u8 length and its bytes.
+    const CHROME_ROOTS_PAYLOAD: &str = "00670582df1302010582df13020608839a648c9b2d010708839a648c9b2d010808839a648c9b2d010908839a648c9b2d010a08839a648c9b2d010b08839a648c9b2d010c08839a648c9b2d010d08839a648c9b2d011208839a648c9b2d011304d679090104d6790904";
+
+    fn hex(s: &str) -> Vec<u8> {
+        (0..s.len())
+            .step_by(2)
+            .map(|i| u8::from_str_radix(&s[i..i + 2], 16).unwrap())
+            .collect()
+    }
+
+    fn is_grease(value: u16) -> bool {
+        value & 0x0f0f == 0x0a0a
+    }
+
+    /// Big-endian u16 values, without GREASE.
+    fn u16s(bytes: &[u8]) -> Vec<u16> {
+        bytes
+            .chunks(2)
+            .map(|c| u16::from_be_bytes([c[0], c[1]]))
+            .filter(|v| !is_grease(*v))
+            .collect()
+    }
+
+    fn hex_list(values: &[u16]) -> String {
+        values
+            .iter()
+            .map(|v| format!("{v:04x}"))
+            .collect::<Vec<_>>()
+            .join(",")
+    }
+
+    /// FoxIO's JA4_r (the raw, unhashed JA4). GREASE values are dropped everywhere.
+    fn ja4_r(version: u16, ciphers: &[u16], extensions: &[(u16, Vec<u8>)]) -> String {
+        let body = |typ: u16| {
+            extensions
+                .iter()
+                .find(|(t, _)| *t == typ)
+                .map(|(_, body)| body.as_slice())
+        };
+        // supported_versions: a u8 length, then the versions. The highest one counts.
+        let version = body(0x002b).map_or(version, |b| u16s(&b[1..]).into_iter().max().unwrap());
+        let version = match version {
+            0x0304 => "13",
+            0x0303 => "12",
+            0x0302 => "11",
+            0x0301 => "10",
+            v => panic!("unexpected TLS version {v:#06x}"),
+        };
+        let sni = if body(0x0000).is_some() { 'd' } else { 'i' };
+        let mut ciphers: Vec<u16> = ciphers.iter().copied().filter(|v| !is_grease(*v)).collect();
+        ciphers.sort_unstable();
+        let mut types: Vec<u16> = extensions
+            .iter()
+            .map(|(t, _)| *t)
+            .filter(|t| !is_grease(*t))
+            .collect();
+        let count = types.len();
+        types.retain(|t| *t != 0x0000 && *t != 0x0010);
+        types.sort_unstable();
+        // ALPN: a u16 list length, then the first protocol's u8 length and bytes.
+        let alpn = body(0x0010).map_or("00".to_string(), |b| {
+            let first = &b[3..3 + usize::from(b[2])];
+            format!("{}{}", first[0] as char, first[first.len() - 1] as char)
+        });
+        // signature_algorithms: a u16 length, then the schemes in wire order.
+        let sigalgs = body(0x000d).map_or(Vec::new(), |b| u16s(&b[2..]));
+        format!(
+            "t{version}{sni}{:02}{count:02}{alpn}_{}_{}_{}",
+            ciphers.len(),
+            hex_list(&ciphers),
+            hex_list(&types),
+            hex_list(&sigalgs)
+        )
+    }
+
+    #[test]
+    fn chrome_profiles_send_real_chrome_ja4_r() {
+        // (profile, JA4_r, trust_anchors body if sent, GREASE first in signature_algorithms)
+        for (name, fp, expected, trust_anchors, sigalg_grease) in [
+            // Real Chrome 157 (157.0.8103.51) has the same JA4_r as Chrome 155.
+            (
+                "chrome_157",
+                chrome_157::fingerprint(),
+                JA4_R_155,
+                Some(CHROME_ROOTS_PAYLOAD),
+                true,
+            ),
+            // Real Chrome 156 (156.0.8078.48) has the same JA4_r as Chrome 155.
+            (
+                "chrome_156",
+                chrome_156::fingerprint(),
+                JA4_R_155,
+                Some(CHROME_ROOTS_PAYLOAD),
+                true,
+            ),
+            (
+                "chrome_155",
+                chrome_155::fingerprint(),
+                JA4_R_155,
+                Some(CHROME_ROOTS_PAYLOAD),
+                true,
+            ),
+            (
+                "chrome_151",
+                chrome_151::fingerprint(),
+                JA4_R_151,
+                None,
+                false,
+            ),
+        ] {
+            let (version, ciphers, exts) = client_hello(fp);
+            assert_eq!(ja4_r(version, &ciphers, &exts), expected, "{name}");
+            let body = |t| {
+                exts.iter()
+                    .find(|(typ, _)| *typ == t)
+                    .map(|(_, body)| body.clone())
+            };
+            assert_eq!(body(0xca34), trust_anchors.map(hex), "{name}");
+            let sigalgs = body(0x000d).unwrap();
+            let first_sigalg = u16::from_be_bytes([sigalgs[2], sigalgs[3]]);
+            if sigalg_grease {
+                assert_eq!(first_sigalg, 0x1a1a, "{name}: GREASE first in sigalgs");
+            } else {
+                assert!(!is_grease(first_sigalg), "{name}: GREASE in sigalgs");
+            }
+        }
+    }
+
+    // Chrome's two GREASE extensions: an empty one first and a 1-byte one last. impit's hello carries GREASE ECH and
+    // no pre_shared_key, so last also means after ECH.
+    #[test]
+    fn chrome_profiles_send_grease_extensions_first_and_last() {
+        for (name, fp) in [
+            ("chrome_157", chrome_157::fingerprint()),
+            ("chrome_156", chrome_156::fingerprint()),
+            ("chrome_155", chrome_155::fingerprint()),
+            ("chrome_151", chrome_151::fingerprint()),
+        ] {
+            let (_, _, exts) = client_hello(fp);
+            assert!(exts.iter().any(|(t, _)| *t == 0xfe0d), "{name}: no ECH");
+            assert_eq!(exts[0], (0xbaba, vec![]), "{name}: first extension");
+            assert_eq!(
+                *exts.last().unwrap(),
+                (0xaaaa, vec![0]),
+                "{name}: last extension"
+            );
+        }
     }
 }

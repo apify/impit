@@ -133,6 +133,15 @@ pub struct TlsExtensions {
     pub session_ticket: bool,
     /// Whether to send padding extension (RFC7685).
     pub padding: bool,
+    /// Trust Anchor IDs to advertise (draft-ietf-tls-trust-anchor-ids, Chrome's codepoint `0xca34`), one
+    /// byte string of 1-32 bytes per ID. `Some(vec![])` sends an empty list; `None` doesn't send the
+    /// extension. List only anchors impit's verifier trusts: a server may leave a listed intermediate
+    /// out of its chain, and impit then can't verify it.
+    pub trust_anchors: Option<Vec<Vec<u8>>>,
+    /// Send Chrome's two GREASE extensions: an empty one first and a 1-byte one last (just before padding
+    /// and `pre_shared_key`). Padding moves to right after the last one and a listed `Grease` becomes the
+    /// first one; the rest of the order is unchanged.
+    pub grease_first_and_last: bool,
 }
 
 impl TlsExtensions {
@@ -172,6 +181,8 @@ impl TlsExtensions {
             extension_order,
             session_ticket: true,
             padding: false,
+            trust_anchors: None,
+            grease_first_and_last: false,
         }
     }
 
@@ -187,6 +198,16 @@ impl TlsExtensions {
 
     pub fn with_padding(mut self, enabled: bool) -> Self {
         self.padding = enabled;
+        self
+    }
+
+    pub fn with_trust_anchors(mut self, ids: Vec<Vec<u8>>) -> Self {
+        self.trust_anchors = Some(ids);
+        self
+    }
+
+    pub fn with_grease_first_and_last(mut self, enabled: bool) -> Self {
+        self.grease_first_and_last = enabled;
         self
     }
 }
@@ -354,6 +375,7 @@ impl TlsFingerprint {
                 SignatureAlgorithm::EcdsaSha1Legacy => {
                     FingerprintSignatureAlgorithm::EcdsaSha1Legacy
                 }
+                SignatureAlgorithm::Grease => FingerprintSignatureAlgorithm::Grease,
             })
             .collect();
 
@@ -402,6 +424,7 @@ impl TlsFingerprint {
                     ExtensionType::SignatureAlgorithmsCert => {
                         Some(RustlsExtType::SignatureAlgorithmsCert)
                     }
+                    ExtensionType::TrustAnchors => Some(RustlsExtType::TrustAnchors),
                     // PreSharedKey and ECH are handled separately by rustls (always last)
                     ExtensionType::PreSharedKey => None,
                     // Skip types that don't map cleanly
@@ -412,11 +435,13 @@ impl TlsFingerprint {
 
         let extensions_config = TlsExtensionsConfig {
             grease: has_grease,
+            grease_first_and_last: self.extensions.grease_first_and_last,
             signed_certificate_timestamp: self.extensions.signed_certificate_timestamp,
             application_settings: self.extensions.application_settings,
             use_new_alps_codepoint: self.extensions.use_new_alps_codepoint,
             delegated_credentials: self.extensions.delegated_credentials,
             record_size_limit: self.extensions.record_size_limit,
+            trust_anchors: self.extensions.trust_anchors.clone(),
             renegotiation_info: true, // Common for both browsers
             padding: self.extensions.padding,
             supported_versions: self.extensions.supported_versions,
