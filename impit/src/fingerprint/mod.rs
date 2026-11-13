@@ -99,14 +99,76 @@ impl TlsFingerprint {
     }
 }
 
+/// HTTP/2 configuration of a browser fingerprint, mostly the client's first SETTINGS frame.
+///
+/// `Some` values are passed to hyper's HTTP/2 builder. For `max_frame_size` (SETTINGS id 5) and
+/// `max_header_list_size` (id 6), `None` means the setting is not sent; for the other `Option`
+/// fields, `None` keeps hyper's default. `send_enable_push: true` sends ENABLE_PUSH (id 2) as `0`
+/// (hyper always disables push); `false` leaves it out, and the server may then push, but every
+/// pushed stream is refused. `no_rfc7540_priorities: Some(b)` adds SETTINGS_NO_RFC7540_PRIORITIES
+/// (id 9, RFC 9218) with the value `b as u32`.
+///
+/// Leaving settings out and adding setting 9 need impit's h2 (apify/h2) with support for the
+/// `IMPIT_H2_OMIT_SETTINGS` and `IMPIT_H2_NO_RFC7540_PRIORITIES` environment variables. impit sets
+/// both whenever it builds a client with a fingerprint, and h2 reads them when an HTTP/2
+/// connection starts. Like `pseudo_header_order` (`IMPIT_H2_PSEUDOHEADERS_ORDER`), they are
+/// process-wide: the last client built with a fingerprint decides them for every new HTTP/2
+/// connection in the process. So clients with different profiles in one process share the most
+/// recently built one's left-out settings and setting 9. (Clients without a fingerprint don't
+/// offer `h2` in ALPN and never use HTTP/2.) Only the SETTINGS frame changes; the limits h2
+/// enforces stay as configured.
+///
+/// For custom fingerprints: a struct literal must set the newer fields `max_frame_size`,
+/// `send_enable_push` and `no_rfc7540_priorities`, and `max_header_list_size: None` now leaves
+/// setting 6 out instead of sending hyper's 16 KiB default. To send what hyper sends by default,
+/// use `max_frame_size: Some(16_384)`, `max_header_list_size: Some(16_384)`,
+/// `send_enable_push: true` and `no_rfc7540_priorities: None`.
 #[derive(Clone, Debug)]
 pub struct Http2Fingerprint {
     pub pseudo_header_order: Vec<String>,
     pub initial_stream_window_size: Option<u32>,
     pub initial_connection_window_size: Option<u32>,
+    /// SETTINGS_MAX_HEADER_LIST_SIZE (id 6); `None`: not sent.
     pub max_header_list_size: Option<u32>,
     pub header_table_size: Option<u32>,
     pub max_concurrent_streams: Option<u32>,
+    /// SETTINGS_MAX_FRAME_SIZE (id 5); `None`: not sent. `Some(v)` must be in
+    /// `16_384..=16_777_215` (RFC 9113 §6.5.2): h2 panics on other values when a connection
+    /// starts, not when the client is built.
+    pub max_frame_size: Option<u32>,
+    /// Whether SETTINGS_ENABLE_PUSH (id 2) is sent, always as `0`.
+    pub send_enable_push: bool,
+    /// SETTINGS_NO_RFC7540_PRIORITIES (id 9); `None`: not sent.
+    pub no_rfc7540_priorities: Option<bool>,
+}
+
+impl Http2Fingerprint {
+    /// The values of the env vars that make apify/h2 send these SETTINGS: the ids to leave out
+    /// (ascending, comma-separated) and setting 9's value. Empty strings change nothing.
+    pub(crate) fn h2_settings_env(&self) -> [(&'static str, String); 2] {
+        let omit = [
+            (!self.send_enable_push, "2"),
+            (self.max_frame_size.is_none(), "5"),
+            (self.max_header_list_size.is_none(), "6"),
+        ]
+        .into_iter()
+        .filter(|&(left_out, _)| left_out)
+        .map(|(_, id)| id)
+        .collect::<Vec<_>>()
+        .join(",");
+        let no_rfc7540_priorities = match self.no_rfc7540_priorities {
+            Some(true) => "1",
+            Some(false) => "0",
+            None => "",
+        };
+        [
+            ("IMPIT_H2_OMIT_SETTINGS", omit),
+            (
+                "IMPIT_H2_NO_RFC7540_PRIORITIES",
+                no_rfc7540_priorities.to_string(),
+            ),
+        ]
+    }
 }
 
 /// TLS extensions configuration.
@@ -473,5 +535,53 @@ impl TlsFingerprint {
             self.alpn_protocols.clone(),
             cert_compression,
         )
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn http2(
+        max_frame_size: Option<u32>,
+        max_header_list_size: Option<u32>,
+        send_enable_push: bool,
+        no_rfc7540_priorities: Option<bool>,
+    ) -> Http2Fingerprint {
+        Http2Fingerprint {
+            pseudo_header_order: vec![],
+            initial_stream_window_size: None,
+            initial_connection_window_size: None,
+            max_header_list_size,
+            header_table_size: None,
+            max_concurrent_streams: None,
+            max_frame_size,
+            send_enable_push,
+            no_rfc7540_priorities,
+        }
+    }
+
+    #[test]
+    fn h2_settings_env_lists_left_out_ids_and_setting_9() {
+        let sent = Some(16_384);
+        let cases = [
+            (http2(sent, sent, true, None), "", ""),
+            (http2(None, sent, true, None), "5", ""),
+            (http2(sent, None, true, None), "6", ""),
+            (http2(sent, sent, false, None), "2", ""),
+            (http2(None, None, false, None), "2,5,6", ""),
+            (http2(sent, None, false, Some(true)), "2,6", "1"),
+            (http2(sent, sent, true, Some(false)), "", "0"),
+        ];
+        for (fingerprint, omit, no_rfc7540) in cases {
+            assert_eq!(
+                fingerprint.h2_settings_env(),
+                [
+                    ("IMPIT_H2_OMIT_SETTINGS", omit.to_string()),
+                    ("IMPIT_H2_NO_RFC7540_PRIORITIES", no_rfc7540.to_string()),
+                ],
+                "{fingerprint:?}"
+            );
+        }
     }
 }
