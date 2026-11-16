@@ -205,6 +205,11 @@ jobs:
         platform:
           - runner: windows-latest
             target: x64
+            # setup-python has no Windows arm64 builds before 3.11.
+            extra-interpreters: ["3.10"]
+          - runner: windows-11-arm
+            target: aarch64
+            extra-interpreters: []
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -216,13 +221,12 @@ jobs:
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
         with:
           python-version: |
-            3.10
+            ${{ join(matrix.platform.extra-interpreters, fromJSON('"\n"')) }}
             3.11
             3.12
             3.13
             3.14
             3.15
-          architecture: ${{ matrix.platform.target }}
 
       - name: Build wheels
         uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b # v1
@@ -239,7 +243,6 @@ jobs:
           path: impit-python/dist
 
       - name: pytest
-        if: ${{ !startsWith(matrix.platform.target, 'aarch64') }}
         shell: bash
         working-directory: impit-python
         env:
