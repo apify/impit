@@ -1355,7 +1355,6 @@ dependencies = [
  "reqwest",
  "rustls",
  "tokio",
- "tokio-stream",
  "urlencoding",
 ]
 

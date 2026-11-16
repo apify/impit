@@ -30,11 +30,11 @@
     "express": "^5.3.0",
     "proxy-chain": "^3.0.1",
     "socks-server-lib": "^0.0.3",
-    "tough-cookie": "^6.0.2",
+    "tough-cookie": "^6.1.0",
     "typedoc": "^0.28.20",
     "typedoc-plugin-mdn-links": "^5.1.1",
     "typescript": "^6.0.3",
-    "vite": "^8.3.5",
+    "vite": "^8.3.6",
     "vitest": "^5.1.0"
   },
   "ava": {
@@ -53,16 +53,16 @@
     "universal": "napi universal",
     "copy-version": "napi version"
   },
-  "packageManager": "pnpm@12.17.0",
+  "packageManager": "pnpm@12.18.0",
   "description": "Impit for JavaScript",
   "optionalDependencies": {
-    "impit-darwin-x64": "0.14.9",
     "impit-darwin-arm64": "0.14.9",
-    "impit-win32-x64-msvc": "0.14.9",
-    "impit-win32-arm64-msvc": "0.14.9",
+    "impit-darwin-x64": "0.14.9",
+    "impit-linux-arm64-gnu": "0.14.9",
+    "impit-linux-arm64-musl": "0.14.9",
     "impit-linux-x64-gnu": "0.14.9",
     "impit-linux-x64-musl": "0.14.9",
-    "impit-linux-arm64-gnu": "0.14.9",
-    "impit-linux-arm64-musl": "0.14.9"
+    "impit-win32-arm64-msvc": "0.14.9",
+    "impit-win32-x64-msvc": "0.14.9"
   }
 }
