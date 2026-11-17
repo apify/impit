@@ -18,12 +18,21 @@ impl CookieStore for PythonCookieJar {
         cookie_headers: &mut dyn Iterator<Item = &reqwest::header::HeaderValue>,
         url: &Url,
     ) {
+        let host = url.host_str().unwrap_or_default();
+
         Python::attach(|py| {
             for header_value in cookie_headers {
                 let cookie = std::str::from_utf8(header_value.as_bytes())
                     .map_err(cookie::ParseError::from)
                     .and_then(Cookie::parse)
                     .unwrap_or(Cookie::new("<cookie-name>", "<cookie-value>"));
+
+                // RFC 6265 §5.3: a cookie whose `Domain` does not match the responding host is ignored.
+                // RFC 6265 §5.2.3: an empty `Domain` is ignored, leaving the cookie host-only.
+                let domain = cookie.domain().filter(|domain| !domain.is_empty());
+                if domain.is_some_and(|domain| !domain_matches(host, domain)) {
+                    continue;
+                }
 
                 let kwargs = PyDict::new(py);
 
@@ -36,12 +45,7 @@ impl CookieStore for PythonCookieJar {
                     .set_item("secure", cookie.secure().unwrap_or(false))
                     .unwrap_or_default();
                 kwargs
-                    .set_item(
-                        "domain",
-                        cookie
-                            .domain()
-                            .unwrap_or_else(|| url.host_str().unwrap_or_default()),
-                    )
+                    .set_item("domain", domain.unwrap_or(host))
                     .unwrap_or_default();
                 kwargs.set_item("comment", None::<&str>).unwrap_or_default();
                 kwargs
@@ -59,13 +63,10 @@ impl CookieStore for PythonCookieJar {
                     )
                     .unwrap_or_default();
                 kwargs
-                    .set_item("domain_specified", cookie.domain().is_some())
+                    .set_item("domain_specified", domain.is_some())
                     .unwrap_or_default();
                 kwargs
-                    .set_item(
-                        "domain_initial_dot",
-                        cookie.domain().map(|d| d.starts_with('.')),
-                    )
+                    .set_item("domain_initial_dot", domain.map(|d| d.starts_with('.')))
                     .unwrap_or_default();
                 kwargs
                     .set_item(
@@ -119,6 +120,10 @@ impl CookieStore for PythonCookieJar {
                         .getattr("domain")
                         .and_then(|attr| attr.extract::<String>())
                         .unwrap_or_default();
+                    let domain_specified = py_cookie
+                        .getattr("domain_specified")
+                        .and_then(|attr| attr.extract::<bool>())
+                        .unwrap_or(true);
                     let path = py_cookie
                         .getattr("path")
                         .and_then(|attr| attr.extract::<String>())
@@ -128,7 +133,14 @@ impl CookieStore for PythonCookieJar {
                         .and_then(|attr| attr.extract::<bool>())
                         .unwrap_or_default();
 
-                    if !domain_matches(url.host_str().unwrap_or_default(), &domain) {
+                    let host = url.host_str().unwrap_or_default();
+                    // RFC 6265 §5.4: a host-only cookie is returned only to the host that set it.
+                    let host_matches = if domain_specified || domain.is_empty() {
+                        domain_matches(host, &domain)
+                    } else {
+                        host.eq_ignore_ascii_case(&domain)
+                    };
+                    if !host_matches {
                         return None;
                     }
                     if !url.path().starts_with(&path) {

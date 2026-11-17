@@ -103,7 +103,7 @@ class TestBasicRequests:
                     'strict=3; Path=/; SameSite=Strict',
                     'secure=4; Path=/; HttpOnly; Secure; SameSite=Strict',
                     'short=5; Path=/;',
-                    'domain=6; Path=/; Domain=.127.0.0.1;',
+                    'domain=6; Path=/; Domain=.httpbin.apify.actor;',
                 ]
             },
         )
@@ -142,7 +142,7 @@ class TestBasicRequests:
                 assert cookie.secure is False
                 # Crate cookies, ignores the starting dot in the domain
                 # but it's ok - https://www.rfc-editor.org/rfc/rfc6265#section-4.1.2.3
-                assert cookie.domain == '127.0.0.1'
+                assert cookie.domain == 'httpbin.apify.actor'
 
     def test_cookie_jar_works(self) -> None:
         cookies = Cookies({'preset-cookie': '123'})

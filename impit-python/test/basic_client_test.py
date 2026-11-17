@@ -165,7 +165,7 @@ class TestBasicRequests:
                     'strict=3; Path=/; SameSite=Strict',
                     'secure=4; Path=/; HttpOnly; Secure; SameSite=Strict',
                     'short=5; Path=/;',
-                    'domain=6; Path=/; Domain=.127.0.0.1;',
+                    'domain=6; Path=/; Domain=.httpbin.apify.actor;',
                 ]
             },
         )
@@ -204,7 +204,59 @@ class TestBasicRequests:
                 assert cookie.secure is False
                 # Crate cookies, ignores the starting dot in the domain
                 # but it's ok - https://www.rfc-editor.org/rfc/rfc6265#section-4.1.2.3
-                assert cookie.domain == '127.0.0.1'
+                assert cookie.domain == 'httpbin.apify.actor'
+
+    def test_cookie_for_another_domain_is_not_stored(self, browser: Browser) -> None:
+        cookies_jar = CookieJar()
+
+        impit = Client(browser=browser, cookie_jar=cookies_jar, follow_redirects=True)
+
+        url = get_httpbin_url(
+            '/response-headers',
+            query={
+                'set-cookie': [
+                    'own=1; Path=/',
+                    'parent=2; Path=/; Domain=apify.actor',
+                    'other=3; Path=/; Domain=example.com',
+                    'empty=4; Path=/; Domain=.',
+                ]
+            },
+        )
+
+        response = impit.get(url)
+        assert response.status_code == 200
+
+        assert {'own', 'parent', 'empty'} == {cookie.name for cookie in cookies_jar}
+        assert {'parent'} == {cookie.name for cookie in cookies_jar if cookie.domain_specified}
+
+    def test_host_only_cookie_is_not_sent_to_subdomains(self, browser: Browser) -> None:
+        cookies_jar = CookieJar()
+        for name, domain_specified in [('host_only', False), ('domain', True)]:
+            cookies_jar.set_cookie(
+                Cookie(
+                    version=0,
+                    name=name,
+                    value='1',
+                    port=None,
+                    port_specified=False,
+                    domain='apify.actor',
+                    domain_specified=domain_specified,
+                    domain_initial_dot=False,
+                    path='/',
+                    path_specified=True,
+                    secure=False,
+                    expires=None,
+                    discard=True,
+                    comment=None,
+                    comment_url=None,
+                    rest={},
+                )
+            )
+
+        impit = Client(browser=browser, cookie_jar=cookies_jar)
+
+        response = impit.get(get_httpbin_url('/cookies'))
+        assert response.json()['cookies'] == {'domain': '1'}
 
     def test_rejected_cookie_is_skipped_not_crashing(self, browser: Browser) -> None:
         """Cookies rejected by the cookie jar are skipped instead of aborting the process."""
