@@ -143,7 +143,7 @@ impl CookieStore for PythonCookieJar {
                     if !host_matches {
                         return None;
                     }
-                    if !url.path().starts_with(&path) {
+                    if !path_matches(url.path(), &path) {
                         return None;
                     }
                     if secure && !url.scheme().eq("https") {
@@ -240,5 +240,21 @@ impl PythonCookieJar {
         cookies
             .getattr(py, "jar")
             .map(|jar| PythonCookieJar::new(py, jar))
+    }
+}
+
+/// Returns `true` if `request_path` path-matches `cookie_path`, as defined by
+/// [RFC 6265, §5.1.4](https://www.rfc-editor.org/rfc/rfc6265#section-5.1.4).
+///
+/// An empty cookie path imposes no path restriction.
+fn path_matches(request_path: &str, cookie_path: &str) -> bool {
+    match request_path.strip_prefix(cookie_path) {
+        Some(rest) => {
+            rest.is_empty()
+                || rest.starts_with('/')
+                || cookie_path.is_empty()
+                || cookie_path.ends_with('/')
+        }
+        None => false,
     }
 }

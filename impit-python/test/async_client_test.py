@@ -5,6 +5,7 @@ import threading
 from collections.abc import AsyncIterator
 from http.cookiejar import Cookie, CookieJar
 from typing import Literal
+from urllib.parse import urlparse
 
 import pytest
 
@@ -286,6 +287,37 @@ class TestBasicRequests:
 
         response = await impit.get(get_httpbin_url('/cookies'))
         assert response.json()['cookies'] == {'domain': '1'}
+
+    @pytest.mark.asyncio
+    async def test_cookie_path_matches_whole_segments(self, browser: Browser) -> None:
+        cookies_jar = CookieJar()
+        host = urlparse(get_httpbin_url('/')).hostname or ''
+        for name, path in [('root', '/'), ('exact', '/cookies'), ('partial', '/cook'), ('other', '/cookies/set')]:
+            cookies_jar.set_cookie(
+                Cookie(
+                    version=0,
+                    name=name,
+                    value='1',
+                    port=None,
+                    port_specified=False,
+                    domain=host,
+                    domain_specified=False,
+                    domain_initial_dot=False,
+                    path=path,
+                    path_specified=True,
+                    secure=False,
+                    expires=None,
+                    discard=True,
+                    comment=None,
+                    comment_url=None,
+                    rest={},
+                )
+            )
+
+        impit = AsyncClient(browser=browser, cookie_jar=cookies_jar)
+
+        response = await impit.get(get_httpbin_url('/cookies'))
+        assert response.json()['cookies'] == {'root': '1', 'exact': '1'}
 
     @pytest.mark.asyncio
     async def test_rejected_cookie_is_skipped_not_crashing(self, browser: Browser) -> None:
