@@ -5,8 +5,7 @@ env:
   MACOSX_DEPLOYMENT_TARGET: '10.13'
   RUSTFLAGS: '--cfg reqwest_unstable'
 permissions:
-  contents: write
-  id-token: write
+  contents: read
 on:
   workflow_dispatch:
     inputs:
@@ -36,6 +35,10 @@ jobs:
         name: Publish
         runs-on: ubuntu-latest
         needs: [test]
+        environment: npm
+        permissions:
+          contents: read
+          id-token: write # Required for OIDC
         steps:
           - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
             with:
@@ -108,6 +111,8 @@ jobs:
       name: Generate changelog
       needs: [publish]
       runs-on: ubuntu-latest
+      permissions:
+        contents: write # Required to create the GitHub release
       steps:
         - name: Checkout
           uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
