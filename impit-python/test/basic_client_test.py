@@ -25,7 +25,7 @@ from impit import (
 )
 
 from .httpbin import get_httpbin_url
-from .servers import echoing_server
+from .servers import echoing_server, set_cookie_server
 from .setup_proxy import start_proxy_server
 
 
@@ -231,6 +231,24 @@ class TestBasicRequests:
 
         assert {'own', 'parent', 'empty'} == {cookie.name for cookie in cookies_jar}
         assert {'parent'} == {cookie.name for cookie in cookies_jar if cookie.domain_specified}
+
+    def test_cookie_for_public_suffix_is_not_stored(self, browser: Browser) -> None:
+        cookies_jar = CookieJar()
+
+        set_cookies = [
+            'own=1; Path=/',
+            'site=2; Path=/; Domain=example.co.uk',
+            'suffix=3; Path=/; Domain=co.uk',
+            'private=4; Path=/; Domain=github.io',
+        ]
+        with set_cookie_server(set_cookies) as port:
+            impit = Client(browser=browser, cookie_jar=cookies_jar, proxy=f'http://127.0.0.1:{port}')
+
+            for url in ['http://shop.example.co.uk/', 'http://attacker.github.io/']:
+                response = impit.get(url)
+                assert response.status_code == 200
+
+        assert {'own', 'site'} == {cookie.name for cookie in cookies_jar}
 
     def test_host_only_cookie_is_not_sent_to_subdomains(self, browser: Browser) -> None:
         cookies_jar = CookieJar()

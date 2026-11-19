@@ -33,8 +33,8 @@ impl CookieStore for PythonCookieJar {
                 if domain.is_some_and(|domain| !domain_matches(host, domain)) {
                     continue;
                 }
-                // A domain without an inner dot (e.g. `com`) would cover every site under that suffix.
-                if domain.is_some_and(|domain| is_dotless_suffix(host, domain)) {
+                // RFC 6265 §5.3: a public suffix (e.g. `com`, `co.uk`) would cover every site under it.
+                if domain.is_some_and(|domain| is_public_suffix(host, domain)) {
                     continue;
                 }
 
@@ -233,13 +233,17 @@ fn domain_matches(host: &str, cookie_domain: &str) -> bool {
             .is_some_and(|prefix| prefix.ends_with('.'))
 }
 
-/// Returns `true` if `cookie_domain` has no inner dot and is not the host itself.
+/// Returns `true` if `cookie_domain` is a public suffix (e.g. `com`, `co.uk`, `github.io`) and not the host itself.
 ///
-/// Such a domain is a bare suffix like `com`, mirroring the check in Python's `DefaultCookiePolicy`.
-fn is_dotless_suffix(host: &str, cookie_domain: &str) -> bool {
-    let cookie_domain = cookie_domain.strip_prefix('.').unwrap_or(cookie_domain);
+/// Uses the [Public Suffix List](https://publicsuffix.org/), where an unlisted top-level name counts as a suffix.
+fn is_public_suffix(host: &str, cookie_domain: &str) -> bool {
+    let cookie_domain = cookie_domain
+        .strip_prefix('.')
+        .unwrap_or(cookie_domain)
+        .to_ascii_lowercase();
 
-    !cookie_domain.contains('.') && !host.eq_ignore_ascii_case(cookie_domain)
+    !host.eq_ignore_ascii_case(&cookie_domain)
+        && psl::suffix_str(&cookie_domain).is_some_and(|suffix| suffix == cookie_domain)
 }
 
 impl PythonCookieJar {
