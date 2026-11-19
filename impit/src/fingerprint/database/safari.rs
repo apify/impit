@@ -132,9 +132,13 @@ pub mod ios_18 {
             initial_stream_window_size: Some(2_097_152),
             // 65_535 (h2 default) + 10_420_225 WINDOW_UPDATE = 10_485_760.
             initial_connection_window_size: Some(10_485_760),
-            max_header_list_size: None,
+            // Not measured: this and `max_frame_size` keep the hyper defaults sent before.
+            max_header_list_size: Some(16_384),
             header_table_size: None,
             max_concurrent_streams: Some(100),
+            max_frame_size: Some(16_384),
+            send_enable_push: true,
+            no_rfc7540_priorities: None,
         }
     }
 

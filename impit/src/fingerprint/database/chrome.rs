@@ -320,6 +320,10 @@ pub mod chrome_151 {
             max_header_list_size: Some(262_144),
             header_table_size: Some(65_536),
             max_concurrent_streams: None,
+            // Chrome doesn't send MAX_FRAME_SIZE.
+            max_frame_size: None,
+            send_enable_push: true,
+            no_rfc7540_priorities: None,
         }
     }
 
@@ -463,6 +467,10 @@ pub mod chrome_142 {
             max_header_list_size: Some(262_144),
             header_table_size: Some(65_536),
             max_concurrent_streams: None,
+            // Chrome doesn't send MAX_FRAME_SIZE.
+            max_frame_size: None,
+            send_enable_push: true,
+            no_rfc7540_priorities: None,
         }
     }
 
@@ -606,6 +614,10 @@ pub mod chrome_136 {
             max_header_list_size: Some(262_144),
             header_table_size: Some(65_536),
             max_concurrent_streams: None,
+            // Chrome doesn't send MAX_FRAME_SIZE.
+            max_frame_size: None,
+            send_enable_push: true,
+            no_rfc7540_priorities: None,
         }
     }
 
@@ -743,6 +755,10 @@ pub mod chrome_133 {
             max_header_list_size: Some(262_144),
             header_table_size: Some(65_536),
             max_concurrent_streams: None,
+            // Chrome doesn't send MAX_FRAME_SIZE.
+            max_frame_size: None,
+            send_enable_push: true,
+            no_rfc7540_priorities: None,
         }
     }
 
@@ -880,6 +896,10 @@ pub mod chrome_124 {
             max_header_list_size: Some(262_144),
             header_table_size: Some(65_536),
             max_concurrent_streams: None,
+            // Chrome doesn't send MAX_FRAME_SIZE.
+            max_frame_size: None,
+            send_enable_push: true,
+            no_rfc7540_priorities: None,
         }
     }
 
@@ -1020,6 +1040,10 @@ pub mod chrome_131 {
             max_header_list_size: Some(262_144),
             header_table_size: Some(65_536),
             max_concurrent_streams: None,
+            // Chrome doesn't send MAX_FRAME_SIZE.
+            max_frame_size: None,
+            send_enable_push: true,
+            no_rfc7540_priorities: None,
         }
     }
 
@@ -1155,6 +1179,10 @@ pub mod chrome_100 {
             max_header_list_size: Some(262_144),
             header_table_size: Some(65_536),
             max_concurrent_streams: Some(1_000),
+            // Chrome 100-116 don't send MAX_FRAME_SIZE (Chromium's source; a capture of 116).
+            max_frame_size: None,
+            send_enable_push: true,
+            no_rfc7540_priorities: None,
         }
     }
 
@@ -1458,6 +1486,10 @@ pub mod chrome_125 {
             max_header_list_size: Some(262_144),
             header_table_size: Some(65_536),
             max_concurrent_streams: None,
+            // Chrome doesn't send MAX_FRAME_SIZE.
+            max_frame_size: None,
+            send_enable_push: true,
+            no_rfc7540_priorities: None,
         }
     }
 

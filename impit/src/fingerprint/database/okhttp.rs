@@ -36,9 +36,13 @@ fn shared_http2_fingerprint() -> Http2Fingerprint {
         initial_stream_window_size: Some(16_777_216),
         // Connection window is also increased to 16 MiB via WINDOW_UPDATE
         initial_connection_window_size: Some(16_777_216),
-        max_header_list_size: None,
+        // Not measured: this and `max_frame_size` keep the hyper defaults sent before.
+        max_header_list_size: Some(16_384),
         header_table_size: None,
         max_concurrent_streams: None,
+        max_frame_size: Some(16_384),
+        send_enable_push: true,
+        no_rfc7540_priorities: None,
     }
 }
 

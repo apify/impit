@@ -296,6 +296,10 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
             if let Some(max) = fingerprint.http2.max_concurrent_streams {
                 client = client.http2_max_concurrent_streams(max);
             }
+
+            if let Some(size) = fingerprint.http2.max_frame_size {
+                client = client.http2_max_frame_size(size);
+            }
         }
 
         if config.max_http_version == Version::HTTP_3 {
@@ -382,6 +386,13 @@ impl<CookieStoreImpl: CookieStore + 'static> Impit<CookieStoreImpl> {
                 "IMPIT_H2_PSEUDOHEADERS_ORDER",
                 pseudo_headers_order.join(","),
             );
+        }
+
+        // Always set, even to "", so a profile doesn't inherit the previous one's values.
+        if let Some(ref fingerprint) = config.fingerprint {
+            for (name, value) in fingerprint.http2.h2_settings_env() {
+                std::env::set_var(name, value);
+            }
         }
 
         Ok(Impit {

@@ -123,9 +123,14 @@ pub mod firefox_128 {
             ],
             initial_stream_window_size: Some(131_072),
             initial_connection_window_size: Some(12_582_912),
+            // Firefox doesn't send MAX_HEADER_LIST_SIZE.
             max_header_list_size: None,
             header_table_size: Some(65_536),
             max_concurrent_streams: None,
+            max_frame_size: Some(16_384),
+            // Firefox 128 sends no ENABLE_PUSH, but SETTINGS_NO_RFC7540_PRIORITIES = 1.
+            send_enable_push: false,
+            no_rfc7540_priorities: Some(true),
         }
     }
 
@@ -271,9 +276,13 @@ pub mod firefox_133 {
             ],
             initial_stream_window_size: Some(131_072),
             initial_connection_window_size: Some(12_582_912),
+            // Firefox doesn't send MAX_HEADER_LIST_SIZE.
             max_header_list_size: None,
             header_table_size: Some(65_536),
             max_concurrent_streams: None,
+            max_frame_size: Some(16_384),
+            send_enable_push: true,
+            no_rfc7540_priorities: None,
         }
     }
 
@@ -424,9 +433,13 @@ pub mod firefox_135 {
             ],
             initial_stream_window_size: Some(131_072),
             initial_connection_window_size: Some(12_582_912),
+            // Firefox doesn't send MAX_HEADER_LIST_SIZE.
             max_header_list_size: None,
             header_table_size: Some(65_536),
             max_concurrent_streams: None,
+            max_frame_size: Some(16_384),
+            send_enable_push: true,
+            no_rfc7540_priorities: None,
         }
     }
 
