@@ -248,6 +248,8 @@ class TestBasicRequests:
                     'parent=2; Path=/; Domain=apify.actor',
                     'other=3; Path=/; Domain=example.com',
                     'empty=4; Path=/; Domain=.',
+                    'dots=5; Path=/; Domain=..',
+                    'suffix=6; Path=/; Domain=actor',
                 ]
             },
         )

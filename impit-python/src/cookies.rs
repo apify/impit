@@ -33,6 +33,10 @@ impl CookieStore for PythonCookieJar {
                 if domain.is_some_and(|domain| !domain_matches(host, domain)) {
                     continue;
                 }
+                // A domain without an inner dot (e.g. `com`) would cover every site under that suffix.
+                if domain.is_some_and(|domain| is_dotless_suffix(host, domain)) {
+                    continue;
+                }
 
                 let kwargs = PyDict::new(py);
 
@@ -201,10 +205,14 @@ impl CookieStore for PythonCookieJar {
 ///
 /// An empty cookie domain imposes no host restriction and therefore matches any host.
 fn domain_matches(host: &str, cookie_domain: &str) -> bool {
-    let cookie_domain = cookie_domain.strip_prefix('.').unwrap_or(cookie_domain);
-
     if cookie_domain.is_empty() {
         return true;
+    }
+
+    // A domain made only of dots (e.g. `.`) is not empty and names no host, so it matches nothing.
+    let cookie_domain = cookie_domain.strip_prefix('.').unwrap_or(cookie_domain);
+    if cookie_domain.is_empty() {
+        return false;
     }
 
     // Host names are case-insensitive; normalise both sides instead of trusting the
@@ -223,6 +231,15 @@ fn domain_matches(host: &str, cookie_domain: &str) -> bool {
         || host
             .strip_suffix(cookie_domain.as_str())
             .is_some_and(|prefix| prefix.ends_with('.'))
+}
+
+/// Returns `true` if `cookie_domain` has no inner dot and is not the host itself.
+///
+/// Such a domain is a bare suffix like `com`, mirroring the check in Python's `DefaultCookiePolicy`.
+fn is_dotless_suffix(host: &str, cookie_domain: &str) -> bool {
+    let cookie_domain = cookie_domain.strip_prefix('.').unwrap_or(cookie_domain);
+
+    !cookie_domain.contains('.') && !host.eq_ignore_ascii_case(cookie_domain)
 }
 
 impl PythonCookieJar {
