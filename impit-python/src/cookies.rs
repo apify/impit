@@ -43,6 +43,8 @@ impl CookieStore for PythonCookieJar {
                     }
                     domain => domain,
                 };
+                // File cookie jars of `http.cookiejar` only keep `domain_specified` for a domain with a leading dot.
+                let domain = domain.map(|domain| format!(".{}", domain.trim_start_matches('.')));
 
                 let kwargs = PyDict::new(py);
 
@@ -55,7 +57,7 @@ impl CookieStore for PythonCookieJar {
                     .set_item("secure", cookie.secure().unwrap_or(false))
                     .unwrap_or_default();
                 kwargs
-                    .set_item("domain", domain.unwrap_or(host))
+                    .set_item("domain", domain.as_deref().unwrap_or(host))
                     .unwrap_or_default();
                 kwargs.set_item("comment", None::<&str>).unwrap_or_default();
                 kwargs
@@ -76,7 +78,7 @@ impl CookieStore for PythonCookieJar {
                     .set_item("domain_specified", domain.is_some())
                     .unwrap_or_default();
                 kwargs
-                    .set_item("domain_initial_dot", domain.map(|d| d.starts_with('.')))
+                    .set_item("domain_initial_dot", domain.is_some())
                     .unwrap_or_default();
                 kwargs
                     .set_item(

@@ -3,7 +3,8 @@ import json
 import socket
 import threading
 from collections.abc import AsyncIterator
-from http.cookiejar import Cookie, CookieJar
+from http.cookiejar import Cookie, CookieJar, MozillaCookieJar
+from pathlib import Path
 from typing import Literal
 from urllib.parse import urlparse
 
@@ -230,9 +231,8 @@ class TestBasicRequests:
             elif cookie.name == 'domain':
                 assert cookie.value == '6'
                 assert cookie.secure is False
-                # Crate cookies, ignores the starting dot in the domain
-                # but it's ok - https://www.rfc-editor.org/rfc/rfc6265#section-4.1.2.3
-                assert cookie.domain == 'httpbin.apify.actor'
+                # Stored with a leading dot, like `http.cookiejar` does for a cookie with a `Domain`.
+                assert cookie.domain == '.httpbin.apify.actor'
 
     @pytest.mark.asyncio
     async def test_cookie_for_another_domain_is_not_stored(self, browser: Browser) -> None:
@@ -281,6 +281,22 @@ class TestBasicRequests:
         assert {'own', 'site', 'private'} == {cookie.name for cookie in cookies_jar}
         assert {'site'} == {cookie.name for cookie in cookies_jar if cookie.domain_specified}
         assert {'github.io'} == {cookie.domain for cookie in cookies_jar if cookie.name == 'private'}
+
+    @pytest.mark.asyncio
+    async def test_domain_cookie_survives_a_file_cookie_jar(self, browser: Browser, tmp_path: Path) -> None:
+        cookies_jar = MozillaCookieJar(tmp_path / 'cookies.txt')
+
+        with set_cookie_server(['own=1; Path=/', 'site=2; Path=/; Domain=example.co.uk']) as port:
+            impit = AsyncClient(browser=browser, cookie_jar=cookies_jar, proxy=f'http://127.0.0.1:{port}')
+            response = await impit.get('http://shop.example.co.uk/')
+            assert response.status_code == 200
+
+        cookies_jar.save(ignore_discard=True)
+        loaded_jar = MozillaCookieJar(tmp_path / 'cookies.txt')
+        loaded_jar.load(ignore_discard=True)
+
+        assert {'own', 'site'} == {cookie.name for cookie in loaded_jar}
+        assert {'site'} == {cookie.name for cookie in loaded_jar if cookie.domain_specified}
 
     @pytest.mark.asyncio
     async def test_host_only_cookie_is_not_sent_to_subdomains(self, browser: Browser) -> None:

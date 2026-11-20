@@ -140,9 +140,8 @@ class TestBasicRequests:
             elif cookie.name == 'domain':
                 assert cookie.value == '6'
                 assert cookie.secure is False
-                # Crate cookies, ignores the starting dot in the domain
-                # but it's ok - https://www.rfc-editor.org/rfc/rfc6265#section-4.1.2.3
-                assert cookie.domain == 'httpbin.apify.actor'
+                # Stored with a leading dot, like `http.cookiejar` does for a cookie with a `Domain`.
+                assert cookie.domain == '.httpbin.apify.actor'
 
     def test_cookie_jar_works(self) -> None:
         cookies = Cookies({'preset-cookie': '123'})
