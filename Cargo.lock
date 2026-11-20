@@ -1350,6 +1350,7 @@ dependencies = [
  "futures",
  "h2",
  "impit",
+ "psl",
  "pyo3",
  "pyo3-async-runtimes",
  "reqwest",
@@ -1938,6 +1939,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8fd00f0bb2e90d81d1044c2b32617f68fcb9fa3bb7640c23e9c748e53fb30934"
 dependencies = [
  "unicode-ident",
+]
+
+[[package]]
+name = "psl"
+version = "2.1.255"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cb40358efa8d957f3e793e45daedd2fef822c694e1e3a45b827b53de6175e724"
+dependencies = [
+ "psl-types",
 ]
 
 [[package]]

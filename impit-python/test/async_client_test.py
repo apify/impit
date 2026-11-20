@@ -3,8 +3,10 @@ import json
 import socket
 import threading
 from collections.abc import AsyncIterator
-from http.cookiejar import Cookie, CookieJar
+from http.cookiejar import Cookie, CookieJar, MozillaCookieJar
+from pathlib import Path
 from typing import Literal
+from urllib.parse import urlparse
 
 import pytest
 
@@ -20,7 +22,7 @@ from impit import (
 )
 
 from .httpbin import get_httpbin_url
-from .servers import echoing_server
+from .servers import echoing_server, set_cookie_server
 from .setup_proxy import start_proxy_server
 
 
@@ -192,7 +194,7 @@ class TestBasicRequests:
                     'strict=3; Path=/; SameSite=Strict',
                     'secure=4; Path=/; HttpOnly; Secure; SameSite=Strict',
                     'short=5; Path=/;',
-                    'domain=6; Path=/; Domain=.127.0.0.1;',
+                    'domain=6; Path=/; Domain=.httpbin.apify.actor;',
                 ]
             },
         )
@@ -229,9 +231,133 @@ class TestBasicRequests:
             elif cookie.name == 'domain':
                 assert cookie.value == '6'
                 assert cookie.secure is False
-                # Crate cookies, ignores the starting dot in the domain
-                # but it's ok - https://www.rfc-editor.org/rfc/rfc6265#section-4.1.2.3
-                assert cookie.domain == '127.0.0.1'
+                # Stored with a leading dot, like `http.cookiejar` does for a cookie with a `Domain`.
+                assert cookie.domain == '.httpbin.apify.actor'
+
+    @pytest.mark.asyncio
+    async def test_cookie_for_another_domain_is_not_stored(self, browser: Browser) -> None:
+        cookies_jar = CookieJar()
+
+        impit = AsyncClient(browser=browser, cookie_jar=cookies_jar, follow_redirects=True)
+
+        url = get_httpbin_url(
+            '/response-headers',
+            query={
+                'set-cookie': [
+                    'own=1; Path=/',
+                    'parent=2; Path=/; Domain=apify.actor',
+                    'other=3; Path=/; Domain=example.com',
+                    'empty=4; Path=/; Domain=.',
+                    'dots=5; Path=/; Domain=..',
+                    'suffix=6; Path=/; Domain=actor',
+                ]
+            },
+        )
+
+        response = await impit.get(url)
+        assert response.status_code == 200
+
+        assert {'own', 'parent', 'empty'} == {cookie.name for cookie in cookies_jar}
+        assert {'parent'} == {cookie.name for cookie in cookies_jar if cookie.domain_specified}
+
+    @pytest.mark.asyncio
+    async def test_cookie_for_public_suffix_is_not_stored(self, browser: Browser) -> None:
+        cookies_jar = CookieJar()
+
+        set_cookies = [
+            'own=1; Path=/',
+            'site=2; Path=/; Domain=example.co.uk',
+            'suffix=3; Path=/; Domain=co.uk',
+            'private=4; Path=/; Domain=github.io',
+        ]
+        with set_cookie_server(set_cookies) as port:
+            impit = AsyncClient(browser=browser, cookie_jar=cookies_jar, proxy=f'http://127.0.0.1:{port}')
+
+            for url in ['http://shop.example.co.uk/', 'http://attacker.github.io/', 'http://github.io/']:
+                response = await impit.get(url)
+                assert response.status_code == 200
+
+        # `github.io` itself may set a cookie for its own name, which then stays host-only.
+        assert {'own', 'site', 'private'} == {cookie.name for cookie in cookies_jar}
+        assert {'site'} == {cookie.name for cookie in cookies_jar if cookie.domain_specified}
+        assert {'github.io'} == {cookie.domain for cookie in cookies_jar if cookie.name == 'private'}
+
+    @pytest.mark.asyncio
+    async def test_domain_cookie_survives_a_file_cookie_jar(self, browser: Browser, tmp_path: Path) -> None:
+        cookies_jar = MozillaCookieJar(tmp_path / 'cookies.txt')
+
+        with set_cookie_server(['own=1; Path=/', 'site=2; Path=/; Domain=example.co.uk']) as port:
+            impit = AsyncClient(browser=browser, cookie_jar=cookies_jar, proxy=f'http://127.0.0.1:{port}')
+            response = await impit.get('http://shop.example.co.uk/')
+            assert response.status_code == 200
+
+        cookies_jar.save(ignore_discard=True)
+        loaded_jar = MozillaCookieJar(tmp_path / 'cookies.txt')
+        loaded_jar.load(ignore_discard=True)
+
+        assert {'own', 'site'} == {cookie.name for cookie in loaded_jar}
+        assert {'site'} == {cookie.name for cookie in loaded_jar if cookie.domain_specified}
+
+    @pytest.mark.asyncio
+    async def test_host_only_cookie_is_not_sent_to_subdomains(self, browser: Browser) -> None:
+        cookies_jar = CookieJar()
+        for name, domain_specified in [('host_only', False), ('domain', True)]:
+            cookies_jar.set_cookie(
+                Cookie(
+                    version=0,
+                    name=name,
+                    value='1',
+                    port=None,
+                    port_specified=False,
+                    domain='apify.actor',
+                    domain_specified=domain_specified,
+                    domain_initial_dot=False,
+                    path='/',
+                    path_specified=True,
+                    secure=False,
+                    expires=None,
+                    discard=True,
+                    comment=None,
+                    comment_url=None,
+                    rest={},
+                )
+            )
+
+        impit = AsyncClient(browser=browser, cookie_jar=cookies_jar)
+
+        response = await impit.get(get_httpbin_url('/cookies'))
+        assert response.json()['cookies'] == {'domain': '1'}
+
+    @pytest.mark.asyncio
+    async def test_cookie_path_matches_whole_segments(self, browser: Browser) -> None:
+        cookies_jar = CookieJar()
+        host = urlparse(get_httpbin_url('/')).hostname or ''
+        for name, path in [('root', '/'), ('exact', '/cookies'), ('partial', '/cook'), ('other', '/cookies/set')]:
+            cookies_jar.set_cookie(
+                Cookie(
+                    version=0,
+                    name=name,
+                    value='1',
+                    port=None,
+                    port_specified=False,
+                    domain=host,
+                    domain_specified=False,
+                    domain_initial_dot=False,
+                    path=path,
+                    path_specified=True,
+                    secure=False,
+                    expires=None,
+                    discard=True,
+                    comment=None,
+                    comment_url=None,
+                    rest={},
+                )
+            )
+
+        impit = AsyncClient(browser=browser, cookie_jar=cookies_jar)
+
+        response = await impit.get(get_httpbin_url('/cookies'))
+        assert response.json()['cookies'] == {'root': '1', 'exact': '1'}
 
     @pytest.mark.asyncio
     async def test_rejected_cookie_is_skipped_not_crashing(self, browser: Browser) -> None:

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import contextlib
+import http.server
 import re
 import socket
 import threading
@@ -52,3 +53,28 @@ def echoing_server(body_started: threading.Event | None = None) -> Iterator[int]
     finally:
         thread.join(5)
         server.close()
+
+
+@contextlib.contextmanager
+def set_cookie_server(cookies: list[str]) -> Iterator[int]:
+    """Answer every request with the given `Set-Cookie` headers over plain HTTP, and yield the port to call."""
+
+    class Handler(http.server.BaseHTTPRequestHandler):
+        def do_GET(self) -> None:
+            self.send_response(200)
+            for cookie in cookies:
+                self.send_header('Set-Cookie', cookie)
+            self.send_header('Content-Length', '0')
+            self.end_headers()
+
+        def log_message(self, *_: object) -> None:
+            pass
+
+    server = http.server.ThreadingHTTPServer(('127.0.0.1', 0), Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        yield server.server_address[1]
+    finally:
+        server.shutdown()
+        server.server_close()
