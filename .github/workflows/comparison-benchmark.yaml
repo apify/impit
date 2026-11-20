@@ -88,6 +88,10 @@ jobs:
     needs: benchmark
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
+    # Only for the service account token, this job publishes nothing to npm.
+    environment:
+      name: npm
+      deployment: false
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7

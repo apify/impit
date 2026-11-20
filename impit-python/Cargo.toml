@@ -19,5 +19,6 @@ pyo3-async-runtimes = { version = "0.29", features = ["attributes", "async-std-r
 urlencoding = "2.1.3"
 encoding = "0.2.33"
 cookie = "0.18.1"
+psl = "2.1.255"
 futures = "0.3.31"
 either = "1.15.0"

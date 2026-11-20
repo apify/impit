@@ -1350,6 +1350,7 @@ dependencies = [
  "futures",
  "h2",
  "impit",
+ "psl",
  "pyo3",
  "pyo3-async-runtimes",
  "reqwest",
@@ -1941,6 +1942,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "psl"
+version = "2.1.255"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cb40358efa8d957f3e793e45daedd2fef822c694e1e3a45b827b53de6175e724"
+dependencies = [
+ "psl-types",
+]
+
+[[package]]
 name = "psl-types"
 version = "2.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2270,8 +2280,8 @@ dependencies = [
 
 [[package]]
 name = "rustls"
-version = "0.23.45"
-source = "git+https://github.com/apify/rustls?rev=2b5779e20250d357aa04780fdfcfdf338b24263a#2b5779e20250d357aa04780fdfcfdf338b24263a"
+version = "0.23.46"
+source = "git+https://github.com/apify/rustls?rev=800ae48131094ddcaf9469d0ba773130b65ece63#800ae48131094ddcaf9469d0ba773130b65ece63"
 dependencies = [
  "aws-lc-rs",
  "brotli",

@@ -22,6 +22,7 @@ impl CookieStore for PythonCookieJar {
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .map_or(0, |now| now.as_secs() as i64);
+        let host = url.host_str().unwrap_or_default();
 
         Python::attach(|py| {
             for header_value in cookie_headers {
@@ -32,9 +33,26 @@ impl CookieStore for PythonCookieJar {
                     continue;
                 };
 
-                let stored_domain = cookie
-                    .domain()
-                    .unwrap_or_else(|| url.host_str().unwrap_or_default());
+                // RFC 6265 §5.3: a cookie whose `Domain` does not match the responding host is ignored.
+                // RFC 6265 §5.2.3: an empty `Domain` is ignored, leaving the cookie host-only.
+                let domain = cookie.domain().filter(|domain| !domain.is_empty());
+                if domain.is_some_and(|domain| !domain_matches(host, domain)) {
+                    continue;
+                }
+                // RFC 6265 §5.3: a public suffix is only accepted from the host of that name, as a host-only cookie.
+                let domain = match domain {
+                    Some(domain) if is_public_suffix(domain) => {
+                        if !host.eq_ignore_ascii_case(domain.strip_prefix('.').unwrap_or(domain)) {
+                            continue;
+                        }
+                        None
+                    }
+                    domain => domain,
+                };
+                // File cookie jars of `http.cookiejar` only keep `domain_specified` for a domain with a leading dot.
+                let domain = domain.map(|domain| format!(".{}", domain.trim_start_matches('.')));
+
+                let stored_domain = domain.as_deref().unwrap_or(host);
                 let stored_path = cookie.path().unwrap_or("");
 
                 // RFC 6265bis §5.7: only a secure origin may set a `Secure` cookie or replace one.
@@ -71,12 +89,7 @@ impl CookieStore for PythonCookieJar {
                     .set_item("secure", cookie.secure().unwrap_or(false))
                     .unwrap_or_default();
                 kwargs
-                    .set_item(
-                        "domain",
-                        cookie
-                            .domain()
-                            .unwrap_or_else(|| url.host_str().unwrap_or_default()),
-                    )
+                    .set_item("domain", domain.as_deref().unwrap_or(host))
                     .unwrap_or_default();
                 kwargs.set_item("comment", None::<&str>).unwrap_or_default();
                 kwargs
@@ -94,13 +107,10 @@ impl CookieStore for PythonCookieJar {
                     )
                     .unwrap_or_default();
                 kwargs
-                    .set_item("domain_specified", cookie.domain().is_some())
+                    .set_item("domain_specified", domain.is_some())
                     .unwrap_or_default();
                 kwargs
-                    .set_item(
-                        "domain_initial_dot",
-                        cookie.domain().map(|d| d.starts_with('.')),
-                    )
+                    .set_item("domain_initial_dot", domain.is_some())
                     .unwrap_or_default();
                 kwargs.set_item("expires", expires).unwrap_or_default();
                 kwargs.set_item("version", 0).unwrap_or_default();
@@ -149,6 +159,10 @@ impl CookieStore for PythonCookieJar {
                         .getattr("domain")
                         .and_then(|attr| attr.extract::<String>())
                         .unwrap_or_default();
+                    let domain_specified = py_cookie
+                        .getattr("domain_specified")
+                        .and_then(|attr| attr.extract::<bool>())
+                        .unwrap_or(true);
                     let path = py_cookie
                         .getattr("path")
                         .and_then(|attr| attr.extract::<String>())
@@ -158,10 +172,17 @@ impl CookieStore for PythonCookieJar {
                         .and_then(|attr| attr.extract::<bool>())
                         .unwrap_or_default();
 
-                    if !domain_matches(url.host_str().unwrap_or_default(), &domain) {
+                    let host = url.host_str().unwrap_or_default();
+                    // RFC 6265 §5.4: a host-only cookie is returned only to the host that set it.
+                    let host_matches = if domain_specified || domain.is_empty() {
+                        domain_matches(host, &domain)
+                    } else {
+                        host.eq_ignore_ascii_case(&domain)
+                    };
+                    if !host_matches {
                         return None;
                     }
-                    if !url.path().starts_with(&path) {
+                    if !path_matches(url.path(), &path) {
                         return None;
                     }
                     if secure && !url.scheme().eq("https") {
@@ -219,10 +240,14 @@ impl CookieStore for PythonCookieJar {
 ///
 /// An empty cookie domain imposes no host restriction and therefore matches any host.
 fn domain_matches(host: &str, cookie_domain: &str) -> bool {
-    let cookie_domain = cookie_domain.strip_prefix('.').unwrap_or(cookie_domain);
-
     if cookie_domain.is_empty() {
         return true;
+    }
+
+    // A domain made only of dots (e.g. `.`) is not empty and names no host, so it matches nothing.
+    let cookie_domain = cookie_domain.strip_prefix('.').unwrap_or(cookie_domain);
+    if cookie_domain.is_empty() {
+        return false;
     }
 
     // Host names are case-insensitive; normalise both sides instead of trusting the
@@ -271,6 +296,19 @@ fn prefix_rules_hold(cookie: &Cookie) -> bool {
     true
 }
 
+/// Returns `true` if `cookie_domain` is a public suffix, e.g. `com`, `co.uk` or `github.io`.
+///
+/// Uses both sections of the [Public Suffix List](https://publicsuffix.org/), like browsers do. An unlisted
+/// top-level name counts as a suffix.
+fn is_public_suffix(cookie_domain: &str) -> bool {
+    let cookie_domain = cookie_domain
+        .strip_prefix('.')
+        .unwrap_or(cookie_domain)
+        .to_ascii_lowercase();
+
+    psl::suffix_str(&cookie_domain).is_some_and(|suffix| suffix == cookie_domain)
+}
+
 impl PythonCookieJar {
     /// Returns `true` if the jar holds a `Secure` cookie with the given name, domain and path.
     fn has_secure_cookie(&self, py: Python<'_>, name: &str, domain: &str, path: &str) -> bool {
@@ -310,5 +348,21 @@ impl PythonCookieJar {
         cookies
             .getattr(py, "jar")
             .map(|jar| PythonCookieJar::new(py, jar))
+    }
+}
+
+/// Returns `true` if `request_path` path-matches `cookie_path`, as defined by
+/// [RFC 6265, §5.1.4](https://www.rfc-editor.org/rfc/rfc6265#section-5.1.4).
+///
+/// An empty cookie path imposes no path restriction.
+fn path_matches(request_path: &str, cookie_path: &str) -> bool {
+    match request_path.strip_prefix(cookie_path) {
+        Some(rest) => {
+            rest.is_empty()
+                || rest.starts_with('/')
+                || cookie_path.is_empty()
+                || cookie_path.ends_with('/')
+        }
+        None => false,
     }
 }
