@@ -33,10 +33,16 @@ impl CookieStore for PythonCookieJar {
                 if domain.is_some_and(|domain| !domain_matches(host, domain)) {
                     continue;
                 }
-                // RFC 6265 §5.3: a public suffix (e.g. `com`, `co.uk`) would cover every site under it.
-                if domain.is_some_and(|domain| is_public_suffix(host, domain)) {
-                    continue;
-                }
+                // RFC 6265 §5.3: a public suffix is only accepted from the host of that name, as a host-only cookie.
+                let domain = match domain {
+                    Some(domain) if is_public_suffix(domain) => {
+                        if !host.eq_ignore_ascii_case(domain.strip_prefix('.').unwrap_or(domain)) {
+                            continue;
+                        }
+                        None
+                    }
+                    domain => domain,
+                };
 
                 let kwargs = PyDict::new(py);
 
@@ -233,17 +239,17 @@ fn domain_matches(host: &str, cookie_domain: &str) -> bool {
             .is_some_and(|prefix| prefix.ends_with('.'))
 }
 
-/// Returns `true` if `cookie_domain` is a public suffix (e.g. `com`, `co.uk`, `github.io`) and not the host itself.
+/// Returns `true` if `cookie_domain` is a public suffix, e.g. `com`, `co.uk` or `github.io`.
 ///
-/// Uses the [Public Suffix List](https://publicsuffix.org/), where an unlisted top-level name counts as a suffix.
-fn is_public_suffix(host: &str, cookie_domain: &str) -> bool {
+/// Uses both sections of the [Public Suffix List](https://publicsuffix.org/), like browsers do. An unlisted
+/// top-level name counts as a suffix.
+fn is_public_suffix(cookie_domain: &str) -> bool {
     let cookie_domain = cookie_domain
         .strip_prefix('.')
         .unwrap_or(cookie_domain)
         .to_ascii_lowercase();
 
-    !host.eq_ignore_ascii_case(&cookie_domain)
-        && psl::suffix_str(&cookie_domain).is_some_and(|suffix| suffix == cookie_domain)
+    psl::suffix_str(&cookie_domain).is_some_and(|suffix| suffix == cookie_domain)
 }
 
 impl PythonCookieJar {

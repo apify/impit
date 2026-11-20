@@ -273,11 +273,14 @@ class TestBasicRequests:
         with set_cookie_server(set_cookies) as port:
             impit = AsyncClient(browser=browser, cookie_jar=cookies_jar, proxy=f'http://127.0.0.1:{port}')
 
-            for url in ['http://shop.example.co.uk/', 'http://attacker.github.io/']:
+            for url in ['http://shop.example.co.uk/', 'http://attacker.github.io/', 'http://github.io/']:
                 response = await impit.get(url)
                 assert response.status_code == 200
 
-        assert {'own', 'site'} == {cookie.name for cookie in cookies_jar}
+        # `github.io` itself may set a cookie for its own name, which then stays host-only.
+        assert {'own', 'site', 'private'} == {cookie.name for cookie in cookies_jar}
+        assert {'site'} == {cookie.name for cookie in cookies_jar if cookie.domain_specified}
+        assert {'github.io'} == {cookie.domain for cookie in cookies_jar if cookie.name == 'private'}
 
     @pytest.mark.asyncio
     async def test_host_only_cookie_is_not_sent_to_subdomains(self, browser: Browser) -> None:
