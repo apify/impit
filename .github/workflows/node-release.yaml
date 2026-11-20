@@ -111,6 +111,9 @@ jobs:
       name: Generate changelog
       needs: [publish]
       runs-on: ubuntu-latest
+      environment:
+        name: npm
+        deployment: false
       permissions:
         contents: write # Required to create the GitHub release
       steps:

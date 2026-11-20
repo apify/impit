@@ -17,6 +17,9 @@ on:
 jobs:
     get_version:
       runs-on: ubuntu-latest
+      environment:
+        name: pypi
+        deployment: false
       outputs:
         bumped-version-commit-sha: ${{ steps.commit_version.outputs.commit_long_sha }}
         new_version: ${{ steps.increment_version.outputs.new_version }}
@@ -119,6 +122,9 @@ jobs:
       name: Generate changelog
       needs: [publish, get_version]
       runs-on: ubuntu-latest
+      environment:
+        name: pypi
+        deployment: false
       permissions:
         contents: write # Required to create the GitHub release
       outputs:
