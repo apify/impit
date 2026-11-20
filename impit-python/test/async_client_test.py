@@ -433,13 +433,21 @@ class TestBasicRequests:
             )
         )
 
-        with set_cookie_server(['plain=1; Path=/', 'secure=1; Path=/; Secure', 'session=replaced; Path=/']) as port:
+        set_cookies = [
+            'plain=1; Path=/',
+            'secure=1; Path=/; Secure',
+            'session=replaced; Path=/',
+            'session=no-path',
+            'session=deeper; Path=/account',
+            'session=parent; Path=/; Domain=insecure.test',
+        ]
+        with set_cookie_server(set_cookies) as port:
             impit = AsyncClient(browser=browser, cookie_jar=cookies_jar, proxy=f'http://127.0.0.1:{port}')
 
             response = await impit.get('http://insecure.test/')
             assert response.status_code == 200
 
-        assert {cookie.name: cookie.value for cookie in cookies_jar} == {'plain': '1', 'session': 'secret'}
+        assert sorted((cookie.name, cookie.value) for cookie in cookies_jar) == [('plain', '1'), ('session', 'secret')]
 
     @pytest.mark.asyncio
     async def test_rejected_cookie_is_skipped_not_crashing(self, browser: Browser) -> None:

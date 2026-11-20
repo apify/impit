@@ -310,7 +310,8 @@ fn is_public_suffix(cookie_domain: &str) -> bool {
 }
 
 impl PythonCookieJar {
-    /// Returns `true` if the jar holds a `Secure` cookie with the given name, domain and path.
+    /// Returns `true` if the jar holds a `Secure` cookie that a cookie with the given name, domain and path
+    /// would shadow, see [RFC 6265bis, §5.7](https://www.ietf.org/archive/id/draft-ietf-httpbis-rfc6265bis-22.html#section-5.7).
     fn has_secure_cookie(&self, py: Python<'_>, name: &str, domain: &str, path: &str) -> bool {
         let Ok(cookies) = PyIterator::from_object(&self.cookie_jar.bind_borrowed(py)) else {
             return false;
@@ -329,8 +330,8 @@ impl PythonCookieJar {
                 .and_then(|value| value.extract::<bool>())
                 .unwrap_or(false)
                 && attr("name") == name
-                && attr("domain").eq_ignore_ascii_case(domain)
-                && attr("path") == path
+                && either_domain_matches(&attr("domain"), domain)
+                && path_matches(or_root(path), or_root(&attr("path")))
         })
     }
 
@@ -348,6 +349,25 @@ impl PythonCookieJar {
         cookies
             .getattr(py, "jar")
             .map(|jar| PythonCookieJar::new(py, jar))
+    }
+}
+
+/// Returns `true` if one of the two cookie domains domain-matches the other.
+fn either_domain_matches(first: &str, second: &str) -> bool {
+    let first = first.strip_prefix('.').unwrap_or(first);
+    let second = second.strip_prefix('.').unwrap_or(second);
+
+    !first.is_empty()
+        && !second.is_empty()
+        && (domain_matches(first, second) || domain_matches(second, first))
+}
+
+/// An empty cookie path covers the whole host, the same as `/`.
+fn or_root(path: &str) -> &str {
+    if path.is_empty() {
+        "/"
+    } else {
+        path
     }
 }
 
