@@ -2,6 +2,7 @@ import asyncio
 import json
 import socket
 import threading
+import time
 from collections.abc import AsyncIterator
 from http.cookiejar import Cookie, CookieJar, MozillaCookieJar
 from pathlib import Path
@@ -358,6 +359,95 @@ class TestBasicRequests:
 
         response = await impit.get(get_httpbin_url('/cookies'))
         assert response.json()['cookies'] == {'root': '1', 'exact': '1'}
+
+    @pytest.mark.asyncio
+    async def test_cookie_storage_rules(self, browser: Browser) -> None:
+        cookies_jar = CookieJar()
+
+        impit = AsyncClient(browser=browser, cookie_jar=cookies_jar)
+
+        url = get_httpbin_url(
+            '/response-headers',
+            query={
+                'set-cookie': [
+                    'plain=1; Path=/',
+                    'malformed',
+                    '__Secure-plain=1; Path=/',
+                    '__Secure-ok=1; Path=/; Secure',
+                    '__Host-ok=1; Path=/; Secure',
+                    '__Host-domain=1; Path=/; Secure; Domain=httpbin.apify.actor',
+                    '__Host-path=1; Path=/cookies; Secure',
+                ]
+            },
+        )
+
+        response = await impit.get(url)
+        assert response.status_code == 200
+
+        assert {'plain', '__Secure-ok', '__Host-ok'} == {cookie.name for cookie in cookies_jar}
+
+    @pytest.mark.asyncio
+    async def test_cookie_max_age(self, browser: Browser) -> None:
+        cookies_jar = CookieJar()
+
+        impit = AsyncClient(browser=browser, cookie_jar=cookies_jar)
+
+        url = get_httpbin_url(
+            '/response-headers', query={'set-cookie': ['kept=1; Path=/; Max-Age=3600', 'removed=1; Path=/']}
+        )
+        response = await impit.get(url)
+        assert response.status_code == 200
+
+        cookies = {cookie.name: cookie for cookie in cookies_jar}
+        assert {'kept', 'removed'} == set(cookies)
+        assert cookies['kept'].expires is not None
+        assert 3500 < cookies['kept'].expires - time.time() <= 3600
+
+        url = get_httpbin_url('/response-headers', query={'set-cookie': ['removed=; Path=/; Max-Age=0']})
+        response = await impit.get(url)
+        assert response.status_code == 200
+
+        assert {'kept'} == {cookie.name for cookie in cookies_jar}
+
+    @pytest.mark.asyncio
+    async def test_secure_cookie_needs_secure_origin(self, browser: Browser) -> None:
+        cookies_jar = CookieJar()
+        cookies_jar.set_cookie(
+            Cookie(
+                version=0,
+                name='session',
+                value='secret',
+                port=None,
+                port_specified=False,
+                domain='insecure.test',
+                domain_specified=False,
+                domain_initial_dot=False,
+                path='/',
+                path_specified=True,
+                secure=True,
+                expires=None,
+                discard=True,
+                comment=None,
+                comment_url=None,
+                rest={},
+            )
+        )
+
+        set_cookies = [
+            'plain=1; Path=/',
+            'secure=1; Path=/; Secure',
+            'session=replaced; Path=/',
+            'session=no-path',
+            'session=deeper; Path=/account',
+            'session=parent; Path=/; Domain=insecure.test',
+        ]
+        with set_cookie_server(set_cookies) as port:
+            impit = AsyncClient(browser=browser, cookie_jar=cookies_jar, proxy=f'http://127.0.0.1:{port}')
+
+            response = await impit.get('http://insecure.test/')
+            assert response.status_code == 200
+
+        assert sorted((cookie.name, cookie.value) for cookie in cookies_jar) == [('plain', '1'), ('session', 'secret')]
 
     @pytest.mark.asyncio
     async def test_rejected_cookie_is_skipped_not_crashing(self, browser: Browser) -> None:
