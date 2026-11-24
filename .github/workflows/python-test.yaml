@@ -45,14 +45,14 @@ jobs:
           - x86_64
           - aarch64
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/checkout@v7.0.1
         with:
           ref: ${{ inputs.commit_sha }}
 
       - name: Install uv
-        uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
+        uses: astral-sh/setup-uv@v10.4.0
 
-      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+      - uses: actions/setup-python@v7.1.0
         with:
           python-version: |
             3.10
@@ -63,7 +63,7 @@ jobs:
             3.15
 
       - name: Build wheels
-        uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b # v1
+        uses: PyO3/maturin-action@v1.51.0
         with:
           working-directory: impit-python
           target: ${{ matrix.target }}
@@ -72,7 +72,7 @@ jobs:
           manylinux: ${{ matrix.target == 'x86_64' && 'auto' || matrix.target == 'aarch64' && '2_28' }}
 
       - name: Upload wheels
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: wheels-linux-${{ matrix.target }}
           path: impit-python/dist
@@ -89,20 +89,20 @@ jobs:
             target: aarch64
 
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/checkout@v7.0.1
         with:
           ref: ${{ inputs.commit_sha }}
 
       - name: Install uv
-        uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
+        uses: astral-sh/setup-uv@v10.4.0
 
       - name: Set up Python
-        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        uses: actions/setup-python@v7.1.0
         with:
           python-version: 3.15
 
       - name: Download wheels
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        uses: actions/download-artifact@v8.0.2
         with:
           name: wheels-linux-${{ matrix.platform.target }}
           path: impit-python/dist
@@ -131,11 +131,11 @@ jobs:
           - runner: ubuntu-22.04
             target: aarch64
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/checkout@v7.0.1
         with:
           ref: ${{ inputs.commit_sha }}
 
-      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+      - uses: actions/setup-python@v7.1.0
         with:
           python-version: |
             3.10
@@ -146,7 +146,7 @@ jobs:
             3.15
 
       - name: Build wheels
-        uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b # v1
+        uses: PyO3/maturin-action@v1.51.0
         with:
           working-directory: impit-python
           target: ${{ matrix.platform.target }}
@@ -155,14 +155,14 @@ jobs:
           manylinux: musllinux_1_2
 
       - name: Upload wheels
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: wheels-musllinux-${{ matrix.platform.target }}
           path: impit-python/dist
 
       - name: pytest
         if: ${{ startsWith(matrix.platform.target, 'x86_64') }}
-        uses: addnab/docker-run-action@4f65fabd2431ebc8d299f8e5a018d79a769ae185 # v3
+        uses: addnab/docker-run-action@v3
         with:
           image: alpine:latest
           options: -v ${{ github.workspace }}:/io -w /io/impit-python -e APIFY_HTTPBIN_TOKEN=${{ secrets.APIFY_HTTPBIN_TOKEN }}
@@ -178,7 +178,7 @@ jobs:
 
       - name: pytest
         if: ${{ !startsWith(matrix.platform.target, 'x86') }}
-        uses: uraimo/run-on-arch-action@1e2c619f81e6d8609845ea1d2f443a778df1ac68 # v3
+        uses: uraimo/run-on-arch-action@v3
         with:
           arch: ${{ matrix.platform.target }}
           distro: alpine_latest
@@ -211,14 +211,14 @@ jobs:
             target: aarch64
             extra-interpreters: []
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/checkout@v7.0.1
         with:
           ref: ${{ inputs.commit_sha }}
 
       - name: Install uv
-        uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
+        uses: astral-sh/setup-uv@v10.4.0
 
-      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+      - uses: actions/setup-python@v7.1.0
         with:
           python-version: |
             ${{ join(matrix.platform.extra-interpreters, fromJSON('"\n"')) }}
@@ -229,7 +229,7 @@ jobs:
             3.15
 
       - name: Build wheels
-        uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b # v1
+        uses: PyO3/maturin-action@v1.51.0
         with:
           working-directory: impit-python
           target: ${{ matrix.platform.target }}
@@ -237,7 +237,7 @@ jobs:
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
 
       - name: Upload wheels
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: wheels-windows-${{ matrix.platform.target }}
           path: impit-python/dist
@@ -265,15 +265,15 @@ jobs:
           - runner: macos-15
             target: aarch64
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/checkout@v7.0.1
         with:
           ref: ${{ inputs.commit_sha }}
 
       - name: Install uv
-        uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
+        uses: astral-sh/setup-uv@v10.4.0
 
       - name: Set up Python
-        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        uses: actions/setup-python@v7.1.0
         with:
           python-version: |
             3.10
@@ -284,7 +284,7 @@ jobs:
             3.15
 
       - name: Build wheels
-        uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b # v1
+        uses: PyO3/maturin-action@v1.51.0
         with:
           working-directory: impit-python
           target: ${{ matrix.platform.target }}
@@ -292,7 +292,7 @@ jobs:
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
 
       - name: Upload wheels
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: wheels-macos-${{ matrix.platform.target }}
           path: impit-python/dist

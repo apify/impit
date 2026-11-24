@@ -86,10 +86,10 @@ jobs:
     name: stable - ${{ matrix.settings.target }} - node@22
     runs-on: ${{ matrix.settings.host }}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/checkout@v7.0.1
 
       - name: Use Node.js 24
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        uses: actions/setup-node@v7.1.0
         with:
           node-version: 26
 
@@ -100,13 +100,13 @@ jobs:
           working-directory: impit-node
 
       - name: Install
-        uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
+        uses: dtolnay/rust-toolchain@stable
         if: ${{ !matrix.settings.docker }}
         with:
           toolchain: stable
           targets: ${{ matrix.settings.target }}
       - name: Cache cargo
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        uses: actions/cache@v6.1.0
         with:
           path: |
             ~/.cargo/registry/index/
@@ -115,7 +115,7 @@ jobs:
             .cargo-cache
             target/
           key: ${{ matrix.settings.target }}-cargo-${{ matrix.settings.host }}
-      - uses: goto-bus-stop/setup-zig@abea47f85e598557f500fa1fd2ab7464fcb39406 # v2
+      - uses: goto-bus-stop/setup-zig@v2.2.1
         if: ${{ matrix.settings.target == 'armv7-unknown-linux-gnueabihf' || matrix.settings.target == 'armv7-unknown-linux-musleabihf' }}
         with:
           version: 0.13.0
@@ -128,13 +128,13 @@ jobs:
         run: pnpm config set supportedArchitectures.cpu "ia32"
         shell: bash
       - name: Setup node x86
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        uses: actions/setup-node@v7.1.0
         if: matrix.settings.target == 'i686-pc-windows-msvc'
         with:
           node-version: 26
           architecture: x86
       - name: Build in docker
-        uses: maus007/docker-run-action-fork@207a4e2a8ebf7e4b985656ba990b1e53715dce2a
+        uses: maus007/docker-run-action-fork@main
         if: ${{ matrix.settings.docker }}
         with:
           image: ${{ matrix.settings.docker }}
@@ -145,7 +145,7 @@ jobs:
         shell: bash
         run: ${{ matrix.settings.build }}
       - name: Upload artifact
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: bindings-${{ matrix.settings.target }}
           path: impit-node/${{ env.APP_NAME }}.*.node
@@ -177,9 +177,9 @@ jobs:
             node: '20'
     runs-on: ${{ matrix.settings.host }}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/checkout@v7.0.1
       - name: Use Node.js ${{ matrix.node }}
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        uses: actions/setup-node@v7.1.0
         with:
           node-version: ${{ matrix.node }}
           architecture: x64
@@ -204,7 +204,7 @@ jobs:
           cd impit-node && pnpm install --frozen-lockfile
 
       - name: Download artifacts
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        uses: actions/download-artifact@v8.0.2
         with:
           name: bindings-${{ matrix.settings.target }}
           path: impit-node
@@ -229,9 +229,9 @@ jobs:
           - '24'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/checkout@v7.0.1
       - name: Use Node.js ${{ matrix.node }}
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        uses: actions/setup-node@v7.1.0
         with:
           node-version: ${{ matrix.node }}
 
@@ -241,7 +241,7 @@ jobs:
           working-directory: impit-node
 
       - name: Download artifacts
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        uses: actions/download-artifact@v8.0.2
         with:
           name: bindings-x86_64-unknown-linux-gnu
           path: impit-node
@@ -264,9 +264,9 @@ jobs:
           - '24'
     runs-on: ubuntu-26.04-arm
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/checkout@v7.0.1
       - name: Use Node.js ${{ matrix.node }}
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        uses: actions/setup-node@v7.1.0
         with:
           node-version: ${{ matrix.node }}
 
@@ -276,7 +276,7 @@ jobs:
           working-directory: impit-node
 
       - name: Download artifacts
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        uses: actions/download-artifact@v8.0.2
         with:
           name: bindings-aarch64-unknown-linux-gnu
           path: impit-node
@@ -302,14 +302,14 @@ jobs:
           - '24'
     runs-on: ubuntu-26.04-arm
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/checkout@v7.0.1
       - name: Use Node.js ${{ matrix.node }}
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        uses: actions/setup-node@v7.1.0
         with:
           node-version: ${{ matrix.node }}
 
       - name: Download artifacts
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        uses: actions/download-artifact@v8.0.2
         with:
           name: bindings-aarch64-unknown-linux-musl
           path: impit-node
@@ -333,14 +333,14 @@ jobs:
           - '24'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/checkout@v7.0.1
       - name: Use Node.js ${{ matrix.node }}
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        uses: actions/setup-node@v7.1.0
         with:
           node-version: ${{ matrix.node }}
 
       - name: Download artifacts
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        uses: actions/download-artifact@v8.0.2
         with:
           name: bindings-x86_64-unknown-linux-musl
           path: impit-node
